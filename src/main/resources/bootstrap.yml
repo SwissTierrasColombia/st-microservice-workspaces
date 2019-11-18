@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: st-microservice-workspaces
+  profiles:
+    active: 
+      - "develop"
+  cloud:
+    config:
+      enabled: true
+      
+---
+spring:
+  profiles: develop
+  cloud:
+    config:
+      failFast: true
+      uri: http://localhost:8889
+      
+---
+spring:
+  profiles: production
+  cloud:
+    config:
+      failFast: true
+      uri: http://localhost:8890
