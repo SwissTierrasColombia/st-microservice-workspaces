@@ -25,4 +25,9 @@ public class MilestoneService implements IMilestoneService {
 		return milestoneRepository.save(milestoneEntity);
 	}
 
+	@Override
+	public MilestoneEntity getMilestoneById(Long id) {
+		return milestoneRepository.findById(id).orElse(null);
+	}
+
 }

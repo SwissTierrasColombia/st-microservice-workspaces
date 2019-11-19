@@ -45,22 +45,9 @@ public class WorkspaceV1Controller {
 	public ResponseEntity<WorkspaceDto> createWorkspace(@ModelAttribute CreateWorkspaceDto requestCreateWorkspace) {
 
 		HttpStatus httpStatus = null;
+		WorkspaceDto workspaceDto = null;
 
 		try {
-
-			// validation end date
-			String endDateString = requestCreateWorkspace.getEndDate();
-			Date endDate = null;
-			if (endDateString != null && !endDateString.isEmpty()) {
-				try {
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-					endDate = sdf.parse(endDateString);
-				} catch (Exception e) {
-					throw new InputValidationException("The final date is invalid.");
-				}
-			} else {
-				throw new InputValidationException("The final date is required.");
-			}
 
 			// validation manager code
 			Long managerCode = requestCreateWorkspace.getManagerCode();
@@ -74,7 +61,7 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("The municipality is required.");
 			}
 
-			// validation municipality
+			// validation observations
 			String observations = requestCreateWorkspace.getObservations();
 			if (observations == null || observations.isEmpty()) {
 				throw new InputValidationException("The observations are required.");
@@ -100,19 +87,28 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("The support file is required.");
 			}
 
-			// validation parcels number
-			Long parcelsNumber = requestCreateWorkspace.getParcelsNumber();
+			// validation number alphanumeric parcels
+			Long parcelsNumber = requestCreateWorkspace.getNumberAlphanumericParcels();
 			if (parcelsNumber != null) {
 				if (parcelsNumber < 0) {
-					throw new InputValidationException("The parcel number is invalid.");
+					throw new InputValidationException("The number parcel is invalid.");
 				}
 			}
 
-			workspaceBusiness.createWorkspace(startDate, endDate, managerCode, municipalityId, observations,
-					parcelsNumber);
+			// validation municipality area
+			Double municipalityArea = requestCreateWorkspace.getMunicipalityArea();
+			if (parcelsNumber != null) {
+				if (parcelsNumber < 0) {
+					throw new InputValidationException("The municipality area is invalid.");
+				}
+			}
 
+			MultipartFile file = requestCreateWorkspace.getSupportFile();
+			System.out.println("ljkfadlks: " + file.getContentType());
+
+			workspaceDto = workspaceBusiness.createWorkspace(startDate, managerCode, municipalityId, observations,
+					parcelsNumber, municipalityArea, requestCreateWorkspace.getSupportFile());
 			httpStatus = HttpStatus.CREATED;
-
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
@@ -124,7 +120,7 @@ public class WorkspaceV1Controller {
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 
-		return new ResponseEntity<>(null, httpStatus);
+		return new ResponseEntity<>(workspaceDto, httpStatus);
 	}
 
 }

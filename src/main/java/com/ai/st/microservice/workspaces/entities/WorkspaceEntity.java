@@ -1,7 +1,10 @@
 package com.ai.st.microservice.workspaces.entities;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,6 +13,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -26,21 +30,18 @@ public class WorkspaceEntity {
 	@Column(name = "is_active")
 	private Boolean isActive;
 
-	@Column(name = "work_area", precision = 10, scale = 2, nullable = true)
-	private Double workArea;
+	@Column(name = "municipality_area", precision = 10, scale = 2, nullable = true)
+	private Double municipalityArea;
 
-	@Column(name = "parcels_number", nullable = true)
-	private Long parcelsNumber;
-
-	@Column(name = "zones_number", nullable = true)
-	private Long zonesNumber;
+	@Column(name = "number_alphanumeric_parcels", nullable = true)
+	private Long numberAlphanumericParcels;
 
 	@Column(name = "version", nullable = false)
 	private Long version;
 
 	@Column(name = "manager_code", nullable = false)
 	private Long managerCode;
-	
+
 	@Column(name = "observations", nullable = false, length = 255)
 	private String observations;
 
@@ -52,13 +53,12 @@ public class WorkspaceEntity {
 	@Temporal(TemporalType.DATE)
 	private Date startDate;
 
-	@Column(name = "end_date", nullable = false)
-	@Temporal(TemporalType.DATE)
-	private Date endDate;
-
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "municipality_id", referencedColumnName = "id", nullable = false)
 	private MunicipalityEntity municipality;
+
+	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
+	private List<SupportEntity> supports = new ArrayList<SupportEntity>();
 
 	public WorkspaceEntity() {
 
@@ -78,30 +78,6 @@ public class WorkspaceEntity {
 
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
-	}
-
-	public Double getWorkArea() {
-		return workArea;
-	}
-
-	public void setWorkArea(Double workArea) {
-		this.workArea = workArea;
-	}
-
-	public Long getParcelsNumber() {
-		return parcelsNumber;
-	}
-
-	public void setParcelsNumber(Long parcelsNumber) {
-		this.parcelsNumber = parcelsNumber;
-	}
-
-	public Long getZonesNumber() {
-		return zonesNumber;
-	}
-
-	public void setZonesNumber(Long zonesNumber) {
-		this.zonesNumber = zonesNumber;
 	}
 
 	public Long getVersion() {
@@ -144,12 +120,36 @@ public class WorkspaceEntity {
 		this.startDate = startDate;
 	}
 
-	public Date getEndDate() {
-		return endDate;
+	public String getObservations() {
+		return observations;
 	}
 
-	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
+	public void setObservations(String observations) {
+		this.observations = observations;
+	}
+
+	public List<SupportEntity> getSupports() {
+		return supports;
+	}
+
+	public void setSupports(List<SupportEntity> supports) {
+		this.supports = supports;
+	}
+
+	public Double getMunicipalityArea() {
+		return municipalityArea;
+	}
+
+	public void setMunicipalityArea(Double municipalityArea) {
+		this.municipalityArea = municipalityArea;
+	}
+
+	public Long getNumberAlphanumericParcels() {
+		return numberAlphanumericParcels;
+	}
+
+	public void setNumberAlphanumericParcels(Long numberAlphanumericParcels) {
+		this.numberAlphanumericParcels = numberAlphanumericParcels;
 	}
 
 }

@@ -15,24 +15,24 @@ public class CreateWorkspaceDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Start date")
 	private String startDate;
 
-	@ApiModelProperty(required = true, notes = "End date")
-	private String endDate;
-
 	@ApiModelProperty(required = true, notes = "Manager Code")
 	private Long managerCode;
 
 	@ApiModelProperty(required = true, notes = "Observations")
 	private String observations;
 
-	@ApiModelProperty(required = false, notes = "Parcels number")
-	private Long parcelsNumber;
+	@ApiModelProperty(required = false, notes = "Number alphanumeric parcels")
+	private Long numberAlphanumericParcels;
+
+	@ApiModelProperty(required = false, notes = "Municipality area")
+	private Double municipalityArea;
 
 	@ApiModelProperty(required = true, notes = "Municipality ID")
 	private Long municipalityId;
-	
+
 	@ApiModelProperty(required = true, notes = "Support file")
 	private MultipartFile supportFile;
-	
+
 	public CreateWorkspaceDto() {
 
 	}
@@ -43,14 +43,6 @@ public class CreateWorkspaceDto implements Serializable {
 
 	public void setStartDate(String startDate) {
 		this.startDate = startDate;
-	}
-
-	public String getEndDate() {
-		return endDate;
-	}
-
-	public void setEndDate(String endDate) {
-		this.endDate = endDate;
 	}
 
 	public Long getManagerCode() {
@@ -69,14 +61,6 @@ public class CreateWorkspaceDto implements Serializable {
 		this.observations = observations;
 	}
 
-	public Long getParcelsNumber() {
-		return parcelsNumber;
-	}
-
-	public void setParcelsNumber(Long parcelsNumber) {
-		this.parcelsNumber = parcelsNumber;
-	}
-
 	public Long getMunicipalityId() {
 		return municipalityId;
 	}
@@ -91,6 +75,22 @@ public class CreateWorkspaceDto implements Serializable {
 
 	public void setSupportFile(MultipartFile supportFile) {
 		this.supportFile = supportFile;
+	}
+
+	public Long getNumberAlphanumericParcels() {
+		return numberAlphanumericParcels;
+	}
+
+	public void setNumberAlphanumericParcels(Long numberAlphanumericParcels) {
+		this.numberAlphanumericParcels = numberAlphanumericParcels;
+	}
+
+	public Double getMunicipalityArea() {
+		return municipalityArea;
+	}
+
+	public void setMunicipalityArea(Double municipalityArea) {
+		this.municipalityArea = municipalityArea;
 	}
 
 }

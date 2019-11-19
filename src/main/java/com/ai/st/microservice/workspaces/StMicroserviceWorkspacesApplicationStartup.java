@@ -7,6 +7,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.workspaces.business.MilestoneBusiness;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
@@ -32,6 +33,7 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		log.info("ST - Loading Domains ... ");
 		this.initMunicipalities();
+		this.initMilestones();
 	}
 
 	public void initMunicipalities() {
@@ -98,18 +100,25 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 	}
 
 	public void initMilestones() {
-		Long countMilestiones = milestoneService.getCount();
-		if (countMilestiones == 0) {
+		Long countMilestones = milestoneService.getCount();
+		if (countMilestones == 0) {
 
 			try {
 
 				MilestoneEntity milestone1 = new MilestoneEntity();
-				milestone1.setName("GESTION MUNICIPIO");
+				milestone1.setId(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
+				milestone1.setName("NUEVO ESPACIO TRABAJO PARA UN MUNICIPIO");
 				milestoneService.createMilestone(milestone1);
 
 				MilestoneEntity milestone2 = new MilestoneEntity();
-				milestone2.setName("ASIGNACIÓN OPERADOR");
+				milestone2.setId(MilestoneBusiness.MILESTONE_UPDATE_WORKSPACE);
+				milestone2.setName("EDITAR ESPACIO TRABAJO PARA UN MUNICIPIO ");
 				milestoneService.createMilestone(milestone2);
+
+				MilestoneEntity milestone3 = new MilestoneEntity();
+				milestone3.setId(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
+				milestone3.setName("ASIGNACIÓN DE OPERADOR A UN MUNICIPIO");
+				milestoneService.createMilestone(milestone3);
 
 				log.info("The domains 'milestones' have been loaded!");
 			} catch (Exception e) {

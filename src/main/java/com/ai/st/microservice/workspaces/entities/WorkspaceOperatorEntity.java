@@ -27,9 +27,13 @@ public class WorkspaceOperatorEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date createdAt;
 
-	@Column(name = "departure_date", nullable = true)
+	@Column(name = "start_date", nullable = true)
 	@Temporal(TemporalType.TIMESTAMP)
-	private Date departureDate;
+	private Date startDate;
+
+	@Column(name = "end_date", nullable = true)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date endDate;
 
 	@Column(name = "operator_code", nullable = false)
 	private Long operatorCode;
@@ -58,14 +62,6 @@ public class WorkspaceOperatorEntity {
 		this.createdAt = createdAt;
 	}
 
-	public Date getDepartureDate() {
-		return departureDate;
-	}
-
-	public void setDepartureDate(Date departureDate) {
-		this.departureDate = departureDate;
-	}
-
 	public Long getOperatorCode() {
 		return operatorCode;
 	}
@@ -80,6 +76,22 @@ public class WorkspaceOperatorEntity {
 
 	public void setWorkspace(WorkspaceEntity workspace) {
 		this.workspace = workspace;
+	}
+
+	public Date getStartDate() {
+		return startDate;
+	}
+
+	public void setStartDate(Date startDate) {
+		this.startDate = startDate;
+	}
+
+	public Date getEndDate() {
+		return endDate;
+	}
+
+	public void setEndDate(Date endDate) {
+		this.endDate = endDate;
 	}
 
 }

@@ -23,10 +23,7 @@ public class SupportEntity {
 	@Column(name = "id", nullable = false)
 	private Long id;
 
-	@Column(name = "observations", nullable = true, length = 255)
-	private String observations;
-
-	@Column(name = "url_documentary_repository", nullable = true, length = 255)
+	@Column(name = "url_documentary_repository", nullable = false, length = 255)
 	private String urlDocumentaryRepository;
 
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -51,14 +48,6 @@ public class SupportEntity {
 
 	public void setId(Long id) {
 		this.id = id;
-	}
-
-	public String getObservations() {
-		return observations;
-	}
-
-	public void setObservations(String observations) {
-		this.observations = observations;
 	}
 
 	public String getUrlDocumentaryRepository() {

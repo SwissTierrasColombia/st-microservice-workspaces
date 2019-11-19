@@ -8,4 +8,6 @@ public interface IMilestoneService {
 
 	public MilestoneEntity createMilestone(MilestoneEntity milestoneEntity);
 
+	public MilestoneEntity getMilestoneById(Long id);
+
 }
