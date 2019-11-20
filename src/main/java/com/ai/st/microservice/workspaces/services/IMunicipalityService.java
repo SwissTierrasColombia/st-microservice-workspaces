@@ -11,7 +11,9 @@ public interface IMunicipalityService {
 	public MunicipalityEntity createMunicipality(MunicipalityEntity municipalityEntity);
 
 	public List<MunicipalityEntity> getMunicipalitiesByDepartmentId(Long departmentId);
-	
+
 	public MunicipalityEntity getMunicipalityById(Long id);
+
+	public List<MunicipalityEntity> getMunicipalitiesByDepartmentIdAndManagerCode(Long departmentId, Long managerCode);
 
 }

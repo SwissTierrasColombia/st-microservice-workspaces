@@ -37,4 +37,9 @@ public class MunicipalityService implements IMunicipalityService {
 		return municipalityRepository.findById(id).orElse(null);
 	}
 
+	@Override
+	public List<MunicipalityEntity> getMunicipalitiesByDepartmentIdAndManagerCode(Long departmentId, Long managerCode) {
+		return municipalityRepository.getMunicipalitiesByDepartmentIdAndManagerCode(departmentId, managerCode);
+	}
+
 }

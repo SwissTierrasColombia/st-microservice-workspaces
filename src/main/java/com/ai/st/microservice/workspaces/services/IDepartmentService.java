@@ -12,4 +12,6 @@ public interface IDepartmentService {
 
 	public List<DepartmentEntity> getAllDepartments();
 
+	public List<DepartmentEntity> getDepartmentsByManagerCode(Long managerCode);
+
 }

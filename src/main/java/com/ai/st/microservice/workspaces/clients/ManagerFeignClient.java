@@ -12,4 +12,7 @@ public interface ManagerFeignClient {
 	@GetMapping("/api/managers/v1/managers/{managerId}")
 	public ManagerDto findById(@PathVariable Long managerId);
 
+	@GetMapping("/api/managers/v1/users/{userCode}/managers")
+	public ManagerDto findByUserCode(@PathVariable Long userCode);
+
 }

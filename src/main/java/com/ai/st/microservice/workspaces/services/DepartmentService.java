@@ -32,4 +32,9 @@ public class DepartmentService implements IDepartmentService {
 		return departmentRepository.findAll();
 	}
 
+	@Override
+	public List<DepartmentEntity> getDepartmentsByManagerCode(Long managerCode) {
+		return departmentRepository.getDeparmentsByManagerCode(managerCode);
+	}
+
 }

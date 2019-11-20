@@ -40,4 +40,27 @@ public class MunicipalityBusiness {
 		return listMunicipalitiesDto;
 	}
 
+	public List<MunicipalityDto> getMunicipalitiesByDepartmentIdAndManager(Long departmentId, Long managerCode)
+			throws BusinessException {
+
+		List<MunicipalityDto> listMunicipalitiesDto = new ArrayList<MunicipalityDto>();
+
+		List<MunicipalityEntity> listMunicipalitiesEntity = municipalityService
+				.getMunicipalitiesByDepartmentIdAndManagerCode(departmentId, managerCode);
+
+		for (MunicipalityEntity municipalityEntity : listMunicipalitiesEntity) {
+
+			MunicipalityDto municipalityDto = new MunicipalityDto();
+			municipalityDto.setId(municipalityEntity.getId());
+			municipalityDto.setName(municipalityEntity.getName());
+			municipalityDto.setCode(municipalityEntity.getCode());
+			municipalityDto.setDepartment(new DepartmentDto(municipalityEntity.getDepartment().getId(),
+					municipalityEntity.getDepartment().getName(), municipalityEntity.getDepartment().getCode()));
+
+			listMunicipalitiesDto.add(municipalityDto);
+		}
+
+		return listMunicipalitiesDto;
+	}
+
 }

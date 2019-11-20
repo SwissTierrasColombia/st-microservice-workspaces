@@ -35,4 +35,22 @@ public class DepartmentBusiness {
 		return listDepartmentsDto;
 	}
 
+	public List<DepartmentDto> getDepartmentsByManagerCode(Long managerCode) throws BusinessException {
+
+		List<DepartmentDto> listDepartmentsDto = new ArrayList<DepartmentDto>();
+
+		List<DepartmentEntity> listDeparmentsEntity = departmentService.getDepartmentsByManagerCode(managerCode);
+
+		for (DepartmentEntity departmentEntity : listDeparmentsEntity) {
+
+			DepartmentDto departmentDto = new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+					departmentEntity.getCode());
+
+			listDepartmentsDto.add(departmentDto);
+
+		}
+
+		return listDepartmentsDto;
+	}
+
 }

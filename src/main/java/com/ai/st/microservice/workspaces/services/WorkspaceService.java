@@ -1,5 +1,7 @@
 package com.ai.st.microservice.workspaces.services;
 
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,16 @@ public class WorkspaceService implements IWorkspaceService {
 	@Override
 	public Long getCountByMunicipality(MunicipalityEntity municipalityEntity) {
 		return workspaceRepository.countByMunicipality(municipalityEntity);
+	}
+
+	@Override
+	public List<WorkspaceEntity> getWorkspacesByMunicipality(MunicipalityEntity municipalityEntity) {
+		return workspaceRepository.findByMunicipality(municipalityEntity);
+	}
+
+	@Override
+	public WorkspaceEntity getWorkspaceActiveByMunicipality(MunicipalityEntity municipalityEntity) {
+		return workspaceRepository.findByIsActiveAndMunicipality(true, municipalityEntity);
 	}
 
 }

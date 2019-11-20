@@ -51,13 +51,19 @@ public class WorkspaceBusiness {
 		try {
 			managerDto = managerClient.findById(managerCode);
 		} catch (FeignException e) {
-			throw new BusinessException("Manager not found.");
+			throw new BusinessException("No se ha encontrado el gestor.");
 		}
 
 		// validate if the municipality exists
 		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
 		if (!(municipalityEntity instanceof MunicipalityEntity)) {
-			throw new BusinessException("Municipality not found.");
+			throw new BusinessException("No se ha encontrado el municipio.");
+		}
+
+		// validate if workspace is active for municipality
+		Long countWorkspaces = workspaceService.getCountByMunicipality(municipalityEntity);
+		if (countWorkspaces > 0) {
+			throw new BusinessException("Ya se ha creado un espacio de trabajo para el municipio.");
 		}
 
 		// save file
@@ -71,8 +77,6 @@ public class WorkspaceBusiness {
 		MilestoneEntity milestoneNewWorkspace = milestoneService
 				.getMilestoneById(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
 
-		Long countWorkspaces = workspaceService.getCountByMunicipality(municipalityEntity);
-
 		WorkspaceEntity workspaceEntity = new WorkspaceEntity();
 		workspaceEntity.setCreatedAt(new Date());
 		workspaceEntity.setIsActive(true);
@@ -81,7 +85,7 @@ public class WorkspaceBusiness {
 		workspaceEntity.setNumberAlphanumericParcels(parcelsNumber);
 		workspaceEntity.setMunicipalityArea(municipalityArea);
 		workspaceEntity.setStartDate(startDate);
-		workspaceEntity.setVersion(countWorkspaces + 1);
+		workspaceEntity.setVersion((long) 1);
 		workspaceEntity.setMunicipality(municipalityEntity);
 
 		// support
@@ -110,6 +114,58 @@ public class WorkspaceBusiness {
 		workspaceDto.setManager(managerDto);
 
 		return workspaceDto;
+	}
+
+	public List<WorkspaceDto> getWorkspacesByMunicipality(Long municipalityId, Long codeManager)
+			throws BusinessException {
+
+		List<WorkspaceDto> listWorkspacesDto = new ArrayList<WorkspaceDto>();
+
+		// validate if the municipality exists
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+		if (!(municipalityEntity instanceof MunicipalityEntity)) {
+			throw new BusinessException("El municipio no existe.");
+		}
+
+		if (codeManager != null) {
+
+			WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+			if (workspaceActive instanceof WorkspaceEntity) {
+				if (codeManager != workspaceActive.getManagerCode()) {
+					throw new BusinessException("No tiene acceso al municipio.");
+				}
+			}
+
+		}
+
+		List<WorkspaceEntity> listWorkspacesEntity = workspaceService.getWorkspacesByMunicipality(municipalityEntity);
+
+		for (WorkspaceEntity workspaceEntity : listWorkspacesEntity) {
+
+			WorkspaceDto workspaceDto = new WorkspaceDto();
+			workspaceDto.setId(workspaceEntity.getId());
+			workspaceDto.setCreatedAt(workspaceEntity.getCreatedAt());
+			workspaceDto.setIsActive(workspaceEntity.getIsActive());
+			workspaceDto.setManagerCode(workspaceEntity.getManagerCode());
+			workspaceDto.setMunicipalityArea(workspaceEntity.getMunicipalityArea());
+			workspaceDto.setNumberAlphanumericParcels(workspaceEntity.getNumberAlphanumericParcels());
+			workspaceDto.setObservations(workspaceEntity.getObservations());
+			workspaceDto.setStartDate(workspaceEntity.getStartDate());
+			workspaceDto.setVersion(workspaceEntity.getVersion());
+
+			// get the manager
+			ManagerDto managerDto = null;
+			try {
+				managerDto = managerClient.findById(workspaceEntity.getManagerCode());
+				workspaceDto.setManager(managerDto);
+			} catch (FeignException e) {
+				workspaceDto.setManager(null);
+			}
+
+			listWorkspacesDto.add(workspaceDto);
+		}
+
+		return listWorkspacesDto;
 	}
 
 }
