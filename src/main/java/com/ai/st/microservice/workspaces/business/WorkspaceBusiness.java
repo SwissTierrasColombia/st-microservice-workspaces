@@ -30,6 +30,9 @@ import feign.FeignException;
 @Component
 public class WorkspaceBusiness {
 
+	public static final Long WORKSPACE_CLONE_FROM_CHANGE_MANAGER = (long) 1;
+	public static final Long WORKSPACE_CLONE_FROM_CHANGE_OPERATOR = (long) 2;
+
 	@Autowired
 	private ManagerFeignClient managerClient;
 
@@ -212,11 +215,6 @@ public class WorkspaceBusiness {
 					"No se puede asignar el operador porque el espacio de trabajo no es el actual.");
 		}
 
-		// validate that the workspace does not already have an operator assigned
-		if (workspaceEntity.getOperators().size() > 0) {
-			throw new BusinessException("El espacio de trabajo ya tiene asignado un operador.");
-		}
-
 		// validate if the end date is greater than the start date
 		if (!endDate.after(startDate)) {
 			throw new BusinessException("La fecha de finalización debe ser mayor a la fecha de inicio.");
@@ -233,6 +231,14 @@ public class WorkspaceBusiness {
 			operatorDto = operatorClient.findById(operatorCode);
 		} catch (FeignException e) {
 			throw new BusinessException("No se ha encontrado el operador.");
+		}
+
+		// validate that the workspace does not already have an operator assigned
+		if (workspaceEntity.getOperators().size() > 0) {
+
+			// generate new workspace
+			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
+			System.out.println("clonado " + workspaceEntity.getId());
 		}
 
 		// TODO: save support file with microservice filemanager
@@ -379,6 +385,61 @@ public class WorkspaceBusiness {
 		workspaceDto.setOperators(operatorsDto);
 
 		return workspaceDto;
+	}
+
+	public WorkspaceEntity cloneWorkspace(Long workspaceId, Long fromClone) throws BusinessException {
+
+		WorkspaceEntity cloneWorkspaceEntity = null;
+
+		List<Long> supportsToSkip = new ArrayList<Long>();
+		if (fromClone == WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_MANAGER) {
+			supportsToSkip.add(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
+			supportsToSkip.add(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
+		} else if (fromClone == WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR) {
+			supportsToSkip.add(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
+		}
+
+		WorkspaceEntity workspaceEntityFound = workspaceService.getWorkspaceById(workspaceId);
+		if (workspaceEntityFound instanceof WorkspaceEntity) {
+
+			Long countWorkspaces = workspaceService.getCountByMunicipality(workspaceEntityFound.getMunicipality());
+
+			cloneWorkspaceEntity = new WorkspaceEntity();
+			cloneWorkspaceEntity.setCreatedAt(new Date());
+			cloneWorkspaceEntity.setIsActive(true);
+			cloneWorkspaceEntity.setManagerCode(workspaceEntityFound.getManagerCode());
+			cloneWorkspaceEntity.setObservations(workspaceEntityFound.getObservations());
+			cloneWorkspaceEntity.setNumberAlphanumericParcels(workspaceEntityFound.getNumberAlphanumericParcels());
+			cloneWorkspaceEntity.setMunicipalityArea(workspaceEntityFound.getMunicipalityArea());
+			cloneWorkspaceEntity.setStartDate(workspaceEntityFound.getStartDate());
+			cloneWorkspaceEntity.setVersion(countWorkspaces + 1);
+			cloneWorkspaceEntity.setMunicipality(workspaceEntityFound.getMunicipality());
+			cloneWorkspaceEntity.setWorkspace(workspaceEntityFound);
+
+			List<SupportEntity> supports = new ArrayList<SupportEntity>();
+
+			List<SupportEntity> supportsFound = workspaceEntityFound.getSupports();
+			for (SupportEntity supportEntity : supportsFound) {
+
+				if (!supportsToSkip.contains(supportEntity.getMilestone().getId())) {
+					SupportEntity supportNewEntity = new SupportEntity();
+					supportNewEntity.setCreatedAt(supportEntity.getCreatedAt());
+					supportNewEntity.setUrlDocumentaryRepository(supportEntity.getUrlDocumentaryRepository());
+					supportNewEntity.setWorkspace(cloneWorkspaceEntity);
+					supportNewEntity.setMilestone(supportEntity.getMilestone());
+					supports.add(supportNewEntity);
+				}
+
+			}
+			cloneWorkspaceEntity.setSupports(supports);
+
+			cloneWorkspaceEntity = workspaceService.createWorkspace(cloneWorkspaceEntity);
+
+			workspaceEntityFound.setIsActive(false);
+			workspaceEntityFound = workspaceService.updateWorkspace(workspaceEntityFound);
+		}
+
+		return cloneWorkspaceEntity;
 	}
 
 }
