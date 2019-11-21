@@ -49,6 +49,10 @@ public class WorkspaceEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date createdAt;
 
+	@Column(name = "updated_at", nullable = true)
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date udpatedAt;
+
 	@Column(name = "start_date", nullable = false)
 	@Temporal(TemporalType.DATE)
 	private Date startDate;
@@ -56,9 +60,16 @@ public class WorkspaceEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "municipality_id", referencedColumnName = "id", nullable = false)
 	private MunicipalityEntity municipality;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = true)
+	private WorkspaceEntity workspace;
 
 	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
 	private List<SupportEntity> supports = new ArrayList<SupportEntity>();
+
+	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	private List<WorkspaceOperatorEntity> operators = new ArrayList<WorkspaceOperatorEntity>();
 
 	public WorkspaceEntity() {
 
@@ -150,6 +161,30 @@ public class WorkspaceEntity {
 
 	public void setNumberAlphanumericParcels(Long numberAlphanumericParcels) {
 		this.numberAlphanumericParcels = numberAlphanumericParcels;
+	}
+
+	public List<WorkspaceOperatorEntity> getOperators() {
+		return operators;
+	}
+
+	public void setOperators(List<WorkspaceOperatorEntity> operators) {
+		this.operators = operators;
+	}
+
+	public Date getUdpatedAt() {
+		return udpatedAt;
+	}
+
+	public void setUdpatedAt(Date udpatedAt) {
+		this.udpatedAt = udpatedAt;
+	}
+
+	public WorkspaceEntity getWorkspace() {
+		return workspace;
+	}
+
+	public void setWorkspace(WorkspaceEntity workspace) {
+		this.workspace = workspace;
 	}
 
 }

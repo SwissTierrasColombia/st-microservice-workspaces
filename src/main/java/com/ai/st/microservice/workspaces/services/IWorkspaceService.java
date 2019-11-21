@@ -15,4 +15,8 @@ public interface IWorkspaceService {
 
 	public WorkspaceEntity getWorkspaceActiveByMunicipality(MunicipalityEntity municipalityEntity);
 
+	public WorkspaceEntity getWorkspaceById(Long id);
+
+	public WorkspaceEntity updateWorkspace(WorkspaceEntity workspaceEntity);
+
 }

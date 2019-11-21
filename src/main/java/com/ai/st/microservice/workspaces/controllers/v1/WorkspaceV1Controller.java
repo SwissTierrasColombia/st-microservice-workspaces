@@ -24,10 +24,12 @@ import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.CreateWorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
 import com.ai.st.microservice.workspaces.dto.ManagerDto;
 import com.ai.st.microservice.workspaces.dto.RoleDto;
+import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.UserDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -208,6 +210,214 @@ public class WorkspaceV1Controller {
 		}
 
 		return new ResponseEntity<>(listWorkspaces, httpStatus);
+	}
+
+	@RequestMapping(value = "/{workspaceId}/operators", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Assign operator to workspace (municipality)")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Assign operator to workspace", response = WorkspaceDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> assignOperator(@PathVariable Long workspaceId,
+			@ModelAttribute AssignOperatorWorkpaceDto requestAssignOperator,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			ManagerDto managerDto = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+
+			// validation start date
+			String startDateString = requestAssignOperator.getStartDate();
+			Date startDate = null;
+			if (startDateString != null && !startDateString.isEmpty()) {
+				try {
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+					startDate = sdf.parse(startDateString);
+				} catch (Exception e) {
+					throw new InputValidationException("La fecha de inicio es inválida.");
+				}
+			} else {
+				throw new InputValidationException("La fecha de inicio es requerida.");
+			}
+
+			// validation end date
+			String endDateString = requestAssignOperator.getEndDate();
+			Date endDate = null;
+			if (endDateString != null && !endDateString.isEmpty()) {
+				try {
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+					endDate = sdf.parse(endDateString);
+				} catch (Exception e) {
+					throw new InputValidationException("La fecha de finalización es inválida.");
+				}
+			} else {
+				throw new InputValidationException("La fecha de finalización es requerida.");
+			}
+
+			// validation number parcels expected
+			Long parcelsNumber = requestAssignOperator.getNumberParcelsExpected();
+			if (parcelsNumber != null) {
+				if (parcelsNumber < 0) {
+					throw new InputValidationException("El número de predios es inválido.");
+				}
+			}
+
+			// validation operator code
+			Long operatorCode = requestAssignOperator.getOperatorCode();
+			if (operatorCode == null || operatorCode <= 0) {
+				throw new InputValidationException("El operador es requerido.");
+			}
+
+			// validation municipality area
+			Double workArea = requestAssignOperator.getWorkArea();
+			if (workArea != null) {
+				if (workArea < 0) {
+					throw new InputValidationException("El área es inválida.");
+				}
+			}
+
+			// validation support
+			MultipartFile supportFile = requestAssignOperator.getSupportFile();
+			if (supportFile.isEmpty()) {
+				throw new InputValidationException("El archivo de soporte es requerido.");
+			}
+
+			responseDto = workspaceBusiness.assignOperator(workspaceId, startDate, endDate, operatorCode, parcelsNumber,
+					workArea, supportFile, managerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@assignOperator#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (InputValidationException e) {
+			log.error("Error WorkspaceV1Controller@assignOperator#Validation ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new ErrorDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@assignOperator#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@assignOperator#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/{workspaceId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Update workspace")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Update Workspace", response = WorkspaceDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> updateWorkspace(@ModelAttribute UpdateWorkpaceDto requestUpdateWorkspace,
+			@PathVariable Long workspaceId, @RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			ManagerDto managerDto = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+
+			// validation observations
+			String observations = requestUpdateWorkspace.getObservations();
+			if (observations == null || observations.isEmpty()) {
+				throw new InputValidationException("Las observaciones son requeridas.");
+			}
+
+			// validation start date
+			String startDateString = requestUpdateWorkspace.getStartDate();
+			Date startDate = null;
+			if (startDateString != null && !startDateString.isEmpty()) {
+				try {
+					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+					startDate = sdf.parse(startDateString);
+				} catch (Exception e) {
+					throw new InputValidationException("La fecha de inicio es inválida.");
+				}
+			} else {
+				throw new InputValidationException("La fecha de inicio es requerida.");
+			}
+
+			// validation number alphanumeric parcels
+			Long parcelsNumber = requestUpdateWorkspace.getNumberAlphanumericParcels();
+			if (parcelsNumber != null) {
+				if (parcelsNumber < 0) {
+					throw new InputValidationException("El número de predios alfanuméricos es inválido.");
+				}
+			}
+
+			// validation municipality area
+			Double municipalityArea = requestUpdateWorkspace.getMunicipalityArea();
+			if (parcelsNumber != null) {
+				if (parcelsNumber < 0) {
+					throw new InputValidationException("El área del municipio es inválida.");
+				}
+			}
+
+			responseDto = workspaceBusiness.updateWorkspace(workspaceId, startDate, observations, parcelsNumber,
+					municipalityArea, managerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@updateWorkspace#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (InputValidationException e) {
+			log.error("Error WorkspaceV1Controller@updateWorkspace#Validation ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new ErrorDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@updateWorkspace#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@updateWorkspace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
 }

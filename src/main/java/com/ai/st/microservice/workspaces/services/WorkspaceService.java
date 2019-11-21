@@ -38,4 +38,15 @@ public class WorkspaceService implements IWorkspaceService {
 		return workspaceRepository.findByIsActiveAndMunicipality(true, municipalityEntity);
 	}
 
+	@Override
+	public WorkspaceEntity getWorkspaceById(Long id) {
+		return workspaceRepository.findById(id).orElse(null);
+	}
+
+	@Override
+	@Transactional
+	public WorkspaceEntity updateWorkspace(WorkspaceEntity workspaceEntity) {
+		return workspaceRepository.save(workspaceEntity);
+	}
+
 }

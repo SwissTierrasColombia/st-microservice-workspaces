@@ -1,7 +1,9 @@
 package com.ai.st.microservice.workspaces.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -35,14 +37,20 @@ public class WorkspaceDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Date creation")
 	private Date createdAt;
 
+	@ApiModelProperty(required = false, notes = "Date update")
+	private Date updatedAt;
+
 	@ApiModelProperty(required = true, notes = "Start date")
 	private Date startDate;
 
 	@ApiModelProperty(required = false, notes = "Manager")
 	private ManagerDto manager;
 
-	public WorkspaceDto() {
+	@ApiModelProperty(required = false, notes = "Operators")
+	private List<WorkspaceOperatorDto> operators;
 
+	public WorkspaceDto() {
+		operators = new ArrayList<WorkspaceOperatorDto>();
 	}
 
 	public Long getId() {
@@ -123,6 +131,22 @@ public class WorkspaceDto implements Serializable {
 
 	public void setManager(ManagerDto manager) {
 		this.manager = manager;
+	}
+
+	public List<WorkspaceOperatorDto> getOperators() {
+		return operators;
+	}
+
+	public void setOperators(List<WorkspaceOperatorDto> operators) {
+		this.operators = operators;
+	}
+
+	public Date getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(Date updatedAt) {
+		this.updatedAt = updatedAt;
 	}
 
 }

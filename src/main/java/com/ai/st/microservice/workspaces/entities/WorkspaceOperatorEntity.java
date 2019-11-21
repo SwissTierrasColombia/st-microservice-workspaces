@@ -38,6 +38,12 @@ public class WorkspaceOperatorEntity {
 	@Column(name = "operator_code", nullable = false)
 	private Long operatorCode;
 
+	@Column(name = "number_parcels_expected", nullable = true)
+	private Long numberParcelsExpected;
+
+	@Column(name = "work_area", precision = 10, scale = 2, nullable = true)
+	private Double workArea;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = false)
 	private WorkspaceEntity workspace;
@@ -92,6 +98,22 @@ public class WorkspaceOperatorEntity {
 
 	public void setEndDate(Date endDate) {
 		this.endDate = endDate;
+	}
+
+	public Long getNumberParcelsExpected() {
+		return numberParcelsExpected;
+	}
+
+	public void setNumberParcelsExpected(Long numberParcelsExpected) {
+		this.numberParcelsExpected = numberParcelsExpected;
+	}
+
+	public Double getWorkArea() {
+		return workArea;
+	}
+
+	public void setWorkArea(Double workArea) {
+		this.workArea = workArea;
 	}
 
 }
