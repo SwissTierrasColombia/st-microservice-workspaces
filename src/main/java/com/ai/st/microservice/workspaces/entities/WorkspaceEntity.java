@@ -60,13 +60,20 @@ public class WorkspaceEntity {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "municipality_id", referencedColumnName = "id", nullable = false)
 	private MunicipalityEntity municipality;
-	
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "state_id", referencedColumnName = "id", nullable = false)
+	private StateEntity state;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = true)
 	private WorkspaceEntity workspace;
 
 	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
 	private List<SupportEntity> supports = new ArrayList<SupportEntity>();
+
+	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
+	private List<WorkspaceStateEntity> statesHistory = new ArrayList<WorkspaceStateEntity>();
 
 	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	private List<WorkspaceOperatorEntity> operators = new ArrayList<WorkspaceOperatorEntity>();
@@ -185,6 +192,22 @@ public class WorkspaceEntity {
 
 	public void setWorkspace(WorkspaceEntity workspace) {
 		this.workspace = workspace;
+	}
+
+	public StateEntity getState() {
+		return state;
+	}
+
+	public void setState(StateEntity state) {
+		this.state = state;
+	}
+
+	public List<WorkspaceStateEntity> getStatesHistory() {
+		return statesHistory;
+	}
+
+	public void setStatesHistory(List<WorkspaceStateEntity> statesHistory) {
+		this.statesHistory = statesHistory;
 	}
 
 }
