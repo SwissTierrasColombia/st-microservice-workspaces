@@ -14,17 +14,21 @@ import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.dto.ManagerDto;
 import com.ai.st.microservice.workspaces.dto.MilestoneDto;
 import com.ai.st.microservice.workspaces.dto.OperatorDto;
+import com.ai.st.microservice.workspaces.dto.StateDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.entities.StateEntity;
 import com.ai.st.microservice.workspaces.entities.SupportEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceStateEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import com.ai.st.microservice.workspaces.services.IStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 
 import feign.FeignException;
@@ -52,6 +56,9 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private IMilestoneService milestoneService;
+
+	@Autowired
+	private IStateService stateService;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -83,6 +90,8 @@ public class WorkspaceBusiness {
 		MilestoneEntity milestoneNewWorkspace = milestoneService
 				.getMilestoneById(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
 
+		StateEntity stateStart = stateService.getStateById(StateBusiness.STATE_START);
+
 		WorkspaceEntity workspaceEntity = new WorkspaceEntity();
 		workspaceEntity.setCreatedAt(new Date());
 		workspaceEntity.setIsActive(true);
@@ -93,6 +102,7 @@ public class WorkspaceBusiness {
 		workspaceEntity.setStartDate(startDate);
 		workspaceEntity.setVersion((long) 1);
 		workspaceEntity.setMunicipality(municipalityEntity);
+		workspaceEntity.setState(stateStart);
 
 		// support
 		SupportEntity supporEntity = new SupportEntity();
@@ -104,6 +114,15 @@ public class WorkspaceBusiness {
 		List<SupportEntity> supports = workspaceEntity.getSupports();
 		supports.add(supporEntity);
 		workspaceEntity.setSupports(supports);
+
+		// states history
+		WorkspaceStateEntity workspaceState = new WorkspaceStateEntity();
+		workspaceState.setCreatedAt(new Date());
+		workspaceState.setState(stateStart);
+		workspaceState.setWorkspace(workspaceEntity);
+		List<WorkspaceStateEntity> listStates = workspaceEntity.getStatesHistory();
+		listStates.add(workspaceState);
+		workspaceEntity.setStatesHistory(listStates);
 
 		workspaceEntity = workspaceService.createWorkspace(workspaceEntity);
 
@@ -119,6 +138,8 @@ public class WorkspaceBusiness {
 		workspaceDto.setStartDate(workspaceEntity.getStartDate());
 		workspaceDto.setVersion(workspaceEntity.getVersion());
 		workspaceDto.setManager(managerDto);
+		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+				workspaceEntity.getState().getDescription()));
 
 		return workspaceDto;
 	}
@@ -160,6 +181,8 @@ public class WorkspaceBusiness {
 			workspaceDto.setObservations(workspaceEntity.getObservations());
 			workspaceDto.setStartDate(workspaceEntity.getStartDate());
 			workspaceDto.setVersion(workspaceEntity.getVersion());
+			workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+					workspaceEntity.getState().getDescription()));
 
 			// get the manager
 			try {
@@ -287,6 +310,8 @@ public class WorkspaceBusiness {
 		workspaceDto.setObservations(workspaceEntity.getObservations());
 		workspaceDto.setStartDate(workspaceEntity.getStartDate());
 		workspaceDto.setVersion(workspaceEntity.getVersion());
+		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+				workspaceEntity.getState().getDescription()));
 
 		ManagerDto managerDto = null;
 		try {
@@ -357,6 +382,8 @@ public class WorkspaceBusiness {
 		workspaceDto.setObservations(workspaceEntity.getObservations());
 		workspaceDto.setStartDate(workspaceEntity.getStartDate());
 		workspaceDto.setVersion(workspaceEntity.getVersion());
+		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+				workspaceEntity.getState().getDescription()));
 
 		ManagerDto managerDto = null;
 		try {
@@ -420,13 +447,26 @@ public class WorkspaceBusiness {
 			cloneWorkspaceEntity.setStartDate(workspaceEntityFound.getStartDate());
 			cloneWorkspaceEntity.setVersion(countWorkspaces + 1);
 			cloneWorkspaceEntity.setMunicipality(workspaceEntityFound.getMunicipality());
+			cloneWorkspaceEntity.setState(workspaceEntityFound.getState());
 			cloneWorkspaceEntity.setWorkspace(workspaceEntityFound);
 
-			List<SupportEntity> supports = new ArrayList<SupportEntity>();
+			// clone states history
+			List<WorkspaceStateEntity> statesHistory = new ArrayList<WorkspaceStateEntity>();
+			List<WorkspaceStateEntity> listStates = workspaceEntityFound.getStatesHistory();
+			for (WorkspaceStateEntity wStateEntity : listStates) {
+				WorkspaceStateEntity stateNewEntity = new WorkspaceStateEntity();
+				stateNewEntity.setCreatedAt(wStateEntity.getCreatedAt());
+				stateNewEntity.setState(wStateEntity.getState());
+				stateNewEntity.setWorkspace(cloneWorkspaceEntity);
+				statesHistory.add(stateNewEntity);
+			}
 
+			cloneWorkspaceEntity.setStatesHistory(statesHistory);
+
+			// clone supports
+			List<SupportEntity> supports = new ArrayList<SupportEntity>();
 			List<SupportEntity> supportsFound = workspaceEntityFound.getSupports();
 			for (SupportEntity supportEntity : supportsFound) {
-
 				if (!supportsToSkip.contains(supportEntity.getMilestone().getId())) {
 					SupportEntity supportNewEntity = new SupportEntity();
 					supportNewEntity.setCreatedAt(supportEntity.getCreatedAt());
@@ -435,12 +475,12 @@ public class WorkspaceBusiness {
 					supportNewEntity.setMilestone(supportEntity.getMilestone());
 					supports.add(supportNewEntity);
 				}
-
 			}
 			cloneWorkspaceEntity.setSupports(supports);
 
 			cloneWorkspaceEntity = workspaceService.createWorkspace(cloneWorkspaceEntity);
 
+			// set workspace old to inactive
 			workspaceEntityFound.setIsActive(false);
 			workspaceEntityFound = workspaceService.updateWorkspace(workspaceEntityFound);
 		}
@@ -484,6 +524,8 @@ public class WorkspaceBusiness {
 			workspaceDto.setObservations(workspaceEntity.getObservations());
 			workspaceDto.setStartDate(workspaceEntity.getStartDate());
 			workspaceDto.setVersion(workspaceEntity.getVersion());
+			workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+					workspaceEntity.getState().getDescription()));
 
 			supportDto.setMilestone(
 					new MilestoneDto(supportEntity.getMilestone().getId(), supportEntity.getMilestone().getName()));
@@ -521,6 +563,8 @@ public class WorkspaceBusiness {
 		workspaceDto.setObservations(workspaceEntity.getObservations());
 		workspaceDto.setStartDate(workspaceEntity.getStartDate());
 		workspaceDto.setVersion(workspaceEntity.getVersion());
+		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+				workspaceEntity.getState().getDescription()));
 
 		ManagerDto managerDto = null;
 		try {
@@ -633,6 +677,8 @@ public class WorkspaceBusiness {
 		workspaceDto.setObservations(workspaceEntity.getObservations());
 		workspaceDto.setStartDate(workspaceEntity.getStartDate());
 		workspaceDto.setVersion(workspaceEntity.getVersion());
+		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+				workspaceEntity.getState().getDescription()));
 
 		ManagerDto managerDto = null;
 		try {

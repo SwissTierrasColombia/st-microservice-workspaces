@@ -49,6 +49,9 @@ public class WorkspaceDto implements Serializable {
 	@ApiModelProperty(required = false, notes = "Operators")
 	private List<WorkspaceOperatorDto> operators;
 
+	@ApiModelProperty(required = true, notes = "State")
+	private StateDto state;
+
 	public WorkspaceDto() {
 		operators = new ArrayList<WorkspaceOperatorDto>();
 	}
@@ -147,6 +150,14 @@ public class WorkspaceDto implements Serializable {
 
 	public void setUpdatedAt(Date updatedAt) {
 		this.updatedAt = updatedAt;
+	}
+
+	public StateDto getState() {
+		return state;
+	}
+
+	public void setState(StateDto state) {
+		this.state = state;
 	}
 
 }
