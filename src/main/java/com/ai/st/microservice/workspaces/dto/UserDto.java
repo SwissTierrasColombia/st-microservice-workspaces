@@ -5,42 +5,19 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
-@ApiModel(value = "UserDto", description = "User")
 public class UserDto implements Serializable {
 
 	private static final long serialVersionUID = -5121529899322990688L;
 
-	@ApiModelProperty(required = true, notes = "User ID")
 	private Long id;
-
-	@ApiModelProperty(required = true, notes = "First Name")
 	private String firstName;
-
-	@ApiModelProperty(required = true, notes = "Last Name")
 	private String lastName;
-
-	@ApiModelProperty(required = true, notes = "Email")
 	private String email;
-
-	@ApiModelProperty(required = true, notes = "Username")
 	private String username;
-
-	@ApiModelProperty(required = true, notes = "Password")
 	private String password;
-
-	@ApiModelProperty(required = true, notes = "Is the user enabled?")
 	private Boolean enabled;
-
-	@ApiModelProperty(required = true, notes = "Creation date")
 	private Date createdAt;
-
-	@ApiModelProperty(required = true, notes = "Update date")
 	private Date updatedAt;
-
-	@ApiModelProperty(required = true, notes = "Roles user")
 	private List<RoleDto> roles;
 
 	public UserDto() {

@@ -12,7 +12,9 @@ import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.dto.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.MilestoneDto;
 import com.ai.st.microservice.workspaces.dto.OperatorDto;
+import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
@@ -177,6 +179,7 @@ public class WorkspaceBusiness {
 				workspaceOperatorDto.setOperatorCode(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setStartDate(wOEntity.getStartDate());
 				workspaceOperatorDto.setWorkArea(wOEntity.getWorkArea());
+				workspaceOperatorDto.setObservations(wOEntity.getObservations());
 
 				// get operator
 				try {
@@ -198,8 +201,8 @@ public class WorkspaceBusiness {
 	}
 
 	public WorkspaceDto assignOperator(Long workspaceId, Date startDate, Date endDate, Long operatorCode,
-			Long numberParcelsExpected, Double workArea, MultipartFile supportFile, Long managerCode)
-			throws BusinessException {
+			Long numberParcelsExpected, Double workArea, MultipartFile supportFile, String observations,
+			Long managerCode) throws BusinessException {
 
 		WorkspaceDto workspaceDto = null;
 
@@ -253,6 +256,7 @@ public class WorkspaceBusiness {
 		workspaceOperatorEntity.setOperatorCode(operatorDto.getId());
 		workspaceOperatorEntity.setStartDate(startDate);
 		workspaceOperatorEntity.setNumberParcelsExpected(numberParcelsExpected);
+		workspaceOperatorEntity.setObservations(observations);
 		workspaceOperatorEntity.setWorkArea(workArea);
 		workspaceOperatorEntity.setWorkspace(workspaceEntity);
 		List<WorkspaceOperatorEntity> operators = workspaceEntity.getOperators();
@@ -302,6 +306,7 @@ public class WorkspaceBusiness {
 			workspaceOperatorDto.setOperatorCode(wOEntity.getOperatorCode());
 			workspaceOperatorDto.setStartDate(wOEntity.getStartDate());
 			workspaceOperatorDto.setWorkArea(wOEntity.getWorkArea());
+			workspaceOperatorDto.setObservations(wOEntity.getObservations());
 			workspaceOperatorDto.setOperator(operatorDto);
 			operatorsDto.add(workspaceOperatorDto);
 		}
@@ -371,6 +376,7 @@ public class WorkspaceBusiness {
 			workspaceOperatorDto.setOperatorCode(wOEntity.getOperatorCode());
 			workspaceOperatorDto.setStartDate(wOEntity.getStartDate());
 			workspaceOperatorDto.setWorkArea(wOEntity.getWorkArea());
+			workspaceOperatorDto.setObservations(wOEntity.getObservations());
 
 			// get operator
 			try {
@@ -440,6 +446,158 @@ public class WorkspaceBusiness {
 		}
 
 		return cloneWorkspaceEntity;
+	}
+
+	public List<SupportDto> getSupportsByWorkspaceId(Long workspaceId, Long managerCode) throws BusinessException {
+
+		List<SupportDto> listSupportsDto = new ArrayList<SupportDto>();
+
+		// validate if the workspace exists
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate access
+		if (managerCode != null) {
+			if (managerCode != workspaceEntity.getManagerCode()) {
+				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
+			}
+		}
+
+		List<SupportEntity> listSupportsEntity = workspaceEntity.getSupports();
+
+		for (SupportEntity supportEntity : listSupportsEntity) {
+			SupportDto supportDto = new SupportDto();
+			supportDto.setId(supportEntity.getId());
+			supportDto.setCreatedAt(supportEntity.getCreatedAt());
+			supportDto.setUrlDocumentaryRepository(supportEntity.getUrlDocumentaryRepository());
+
+			WorkspaceDto workspaceDto = new WorkspaceDto();
+			workspaceDto.setId(workspaceEntity.getId());
+			workspaceDto.setCreatedAt(workspaceEntity.getCreatedAt());
+			workspaceDto.setUpdatedAt(workspaceEntity.getUdpatedAt());
+			workspaceDto.setIsActive(workspaceEntity.getIsActive());
+			workspaceDto.setManagerCode(workspaceEntity.getManagerCode());
+			workspaceDto.setMunicipalityArea(workspaceEntity.getMunicipalityArea());
+			workspaceDto.setNumberAlphanumericParcels(workspaceEntity.getNumberAlphanumericParcels());
+			workspaceDto.setObservations(workspaceEntity.getObservations());
+			workspaceDto.setStartDate(workspaceEntity.getStartDate());
+			workspaceDto.setVersion(workspaceEntity.getVersion());
+
+			supportDto.setMilestone(
+					new MilestoneDto(supportEntity.getMilestone().getId(), supportEntity.getMilestone().getName()));
+			supportDto.setWorkspace(workspaceDto);
+
+			listSupportsDto.add(supportDto);
+		}
+
+		return listSupportsDto;
+	}
+
+	public WorkspaceDto getWorkspaceById(Long workspaceId, Long managerCode) throws BusinessException {
+
+		// validate if the workspace exists
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate access
+		if (managerCode != null) {
+			if (managerCode != workspaceEntity.getManagerCode()) {
+				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
+			}
+		}
+
+		WorkspaceDto workspaceDto = new WorkspaceDto();
+		workspaceDto.setId(workspaceEntity.getId());
+		workspaceDto.setCreatedAt(workspaceEntity.getCreatedAt());
+		workspaceDto.setUpdatedAt(workspaceEntity.getUdpatedAt());
+		workspaceDto.setIsActive(workspaceEntity.getIsActive());
+		workspaceDto.setManagerCode(workspaceEntity.getManagerCode());
+		workspaceDto.setMunicipalityArea(workspaceEntity.getMunicipalityArea());
+		workspaceDto.setNumberAlphanumericParcels(workspaceEntity.getNumberAlphanumericParcels());
+		workspaceDto.setObservations(workspaceEntity.getObservations());
+		workspaceDto.setStartDate(workspaceEntity.getStartDate());
+		workspaceDto.setVersion(workspaceEntity.getVersion());
+
+		ManagerDto managerDto = null;
+		try {
+			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
+			workspaceDto.setManager(managerDto);
+		} catch (FeignException e) {
+			workspaceDto.setManager(null);
+		}
+
+		List<WorkspaceOperatorDto> operatorsDto = new ArrayList<WorkspaceOperatorDto>();
+
+		for (WorkspaceOperatorEntity wOEntity : workspaceEntity.getOperators()) {
+			WorkspaceOperatorDto workspaceOperatorDto = new WorkspaceOperatorDto();
+			workspaceOperatorDto.setId(wOEntity.getId());
+			workspaceOperatorDto.setCreatedAt(wOEntity.getCreatedAt());
+			workspaceOperatorDto.setEndDate(wOEntity.getEndDate());
+			workspaceOperatorDto.setNumberParcelsExpected(wOEntity.getNumberParcelsExpected());
+			workspaceOperatorDto.setOperatorCode(wOEntity.getOperatorCode());
+			workspaceOperatorDto.setStartDate(wOEntity.getStartDate());
+			workspaceOperatorDto.setWorkArea(wOEntity.getWorkArea());
+			workspaceOperatorDto.setObservations(wOEntity.getObservations());
+
+			// get operator
+			try {
+				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				workspaceOperatorDto.setOperator(operatorDto);
+			} catch (FeignException e) {
+				workspaceOperatorDto.setOperator(null);
+			}
+			operatorsDto.add(workspaceOperatorDto);
+		}
+
+		workspaceDto.setOperators(operatorsDto);
+
+		return workspaceDto;
+	}
+
+	public List<WorkspaceOperatorDto> getOperatorsByWorkspaceId(Long workspaceId, Long managerCode)
+			throws BusinessException {
+
+		List<WorkspaceOperatorDto> listOperatorsDto = new ArrayList<WorkspaceOperatorDto>();
+
+		// validate if the workspace exists
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate access
+		if (managerCode != null) {
+			if (managerCode != workspaceEntity.getManagerCode()) {
+				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
+			}
+		}
+
+		for (WorkspaceOperatorEntity wOEntity : workspaceEntity.getOperators()) {
+			WorkspaceOperatorDto workspaceOperatorDto = new WorkspaceOperatorDto();
+			workspaceOperatorDto.setId(wOEntity.getId());
+			workspaceOperatorDto.setCreatedAt(wOEntity.getCreatedAt());
+			workspaceOperatorDto.setEndDate(wOEntity.getEndDate());
+			workspaceOperatorDto.setNumberParcelsExpected(wOEntity.getNumberParcelsExpected());
+			workspaceOperatorDto.setOperatorCode(wOEntity.getOperatorCode());
+			workspaceOperatorDto.setStartDate(wOEntity.getStartDate());
+			workspaceOperatorDto.setWorkArea(wOEntity.getWorkArea());
+			workspaceOperatorDto.setObservations(wOEntity.getObservations());
+
+			// get operator
+			try {
+				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				workspaceOperatorDto.setOperator(operatorDto);
+			} catch (FeignException e) {
+				workspaceOperatorDto.setOperator(null);
+			}
+			listOperatorsDto.add(workspaceOperatorDto);
+		}
+
+		return listOperatorsDto;
 	}
 
 }

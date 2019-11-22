@@ -27,6 +27,9 @@ public class AssignOperatorWorkpaceDto implements Serializable {
 	@ApiModelProperty(required = false, notes = "Work area")
 	private Double workArea;
 
+	@ApiModelProperty(required = false, notes = "Observations")
+	private String observations;
+
 	@ApiModelProperty(required = true, notes = "Support file")
 	private MultipartFile supportFile;
 
@@ -80,6 +83,14 @@ public class AssignOperatorWorkpaceDto implements Serializable {
 
 	public void setSupportFile(MultipartFile supportFile) {
 		this.supportFile = supportFile;
+	}
+
+	public String getObservations() {
+		return observations;
+	}
+
+	public void setObservations(String observations) {
+		this.observations = observations;
 	}
 
 }

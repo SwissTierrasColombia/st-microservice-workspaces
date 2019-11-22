@@ -35,6 +35,9 @@ public class WorkspaceOperatorDto implements Serializable {
 	@ApiModelProperty(required = false, notes = "Operator")
 	private OperatorDto operator;
 
+	@ApiModelProperty(required = false, notes = "Observations")
+	private String observations;
+
 	public WorkspaceOperatorDto() {
 
 	}
@@ -101,6 +104,14 @@ public class WorkspaceOperatorDto implements Serializable {
 
 	public void setOperator(OperatorDto operator) {
 		this.operator = operator;
+	}
+
+	public String getObservations() {
+		return observations;
+	}
+
+	public void setObservations(String observations) {
+		this.observations = observations;
 	}
 
 }

@@ -43,6 +43,9 @@ public class WorkspaceOperatorEntity {
 
 	@Column(name = "work_area", precision = 10, scale = 2, nullable = true)
 	private Double workArea;
+	
+	@Column(name = "observations", nullable = true, length = 255)
+	private String observations;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = false)
@@ -114,6 +117,14 @@ public class WorkspaceOperatorEntity {
 
 	public void setWorkArea(Double workArea) {
 		this.workArea = workArea;
+	}
+
+	public String getObservations() {
+		return observations;
+	}
+
+	public void setObservations(String observations) {
+		this.observations = observations;
 	}
 
 }

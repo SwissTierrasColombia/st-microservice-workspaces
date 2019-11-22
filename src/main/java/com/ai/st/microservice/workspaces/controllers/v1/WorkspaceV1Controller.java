@@ -29,9 +29,11 @@ import com.ai.st.microservice.workspaces.dto.CreateWorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
 import com.ai.st.microservice.workspaces.dto.ManagerDto;
 import com.ai.st.microservice.workspaces.dto.RoleDto;
+import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.UserDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
+import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
@@ -145,7 +147,7 @@ public class WorkspaceV1Controller {
 	}
 
 	@RequestMapping(value = "/municipalities/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get workspace by municipality")
+	@ApiOperation(value = "Get workspaces by municipality")
 	@ApiResponses(value = {
 			@ApiResponse(code = 201, message = "Get workspaces by municipality", response = WorkspaceDto.class, responseContainer = "List"),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
@@ -303,7 +305,7 @@ public class WorkspaceV1Controller {
 			}
 
 			responseDto = workspaceBusiness.assignOperator(workspaceId, startDate, endDate, operatorCode, parcelsNumber,
-					workArea, supportFile, managerDto.getId());
+					workArea, supportFile, requestAssignOperator.getObservations(), managerDto.getId());
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {
@@ -418,6 +420,207 @@ public class WorkspaceV1Controller {
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/{workspaceId}/supports", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get supports by workspace")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get supports by workspace", response = WorkspaceDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getSupportsByWorkspace(@ModelAttribute UpdateWorkpaceDto requestUpdateWorkspace,
+			@PathVariable Long workspaceId, @RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		List<SupportDto> listSupports = new ArrayList<SupportDto>();
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+
+			RoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+
+			if (roleAdministrator instanceof RoleDto) {
+
+				listSupports = workspaceBusiness.getSupportsByWorkspaceId(workspaceId, null);
+
+			} else if (roleManager instanceof RoleDto) {
+
+				// get manager
+				ManagerDto managerDto = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+
+				listSupports = workspaceBusiness.getSupportsByWorkspaceId(workspaceId, managerDto.getId());
+			}
+
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
+				: new ResponseEntity<>(listSupports, httpStatus);
+	}
+
+	@RequestMapping(value = "/{workspaceId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get workspace by id")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get workspace by id", response = WorkspaceDto.class),
+			@ApiResponse(code = 404, message = "Workspace not found", response = String.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getWorkspaceById(@PathVariable Long workspaceId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+
+			RoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+
+			if (roleAdministrator instanceof RoleDto) {
+				responseDto = workspaceBusiness.getWorkspaceById(workspaceId, null);
+			} else if (roleManager instanceof RoleDto) {
+
+				// get manager
+				ManagerDto managerDto = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+
+				responseDto = workspaceBusiness.getWorkspaceById(workspaceId, managerDto.getId());
+			}
+
+			httpStatus = (responseDto instanceof WorkspaceDto) ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getWorkspaceById#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getWorkspaceById#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getWorkspaceById#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/{workspaceId}/operators", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get operators by workspace")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get operators by workspace", response = WorkspaceDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getOperatorsByWorkspace(@PathVariable Long workspaceId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		List<WorkspaceOperatorDto> listOperators = new ArrayList<WorkspaceOperatorDto>();
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+
+			RoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+
+			if (roleAdministrator instanceof RoleDto) {
+				listOperators = workspaceBusiness.getOperatorsByWorkspaceId(workspaceId, null);
+			} else if (roleManager instanceof RoleDto) {
+
+				// get manager
+				ManagerDto managerDto = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+
+				listOperators = workspaceBusiness.getOperatorsByWorkspaceId(workspaceId, managerDto.getId());
+			}
+
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
+				: new ResponseEntity<>(listOperators, httpStatus);
 	}
 
 }

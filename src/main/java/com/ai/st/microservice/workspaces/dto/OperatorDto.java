@@ -3,8 +3,6 @@ package com.ai.st.microservice.workspaces.dto;
 import java.io.Serializable;
 import java.util.Date;
 
-import io.swagger.annotations.ApiModelProperty;
-
 public class OperatorDto implements Serializable {
 
 	private static final long serialVersionUID = 4784320463657739097L;
