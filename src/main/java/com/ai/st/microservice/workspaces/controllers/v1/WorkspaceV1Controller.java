@@ -149,7 +149,7 @@ public class WorkspaceV1Controller {
 	@RequestMapping(value = "/municipalities/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Get workspaces by municipality")
 	@ApiResponses(value = {
-			@ApiResponse(code = 201, message = "Get workspaces by municipality", response = WorkspaceDto.class, responseContainer = "List"),
+			@ApiResponse(code = 200, message = "Get workspaces by municipality", response = WorkspaceDto.class, responseContainer = "List"),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
 	public ResponseEntity<List<WorkspaceDto>> getWorkspacesByMunicipality(@PathVariable Long municipalityId,
@@ -621,6 +621,76 @@ public class WorkspaceV1Controller {
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
 				: new ResponseEntity<>(listOperators, httpStatus);
+	}
+
+	@RequestMapping(value = "/municipalities/{municipalityId}/active", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get workspace active by municipality")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get workspace active by municipality", response = WorkspaceDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getWorkspaceActiveByMunicipality(@PathVariable Long municipalityId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+
+			RoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+
+			if (roleAdministrator instanceof RoleDto) {
+
+				responseDto = workspaceBusiness.getWorkspaceActiveByMunicipality(municipalityId, null);
+
+			} else if (roleManager instanceof RoleDto) {
+
+				// verify that you have access to the municipality
+
+				// get manager
+				ManagerDto managerDto = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+
+				responseDto = workspaceBusiness.getWorkspaceActiveByMunicipality(municipalityId, managerDto.getId());
+			}
+
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error(
+					"Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
 }
