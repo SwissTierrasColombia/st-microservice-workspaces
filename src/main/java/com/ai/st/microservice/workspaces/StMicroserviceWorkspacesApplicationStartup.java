@@ -8,12 +8,15 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.business.MilestoneBusiness;
+import com.ai.st.microservice.workspaces.business.StateBusiness;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.entities.StateEntity;
 import com.ai.st.microservice.workspaces.services.IDepartmentService;
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import com.ai.st.microservice.workspaces.services.IStateService;
 
 @Component
 public class StMicroserviceWorkspacesApplicationStartup implements ApplicationListener<ContextRefreshedEvent> {
@@ -29,11 +32,15 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 	@Autowired
 	private IMilestoneService milestoneService;
 
+	@Autowired
+	private IStateService stateService;
+
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		log.info("ST - Loading Domains ... ");
 		this.initMunicipalities();
 		this.initMilestones();
+		this.initStates();
 	}
 
 	public void initMunicipalities() {
@@ -127,6 +134,56 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 
 		}
 
+	}
+
+	public void initStates() {
+		Long countStates = stateService.getCount();
+		if (countStates == 0) {
+
+			try {
+
+				StateEntity stateStart = new StateEntity();
+				stateStart.setId(StateBusiness.STATE_START);
+				stateStart.setName("INICIO");
+				stateStart.setDescription("Cuando se crea un espacio de trabajo a un municipio.");
+				stateService.createState(stateStart);
+
+				StateEntity stateRequested = new StateEntity();
+				stateRequested.setId(StateBusiness.STATE_SUPPLIES_REQUESTED);
+				stateRequested.setName("INSUMOS SOLICITADOS");
+				stateRequested.setDescription("Cuando se solicitan insumos por parte del gestor.");
+				stateService.createState(stateRequested);
+
+				StateEntity stateReceived = new StateEntity();
+				stateReceived.setId(StateBusiness.STATE_SUPPLIES_RECEIVED);
+				stateReceived.setName("INSUMOS RECIBIDOS");
+				stateReceived.setDescription("Cuando se reciben los insumos solicitados.");
+				stateService.createState(stateReceived);
+
+				StateEntity stateIntegrated = new StateEntity();
+				stateIntegrated.setId(StateBusiness.STATE_SUPPLIES_INTEGRATED);
+				stateIntegrated.setName("INSUMOS INTEGRADOS");
+				stateIntegrated.setDescription("Cuando se integran los insumos por parte del gestor.");
+				stateService.createState(stateIntegrated);
+
+				StateEntity stateDelivered = new StateEntity();
+				stateDelivered.setId(StateBusiness.STATE_SUPPLIES_DELIVERED);
+				stateDelivered.setName("INSUMOS ENTREGADOS");
+				stateDelivered.setDescription("Cuando se entregan los insumos generados al operador.");
+				stateService.createState(stateDelivered);
+
+				StateEntity stateDownloaded = new StateEntity();
+				stateDownloaded.setId(StateBusiness.STATE_SUPPLIES_DOWNLOADED);
+				stateDownloaded.setName("INSUMOS DESCARGADOS");
+				stateDownloaded.setDescription("Cuando se descargan los insumos por parte del operador");
+				stateService.createState(stateDownloaded);
+
+				log.info("The domains 'states' have been loaded!");
+			} catch (Exception e) {
+				log.error("Failed to load 'states' domains");
+			}
+
+		}
 	}
 
 }
