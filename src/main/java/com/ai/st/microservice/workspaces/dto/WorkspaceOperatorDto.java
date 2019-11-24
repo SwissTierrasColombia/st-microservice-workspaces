@@ -3,6 +3,8 @@ package com.ai.st.microservice.workspaces.dto;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
+
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 

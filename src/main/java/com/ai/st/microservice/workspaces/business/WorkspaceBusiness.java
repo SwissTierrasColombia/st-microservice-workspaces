@@ -1,6 +1,9 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.text.SimpleDateFormat;
+
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -11,13 +14,21 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
-import com.ai.st.microservice.workspaces.dto.ManagerDto;
+import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.MilestoneDto;
-import com.ai.st.microservice.workspaces.dto.OperatorDto;
 import com.ai.st.microservice.workspaces.dto.StateDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
+import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
+
+import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.StateEntity;
@@ -25,7 +36,9 @@ import com.ai.st.microservice.workspaces.entities.SupportEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceStateEntity;
+
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
@@ -44,6 +57,9 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private OperatorFeignClient operatorClient;
+
+	@Autowired
+	private ProviderFeignClient providerClient;
 
 	@Autowired
 	private FilemanagerFeignClient filemanagerClient;
@@ -69,7 +85,7 @@ public class WorkspaceBusiness {
 		ManagerDto managerDto = null;
 		try {
 			managerDto = managerClient.findById(managerCode);
-		} catch (FeignException e) {
+		} catch (Exception e) {
 			throw new BusinessException("No se ha encontrado el gestor.");
 		}
 
@@ -188,7 +204,7 @@ public class WorkspaceBusiness {
 			try {
 				ManagerDto managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 				workspaceDto.setManager(managerDto);
-			} catch (FeignException e) {
+			} catch (Exception e) {
 				workspaceDto.setManager(null);
 			}
 
@@ -264,7 +280,6 @@ public class WorkspaceBusiness {
 
 			// generate new workspace
 			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
-			System.out.println("clonado " + workspaceEntity.getId());
 		}
 
 		// TODO: save support file with microservice filemanager
@@ -317,7 +332,7 @@ public class WorkspaceBusiness {
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
-		} catch (FeignException e) {
+		} catch (Exception e) {
 			workspaceDto.setManager(null);
 		}
 
@@ -389,7 +404,7 @@ public class WorkspaceBusiness {
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
-		} catch (FeignException e) {
+		} catch (Exception e) {
 			workspaceDto.setManager(null);
 		}
 
@@ -409,7 +424,7 @@ public class WorkspaceBusiness {
 			try {
 				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
-			} catch (FeignException e) {
+			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
 			}
 			operatorsDto.add(workspaceOperatorDto);
@@ -570,7 +585,7 @@ public class WorkspaceBusiness {
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
-		} catch (FeignException e) {
+		} catch (Exception e) {
 			workspaceDto.setManager(null);
 		}
 
@@ -591,7 +606,7 @@ public class WorkspaceBusiness {
 			try {
 				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
-			} catch (FeignException e) {
+			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
 			}
 			operatorsDto.add(workspaceOperatorDto);
@@ -635,7 +650,7 @@ public class WorkspaceBusiness {
 			try {
 				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
-			} catch (FeignException e) {
+			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
 			}
 			listOperatorsDto.add(workspaceOperatorDto);
@@ -684,7 +699,7 @@ public class WorkspaceBusiness {
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
-		} catch (FeignException e) {
+		} catch (Exception e) {
 			workspaceDto.setManager(null);
 		}
 
@@ -714,6 +729,99 @@ public class WorkspaceBusiness {
 		workspaceDto.setOperators(operatorsDto);
 
 		return workspaceDto;
+	}
+
+	public List<MicroserviceRequestDto> createRequest(Date deadline, List<TypeSupplyRequestedDto> supplies,
+			Long userCode, Long managerCode, Long municipalityId) throws BusinessException {
+
+		// validate if the municipality exists
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+		if (!(municipalityEntity instanceof MunicipalityEntity)) {
+			throw new BusinessException("El municipio no existe.");
+		}
+
+		// validate access
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+		if (workspaceEntity instanceof WorkspaceEntity) {
+			if (managerCode != workspaceEntity.getManagerCode()) {
+				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
+			}
+		} else {
+			throw new BusinessException("El municipio no tiene un espacio de trabajo activo.");
+		}
+
+		// verify that the sea deadline greater than the 15 days
+		try {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DAY_OF_MONTH, 15);
+			Date date15Days = sdf.parse(sdf.format(cal.getTime()));
+			if (!deadline.after(date15Days)) {
+				throw new BusinessException(
+						"La fecha límite debe tener 15 días de diferencia respecto a la fecha actual.");
+			}
+		} catch (Exception e) {
+			throw new BusinessException("La fecha límite es inválida.");
+		}
+
+		List<MicroserviceCreateRequestDto> groupRequests = new ArrayList<MicroserviceCreateRequestDto>();
+		List<Long> skipped = new ArrayList<Long>();
+
+		for (TypeSupplyRequestedDto supplyDto : supplies) {
+
+			Long providerId = supplyDto.getProviderId();
+
+			if (!skipped.contains(providerId)) {
+
+				MicroserviceCreateRequestDto requestDto = new MicroserviceCreateRequestDto();
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+				requestDto.setDeadline(sdf.format(deadline));
+				requestDto.setProviderId(providerId);
+
+				// supplies by request
+				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProvider = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
+				for (TypeSupplyRequestedDto supplyDto2 : supplies) {
+					if (supplyDto2.getProviderId() == providerId) {
+						MicroserviceTypeSupplyRequestedDto mtsr = new MicroserviceTypeSupplyRequestedDto();
+						mtsr.setObservation(supplyDto2.getObservation());
+						mtsr.setTypeSupplyId(supplyDto2.getTypeSupplyId());
+						listSuppliesByProvider.add(mtsr);
+					}
+				}
+
+				// emitters by request
+				List<MicroserviceRequestEmitterDto> listEmittersByProvider = new ArrayList<MicroserviceRequestEmitterDto>();
+				MicroserviceRequestEmitterDto emitter1 = new MicroserviceRequestEmitterDto();
+				emitter1.setEmitterCode(userCode);
+				emitter1.setEmitterType("USER");
+				listEmittersByProvider.add(emitter1);
+				MicroserviceRequestEmitterDto emitter2 = new MicroserviceRequestEmitterDto();
+				emitter2.setEmitterCode(managerCode);
+				emitter2.setEmitterType("ENTITY");
+				listEmittersByProvider.add(emitter2);
+
+				requestDto.setSupplies(listSuppliesByProvider);
+				requestDto.setEmitters(listEmittersByProvider);
+
+				groupRequests.add(requestDto);
+				skipped.add(providerId);
+			}
+
+		}
+
+		List<MicroserviceRequestDto> requests = new ArrayList<MicroserviceRequestDto>();
+		for (MicroserviceCreateRequestDto request : groupRequests) {
+
+			try {
+				MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
+				requests.add(responseRequest);
+			} catch (Exception e) {
+
+			}
+
+		}
+
+		return requests;
 	}
 
 }

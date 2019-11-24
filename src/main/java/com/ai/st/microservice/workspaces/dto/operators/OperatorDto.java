@@ -1,18 +1,19 @@
-package com.ai.st.microservice.workspaces.dto;
+package com.ai.st.microservice.workspaces.dto.operators;
 
 import java.io.Serializable;
 import java.util.Date;
 
-public class ManagerDto implements Serializable {
+public class OperatorDto implements Serializable {
 
-	private static final long serialVersionUID = 7175035438779604827L;
+	private static final long serialVersionUID = 4784320463657739097L;
 
 	private Long id;
 	private String name;
 	private String taxIdentificationNumber;
 	private Date createdAt;
+	private Boolean isPublic;
 
-	public ManagerDto() {
+	public OperatorDto() {
 
 	}
 
@@ -46,6 +47,14 @@ public class ManagerDto implements Serializable {
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Boolean getIsPublic() {
+		return isPublic;
+	}
+
+	public void setIsPublic(Boolean isPublic) {
+		this.isPublic = isPublic;
 	}
 
 }

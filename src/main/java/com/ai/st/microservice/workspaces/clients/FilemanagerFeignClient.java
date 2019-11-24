@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.dto.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
 
 @FeignClient(name = "st-microservice-filemanager", configuration = { FeignSupportConfig.class })
 public interface FilemanagerFeignClient {

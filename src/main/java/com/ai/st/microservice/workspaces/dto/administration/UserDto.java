@@ -1,4 +1,4 @@
-package com.ai.st.microservice.workspaces.dto;
+package com.ai.st.microservice.workspaces.dto.administration;
 
 import java.io.Serializable;
 import java.util.ArrayList;

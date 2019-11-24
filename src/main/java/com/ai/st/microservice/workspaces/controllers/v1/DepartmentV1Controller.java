@@ -22,10 +22,10 @@ import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
-import com.ai.st.microservice.workspaces.dto.ManagerDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.RoleDto;
-import com.ai.st.microservice.workspaces.dto.UserDto;
+import com.ai.st.microservice.workspaces.dto.administration.RoleDto;
+import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 

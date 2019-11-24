@@ -1,19 +1,19 @@
-package com.ai.st.microservice.workspaces.dto;
+package com.ai.st.microservice.workspaces.dto.providers;
 
 import java.io.Serializable;
 
-public class RoleDto implements Serializable {
+public class MicroserviceProviderCategoryDto implements Serializable {
 
-	private static final long serialVersionUID = 4718401534262270253L;
+	private static final long serialVersionUID = -5302157804880208335L;
 
 	private Long id;
 	private String name;
 
-	public RoleDto() {
+	public MicroserviceProviderCategoryDto() {
 
 	}
 
-	public RoleDto(Long id, String name) {
+	public MicroserviceProviderCategoryDto(Long id, String name) {
 		super();
 		this.id = id;
 		this.name = name;
