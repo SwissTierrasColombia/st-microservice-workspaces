@@ -53,6 +53,9 @@ public class WorkspaceDto implements Serializable {
 
 	@ApiModelProperty(required = true, notes = "State")
 	private StateDto state;
+	
+	@ApiModelProperty(required = false, notes = "Municipality")
+	private MunicipalityDto municipality;
 
 	public WorkspaceDto() {
 		operators = new ArrayList<WorkspaceOperatorDto>();
@@ -160,6 +163,14 @@ public class WorkspaceDto implements Serializable {
 
 	public void setState(StateDto state) {
 		this.state = state;
+	}
+
+	public MunicipalityDto getMunicipality() {
+		return municipality;
+	}
+
+	public void setMunicipality(MunicipalityDto municipality) {
+		this.municipality = municipality;
 	}
 
 }

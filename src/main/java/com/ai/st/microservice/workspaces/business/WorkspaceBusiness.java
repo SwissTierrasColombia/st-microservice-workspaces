@@ -16,19 +16,24 @@ import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MilestoneDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.StateDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.administration.UserDto;
 import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
 
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.StateEntity;
@@ -60,6 +65,9 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private ProviderFeignClient providerClient;
+
+	@Autowired
+	private UserFeignClient userClient;
 
 	@Autowired
 	private FilemanagerFeignClient filemanagerClient;
@@ -614,6 +622,18 @@ public class WorkspaceBusiness {
 
 		workspaceDto.setOperators(operatorsDto);
 
+		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+		DepartmentEntity deparmentEntity = municipalityEntity.getDepartment();
+
+		MunicipalityDto municipalityDto = new MunicipalityDto();
+		municipalityDto.setCode(municipalityEntity.getCode());
+		municipalityDto.setId(municipalityEntity.getId());
+		municipalityDto.setName(municipalityEntity.getName());
+		municipalityDto.setDepartment(
+				new DepartmentDto(deparmentEntity.getId(), deparmentEntity.getName(), deparmentEntity.getCode()));
+
+		workspaceDto.setMunicipality(municipalityDto);
+
 		return workspaceDto;
 	}
 
@@ -777,6 +797,7 @@ public class WorkspaceBusiness {
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 				requestDto.setDeadline(sdf.format(deadline));
 				requestDto.setProviderId(providerId);
+				requestDto.setMunicipalityCode(municipalityEntity.getCode());
 
 				// supplies by request
 				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProvider = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
@@ -822,6 +843,61 @@ public class WorkspaceBusiness {
 		}
 
 		return requests;
+	}
+
+	public List<MicroserviceRequestDto> getPendingRequestByProvider(Long providerId) throws BusinessException {
+
+		List<MicroserviceRequestDto> listPendingRequestsDto = new ArrayList<MicroserviceRequestDto>();
+
+		try {
+			List<MicroserviceRequestDto> responseRequestsDto = providerClient.getRequestsByProvider(providerId,
+					(long) 1);
+
+			for (MicroserviceRequestDto requestDto : responseRequestsDto) {
+
+				List<MicroserviceEmitterDto> emittersDto = new ArrayList<MicroserviceEmitterDto>();
+				for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
+					if (emitterDto.getEmitterType().equals("ENTITY")) {
+						try {
+							ManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
+							emitterDto.setUser(managerDto);
+						} catch (Exception e) {
+							emitterDto.setUser(null);
+						}
+					} else {
+						try {
+							UserDto userDto = userClient.findById(emitterDto.getEmitterCode());
+							emitterDto.setUser(userDto);
+						} catch (Exception e) {
+							emitterDto.setUser(null);
+						}
+					}
+					emittersDto.add(emitterDto);
+				}
+
+				MunicipalityEntity municipalityEntity = municipalityService
+						.getMunicipalityByCode(requestDto.getMunicipalityCode());
+
+				DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+
+				MunicipalityDto municipalityDto = new MunicipalityDto();
+				municipalityDto.setCode(municipalityEntity.getCode());
+				municipalityDto.setId(municipalityEntity.getId());
+				municipalityDto.setName(municipalityEntity.getName());
+				municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+						departmentEntity.getCode()));
+
+				requestDto.setEmitters(emittersDto);
+				requestDto.setMunicipality(municipalityDto);
+
+				listPendingRequestsDto.add(requestDto);
+			}
+
+		} catch (Exception e) {
+
+		}
+
+		return listPendingRequestsDto;
 	}
 
 }

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+
 public class MicroserviceRequestDto implements Serializable {
 
 	private static final long serialVersionUID = 18861947628131335L;
@@ -17,6 +19,8 @@ public class MicroserviceRequestDto implements Serializable {
 	private List<MicroserivceSupplyRequestedDto> suppliesRequested;
 	private List<MicroserviceEmitterDto> emitters;
 	private MicroserviceProviderDto provider;
+	private String municipalityCode;
+	private MunicipalityDto municipality;
 
 	public MicroserviceRequestDto() {
 		suppliesRequested = new ArrayList<MicroserivceSupplyRequestedDto>();
@@ -85,6 +89,22 @@ public class MicroserviceRequestDto implements Serializable {
 
 	public void setProvider(MicroserviceProviderDto provider) {
 		this.provider = provider;
+	}
+
+	public String getMunicipalityCode() {
+		return municipalityCode;
+	}
+
+	public void setMunicipalityCode(String municipalityCode) {
+		this.municipalityCode = municipalityCode;
+	}
+
+	public MunicipalityDto getMunicipality() {
+		return municipality;
+	}
+
+	public void setMunicipality(MunicipalityDto municipality) {
+		this.municipality = municipality;
 	}
 
 }

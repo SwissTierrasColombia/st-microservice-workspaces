@@ -16,4 +16,6 @@ public interface IMunicipalityService {
 
 	public List<MunicipalityEntity> getMunicipalitiesByDepartmentIdAndManagerCode(Long departmentId, Long managerCode);
 
+	public MunicipalityEntity getMunicipalityByCode(String code);
+
 }

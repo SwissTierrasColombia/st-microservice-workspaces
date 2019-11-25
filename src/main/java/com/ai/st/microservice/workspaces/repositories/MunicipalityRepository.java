@@ -17,4 +17,5 @@ public interface MunicipalityRepository extends CrudRepository<MunicipalityEntit
 	List<MunicipalityEntity> getMunicipalitiesByDepartmentIdAndManagerCode(@Param("departmentId") Long departmentId,
 			@Param("managerCode") Long managerCode);
 
+	MunicipalityEntity findByCode(String code);
 }

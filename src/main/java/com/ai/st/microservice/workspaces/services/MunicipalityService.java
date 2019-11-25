@@ -42,4 +42,9 @@ public class MunicipalityService implements IMunicipalityService {
 		return municipalityRepository.getMunicipalitiesByDepartmentIdAndManagerCode(departmentId, managerCode);
 	}
 
+	@Override
+	public MunicipalityEntity getMunicipalityByCode(String code) {
+		return municipalityRepository.findByCode(code);
+	}
+
 }
