@@ -11,6 +11,7 @@ public interface FilemanagerFeignClient {
 
 	@PostMapping(value = "/api/filemanager/v1/filebytes")
 	public ManagerDto saveFile(@RequestParam(value = "file", name = "file") byte[] file,
-			@RequestParam("filename") String filename, @RequestParam("driver") String driver);
+			@RequestParam("filename") String filename, @RequestParam("namespace") String namespace,
+			@RequestParam("driver") String driver);
 
 }
