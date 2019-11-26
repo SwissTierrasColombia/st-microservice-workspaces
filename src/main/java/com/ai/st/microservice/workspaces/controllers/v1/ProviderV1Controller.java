@@ -40,7 +40,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Workspaces", description = "Manage Workspaces", tags = { "Workspaces" })
+@Api(value = "Manage Providers", description = "Manage Providers", tags = { "Providers" })
 @RestController
 @RequestMapping("api/workspaces/v1/providers")
 public class ProviderV1Controller {
