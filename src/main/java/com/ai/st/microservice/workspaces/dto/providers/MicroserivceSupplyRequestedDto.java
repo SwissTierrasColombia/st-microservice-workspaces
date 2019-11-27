@@ -1,6 +1,7 @@
 package com.ai.st.microservice.workspaces.dto.providers;
 
 import java.io.Serializable;
+import java.util.Date;
 
 public class MicroserivceSupplyRequestedDto implements Serializable {
 
@@ -9,6 +10,10 @@ public class MicroserivceSupplyRequestedDto implements Serializable {
 	private Long id;
 	private String description;
 	private MicroserviceTypeSupplyDto typeSupply;
+	private Date createdAt;
+	private Boolean delivered;
+	private Date deliveredAt;
+	private String justification;
 
 	public MicroserivceSupplyRequestedDto() {
 
@@ -36,6 +41,38 @@ public class MicroserivceSupplyRequestedDto implements Serializable {
 
 	public void setTypeSupply(MicroserviceTypeSupplyDto typeSupply) {
 		this.typeSupply = typeSupply;
+	}
+
+	public Date getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(Date createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public Boolean getDelivered() {
+		return delivered;
+	}
+
+	public void setDelivered(Boolean delivered) {
+		this.delivered = delivered;
+	}
+
+	public Date getDeliveredAt() {
+		return deliveredAt;
+	}
+
+	public void setDeliveredAt(Date deliveredAt) {
+		this.deliveredAt = deliveredAt;
+	}
+
+	public String getJustification() {
+		return justification;
+	}
+
+	public void setJustification(String justification) {
+		this.justification = justification;
 	}
 
 }

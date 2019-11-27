@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -39,6 +41,16 @@ public interface ProviderFeignClient {
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/requests")
 	public List<MicroserviceRequestDto> getRequestsByProvider(@PathVariable Long providerId,
 			@RequestParam(required = false, name = "state") Long requestStateId);
+
+	@GetMapping("/api/providers-supplies/v1/requests/{requestId}")
+	public MicroserviceRequestDto findRequestById(@PathVariable Long requestId);
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
+	public List<MicroserviceProviderUserDto> findUsersByProviderId(@PathVariable Long providerId);
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/requests/{requestId}/supplies/{supplyRequestedId}", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceRequestDto updateSupplyRequested(@PathVariable Long requestId,
+			@PathVariable Long supplyRequestedId, @RequestBody MicroserviceUpdateSupplyRequestedDto updateSupply);
 
 	class Configuration {
 

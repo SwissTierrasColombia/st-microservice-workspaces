@@ -11,18 +11,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.ai.st.microservice.workspaces.business.ProviderBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
@@ -58,6 +63,9 @@ public class ProviderV1Controller {
 
 	@Autowired
 	private ProviderFeignClient providerClient;
+
+	@Autowired
+	private ProviderBusiness providerBusiness;
 
 	@RequestMapping(value = "/municipalities/{municipalityId}/requests", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Create request")
@@ -202,6 +210,72 @@ public class ProviderV1Controller {
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
 				: new ResponseEntity<>(listRequests, httpStatus);
+	}
+
+	@RequestMapping(value = "/requests/{requestId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Answer request")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Answer request", response = MicroserviceRequestDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> answerRequest(@PathVariable Long requestId,
+			@RequestHeader("authorization") String headerAuthorization,
+			@RequestParam(name = "files[]", required = false) MultipartFile[] files,
+			@ModelAttribute AnswerRequestDto answerRequest) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			// validation type supply
+			Long typeSupplyId = answerRequest.getTypeSupplyId();
+			if (typeSupplyId == null || typeSupplyId <= 0) {
+				throw new InputValidationException("El tipo de insumo es inválido.");
+			}
+
+			responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getJustification(),
+					files, answerRequest.getUrl(), providerDto, userDtoSession.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@answerRequest#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (InputValidationException e) {
+			log.error("Error ProviderV1Controller@answerRequest#Validation ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new ErrorDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@answerRequest#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@answerRequest#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
 }
