@@ -37,6 +37,10 @@ public class ProviderBusiness {
 			throw new BusinessException("No tiene acceso a la solicitud.");
 		}
 
+		if (requestDto.getRequestState().getId() != 1) {
+			throw new BusinessException("La solicitud esta cerrada, no se puede modificar.");
+		}
+
 		List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
 		MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
 				.filter(user -> userCode == user.getUserCode()).findAny().orElse(null);
@@ -62,11 +66,15 @@ public class ProviderBusiness {
 				Boolean delivered = (files.length > 0 || (url != null && !url.isEmpty())) ? true : false;
 
 				// Update request
-				MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
-				updateSupply.setDelivered(delivered);
-				updateSupply.setJustification(justification);
-				requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(),
-						updateSupply);
+				try {
+					MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+					updateSupply.setDelivered(delivered);
+					updateSupply.setJustification(justification);
+					requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(),
+							updateSupply);
+				} catch (Exception e) {
+					throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+				}
 
 				searchSupply = true;
 				break;
@@ -77,7 +85,44 @@ public class ProviderBusiness {
 			throw new BusinessException("El tipo de insumo no pertenece a la solicitud.");
 		}
 
-		System.out.println("HOLA MUNDOO " + requestDto.getId());
+		return requestUpdatedDto;
+	}
+
+	public MicroserviceRequestDto closeRequest(Long requestId, MicroserviceProviderDto providerDto, Long userCode)
+			throws BusinessException {
+
+		MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
+
+		if (providerDto.getId() != requestDto.getProvider().getId()) {
+			throw new BusinessException("No tiene acceso a la solicitud.");
+		}
+
+		if (requestDto.getRequestState().getId() != 1) {
+			throw new BusinessException("La solicitud esta cerrada, no se puede cerrar.");
+		}
+
+		List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
+		MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
+				.filter(user -> userCode == user.getUserCode()).findAny().orElse(null);
+		if (userProviderFound == null) {
+			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
+		}
+
+		for (MicroserivceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+			if (!supplyRequested.getDelivered()
+					&& (supplyRequested.getJustification() == null || supplyRequested.getJustification().isEmpty())) {
+				throw new BusinessException(
+						"No se puede cerrar la solicitud porque no se han cargado todos los insumos.");
+			}
+		}
+
+		MicroserviceRequestDto requestUpdatedDto = null;
+
+		try {
+			requestUpdatedDto = providerClient.closeRequest(requestId);
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+		}
 
 		return requestUpdatedDto;
 	}

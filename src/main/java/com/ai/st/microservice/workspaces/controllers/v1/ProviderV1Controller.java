@@ -278,4 +278,57 @@ public class ProviderV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
+	@RequestMapping(value = "/requests/{requestId}/close", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Close request")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Close request", response = MicroserviceRequestDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> closeRequest(@PathVariable Long requestId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			UserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			responseDto = providerBusiness.closeRequest(requestId, providerDto, userDtoSession.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@answerRequest#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@answerRequest#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@answerRequest#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
 }

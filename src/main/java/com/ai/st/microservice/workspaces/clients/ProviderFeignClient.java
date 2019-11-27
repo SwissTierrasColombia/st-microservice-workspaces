@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -51,6 +52,9 @@ public interface ProviderFeignClient {
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/requests/{requestId}/supplies/{supplyRequestedId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceRequestDto updateSupplyRequested(@PathVariable Long requestId,
 			@PathVariable Long supplyRequestedId, @RequestBody MicroserviceUpdateSupplyRequestedDto updateSupply);
+
+	@PutMapping("/api/providers-supplies/v1/requests/{requestId}/delivered")
+	public MicroserviceRequestDto closeRequest(@PathVariable Long requestId);
 
 	class Configuration {
 
