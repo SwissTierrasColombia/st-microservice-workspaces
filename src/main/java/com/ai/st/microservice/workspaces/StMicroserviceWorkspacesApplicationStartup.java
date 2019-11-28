@@ -57,43 +57,43 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 
 				MunicipalityEntity municipalitySincelejo = new MunicipalityEntity();
 				municipalitySincelejo.setName("SINCELEJO");
-				municipalitySincelejo.setCode("001");
+				municipalitySincelejo.setCode("70001");
 				municipalitySincelejo.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalitySincelejo);
 
 				MunicipalityEntity municipalityBuenavista = new MunicipalityEntity();
 				municipalityBuenavista.setName("BUENAVISTA");
-				municipalityBuenavista.setCode("110");
+				municipalityBuenavista.setCode("70110");
 				municipalityBuenavista.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityBuenavista);
 
 				MunicipalityEntity municipalityCaimito = new MunicipalityEntity();
 				municipalityCaimito.setName("CAIMITO");
-				municipalityCaimito.setCode("124");
+				municipalityCaimito.setCode("70124");
 				municipalityCaimito.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityCaimito);
 
 				MunicipalityEntity municipalityCorozal = new MunicipalityEntity();
 				municipalityCorozal.setName("COROZAL");
-				municipalityCorozal.setCode("215");
+				municipalityCorozal.setCode("70215");
 				municipalityCorozal.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityCorozal);
 
 				MunicipalityEntity municipalityCovenas = new MunicipalityEntity();
 				municipalityCovenas.setName("COVEÑAS");
-				municipalityCovenas.setCode("221");
+				municipalityCovenas.setCode("70221");
 				municipalityCovenas.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityCovenas);
 
 				MunicipalityEntity municipalityChalan = new MunicipalityEntity();
 				municipalityChalan.setName("CHALÁN");
-				municipalityChalan.setCode("230");
+				municipalityChalan.setCode("70230");
 				municipalityChalan.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityChalan);
 
 				MunicipalityEntity municipalityOvejas = new MunicipalityEntity();
 				municipalityOvejas.setName("OVEJAS");
-				municipalityOvejas.setCode("508");
+				municipalityOvejas.setCode("70508");
 				municipalityOvejas.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityOvejas);
 

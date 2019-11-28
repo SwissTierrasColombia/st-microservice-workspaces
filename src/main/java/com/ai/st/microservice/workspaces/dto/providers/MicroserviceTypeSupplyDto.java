@@ -1,7 +1,9 @@
 package com.ai.st.microservice.workspaces.dto.providers;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class MicroserviceTypeSupplyDto implements Serializable {
 
@@ -13,9 +15,10 @@ public class MicroserviceTypeSupplyDto implements Serializable {
 	private Boolean metadataRequired;
 	private String name;
 	private MicroserviceProviderProfileDto providerProfile;
+	private List<MicroserviceExtensionDto> extensions;
 
 	public MicroserviceTypeSupplyDto() {
-
+		this.extensions = new ArrayList<MicroserviceExtensionDto>();
 	}
 
 	public Long getId() {
@@ -64,6 +67,14 @@ public class MicroserviceTypeSupplyDto implements Serializable {
 
 	public void setProviderProfile(MicroserviceProviderProfileDto providerProfile) {
 		this.providerProfile = providerProfile;
+	}
+
+	public List<MicroserviceExtensionDto> getExtensions() {
+		return extensions;
+	}
+
+	public void setExtensions(List<MicroserviceExtensionDto> extensions) {
+		this.extensions = extensions;
 	}
 
 }
