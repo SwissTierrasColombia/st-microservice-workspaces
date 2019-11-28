@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
@@ -25,6 +26,7 @@ import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
 import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
 
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
@@ -109,7 +111,24 @@ public class WorkspaceBusiness {
 			throw new BusinessException("Ya se ha creado un espacio de trabajo para el municipio.");
 		}
 
-		// TODO: save file with microservice filemanager
+		// save file with microservice filemanager
+		String urlDocumentaryRepository = null;
+		try {
+
+			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
+
+			MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
+					supportFile.getBytes(), StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+
+			if (!responseFilemanagerDto.getStatus()) {
+				throw new BusinessException("No se ha podido cargar el soporte.");
+			}
+
+			urlDocumentaryRepository = responseFilemanagerDto.getUrl();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido cargar el soporte.");
+		}
 
 		MilestoneEntity milestoneNewWorkspace = milestoneService
 				.getMilestoneById(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
@@ -131,7 +150,7 @@ public class WorkspaceBusiness {
 		// support
 		SupportEntity supporEntity = new SupportEntity();
 		supporEntity.setCreatedAt(new Date());
-		supporEntity.setUrlDocumentaryRepository("test");
+		supporEntity.setUrlDocumentaryRepository(urlDocumentaryRepository);
 		supporEntity.setWorkspace(workspaceEntity);
 		supporEntity.setMilestone(milestoneNewWorkspace);
 
@@ -290,7 +309,24 @@ public class WorkspaceBusiness {
 			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
 		}
 
-		// TODO: save support file with microservice filemanager
+		// save support file with microservice filemanager
+		String urlDocumentaryRepository = null;
+		try {
+
+			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
+
+			MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
+					supportFile.getBytes(), StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+
+			if (!responseFilemanagerDto.getStatus()) {
+				throw new BusinessException("No se ha podido cargar el soporte.");
+			}
+
+			urlDocumentaryRepository = responseFilemanagerDto.getUrl();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido cargar el soporte.");
+		}
 
 		MilestoneEntity milestoneAssignOperator = milestoneService
 				.getMilestoneById(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
@@ -311,7 +347,7 @@ public class WorkspaceBusiness {
 		// support
 		SupportEntity supporEntity = new SupportEntity();
 		supporEntity.setCreatedAt(new Date());
-		supporEntity.setUrlDocumentaryRepository("test");
+		supporEntity.setUrlDocumentaryRepository(urlDocumentaryRepository);
 		supporEntity.setWorkspace(workspaceEntity);
 		supporEntity.setMilestone(milestoneAssignOperator);
 		List<SupportEntity> supports = workspaceEntity.getSupports();
