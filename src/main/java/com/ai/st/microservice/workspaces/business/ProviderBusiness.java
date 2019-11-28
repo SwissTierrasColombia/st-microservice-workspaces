@@ -1,18 +1,25 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
+import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserivceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 @Component
@@ -20,6 +27,12 @@ public class ProviderBusiness {
 
 	@Autowired
 	private ProviderFeignClient providerClient;
+
+	@Autowired
+	private SupplyFeignClient supplyClient;
+
+	@Autowired
+	private FilemanagerFeignClient filemanagerClient;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode)
@@ -64,6 +77,60 @@ public class ProviderBusiness {
 
 				// TODO: send supply to microservice supplies
 				Boolean delivered = (files.length > 0 || (url != null && !url.isEmpty())) ? true : false;
+
+				try {
+					MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
+					createSupplyDto.setMunicipalityCode(requestDto.getMunicipalityCode());
+					createSupplyDto.setObservations("N/A");
+					createSupplyDto.setTypeSupplyCode(typeSupplyId);
+					if (files.length > 0) {
+						List<String> urls = new ArrayList<String>();
+						for (MultipartFile file : files) {
+
+							try {
+
+								String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_")
+										+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
+										+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
+
+								MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
+										file.getBytes(), StringUtils.cleanPath(file.getOriginalFilename()), urlBase,
+										"Local");
+
+								if (!responseFilemanagerDto.getStatus()) {
+									throw new BusinessException(
+											"No se ha podido guardar el archivo en el repositorio documental.");
+								}
+
+								urls.add(responseFilemanagerDto.getUrl());
+							} catch (Exception e) {
+								throw new BusinessException(
+										"No se ha podido guardar el archivo en el repositorio documental.");
+							}
+						}
+						createSupplyDto.setUrlsDocumentaryRepository(urls);
+					}
+					if (url != null && !url.isEmpty()) {
+						createSupplyDto.setUrl(url);
+					}
+					List<MicroserviceCreateSupplyOwnerDto> owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
+
+					MicroserviceCreateSupplyOwnerDto owner1 = new MicroserviceCreateSupplyOwnerDto();
+					owner1.setOwnerCode(userCode);
+					owner1.setOwnerType("USER");
+					owners.add(owner1);
+
+					MicroserviceCreateSupplyOwnerDto owner2 = new MicroserviceCreateSupplyOwnerDto();
+					owner2.setOwnerCode(providerDto.getId());
+					owner2.setOwnerType("ENTITY");
+					owners.add(owner2);
+
+					createSupplyDto.setOwners(owners);
+
+					supplyClient.createSupply(createSupplyDto);
+				} catch (Exception e) {
+					throw new BusinessException("No se ha podido cargar el insumo.");
+				}
 
 				// Update request
 				try {
