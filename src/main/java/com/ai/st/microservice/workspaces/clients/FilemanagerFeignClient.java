@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
 
-@FeignClient(name = "st-microservice-filemanager", configuration = { FeignSupportConfig.class })
+@FeignClient(name = "st-microservice-filemanager")
 public interface FilemanagerFeignClient {
 
 	@PostMapping(value = "/api/filemanager/v1/filebytes")

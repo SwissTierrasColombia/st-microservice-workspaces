@@ -3,7 +3,7 @@ package com.ai.st.microservice.workspaces.dto.tasks;
 import java.io.Serializable;
 import java.util.Date;
 
-import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -23,7 +23,7 @@ public class MicroserviceTaskMemberDto implements Serializable {
 	private Date createdAt;
 
 	@ApiModelProperty(required = true, notes = "User")
-	private UserDto user;
+	private MicroserviceUserDto user;
 
 	public MicroserviceTaskMemberDto() {
 
@@ -53,11 +53,11 @@ public class MicroserviceTaskMemberDto implements Serializable {
 		this.createdAt = createdAt;
 	}
 
-	public UserDto getUser() {
+	public MicroserviceUserDto getUser() {
 		return user;
 	}
 
-	public void setUser(UserDto user) {
+	public void setUser(MicroserviceUserDto user) {
 		this.user = user;
 	}
 

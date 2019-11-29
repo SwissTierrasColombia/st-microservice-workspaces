@@ -31,7 +31,7 @@ import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
@@ -84,7 +84,7 @@ public class ProviderV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -174,7 +174,7 @@ public class ProviderV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -230,7 +230,7 @@ public class ProviderV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -294,7 +294,7 @@ public class ProviderV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {

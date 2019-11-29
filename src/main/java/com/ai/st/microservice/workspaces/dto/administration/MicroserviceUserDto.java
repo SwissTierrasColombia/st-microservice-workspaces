@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-public class UserDto implements Serializable {
+public class MicroserviceUserDto implements Serializable {
 
 	private static final long serialVersionUID = -5121529899322990688L;
 
@@ -18,13 +18,13 @@ public class UserDto implements Serializable {
 	private Boolean enabled;
 	private Date createdAt;
 	private Date updatedAt;
-	private List<RoleDto> roles;
+	private List<MicroserviceRoleDto> roles;
 
-	public UserDto() {
-		this.roles = new ArrayList<RoleDto>();
+	public MicroserviceUserDto() {
+		this.roles = new ArrayList<MicroserviceRoleDto>();
 	}
 
-	public UserDto(Long id, String firstName, String lastName, String email, String username) {
+	public MicroserviceUserDto(Long id, String firstName, String lastName, String email, String username) {
 		super();
 		this.id = id;
 		this.firstName = firstName;
@@ -105,11 +105,11 @@ public class UserDto implements Serializable {
 		this.updatedAt = updatedAt;
 	}
 
-	public List<RoleDto> getRoles() {
+	public List<MicroserviceRoleDto> getRoles() {
 		return roles;
 	}
 
-	public void setRoles(List<RoleDto> roles) {
+	public void setRoles(List<MicroserviceRoleDto> roles) {
 		this.roles = roles;
 	}
 

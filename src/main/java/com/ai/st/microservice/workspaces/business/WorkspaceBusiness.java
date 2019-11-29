@@ -25,7 +25,7 @@ import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
 import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
 
@@ -902,7 +902,7 @@ public class WorkspaceBusiness {
 						}
 					} else {
 						try {
-							UserDto userDto = userClient.findById(emitterDto.getEmitterCode());
+							MicroserviceUserDto userDto = userClient.findById(emitterDto.getEmitterCode());
 							emitterDto.setUser(userDto);
 						} catch (Exception e) {
 							emitterDto.setUser(null);

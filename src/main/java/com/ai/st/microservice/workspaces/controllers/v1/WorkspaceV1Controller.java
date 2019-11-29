@@ -31,8 +31,8 @@ import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.administration.RoleDto;
-import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
@@ -162,7 +162,7 @@ public class WorkspaceV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -170,17 +170,17 @@ public class WorkspaceV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
 
-			RoleDto roleManager = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
 
-			if (roleAdministrator instanceof RoleDto) {
+			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
 				listWorkspaces = workspaceBusiness.getWorkspacesByMunicipality(municipalityId, null);
 
-			} else if (roleManager instanceof RoleDto) {
+			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// verify that you have access to the municipality
 
@@ -231,7 +231,7 @@ public class WorkspaceV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -344,7 +344,7 @@ public class WorkspaceV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -439,7 +439,7 @@ public class WorkspaceV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -447,17 +447,17 @@ public class WorkspaceV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
 
-			RoleDto roleManager = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
 
-			if (roleAdministrator instanceof RoleDto) {
+			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
 				listSupports = workspaceBusiness.getSupportsByWorkspaceId(workspaceId, null);
 
-			} else if (roleManager instanceof RoleDto) {
+			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
 				ManagerDto managerDto = null;
@@ -507,7 +507,7 @@ public class WorkspaceV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -515,15 +515,15 @@ public class WorkspaceV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
 
-			RoleDto roleManager = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
 
-			if (roleAdministrator instanceof RoleDto) {
+			if (roleAdministrator instanceof MicroserviceRoleDto) {
 				responseDto = workspaceBusiness.getWorkspaceById(workspaceId, null);
-			} else if (roleManager instanceof RoleDto) {
+			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
 				ManagerDto managerDto = null;
@@ -573,7 +573,7 @@ public class WorkspaceV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -581,15 +581,15 @@ public class WorkspaceV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
 
-			RoleDto roleManager = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
 
-			if (roleAdministrator instanceof RoleDto) {
+			if (roleAdministrator instanceof MicroserviceRoleDto) {
 				listOperators = workspaceBusiness.getOperatorsByWorkspaceId(workspaceId, null);
-			} else if (roleManager instanceof RoleDto) {
+			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
 				ManagerDto managerDto = null;
@@ -639,7 +639,7 @@ public class WorkspaceV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {
@@ -647,17 +647,17 @@ public class WorkspaceV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			RoleDto roleAdministrator = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
 
-			RoleDto roleManager = userDtoSession.getRoles().stream()
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
 
-			if (roleAdministrator instanceof RoleDto) {
+			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
 				responseDto = workspaceBusiness.getWorkspaceActiveByMunicipality(municipalityId, null);
 
-			} else if (roleManager instanceof RoleDto) {
+			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// verify that you have access to the municipality
 

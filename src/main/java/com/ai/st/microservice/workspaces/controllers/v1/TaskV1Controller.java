@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ai.st.microservice.workspaces.business.TaskBusiness;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
-import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
@@ -58,7 +58,7 @@ public class TaskV1Controller {
 
 			// user session
 			String token = headerAuthorization.replace("Bearer ", "").trim();
-			UserDto userDtoSession = null;
+			MicroserviceUserDto userDtoSession = null;
 			try {
 				userDtoSession = userClient.findByToken(token);
 			} catch (FeignException e) {

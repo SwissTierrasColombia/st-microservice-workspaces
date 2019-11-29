@@ -2,18 +2,18 @@ package com.ai.st.microservice.workspaces.dto.administration;
 
 import java.io.Serializable;
 
-public class RoleDto implements Serializable {
+public class MicroserviceRoleDto implements Serializable {
 
 	private static final long serialVersionUID = 4718401534262270253L;
 
 	private Long id;
 	private String name;
 
-	public RoleDto() {
+	public MicroserviceRoleDto() {
 
 	}
 
-	public RoleDto(Long id, String name) {
+	public MicroserviceRoleDto(Long id, String name) {
 		super();
 		this.id = id;
 		this.name = name;

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.administration.UserDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -34,7 +34,7 @@ public class TaskBusiness {
 				List<MicroserviceTaskMemberDto> members = new ArrayList<MicroserviceTaskMemberDto>();
 				for (MicroserviceTaskMemberDto member : taskDto.getMembers()) {
 					try {
-						UserDto userDto = userClient.findById(member.getMemberCode());
+						MicroserviceUserDto userDto = userClient.findById(member.getMemberCode());
 						member.setUser(userDto);
 					} catch (Exception e) {
 						member.setUser(null);
