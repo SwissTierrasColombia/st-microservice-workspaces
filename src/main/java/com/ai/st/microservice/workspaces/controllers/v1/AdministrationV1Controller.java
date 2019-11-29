@@ -53,7 +53,8 @@ public class AdministrationV1Controller {
 
 			responseDto = administrationBusiness.createUser(requestCreateUser.getFirstName(),
 					requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
-					requestCreateUser.getPassword(), requestCreateUser.getRoleProvider());
+					requestCreateUser.getPassword(), requestCreateUser.getRoleProvider(),
+					requestCreateUser.getRoleAdministrator());
 			httpStatus = HttpStatus.CREATED;
 
 		} catch (InputValidationException e) {

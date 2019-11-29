@@ -25,8 +25,11 @@ public class CreateUserDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Password")
 	private String password;
 
-	@ApiModelProperty(required = false, notes = "Roles")
+	@ApiModelProperty(required = false, notes = "Role Provider Supply")
 	private CreateUserRoleProviderDto roleProvider;
+
+	@ApiModelProperty(required = false, notes = "Roles Administrator")
+	private CreateUserRoleAdministratorDto roleAdministrator;
 
 	public CreateUserDto() {
 
@@ -78,6 +81,14 @@ public class CreateUserDto implements Serializable {
 
 	public void setRoleProvider(CreateUserRoleProviderDto roleProvider) {
 		this.roleProvider = roleProvider;
+	}
+
+	public CreateUserRoleAdministratorDto getRoleAdministrator() {
+		return roleAdministrator;
+	}
+
+	public void setRoleAdministrator(CreateUserRoleAdministratorDto roleAdministrator) {
+		this.roleAdministrator = roleAdministrator;
 	}
 
 }

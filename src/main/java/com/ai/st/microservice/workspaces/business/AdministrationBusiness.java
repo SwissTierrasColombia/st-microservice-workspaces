@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleProviderDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceCreateUserDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
@@ -24,7 +25,8 @@ public class AdministrationBusiness {
 	private ProviderFeignClient providerClient;
 
 	public MicroserviceUserDto createUser(String firstName, String lastName, String email, String username,
-			String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
+			String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin)
+			throws BusinessException {
 
 		MicroserviceUserDto userResponseDto = null;
 
@@ -41,6 +43,11 @@ public class AdministrationBusiness {
 				roles.add(roleProvider.getRoleId());
 			}
 		}
+
+		if (roleAdmin != null) {
+			roles.add(roleAdmin.getRoleId());
+		}
+
 		createUserDto.setRoles(roles);
 
 		if (roles.size() > 0) {
@@ -49,7 +56,6 @@ public class AdministrationBusiness {
 				userResponseDto = userClient.createUser(createUserDto);
 
 				if (roleProvider != null) {
-
 					try {
 						for (Long profileId : roleProvider.getProfiles()) {
 							MicroserviceAddUserToProviderDto addUser = new MicroserviceAddUserToProviderDto();
@@ -60,9 +66,8 @@ public class AdministrationBusiness {
 							providerClient.addUserToProvide(addUser);
 						}
 					} catch (Exception e) {
-						throw new BusinessException("No se ha podido asignar el usuario al proveedor de insumo");
-					}
 
+					}
 				}
 
 			} catch (BusinessException e) {
