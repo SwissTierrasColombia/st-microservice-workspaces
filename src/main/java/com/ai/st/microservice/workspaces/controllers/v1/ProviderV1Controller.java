@@ -254,7 +254,8 @@ public class ProviderV1Controller {
 			}
 
 			responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getJustification(),
-					files, answerRequest.getUrl(), providerDto, userDtoSession.getId());
+					files, answerRequest.getUrl(), providerDto, userDtoSession.getId(),
+					answerRequest.getObservations());
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {

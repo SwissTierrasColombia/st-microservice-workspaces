@@ -19,6 +19,9 @@ public class AnswerRequestDto implements Serializable {
 	@ApiModelProperty(required = false, notes = "Url")
 	private String url;
 
+	@ApiModelProperty(required = false, notes = "Observations")
+	private String observations;
+
 	public AnswerRequestDto() {
 
 	}
@@ -45,6 +48,14 @@ public class AnswerRequestDto implements Serializable {
 
 	public void setUrl(String url) {
 		this.url = url;
+	}
+
+	public String getObservations() {
+		return observations;
+	}
+
+	public void setObservations(String observations) {
+		this.observations = observations;
 	}
 
 }

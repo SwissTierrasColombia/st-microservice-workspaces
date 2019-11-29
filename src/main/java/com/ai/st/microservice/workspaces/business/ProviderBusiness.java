@@ -35,7 +35,7 @@ public class ProviderBusiness {
 	private FilemanagerFeignClient filemanagerClient;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
-			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode)
+			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
 			throws BusinessException {
 
 		MicroserviceRequestDto requestUpdatedDto = null;
@@ -52,6 +52,11 @@ public class ProviderBusiness {
 
 		if (requestDto.getRequestState().getId() != 1) {
 			throw new BusinessException("La solicitud esta cerrada, no se puede modificar.");
+		}
+
+		Boolean delivered = (files.length > 0 || (url != null && !url.isEmpty())) ? true : false;
+		if (delivered && (observations == null || observations.isEmpty())) {
+			throw new BusinessException("Las observaciones son requeridas.");
 		}
 
 		List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
@@ -75,14 +80,13 @@ public class ProviderBusiness {
 							"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
 				}
 
-				// TODO: send supply to microservice supplies
-				Boolean delivered = (files.length > 0 || (url != null && !url.isEmpty())) ? true : false;
-				
 				if (delivered == true) {
+
+					// send supply to microservice supplies
 					try {
 						MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
 						createSupplyDto.setMunicipalityCode(requestDto.getMunicipalityCode());
-						createSupplyDto.setObservations("N/A");
+						createSupplyDto.setObservations(observations);
 						createSupplyDto.setTypeSupplyCode(typeSupplyId);
 						if (files.length > 0) {
 							List<String> urls = new ArrayList<String>();
@@ -94,9 +98,10 @@ public class ProviderBusiness {
 											+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
 											+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
 
-									MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
-											file.getBytes(), StringUtils.cleanPath(file.getOriginalFilename()), urlBase,
-											"Local");
+									MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient
+											.saveFile(file.getBytes(),
+													StringUtils.cleanPath(file.getOriginalFilename()), urlBase,
+													"Local");
 
 									if (!responseFilemanagerDto.getStatus()) {
 										throw new BusinessException(
@@ -131,7 +136,7 @@ public class ProviderBusiness {
 						supplyClient.createSupply(createSupplyDto);
 					} catch (Exception e) {
 						throw new BusinessException("No se ha podido cargar el insumo.");
-					}		
+					}
 				}
 
 				// Update request
