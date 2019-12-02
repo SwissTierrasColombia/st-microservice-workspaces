@@ -3,7 +3,7 @@ package com.ai.st.microservice.workspaces.dto.managers;
 import java.io.Serializable;
 import java.util.Date;
 
-public class ManagerDto implements Serializable {
+public class MicroserviceManagerDto implements Serializable {
 
 	private static final long serialVersionUID = 7175035438779604827L;
 
@@ -12,7 +12,7 @@ public class ManagerDto implements Serializable {
 	private String taxIdentificationNumber;
 	private Date createdAt;
 
-	public ManagerDto() {
+	public MicroserviceManagerDto() {
 
 	}
 

@@ -6,12 +6,15 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
+import com.ai.st.microservice.workspaces.dto.CreateUserRoleManagerDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleProviderDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceCreateUserDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
@@ -24,9 +27,12 @@ public class AdministrationBusiness {
 	@Autowired
 	private ProviderFeignClient providerClient;
 
+	@Autowired
+	private ManagerFeignClient managerClient;
+
 	public MicroserviceUserDto createUser(String firstName, String lastName, String email, String username,
-			String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin)
-			throws BusinessException {
+			String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+			CreateUserRoleManagerDto roleManager) throws BusinessException {
 
 		MicroserviceUserDto userResponseDto = null;
 
@@ -38,7 +44,13 @@ public class AdministrationBusiness {
 		createUserDto.setUsername(username);
 
 		List<Long> roles = new ArrayList<Long>();
+
 		if (roleProvider != null) {
+
+			if (roleProvider.getProfiles().size() == 0) {
+				throw new BusinessException("Para asignar el rol de proveedor se debe especificar al menos un perfil.");
+			}
+
 			if (roleProvider.getRoleId() != null && roleProvider.getRoleId() > 0) {
 				roles.add(roleProvider.getRoleId());
 			}
@@ -46,6 +58,17 @@ public class AdministrationBusiness {
 
 		if (roleAdmin != null) {
 			roles.add(roleAdmin.getRoleId());
+		}
+
+		if (roleManager != null) {
+
+			if (roleManager.getProfiles().size() == 0) {
+				throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
+			}
+
+			if (roleManager.getRoleId() != null && roleManager.getRoleId() > 0) {
+				roles.add(roleManager.getRoleId());
+			}
 		}
 
 		createUserDto.setRoles(roles);
@@ -67,6 +90,24 @@ public class AdministrationBusiness {
 						}
 					} catch (Exception e) {
 
+					}
+				}
+
+				if (roleManager != null) {
+					try {
+
+						for (Long profileId : roleManager.getProfiles()) {
+
+							MicroserviceAddUserToManagerDto addUser = new MicroserviceAddUserToManagerDto();
+							addUser.setUserCode(userResponseDto.getId());
+							addUser.setProfileId(profileId);
+							addUser.setManagerId(roleManager.getManagerId());
+
+							managerClient.addUserToManager(addUser);
+						}
+
+					} catch (Exception e) {
+						System.out.println("HOLAAA " + e.getMessage());
 					}
 				}
 

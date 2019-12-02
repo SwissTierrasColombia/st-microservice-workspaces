@@ -27,7 +27,7 @@ import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
-import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
@@ -92,7 +92,7 @@ public class WorkspaceBusiness {
 		WorkspaceDto workspaceDto = null;
 
 		// validate if the manager exists
-		ManagerDto managerDto = null;
+		MicroserviceManagerDto managerDto = null;
 		try {
 			managerDto = managerClient.findById(managerCode);
 		} catch (Exception e) {
@@ -229,7 +229,7 @@ public class WorkspaceBusiness {
 
 			// get the manager
 			try {
-				ManagerDto managerDto = managerClient.findById(workspaceEntity.getManagerCode());
+				MicroserviceManagerDto managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 				workspaceDto.setManager(managerDto);
 			} catch (Exception e) {
 				workspaceDto.setManager(null);
@@ -372,7 +372,7 @@ public class WorkspaceBusiness {
 		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
 				workspaceEntity.getState().getDescription()));
 
-		ManagerDto managerDto = null;
+		MicroserviceManagerDto managerDto = null;
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
@@ -444,7 +444,7 @@ public class WorkspaceBusiness {
 		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
 				workspaceEntity.getState().getDescription()));
 
-		ManagerDto managerDto = null;
+		MicroserviceManagerDto managerDto = null;
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
@@ -625,7 +625,7 @@ public class WorkspaceBusiness {
 		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
 				workspaceEntity.getState().getDescription()));
 
-		ManagerDto managerDto = null;
+		MicroserviceManagerDto managerDto = null;
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
@@ -751,7 +751,7 @@ public class WorkspaceBusiness {
 		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
 				workspaceEntity.getState().getDescription()));
 
-		ManagerDto managerDto = null;
+		MicroserviceManagerDto managerDto = null;
 		try {
 			managerDto = managerClient.findById(workspaceEntity.getManagerCode());
 			workspaceDto.setManager(managerDto);
@@ -895,7 +895,7 @@ public class WorkspaceBusiness {
 				for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
 					if (emitterDto.getEmitterType().equals("ENTITY")) {
 						try {
-							ManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
+							MicroserviceManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
 							emitterDto.setUser(managerDto);
 						} catch (Exception e) {
 							emitterDto.setUser(null);

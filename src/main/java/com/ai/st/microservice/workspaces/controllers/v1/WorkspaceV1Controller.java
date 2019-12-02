@@ -33,7 +33,7 @@ import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
@@ -185,7 +185,7 @@ public class WorkspaceV1Controller {
 				// verify that you have access to the municipality
 
 				// get manager
-				ManagerDto managerDto = null;
+				MicroserviceManagerDto managerDto = null;
 				try {
 					managerDto = managerClient.findByUserCode(userDtoSession.getId());
 				} catch (FeignException e) {
@@ -240,7 +240,7 @@ public class WorkspaceV1Controller {
 			}
 
 			// get manager
-			ManagerDto managerDto = null;
+			MicroserviceManagerDto managerDto = null;
 			try {
 				managerDto = managerClient.findByUserCode(userDtoSession.getId());
 			} catch (FeignException e) {
@@ -353,7 +353,7 @@ public class WorkspaceV1Controller {
 			}
 
 			// get manager
-			ManagerDto managerDto = null;
+			MicroserviceManagerDto managerDto = null;
 			try {
 				managerDto = managerClient.findByUserCode(userDtoSession.getId());
 			} catch (FeignException e) {
@@ -460,7 +460,7 @@ public class WorkspaceV1Controller {
 			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
-				ManagerDto managerDto = null;
+				MicroserviceManagerDto managerDto = null;
 				try {
 					managerDto = managerClient.findByUserCode(userDtoSession.getId());
 				} catch (FeignException e) {
@@ -526,7 +526,7 @@ public class WorkspaceV1Controller {
 			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
-				ManagerDto managerDto = null;
+				MicroserviceManagerDto managerDto = null;
 				try {
 					managerDto = managerClient.findByUserCode(userDtoSession.getId());
 				} catch (FeignException e) {
@@ -592,7 +592,7 @@ public class WorkspaceV1Controller {
 			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
-				ManagerDto managerDto = null;
+				MicroserviceManagerDto managerDto = null;
 				try {
 					managerDto = managerClient.findByUserCode(userDtoSession.getId());
 				} catch (FeignException e) {
@@ -662,7 +662,7 @@ public class WorkspaceV1Controller {
 				// verify that you have access to the municipality
 
 				// get manager
-				ManagerDto managerDto = null;
+				MicroserviceManagerDto managerDto = null;
 				try {
 					managerDto = managerClient.findByUserCode(userDtoSession.getId());
 				} catch (FeignException e) {

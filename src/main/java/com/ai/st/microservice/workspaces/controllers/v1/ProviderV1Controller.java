@@ -32,7 +32,7 @@ import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -93,7 +93,7 @@ public class ProviderV1Controller {
 			}
 
 			// get manager
-			ManagerDto managerDto = null;
+			MicroserviceManagerDto managerDto = null;
 			try {
 				managerDto = managerClient.findByUserCode(userDtoSession.getId());
 			} catch (FeignException e) {

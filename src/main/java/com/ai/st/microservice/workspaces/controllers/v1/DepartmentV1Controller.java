@@ -25,7 +25,7 @@ import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 
@@ -89,7 +89,7 @@ public class DepartmentV1Controller {
 			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
-				ManagerDto managerDto = null;
+				MicroserviceManagerDto managerDto = null;
 				try {
 					managerDto = managerClient.findByUserCode(userDtoSession.getId());
 				} catch (FeignException e) {
@@ -152,7 +152,7 @@ public class DepartmentV1Controller {
 			} else if (roleManager instanceof MicroserviceRoleDto) {
 
 				// get manager
-				ManagerDto managerDto = null;
+				MicroserviceManagerDto managerDto = null;
 				try {
 					managerDto = managerClient.findByUserCode(userDtoSession.getId());
 				} catch (FeignException e) {

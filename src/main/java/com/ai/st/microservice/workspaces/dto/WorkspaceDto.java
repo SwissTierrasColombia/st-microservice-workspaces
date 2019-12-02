@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -46,7 +46,7 @@ public class WorkspaceDto implements Serializable {
 	private Date startDate;
 
 	@ApiModelProperty(required = false, notes = "Manager")
-	private ManagerDto manager;
+	private MicroserviceManagerDto manager;
 
 	@ApiModelProperty(required = false, notes = "Operators")
 	private List<WorkspaceOperatorDto> operators;
@@ -133,11 +133,11 @@ public class WorkspaceDto implements Serializable {
 		this.startDate = startDate;
 	}
 
-	public ManagerDto getManager() {
+	public MicroserviceManagerDto getManager() {
 		return manager;
 	}
 
-	public void setManager(ManagerDto manager) {
+	public void setManager(MicroserviceManagerDto manager) {
 		this.manager = manager;
 	}
 

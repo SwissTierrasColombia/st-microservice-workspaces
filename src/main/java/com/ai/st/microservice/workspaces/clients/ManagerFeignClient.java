@@ -1,18 +1,52 @@
 package com.ai.st.microservice.workspaces.clients;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.cloud.openfeign.support.SpringEncoder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 
-import com.ai.st.microservice.workspaces.dto.managers.ManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 
-@FeignClient(name = "st-microservice-managers")
+import feign.Feign;
+import feign.codec.Encoder;
+import feign.form.spring.SpringFormEncoder;
+
+@FeignClient(name = "st-microservice-managers", configuration = ManagerFeignClient.Configuration.class)
 public interface ManagerFeignClient {
 
 	@GetMapping("/api/managers/v1/managers/{managerId}")
-	public ManagerDto findById(@PathVariable Long managerId);
+	public MicroserviceManagerDto findById(@PathVariable Long managerId);
 
 	@GetMapping("/api/managers/v1/users/{userCode}/managers")
-	public ManagerDto findByUserCode(@PathVariable Long userCode);
+	public MicroserviceManagerDto findByUserCode(@PathVariable Long userCode);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/users", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerUserDto addUserToManager(@RequestBody MicroserviceAddUserToManagerDto data);
+
+	class Configuration {
+
+		@Bean
+		Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
+			return new SpringFormEncoder(new SpringEncoder(converters));
+		}
+
+		@Bean
+		@Scope("prototype")
+		public Feign.Builder feignBuilder() {
+			return Feign.builder();
+		}
+
+	}
 
 }
