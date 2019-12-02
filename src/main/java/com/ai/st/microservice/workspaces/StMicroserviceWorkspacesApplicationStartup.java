@@ -96,6 +96,29 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 				municipalityOvejas.setCode("70508");
 				municipalityOvejas.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityOvejas);
+				
+				DepartmentEntity departmentCundinamarca = new DepartmentEntity();
+				departmentCundinamarca.setName("CUNDINAMARCA");
+				departmentCundinamarca.setCode("25");
+				departmentCundinamarca = departmentService.createDepartment(departmentCundinamarca);
+				
+				MunicipalityEntity municipalityFacatativa = new MunicipalityEntity();
+				municipalityFacatativa.setName("FACATATIVA");
+				municipalityFacatativa.setCode("25269");
+				municipalityFacatativa.setDepartment(departmentCundinamarca);
+				municipalityService.createMunicipality(municipalityFacatativa);
+				
+				MunicipalityEntity municipalityGuaduas = new MunicipalityEntity();
+				municipalityGuaduas.setName("GUADUAS");
+				municipalityGuaduas.setCode("25320");
+				municipalityGuaduas.setDepartment(departmentCundinamarca);
+				municipalityService.createMunicipality(municipalityGuaduas);
+				
+				MunicipalityEntity municipalityLaPalma = new MunicipalityEntity();
+				municipalityLaPalma.setName("LA PALMA");
+				municipalityLaPalma.setCode("25394");
+				municipalityLaPalma.setDepartment(departmentCundinamarca);
+				municipalityService.createMunicipality(municipalityLaPalma);
 
 				log.info("The domains 'municipalities' have been loaded!");
 			} catch (Exception e) {
