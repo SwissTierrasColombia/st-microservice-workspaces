@@ -17,7 +17,6 @@ import com.ai.st.microservice.workspaces.dto.CreateUserDto;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -46,22 +45,13 @@ public class AdministrationV1Controller {
 
 		try {
 
-			// validation roles
-			if (requestCreateUser.getRoleProvider() == null) {
-				throw new InputValidationException("El usuario tiene que tener al menos un rol.");
-			}
-
 			responseDto = administrationBusiness.createUser(requestCreateUser.getFirstName(),
 					requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
 					requestCreateUser.getPassword(), requestCreateUser.getRoleProvider(),
 					requestCreateUser.getRoleAdministrator(), requestCreateUser.getRoleManager());
 			httpStatus = HttpStatus.CREATED;
 
-		} catch (InputValidationException e) {
-			log.error("Error WorkspaceV1Controller@createWorkspace#Validation ---> " + e.getMessage());
-			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
-		} catch (BusinessException e) {
+		}  catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
 			responseDto = new ErrorDto(e.getMessage(), 2);
