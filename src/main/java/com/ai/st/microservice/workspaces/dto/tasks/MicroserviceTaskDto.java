@@ -43,10 +43,14 @@ public class MicroserviceTaskDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Metadata")
 	private List<MicroserviceTaskMetadataDto> metadata;
 
+	@ApiModelProperty(required = true, notes = "Steps")
+	private List<MicroserviceTaskStepDto> steps;
+
 	public MicroserviceTaskDto() {
 		this.members = new ArrayList<MicroserviceTaskMemberDto>();
 		this.categories = new ArrayList<MicroserviceTaskCategoryDto>();
 		this.metadata = new ArrayList<MicroserviceTaskMetadataDto>();
+		this.steps = new ArrayList<MicroserviceTaskStepDto>();
 	}
 
 	public Long getId() {
@@ -127,6 +131,14 @@ public class MicroserviceTaskDto implements Serializable {
 
 	public void setMetadata(List<MicroserviceTaskMetadataDto> metadata) {
 		this.metadata = metadata;
+	}
+
+	public List<MicroserviceTaskStepDto> getSteps() {
+		return steps;
+	}
+
+	public void setSteps(List<MicroserviceTaskStepDto> steps) {
+		this.steps = steps;
 	}
 
 }
