@@ -3,7 +3,7 @@ spring:
     name: st-microservice-workspaces
   profiles:
     active: 
-      - "develop"
+      - "production"
   cloud:
     config:
       enabled: true
