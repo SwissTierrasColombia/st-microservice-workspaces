@@ -8,6 +8,22 @@ Microservice that is responsible for the management of a municipality and at the
 $ mvn spring-boot:run
 ```
 
+## Configuration
+
+Modify the database connection in the st-microservice-workspaces/src/main/resources/**application.yml** file
+
+```yml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sistema-transicion
+    username: postgres
+    password: 123456
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
+    hibernate.ddl-auto: create
+```
+
 ### How to disable eureka client?
 
 Modify the **enabled** property in st-microservice-workspaces/src/main/resources/**application.yml** file:
