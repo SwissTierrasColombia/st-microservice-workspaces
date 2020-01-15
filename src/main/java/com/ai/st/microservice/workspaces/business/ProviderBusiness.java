@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,10 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
-import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserivceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
@@ -21,6 +20,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyR
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
 @Component
 public class ProviderBusiness {
@@ -32,7 +32,7 @@ public class ProviderBusiness {
 	private SupplyFeignClient supplyClient;
 
 	@Autowired
-	private FilemanagerFeignClient filemanagerClient;
+	private RabbitMQSenderService rabbitMQSender;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -92,27 +92,27 @@ public class ProviderBusiness {
 							List<String> urls = new ArrayList<String>();
 							for (MultipartFile file : files) {
 
+								// save file with microservice filemanager
+								String urlDocumentaryRepository = null;
 								try {
 
 									String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_")
 											+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
 											+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
 
-									MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient
-											.saveFile(file.getBytes(),
-													StringUtils.cleanPath(file.getOriginalFilename()), urlBase,
-													"Local");
+									urlDocumentaryRepository = rabbitMQSender.sendFile(file.getBytes(),
+											StringUtils.cleanPath(file.getOriginalFilename()), urlBase, "Local");
 
-									if (!responseFilemanagerDto.getStatus()) {
+									if (urlDocumentaryRepository == null) {
 										throw new BusinessException(
 												"No se ha podido guardar el archivo en el repositorio documental.");
 									}
 
-									urls.add(responseFilemanagerDto.getUrl());
-								} catch (Exception e) {
-									throw new BusinessException(
-											"No se ha podido guardar el archivo en el repositorio documental.");
+									urls.add(urlDocumentaryRepository);
+								} catch (IOException e) {
+									throw new BusinessException("No se ha podido cargar el soporte.");
 								}
+
 							}
 							createSupplyDto.setUrlsDocumentaryRepository(urls);
 						}

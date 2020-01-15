@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
@@ -26,7 +26,6 @@ import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
@@ -50,6 +49,7 @@ import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
 import feign.FeignException;
 
@@ -72,9 +72,6 @@ public class WorkspaceBusiness {
 	private UserFeignClient userClient;
 
 	@Autowired
-	private FilemanagerFeignClient filemanagerClient;
-
-	@Autowired
 	private IMunicipalityService municipalityService;
 
 	@Autowired
@@ -85,6 +82,9 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private IStateService stateService;
+
+	@Autowired
+	private RabbitMQSenderService rabbitMQSender;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -117,16 +117,14 @@ public class WorkspaceBusiness {
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 
-			MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
-					supportFile.getBytes(), StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+			urlDocumentaryRepository = rabbitMQSender.sendFile(supportFile.getBytes(),
+					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
 
-			if (!responseFilemanagerDto.getStatus()) {
-				throw new BusinessException("No se ha podido cargar el soporte.");
-			}
+		} catch (IOException e) {
+			throw new BusinessException("No se ha podido cargar el soporte.");
+		}
 
-			urlDocumentaryRepository = responseFilemanagerDto.getUrl();
-
-		} catch (Exception e) {
+		if (urlDocumentaryRepository == null) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -309,22 +307,20 @@ public class WorkspaceBusiness {
 			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
 		}
 
-		// save support file with microservice filemanager
+		// save file with microservice filemanager
 		String urlDocumentaryRepository = null;
 		try {
 
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
 
-			MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
-					supportFile.getBytes(), StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+			urlDocumentaryRepository = rabbitMQSender.sendFile(supportFile.getBytes(),
+					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
 
-			if (!responseFilemanagerDto.getStatus()) {
-				throw new BusinessException("No se ha podido cargar el soporte.");
-			}
+		} catch (IOException e) {
+			throw new BusinessException("No se ha podido cargar el soporte.");
+		}
 
-			urlDocumentaryRepository = responseFilemanagerDto.getUrl();
-
-		} catch (Exception e) {
+		if (urlDocumentaryRepository == null) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
