@@ -692,5 +692,15 @@ public class WorkspaceV1Controller {
 
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
+	
+	@RequestMapping(value = "/integration/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Make integration")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Integration done", response = WorkspaceDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public void makeIntegration(@PathVariable Long municipalityId) {
+		
+	}
 
 }

@@ -16,6 +16,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequest
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 
 import feign.Feign;
@@ -59,6 +60,9 @@ public interface ProviderFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public List<MicroserviceProviderUserDto> addUserToProvide(@RequestBody MicroserviceAddUserToProviderDto data);
+
+	@GetMapping("/api/providers-supplies/v1/types-supplies/{typeSupplyId}")
+	public MicroserviceTypeSupplyDto findTypeSuppleById(@PathVariable Long typeSupplyId);
 
 	class Configuration {
 
