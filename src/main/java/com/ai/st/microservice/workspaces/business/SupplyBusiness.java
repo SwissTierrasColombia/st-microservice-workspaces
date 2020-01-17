@@ -87,6 +87,21 @@ public class SupplyBusiness {
 
 		try {
 			suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipalityEntity.getCode());
+
+			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
+
+				try {
+					MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+							.findTypeSuppleById(supplyDto.getTypeSupplyCode());
+
+					supplyDto.setTypeSupply(typeSupplyDto);
+
+				} catch (Exception e) {
+					throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+				}
+
+			}
+
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido consultar los insumos del municipio.");
 		}
