@@ -13,6 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -27,6 +28,7 @@ import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.CreateWorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.ErrorDto;
+import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
@@ -692,15 +694,74 @@ public class WorkspaceV1Controller {
 
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
-	
+
 	@RequestMapping(value = "/integration/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Make integration")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Integration done", response = WorkspaceDto.class, responseContainer = "List"),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
-	public void makeIntegration(@PathVariable Long municipalityId) {
-		
+	public ResponseEntity<?> makeIntegration(@PathVariable Long municipalityId,
+			@RequestBody MakeIntegrationDto requestMakeIntegration,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+
+			// validation supply cadastre
+			Long supplyCadastre = requestMakeIntegration.getSupplyCadastre();
+			if (supplyCadastre == null || supplyCadastre <= 0) {
+				throw new InputValidationException("El insumo de catastro es requerido.");
+			}
+
+			// validation supply registration
+			Long supplyRegistration = requestMakeIntegration.getSupplyRegistration();
+			if (supplyRegistration == null || supplyRegistration <= 0) {
+				throw new InputValidationException("El insumo de registro es requerido.");
+			}
+
+			workspaceBusiness.makeIntegrationCadastreRegistration(municipalityId, supplyCadastre, supplyRegistration,
+					managerDto.getId());
+
+			httpStatus = HttpStatus.OK;
+			responseDto = new ErrorDto("test", 5);
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@makeIntegration#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@makeIntegration#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new ErrorDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@makeIntegration#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new ErrorDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
 }

@@ -28,9 +28,12 @@ public interface SupplyFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/supplies/v1/supplies", consumes = APPLICATION_JSON_VALUE)
 	public void createSupply(@RequestBody MicroserviceCreateSupplyDto createSupply);
-	
-	@GetMapping("/api/supplies/v1/supplies/{municipalityId}")
+
+	@GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
 	public List<MicroserviceSupplyDto> getSuppliesByMunicipalityCode(@PathVariable String municipalityId);
+
+	@GetMapping("/api/supplies/v1/supplies/{supplyId}")
+	public MicroserviceSupplyDto findSupplyById(@PathVariable Long supplyId);
 
 	class Configuration {
 

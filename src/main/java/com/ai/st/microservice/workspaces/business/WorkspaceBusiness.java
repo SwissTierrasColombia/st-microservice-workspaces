@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MilestoneDto;
@@ -33,8 +34,11 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequest
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
+import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.StateEntity;
@@ -44,7 +48,7 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceStateEntity;
 
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-
+import com.ai.st.microservice.workspaces.services.IIntegrationService;
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
@@ -84,7 +88,13 @@ public class WorkspaceBusiness {
 	private IStateService stateService;
 
 	@Autowired
+	private IIntegrationService integrationService;
+
+	@Autowired
 	private RabbitMQSenderService rabbitMQSender;
+
+	@Autowired
+	private SupplyFeignClient supplyClient;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -930,6 +940,63 @@ public class WorkspaceBusiness {
 		}
 
 		return listPendingRequestsDto;
+	}
+
+	public void makeIntegrationCadastreRegistration(Long municipalityId, Long supplyIdCadastre,
+			Long supplyIdRegistration, Long managerCode) throws BusinessException {
+
+		// validate if the municipality exists
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+		if (!(municipalityEntity instanceof MunicipalityEntity)) {
+			throw new BusinessException("El municipio no existe.");
+		}
+
+		// validate if there is an integration running
+		IntegrationEntity integrationPending = integrationService
+				.getIntegrationByMunicipalityActive(municipalityEntity);
+
+		if (integrationPending instanceof IntegrationEntity) {
+			throw new BusinessException("Existe una integración en curso para el municipio.");
+		}
+
+		// validate cadastre
+		MicroserviceSupplyDto supplyCadastreDto = null;
+		try {
+
+			supplyCadastreDto = supplyClient.findSupplyById(supplyIdCadastre);
+
+			MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+					.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode());
+
+			supplyCadastreDto.setTypeSupply(typeSupplyDto);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+		}
+		if (supplyCadastreDto.getTypeSupply().getProvider().getProviderCategory().getId() != 1) {
+			throw new BusinessException("El insumo de catastro es inválido.");
+		}
+
+		// validate register
+		MicroserviceSupplyDto supplyRegisteredDto = null;
+		try {
+
+			supplyRegisteredDto = supplyClient.findSupplyById(supplyIdRegistration);
+
+			MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+					.findTypeSuppleById(supplyRegisteredDto.getTypeSupplyCode());
+
+			supplyRegisteredDto.setTypeSupply(typeSupplyDto);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+		}
+		if (supplyRegisteredDto.getTypeSupply().getProvider().getProviderCategory().getId() != 2) {
+			throw new BusinessException("El insumo de registro es inválido.");
+		}
+
+		System.out.println("HOLAA: ");
+
 	}
 
 }

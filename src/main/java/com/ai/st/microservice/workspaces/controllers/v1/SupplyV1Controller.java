@@ -1,5 +1,7 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -53,6 +56,7 @@ public class SupplyV1Controller {
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
 	public ResponseEntity<?> getSuppliesByMunicipality(@PathVariable Long municipalityId,
+			@RequestParam(name = "extensions", required = false) List<String> extensions,
 			@RequestHeader("authorization") String headerAuthorization) {
 
 		HttpStatus httpStatus = null;
@@ -78,7 +82,7 @@ public class SupplyV1Controller {
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
-				responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId);
+				responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions);
 
 			} else if (roleManager instanceof MicroserviceRoleDto) {
 
@@ -91,7 +95,8 @@ public class SupplyV1Controller {
 							"No se ha podido establecer conexión con el microservicio de gestores.");
 				}
 
-				responseDto = supplyBusiness.getSuppliesByMunicipalityManager(municipalityId, managerDto.getId());
+				responseDto = supplyBusiness.getSuppliesByMunicipalityManager(municipalityId, managerDto.getId(),
+						extensions);
 			}
 
 			httpStatus = HttpStatus.OK;
