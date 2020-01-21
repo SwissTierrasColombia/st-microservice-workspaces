@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.workspaces.business.AdministrationBusiness;
 import com.ai.st.microservice.workspaces.dto.CreateUserDto;
-import com.ai.st.microservice.workspaces.dto.ErrorDto;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
@@ -54,11 +54,11 @@ public class AdministrationV1Controller {
 		}  catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);

@@ -27,7 +27,7 @@ import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.CreateWorkspaceDto;
-import com.ai.st.microservice.workspaces.dto.ErrorDto;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
@@ -134,15 +134,15 @@ public class WorkspaceV1Controller {
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -313,19 +313,19 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -406,19 +406,19 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -478,15 +478,15 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -544,15 +544,15 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceById#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceById#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceById#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -610,15 +610,15 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -681,15 +681,15 @@ public class WorkspaceV1Controller {
 			log.error(
 					"Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -745,20 +745,20 @@ public class WorkspaceV1Controller {
 					managerDto.getId());
 
 			httpStatus = HttpStatus.OK;
-			responseDto = new ErrorDto("test", 5);
+			responseDto = new BasicResponseDto("¡Se ha iniciado la integración!", 7);
 
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@makeIntegration#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@makeIntegration#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@makeIntegration#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);

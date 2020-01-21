@@ -31,12 +31,31 @@ public class IntegrationEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date startedAt;
 
-	@Column(name = "finished_at", nullable = false)
+	@Column(name = "finished_at", nullable = true)
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date finishedAt;
 
-	@Column(name = "pending", nullable = false)
-	private Boolean pending;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "integration_state_id", referencedColumnName = "id", nullable = false)
+	private IntegrationStateEntity state;
+
+	@Column(name = "hostname", nullable = false)
+	private String hostname;
+
+	@Column(name = "port", nullable = false)
+	private String port;
+
+	@Column(name = "database", nullable = false)
+	private String database;
+
+	@Column(name = "schema", nullable = false)
+	private String schema;
+
+	@Column(name = "username", nullable = false)
+	private String username;
+
+	@Column(name = "password", nullable = false)
+	private String password;
 
 	public IntegrationEntity() {
 
@@ -74,12 +93,60 @@ public class IntegrationEntity {
 		this.finishedAt = finishedAt;
 	}
 
-	public Boolean getPending() {
-		return pending;
+	public String getHostname() {
+		return hostname;
 	}
 
-	public void setPending(Boolean pending) {
-		this.pending = pending;
+	public void setHostname(String hostname) {
+		this.hostname = hostname;
+	}
+
+	public String getPort() {
+		return port;
+	}
+
+	public void setPort(String port) {
+		this.port = port;
+	}
+
+	public String getDatabase() {
+		return database;
+	}
+
+	public void setDatabase(String database) {
+		this.database = database;
+	}
+
+	public String getSchema() {
+		return schema;
+	}
+
+	public void setSchema(String schema) {
+		this.schema = schema;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public IntegrationStateEntity getState() {
+		return state;
+	}
+
+	public void setState(IntegrationStateEntity state) {
+		this.state = state;
 	}
 
 }

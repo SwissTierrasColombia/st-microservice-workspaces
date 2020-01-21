@@ -8,11 +8,14 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ai.st.microservice.workspaces.clients.IliFeignClient;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
@@ -27,6 +30,7 @@ import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
@@ -36,9 +40,11 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
+import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.StateEntity;
@@ -49,6 +55,7 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceStateEntity;
 
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
+import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
@@ -59,6 +66,15 @@ import feign.FeignException;
 
 @Component
 public class WorkspaceBusiness {
+
+	@Value("${integrations.database.hostname}")
+	private String databaseIntegrationHost;
+
+	@Value("${integrations.database.port}")
+	private String databaseIntegrationPort;
+
+	@Value("${integrations.database.schema}")
+	private String databaseIntegrationSchema;
 
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_MANAGER = (long) 1;
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_OPERATOR = (long) 2;
@@ -95,6 +111,18 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private SupplyFeignClient supplyClient;
+
+	@Autowired
+	private IliFeignClient iliClient;
+
+	@Autowired
+	private DatabaseIntegrationBusiness databaseIntegration;
+
+	@Autowired
+	private CrytpoBusiness cryptoBusiness;
+
+	@Autowired
+	private IIntegrationStateService integrationStateService;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -951,9 +979,12 @@ public class WorkspaceBusiness {
 			throw new BusinessException("El municipio no existe.");
 		}
 
+		IntegrationStateEntity stateStarted = integrationStateService
+				.getIntegrationStateById(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
+
 		// validate if there is an integration running
 		IntegrationEntity integrationPending = integrationService
-				.getIntegrationByMunicipalityActive(municipalityEntity);
+				.getIntegrationByMunicipalityAndState(municipalityEntity, stateStarted);
 
 		if (integrationPending instanceof IntegrationEntity) {
 			throw new BusinessException("Existe una integración en curso para el municipio.");
@@ -961,6 +992,7 @@ public class WorkspaceBusiness {
 
 		// validate cadastre
 		MicroserviceSupplyDto supplyCadastreDto = null;
+		String pathFileCadastre = null;
 		try {
 
 			supplyCadastreDto = supplyClient.findSupplyById(supplyIdCadastre);
@@ -970,15 +1002,22 @@ public class WorkspaceBusiness {
 
 			supplyCadastreDto.setTypeSupply(typeSupplyDto);
 
+			MicroserviceSupplyAttachmentDto attachment = supplyCadastreDto.getAttachments().get(0);
+			pathFileCadastre = attachment.getUrlDocumentaryRepository();
+
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
 		}
 		if (supplyCadastreDto.getTypeSupply().getProvider().getProviderCategory().getId() != 1) {
 			throw new BusinessException("El insumo de catastro es inválido.");
 		}
+		if (!supplyCadastreDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+			throw new BusinessException("El insumo no pertenece al municipio.");
+		}
 
 		// validate register
 		MicroserviceSupplyDto supplyRegisteredDto = null;
+		String pathFileRegistration = null;
 		try {
 
 			supplyRegisteredDto = supplyClient.findSupplyById(supplyIdRegistration);
@@ -988,14 +1027,73 @@ public class WorkspaceBusiness {
 
 			supplyRegisteredDto.setTypeSupply(typeSupplyDto);
 
+			MicroserviceSupplyAttachmentDto attachment = supplyRegisteredDto.getAttachments().get(0);
+			pathFileRegistration = attachment.getUrlDocumentaryRepository();
+
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
 		}
 		if (supplyRegisteredDto.getTypeSupply().getProvider().getProviderCategory().getId() != 2) {
 			throw new BusinessException("El insumo de registro es inválido.");
 		}
+		if (!supplyRegisteredDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+			throw new BusinessException("El insumo no pertenece al municipio.");
+		}
 
-		System.out.println("HOLAA: ");
+		if (pathFileCadastre == null || pathFileRegistration == null) {
+			throw new BusinessException("No se puede realizar la integración con los insumos seleccionados.");
+		}
+
+		String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
+		String randomUsername = RandomStringUtils.random(8, true, false).toLowerCase();
+		String randomPassword = RandomStringUtils.random(10, true, true);
+
+		// create database
+		try {
+
+			System.out.println("database: " + randomDatabaseName);
+			System.out.println("username: " + randomUsername);
+			System.out.println("password: " + randomPassword);
+
+			databaseIntegration.createDatabase(randomDatabaseName, randomUsername, randomPassword);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido iniciar la integración.");
+		}
+
+		try {
+			MicroserviceIntegrationCadastreRegistrationDto integrationDto = new MicroserviceIntegrationCadastreRegistrationDto();
+
+			integrationDto.setCadastrePathXTF(pathFileCadastre);
+			integrationDto.setRegistrationPathXTF(pathFileRegistration);
+			integrationDto.setDatabaseHost(databaseIntegrationHost);
+			integrationDto.setDatabaseName(randomDatabaseName);
+			integrationDto.setDatabasePassword(randomPassword);
+			integrationDto.setDatabasePort(databaseIntegrationPort);
+			integrationDto.setDatabaseSchema(databaseIntegrationSchema);
+			integrationDto.setDatabaseUsername(randomUsername);
+
+			iliClient.startIntegrationCadastreRegistration(integrationDto);
+
+			IntegrationEntity integrationEntity = new IntegrationEntity();
+			integrationEntity.setDatabase(cryptoBusiness.encrypt(randomDatabaseName));
+			integrationEntity.setHostname(cryptoBusiness.encrypt(databaseIntegrationHost));
+			integrationEntity.setMunicipality(municipalityEntity);
+			integrationEntity.setPassword(cryptoBusiness.encrypt(randomPassword));
+			integrationEntity.setState(stateStarted);
+			integrationEntity.setPort(cryptoBusiness.encrypt(databaseIntegrationPort));
+			integrationEntity.setSchema(cryptoBusiness.encrypt(databaseIntegrationSchema));
+			integrationEntity.setStartedAt(new Date());
+			integrationEntity.setUsername(cryptoBusiness.encrypt(randomUsername));
+			integrationService.createIntegration(integrationEntity);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido iniciar la integración.");
+		}
+
+	}
+
+	public void updateIntegration() {
 
 	}
 

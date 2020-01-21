@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.workspaces.business.TaskBusiness;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.ErrorDto;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -72,15 +72,15 @@ public class TaskV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error TaskV1Controller@createRequest#getPendingTasks ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error TaskV1Controller@createRequest#getPendingTasks ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error TaskV1Controller@createRequest#getPendingTasks ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
