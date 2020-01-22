@@ -338,7 +338,7 @@ public class WorkspaceBusiness {
 		OperatorDto operatorDto = null;
 		try {
 			operatorDto = operatorClient.findById(operatorCode);
-		} catch (FeignException e) {
+		} catch (Exception e) {
 			throw new BusinessException("No se ha encontrado el operador.");
 		}
 

@@ -2,6 +2,8 @@ package com.ai.st.microservice.workspaces.clients;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+import java.util.List;
+
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 
 import feign.Feign;
@@ -33,6 +36,9 @@ public interface ManagerFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceManagerUserDto addUserToManager(@RequestBody MicroserviceAddUserToManagerDto data);
+	
+	@GetMapping("/api/managers/v1/users/{userCode}/profiles")
+	public List<MicroserviceManagerProfileDto> findProfilesByUser(@PathVariable Long userCode);
 
 	class Configuration {
 
