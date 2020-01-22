@@ -1,5 +1,7 @@
 package com.ai.st.microservice.workspaces.services;
 
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
-import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.repositories.IntegrationRepository;
 
 @Service
@@ -23,9 +25,30 @@ public class IntegrationService implements IIntegrationService {
 	}
 
 	@Override
-	public IntegrationEntity getIntegrationByMunicipalityAndState(MunicipalityEntity municipality,
+	public IntegrationEntity getIntegrationByWorkspaceAndState(WorkspaceEntity workspace,
 			IntegrationStateEntity state) {
-		return integrationRepository.findByStateAndMunicipality(state, municipality);
+		return integrationRepository.findByWorkspaceAndState(workspace, state);
+	}
+
+	@Override
+	public List<IntegrationEntity> getIntegrationByWorkspaceAndStates(Long workspaceId, List<Long> states) {
+		return integrationRepository.findIntegrationsByWorkspaceAndStates(workspaceId, states);
+	}
+
+	@Override
+	public IntegrationEntity getIntegrationById(Long id) {
+		return integrationRepository.findById(id).orElse(null);
+	}
+
+	@Override
+	@Transactional
+	public IntegrationEntity updateIntegration(IntegrationEntity integrationEntity) {
+		return integrationRepository.save(integrationEntity);
+	}
+
+	@Override
+	public List<IntegrationEntity> getIntegrationByWorkspace(WorkspaceEntity workspaceEntity) {
+		return integrationRepository.findByWorkspace(workspaceEntity);
 	}
 
 }

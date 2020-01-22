@@ -1,7 +1,10 @@
 package com.ai.st.microservice.workspaces.entities;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,6 +13,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -24,8 +28,8 @@ public class IntegrationEntity {
 	private Long id;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "municipality_id", referencedColumnName = "id", nullable = false)
-	private MunicipalityEntity municipality;
+	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = false)
+	private WorkspaceEntity workspace;
 
 	@Column(name = "started_at", nullable = false)
 	@Temporal(TemporalType.TIMESTAMP)
@@ -57,6 +61,18 @@ public class IntegrationEntity {
 	@Column(name = "password", nullable = false)
 	private String password;
 
+	@Column(name = "supply_cadastre_id", nullable = false)
+	private Long supplyCadastreId;
+
+	@Column(name = "supply_snr_id", nullable = false)
+	private Long supplySnrId;
+
+	@Column(name = "supply_ant_id", nullable = true)
+	private Long supplyAntId;
+
+	@OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
+	private List<IntegrationStatEntity> stats = new ArrayList<IntegrationStatEntity>();
+
 	public IntegrationEntity() {
 
 	}
@@ -67,14 +83,6 @@ public class IntegrationEntity {
 
 	public void setId(Long id) {
 		this.id = id;
-	}
-
-	public MunicipalityEntity getMunicipality() {
-		return municipality;
-	}
-
-	public void setMunicipality(MunicipalityEntity municipality) {
-		this.municipality = municipality;
 	}
 
 	public Date getStartedAt() {
@@ -147,6 +155,46 @@ public class IntegrationEntity {
 
 	public void setState(IntegrationStateEntity state) {
 		this.state = state;
+	}
+
+	public WorkspaceEntity getWorkspace() {
+		return workspace;
+	}
+
+	public void setWorkspace(WorkspaceEntity workspace) {
+		this.workspace = workspace;
+	}
+
+	public List<IntegrationStatEntity> getStats() {
+		return stats;
+	}
+
+	public void setStats(List<IntegrationStatEntity> stats) {
+		this.stats = stats;
+	}
+
+	public Long getSupplyCadastreId() {
+		return supplyCadastreId;
+	}
+
+	public void setSupplyCadastreId(Long supplyCadastreId) {
+		this.supplyCadastreId = supplyCadastreId;
+	}
+
+	public Long getSupplySnrId() {
+		return supplySnrId;
+	}
+
+	public void setSupplySnrId(Long supplySnrId) {
+		this.supplySnrId = supplySnrId;
+	}
+
+	public Long getSupplyAntId() {
+		return supplyAntId;
+	}
+
+	public void setSupplyAntId(Long supplyAntId) {
+		this.supplyAntId = supplyAntId;
 	}
 
 }

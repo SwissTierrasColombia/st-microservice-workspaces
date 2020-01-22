@@ -14,6 +14,7 @@ public class MicroserviceIntegrationCadastreRegistrationDto implements Serializa
 	private String databaseName;
 	private String cadastrePathXTF;
 	private String registrationPathXTF;
+	private Long integrationId;
 
 	public MicroserviceIntegrationCadastreRegistrationDto() {
 
@@ -81,6 +82,14 @@ public class MicroserviceIntegrationCadastreRegistrationDto implements Serializa
 
 	public void setRegistrationPathXTF(String registrationPathXTF) {
 		this.registrationPathXTF = registrationPathXTF;
+	}
+
+	public Long getIntegrationId() {
+		return integrationId;
+	}
+
+	public void setIntegrationId(Long integrationId) {
+		this.integrationId = integrationId;
 	}
 
 }

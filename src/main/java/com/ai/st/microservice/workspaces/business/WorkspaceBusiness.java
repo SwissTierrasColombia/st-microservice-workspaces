@@ -22,6 +22,7 @@ import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
+import com.ai.st.microservice.workspaces.dto.IntegrationDto;
 import com.ai.st.microservice.workspaces.dto.MilestoneDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.StateDto;
@@ -92,6 +93,12 @@ public class WorkspaceBusiness {
 	private UserFeignClient userClient;
 
 	@Autowired
+	private SupplyFeignClient supplyClient;
+
+	@Autowired
+	private IliFeignClient iliClient;
+
+	@Autowired
 	private IMunicipalityService municipalityService;
 
 	@Autowired
@@ -107,22 +114,19 @@ public class WorkspaceBusiness {
 	private IIntegrationService integrationService;
 
 	@Autowired
-	private RabbitMQSenderService rabbitMQSender;
+	private RabbitMQSenderService rabbitMQSenderService;
 
 	@Autowired
-	private SupplyFeignClient supplyClient;
+	private IIntegrationStateService integrationStateService;
 
 	@Autowired
-	private IliFeignClient iliClient;
-
-	@Autowired
-	private DatabaseIntegrationBusiness databaseIntegration;
+	private DatabaseIntegrationBusiness databaseIntegrationBusiness;
 
 	@Autowired
 	private CrytpoBusiness cryptoBusiness;
 
 	@Autowired
-	private IIntegrationStateService integrationStateService;
+	private IntegrationBusiness integrationBusiness;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -155,7 +159,7 @@ public class WorkspaceBusiness {
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 
-			urlDocumentaryRepository = rabbitMQSender.sendFile(supportFile.getBytes(),
+			urlDocumentaryRepository = rabbitMQSenderService.sendFile(supportFile.getBytes(),
 					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
 
 		} catch (IOException e) {
@@ -351,7 +355,7 @@ public class WorkspaceBusiness {
 
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
 
-			urlDocumentaryRepository = rabbitMQSender.sendFile(supportFile.getBytes(),
+			urlDocumentaryRepository = rabbitMQSenderService.sendFile(supportFile.getBytes(),
 					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
 
 		} catch (IOException e) {
@@ -979,14 +983,20 @@ public class WorkspaceBusiness {
 			throw new BusinessException("El municipio no existe.");
 		}
 
-		IntegrationStateEntity stateStarted = integrationStateService
-				.getIntegrationStateById(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
+		WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+		if (!(workspaceActive instanceof WorkspaceEntity)) {
+			throw new BusinessException("El municipio no cuenta con un espacio de trabajo activo.");
+		}
 
 		// validate if there is an integration running
-		IntegrationEntity integrationPending = integrationService
-				.getIntegrationByMunicipalityAndState(municipalityEntity, stateStarted);
-
-		if (integrationPending instanceof IntegrationEntity) {
+		List<Long> statesId = new ArrayList<>();
+		statesId.add(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
+		statesId.add(IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC);
+		statesId.add(IntegrationStateBusiness.STATE_STARTED_ASSISTED);
+		statesId.add(IntegrationStateBusiness.STATE_FINISHED_ASSISTED);
+		List<IntegrationEntity> integrationsPending = integrationService
+				.getIntegrationByWorkspaceAndStates(workspaceActive.getId(), statesId);
+		if (integrationsPending.size() > 0) {
 			throw new BusinessException("Existe una integración en curso para el municipio.");
 		}
 
@@ -1050,15 +1060,28 @@ public class WorkspaceBusiness {
 
 		// create database
 		try {
-
-			System.out.println("database: " + randomDatabaseName);
-			System.out.println("username: " + randomUsername);
-			System.out.println("password: " + randomPassword);
-
-			databaseIntegration.createDatabase(randomDatabaseName, randomUsername, randomPassword);
-
+			databaseIntegrationBusiness.createDatabase(randomDatabaseName, randomUsername, randomPassword);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido iniciar la integración.");
+		}
+
+		Long integrationId = null;
+		try {
+
+			IntegrationStateEntity stateStarted = integrationStateService
+					.getIntegrationStateById(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
+
+			IntegrationDto integrationDto = integrationBusiness.createIntegration(
+					cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(databaseIntegrationPort),
+					cryptoBusiness.encrypt(randomDatabaseName), cryptoBusiness.encrypt(databaseIntegrationSchema),
+					cryptoBusiness.encrypt(randomUsername), cryptoBusiness.encrypt(randomPassword),
+					supplyCadastreDto.getId(), supplyRegisteredDto.getId(), null,
+					workspaceActive, stateStarted);
+
+			integrationId = integrationDto.getId();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido crear la integración.");
 		}
 
 		try {
@@ -1072,28 +1095,14 @@ public class WorkspaceBusiness {
 			integrationDto.setDatabasePort(databaseIntegrationPort);
 			integrationDto.setDatabaseSchema(databaseIntegrationSchema);
 			integrationDto.setDatabaseUsername(randomUsername);
+			integrationDto.setIntegrationId(integrationId);
 
 			iliClient.startIntegrationCadastreRegistration(integrationDto);
 
-			IntegrationEntity integrationEntity = new IntegrationEntity();
-			integrationEntity.setDatabase(cryptoBusiness.encrypt(randomDatabaseName));
-			integrationEntity.setHostname(cryptoBusiness.encrypt(databaseIntegrationHost));
-			integrationEntity.setMunicipality(municipalityEntity);
-			integrationEntity.setPassword(cryptoBusiness.encrypt(randomPassword));
-			integrationEntity.setState(stateStarted);
-			integrationEntity.setPort(cryptoBusiness.encrypt(databaseIntegrationPort));
-			integrationEntity.setSchema(cryptoBusiness.encrypt(databaseIntegrationSchema));
-			integrationEntity.setStartedAt(new Date());
-			integrationEntity.setUsername(cryptoBusiness.encrypt(randomUsername));
-			integrationService.createIntegration(integrationEntity);
-
 		} catch (Exception e) {
+			integrationBusiness.updateStateToIntegration(integrationId, IntegrationStateBusiness.STATE_ERROR);
 			throw new BusinessException("No se ha podido iniciar la integración.");
 		}
-
-	}
-
-	public void updateIntegration() {
 
 	}
 
