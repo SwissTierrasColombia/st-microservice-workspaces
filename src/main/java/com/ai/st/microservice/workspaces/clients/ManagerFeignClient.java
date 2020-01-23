@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
@@ -39,6 +40,10 @@ public interface ManagerFeignClient {
 	
 	@GetMapping("/api/managers/v1/users/{userCode}/profiles")
 	public List<MicroserviceManagerProfileDto> findProfilesByUser(@PathVariable Long userCode);
+	
+	@GetMapping("/api/managers/v1/managers/{managerId}/users")
+	public List<MicroserviceManagerUserDto> findUsersByManager(@PathVariable Long managerId,
+			@RequestParam(required = false, name = "profiles") List<Long> profiles);
 
 	class Configuration {
 

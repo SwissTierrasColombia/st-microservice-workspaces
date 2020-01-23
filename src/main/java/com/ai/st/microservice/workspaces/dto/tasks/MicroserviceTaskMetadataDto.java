@@ -1,23 +1,15 @@
 package com.ai.st.microservice.workspaces.dto.tasks;
 
 import java.io.Serializable;
+import java.util.List;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
-@ApiModel(value = "TaskMedataDto", description = "Task Metadata")
 public class MicroserviceTaskMetadataDto implements Serializable {
 
 	private static final long serialVersionUID = 5451686139173510244L;
 
-	@ApiModelProperty(required = true, notes = "Id")
 	private Long id;
-
-	@ApiModelProperty(required = true, notes = "Key")
 	private String key;
-
-	@ApiModelProperty(required = true, notes = "Value")
-	private String value;
+	private List<MicroserviceTaskMetadataPropertyDto> properties;
 
 	public MicroserviceTaskMetadataDto() {
 
@@ -39,12 +31,12 @@ public class MicroserviceTaskMetadataDto implements Serializable {
 		this.key = key;
 	}
 
-	public String getValue() {
-		return value;
+	public List<MicroserviceTaskMetadataPropertyDto> getProperties() {
+		return properties;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setProperties(List<MicroserviceTaskMetadataPropertyDto> properties) {
+		this.properties = properties;
 	}
 
 }

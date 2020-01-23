@@ -372,7 +372,7 @@ public class WorkspaceV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			// get manager			
+			// get manager
 			MicroserviceManagerDto managerDto = null;
 			MicroserviceManagerProfileDto profileDirector = null;
 			try {
@@ -730,7 +730,7 @@ public class WorkspaceV1Controller {
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Integration done", response = BasicResponseDto.class),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
-	public ResponseEntity<?> makeIntegration(@PathVariable Long municipalityId,
+	public ResponseEntity<?> makeIntegrationAutomatic(@PathVariable Long municipalityId,
 			@RequestBody MakeIntegrationDto requestMakeIntegration,
 			@RequestHeader("authorization") String headerAuthorization) {
 
@@ -865,6 +865,70 @@ public class WorkspaceV1Controller {
 			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getIntegrationsByWorkspace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/integrations/{integrationId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get integrations by workspace")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get integrations", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> startIntegrationAssisted(@PathVariable Long workspaceId, @PathVariable Long integrationId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			responseDto = workspaceBusiness.startIntegrationAssisted(workspaceId, integrationId, managerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@startIntegrationAssisted#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@startIntegrationAssisted#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@startIntegrationAssisted#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}

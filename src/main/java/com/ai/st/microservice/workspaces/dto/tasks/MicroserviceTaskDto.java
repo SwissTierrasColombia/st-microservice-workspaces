@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -45,6 +46,9 @@ public class MicroserviceTaskDto implements Serializable {
 
 	@ApiModelProperty(required = true, notes = "Steps")
 	private List<MicroserviceTaskStepDto> steps;
+
+	@ApiModelProperty(required = true, notes = "JSON extra data")
+	private Map<String, Object> data;
 
 	public MicroserviceTaskDto() {
 		this.members = new ArrayList<MicroserviceTaskMemberDto>();
@@ -139,6 +143,14 @@ public class MicroserviceTaskDto implements Serializable {
 
 	public void setSteps(List<MicroserviceTaskStepDto> steps) {
 		this.steps = steps;
+	}
+
+	public Map<String, Object> getData() {
+		return data;
+	}
+
+	public void setData(Map<String, Object> data) {
+		this.data = data;
 	}
 
 }

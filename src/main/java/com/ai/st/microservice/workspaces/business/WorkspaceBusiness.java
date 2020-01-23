@@ -33,7 +33,7 @@ import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
@@ -43,6 +43,9 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskMetadataDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskPropertyDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskStepDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
@@ -127,6 +130,9 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private IntegrationBusiness integrationBusiness;
+
+	@Autowired
+	private TaskBusiness taskBusiness;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -1075,8 +1081,7 @@ public class WorkspaceBusiness {
 					cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(databaseIntegrationPort),
 					cryptoBusiness.encrypt(randomDatabaseName), cryptoBusiness.encrypt(databaseIntegrationSchema),
 					cryptoBusiness.encrypt(randomUsername), cryptoBusiness.encrypt(randomPassword),
-					supplyCadastreDto.getId(), supplyRegisteredDto.getId(), null,
-					workspaceActive, stateStarted);
+					supplyCadastreDto.getId(), supplyRegisteredDto.getId(), null, workspaceActive, stateStarted);
 
 			integrationId = integrationDto.getId();
 
@@ -1104,6 +1109,105 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha podido iniciar la integración.");
 		}
 
+	}
+
+	public IntegrationDto startIntegrationAssisted(Long workspaceId, Long integrationId, Long managerCode)
+			throws BusinessException {
+
+		IntegrationDto integrationDto = null;
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración.");
+		}
+
+		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
+		}
+
+//		if (integrationEntity.getState().getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC) {
+//			throw new BusinessException(
+//					"No se puede iniciar la integración asistida ya que no se encuentra en estado finalizado automático.");
+//		}
+
+		// modify integration state
+		integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
+				IntegrationStateBusiness.STATE_STARTED_ASSISTED);
+
+		// create tasks
+
+		try {
+
+			List<Long> profiles = new ArrayList<>();
+			profiles.add(RoleBusiness.SUB_ROLE_INTEGRATOR);
+
+			List<MicroserviceManagerUserDto> listUsersIntegrators = managerClient.findUsersByManager(managerCode,
+					profiles);
+
+			List<Long> users = new ArrayList<>();
+			for (MicroserviceManagerUserDto managerUserDto : listUsersIntegrators) {
+				users.add(managerUserDto.getUserCode());
+			}
+
+			List<Long> taskCategories = new ArrayList<>();
+			taskCategories.add(TaskBusiness.TASK_CATEGORY_INTEGRATION);
+
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DAY_OF_MONTH, 30);
+
+			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+			String description = "Integración catastro-registro " + municipalityEntity.getName().toLowerCase();
+			String name = "Integración catastro-registro " + municipalityEntity.getName().toLowerCase();
+
+			List<MicroserviceCreateTaskMetadataDto> metadata = new ArrayList<>();
+
+			MicroserviceCreateTaskMetadataDto metadataConnection = new MicroserviceCreateTaskMetadataDto();
+			metadataConnection.setKey("connection");
+			List<MicroserviceCreateTaskPropertyDto> listPropertiesConnection = new ArrayList<>();
+			listPropertiesConnection
+					.add(new MicroserviceCreateTaskPropertyDto("host", integrationEntity.getHostname()));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("port", integrationEntity.getPort()));
+			listPropertiesConnection
+					.add(new MicroserviceCreateTaskPropertyDto("database", integrationEntity.getDatabase()));
+			listPropertiesConnection
+					.add(new MicroserviceCreateTaskPropertyDto("schema", integrationEntity.getSchema()));
+			listPropertiesConnection
+					.add(new MicroserviceCreateTaskPropertyDto("username", integrationEntity.getUsername()));
+			listPropertiesConnection
+					.add(new MicroserviceCreateTaskPropertyDto("password", integrationEntity.getPassword()));
+			metadataConnection.setProperties(listPropertiesConnection);
+			metadata.add(metadataConnection);
+
+			MicroserviceCreateTaskMetadataDto metadataIntegration = new MicroserviceCreateTaskMetadataDto();
+			metadataIntegration.setKey("integration");
+			List<MicroserviceCreateTaskPropertyDto> listPropertiesIntegration = new ArrayList<>();
+			listPropertiesIntegration
+					.add(new MicroserviceCreateTaskPropertyDto("integration", integrationEntity.getId().toString()));
+
+			List<MicroserviceCreateTaskStepDto> steps = new ArrayList<>();
+			steps.add(new MicroserviceCreateTaskStepDto("Paso 1", "Ejemplo", TaskBusiness.TASK_TYPE_STEP_ALWAYS));
+
+			taskBusiness.createTask(taskCategories, sdf.format(cal.getTime()), description, name, users, metadata,
+					steps);
+
+		} catch (Exception e) {
+
+		}
+
+		return integrationDto;
 	}
 
 }

@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.business;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -9,12 +10,24 @@ import org.springframework.stereotype.Component;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskMetadataDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskStepDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataPropertyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 @Component
 public class TaskBusiness {
+
+	public static final Long TASK_CATEGORY_INTEGRATION = (long) 1;
+
+	public static final Long TASK_TYPE_STEP_ONCE = (long) 1;
+	public static final Long TASK_TYPE_STEP_ALWAYS = (long) 2;
 
 	@Autowired
 	private TaskFeignClient taskClient;
@@ -42,6 +55,25 @@ public class TaskBusiness {
 					members.add(member);
 				}
 				taskDto.setMembers(members);
+
+				JsonObject objectMetadata = new JsonObject();
+
+				for (MicroserviceTaskMetadataDto metadataDto : taskDto.getMetadata()) {
+
+					JsonObject objectProperties = new JsonObject();
+					for (MicroserviceTaskMetadataPropertyDto propertyDto : metadataDto.getProperties()) {
+						objectProperties.addProperty(propertyDto.getKey(), propertyDto.getValue());
+					}
+
+					objectMetadata.add(metadataDto.getKey(), objectProperties);
+
+				}
+
+				Gson gson = new Gson();
+				@SuppressWarnings("unchecked")
+				Map<String, Object> mapData = gson.fromJson(objectMetadata.toString(), Map.class);
+				taskDto.setData(mapData);
+
 				listTasksDto.add(taskDto);
 			}
 
@@ -50,6 +82,32 @@ public class TaskBusiness {
 		}
 
 		return listTasksDto;
+	}
+
+	public MicroserviceTaskDto createTask(List<Long> categories, String deadline, String description, String name,
+			List<Long> users, List<MicroserviceCreateTaskMetadataDto> metadata,
+			List<MicroserviceCreateTaskStepDto> steps) throws BusinessException {
+
+		MicroserviceTaskDto taskDto = null;
+
+		try {
+
+			MicroserviceCreateTaskDto createTask = new MicroserviceCreateTaskDto();
+			createTask.setCategories(categories);
+			createTask.setDeadline(deadline);
+			createTask.setDescription(description);
+			createTask.setMetadata(metadata);
+			createTask.setName(name);
+			createTask.setUsers(users);
+			createTask.setSteps(steps);
+
+			taskDto = taskClient.createTask(createTask);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido crear la tarea.");
+		}
+
+		return taskDto;
 	}
 
 }
