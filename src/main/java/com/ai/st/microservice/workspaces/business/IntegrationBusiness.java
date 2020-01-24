@@ -10,10 +10,12 @@ import org.springframework.stereotype.Component;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
+import com.ai.st.microservice.workspaces.dto.IntegrationHistoryDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStatDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStateDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
+import com.ai.st.microservice.workspaces.entities.IntegrationHistoryEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStatEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
@@ -61,6 +63,14 @@ public class IntegrationBusiness {
 		integrationEntity.setSupplyAntId(supplyAntId);
 		integrationEntity.setSupplyCadastreId(supplyCadastreId);
 		integrationEntity.setSupplySnrId(supplySnrId);
+
+		// set history
+		IntegrationHistoryEntity historyEntity = new IntegrationHistoryEntity();
+		historyEntity.setIntegration(integrationEntity);
+		historyEntity.setCreatedAt(integrationEntity.getStartedAt());
+		historyEntity.setState(stateEntity);
+		integrationEntity.getHistories().add(historyEntity);
+
 		integrationEntity = integrationService.createIntegration(integrationEntity);
 
 		return this.transformEntityToDto(integrationEntity);
@@ -98,7 +108,15 @@ public class IntegrationBusiness {
 			throw new BusinessException("No se ha encontrado el estado de integración");
 		}
 
+		// new integration history
+		IntegrationHistoryEntity historyEntity = new IntegrationHistoryEntity();
+		historyEntity.setIntegration(integrationEntity);
+		historyEntity.setCreatedAt(new Date());
+		historyEntity.setState(stateEntity);
+
+		integrationEntity.getHistories().add(historyEntity);
 		integrationEntity.setState(stateEntity);
+
 		integrationEntity = integrationService.updateIntegration(integrationEntity);
 
 		return this.transformEntityToDto(integrationEntity);
@@ -184,6 +202,21 @@ public class IntegrationBusiness {
 				statDto.setCreatedAt(statEntity.getCreatedAt());
 
 				integrationDto.getStats().add(statDto);
+			}
+		}
+
+		List<IntegrationHistoryEntity> histories = integrationEntity.getHistories();
+		if (histories.size() > 0) {
+			for (IntegrationHistoryEntity historyEntity : histories) {
+				IntegrationHistoryDto historyDto = new IntegrationHistoryDto();
+				historyDto.setId(historyEntity.getId());
+				historyDto.setCreatedAt(historyEntity.getCreatedAt());
+				IntegrationStateEntity stateHistoryEntity = historyEntity.getState();
+				historyDto.setState(new IntegrationStateDto(stateHistoryEntity.getId(), stateHistoryEntity.getName(),
+						stateHistoryEntity.getDescription()));
+
+				integrationDto.getHistories().add(historyDto);
+
 			}
 		}
 

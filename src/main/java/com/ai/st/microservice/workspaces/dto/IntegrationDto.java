@@ -66,8 +66,12 @@ public class IntegrationDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Stats")
 	private List<IntegrationStatDto> stats;
 
+	@ApiModelProperty(required = true, notes = "Histories")
+	private List<IntegrationHistoryDto> histories;
+
 	public IntegrationDto() {
 		this.stats = new ArrayList<>();
+		this.histories = new ArrayList<>();
 	}
 
 	public Long getId() {
@@ -204,6 +208,14 @@ public class IntegrationDto implements Serializable {
 
 	public void setSupplyAnt(MicroserviceSupplyDto supplyAnt) {
 		this.supplyAnt = supplyAnt;
+	}
+
+	public List<IntegrationHistoryDto> getHistories() {
+		return histories;
+	}
+
+	public void setHistories(List<IntegrationHistoryDto> histories) {
+		this.histories = histories;
 	}
 
 }

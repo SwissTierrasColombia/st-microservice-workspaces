@@ -73,6 +73,9 @@ public class IntegrationEntity {
 	@OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
 	private List<IntegrationStatEntity> stats = new ArrayList<IntegrationStatEntity>();
 
+	@OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
+	private List<IntegrationHistoryEntity> histories = new ArrayList<IntegrationHistoryEntity>();
+
 	public IntegrationEntity() {
 
 	}
@@ -195,6 +198,14 @@ public class IntegrationEntity {
 
 	public void setSupplyAntId(Long supplyAntId) {
 		this.supplyAntId = supplyAntId;
+	}
+
+	public List<IntegrationHistoryEntity> getHistories() {
+		return histories;
+	}
+
+	public void setHistories(List<IntegrationHistoryEntity> histories) {
+		this.histories = histories;
 	}
 
 }

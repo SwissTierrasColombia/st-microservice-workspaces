@@ -1198,7 +1198,15 @@ public class WorkspaceBusiness {
 					.add(new MicroserviceCreateTaskPropertyDto("integration", integrationEntity.getId().toString()));
 
 			List<MicroserviceCreateTaskStepDto> steps = new ArrayList<>();
-			steps.add(new MicroserviceCreateTaskStepDto("Paso 1", "Ejemplo", TaskBusiness.TASK_TYPE_STEP_ALWAYS));
+
+			steps.add(new MicroserviceCreateTaskStepDto("Conectar a BD remota", "Conectar a BD remota",
+					TaskBusiness.TASK_TYPE_STEP_ALWAYS));
+
+			steps.add(new MicroserviceCreateTaskStepDto("Explorar datos de Catastro y Registro.",
+					"Explorar datos de Catastro y Registro.", TaskBusiness.TASK_TYPE_STEP_ALWAYS));
+
+			steps.add(new MicroserviceCreateTaskStepDto("Realizar integración asistida.",
+					"Realizar integración asistida.", TaskBusiness.TASK_TYPE_STEP_ALWAYS));
 
 			taskBusiness.createTask(taskCategories, sdf.format(cal.getTime()), description, name, users, metadata,
 					steps);
