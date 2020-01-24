@@ -247,8 +247,14 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 				stateFinishedAssisted.setDescription("La integración ha finalizado de forma asistida.");
 				integrationStateService.createIntegrationState(stateFinishedAssisted);
 
+				IntegrationStateEntity stateGeneratingProduct = new IntegrationStateEntity();
+				stateGeneratingProduct.setId(IntegrationStateBusiness.STATE_GENERATING_PRODUCT);
+				stateGeneratingProduct.setName("GENERANDO PRODUCTO");
+				stateGeneratingProduct.setDescription("Se esta generando un producto.");
+				integrationStateService.createIntegrationState(stateGeneratingProduct);
+
 				IntegrationStateEntity stateProductGenerated = new IntegrationStateEntity();
-				stateProductGenerated.setId(IntegrationStateBusiness.STATE_PRODUCT_GENERATED);
+				stateProductGenerated.setId(IntegrationStateBusiness.STATE_GENERATED_PRODUCT);
 				stateProductGenerated.setName("PRODUCTO GENERADO");
 				stateProductGenerated.setDescription("Se ha generado ya un producto.");
 				integrationStateService.createIntegrationState(stateProductGenerated);
