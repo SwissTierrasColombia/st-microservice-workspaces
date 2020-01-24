@@ -1233,4 +1233,43 @@ public class WorkspaceBusiness {
 		return integrationDto;
 	}
 
+	public IntegrationDto exportXtf(Long workspaceId, Long integrationId, MicroserviceManagerDto managerDto,
+			MicroserviceUserDto userDto) throws BusinessException {
+
+		IntegrationDto integrationDto = null;
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerDto.getId() != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración.");
+		}
+
+		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
+		}
+
+		IntegrationStateEntity stateEntity = integrationEntity.getState();
+		if (stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_ASSISTED) {
+			throw new BusinessException(
+					"No se puede generar el producto porque la integración no esta finalizada de forma automática ni asistida.");
+		}
+
+		return integrationDto;
+	}
+
 }
