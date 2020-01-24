@@ -1136,10 +1136,10 @@ public class WorkspaceBusiness {
 			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
 		}
 
-//		if (integrationEntity.getState().getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC) {
-//			throw new BusinessException(
-//					"No se puede iniciar la integración asistida ya que no se encuentra en estado finalizado automático.");
-//		}
+		if (integrationEntity.getState().getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC) {
+			throw new BusinessException(
+					"No se puede iniciar la integración asistida ya que no se encuentra en estado finalizado automático.");
+		}
 
 		// modify integration state
 		integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
