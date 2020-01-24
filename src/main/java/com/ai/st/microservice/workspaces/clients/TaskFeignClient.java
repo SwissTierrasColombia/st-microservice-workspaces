@@ -29,7 +29,7 @@ public interface TaskFeignClient {
 	@GetMapping("/api/tasks/v1/tasks")
 	public List<MicroserviceTaskDto> findByUserAndState(
 			@RequestParam(required = false, name = "member") Long memberCode,
-			@RequestParam(required = false, name = "state") Long taskStateId);
+			@RequestParam(required = false, name = "states") List<Long> taskStates);
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/tasks/v1/tasks", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceTaskDto createTask(@RequestBody MicroserviceCreateTaskDto createtaskDto);

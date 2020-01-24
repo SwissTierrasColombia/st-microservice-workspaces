@@ -29,6 +29,11 @@ public class TaskBusiness {
 	public static final Long TASK_TYPE_STEP_ONCE = (long) 1;
 	public static final Long TASK_TYPE_STEP_ALWAYS = (long) 2;
 
+	public static final Long TASK_STATE_ASSIGNED = (long) 1;
+	public static final Long TASK_STATE_CLOSED = (long) 2;
+	public static final Long TASK_STATE_CANCELLED = (long) 3;
+	public static final Long TASK_STATE_STARTED = (long) 4;
+
 	@Autowired
 	private TaskFeignClient taskClient;
 
@@ -40,7 +45,12 @@ public class TaskBusiness {
 		List<MicroserviceTaskDto> listTasksDto = new ArrayList<MicroserviceTaskDto>();
 
 		try {
-			List<MicroserviceTaskDto> listResponseTasks = taskClient.findByUserAndState(userCode, (long) 1);
+
+			List<Long> taskStates = new ArrayList<>();
+			taskStates.add(TaskBusiness.TASK_STATE_ASSIGNED);
+			taskStates.add(TaskBusiness.TASK_STATE_STARTED);
+
+			List<MicroserviceTaskDto> listResponseTasks = taskClient.findByUserAndState(userCode, taskStates);
 
 			for (MicroserviceTaskDto taskDto : listResponseTasks) {
 
@@ -106,6 +116,15 @@ public class TaskBusiness {
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido crear la tarea.");
 		}
+
+		return taskDto;
+	}
+
+	public MicroserviceTaskDto startTask(Long taskId, Long userId) throws BusinessException {
+
+		MicroserviceTaskDto taskDto = null;
+		
+		
 
 		return taskDto;
 	}

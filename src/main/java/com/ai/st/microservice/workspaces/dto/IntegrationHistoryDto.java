@@ -20,6 +20,9 @@ public class IntegrationHistoryDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "State")
 	private IntegrationStateDto state;
 
+	@ApiModelProperty(required = true, notes = "User name")
+	private String userName;
+
 	public IntegrationHistoryDto() {
 
 	}
@@ -46,6 +49,14 @@ public class IntegrationHistoryDto implements Serializable {
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 
 }

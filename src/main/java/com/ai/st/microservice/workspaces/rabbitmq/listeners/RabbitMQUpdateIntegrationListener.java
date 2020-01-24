@@ -36,7 +36,8 @@ public class RabbitMQUpdateIntegrationListener {
 				log.info("Integration automatic finished with errors");
 			}
 
-			integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId);
+			integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, null, null,
+					"SISTEMA");
 
 		} catch (Exception e) {
 			log.error("Error RabbitMQUpdateIntegrationListener@updateIntegration#Business ---> " + e.getMessage());

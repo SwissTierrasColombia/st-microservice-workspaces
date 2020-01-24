@@ -48,7 +48,8 @@ public class IntegrationBusiness {
 
 	public IntegrationDto createIntegration(String hostname, String port, String database, String schema,
 			String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
-			WorkspaceEntity workspaceEntity, IntegrationStateEntity stateEntity) throws BusinessException {
+			WorkspaceEntity workspaceEntity, IntegrationStateEntity stateEntity, Long userCode, Long managerCode,
+			String user) throws BusinessException {
 
 		IntegrationEntity integrationEntity = new IntegrationEntity();
 		integrationEntity.setDatabase(database);
@@ -69,6 +70,9 @@ public class IntegrationBusiness {
 		historyEntity.setIntegration(integrationEntity);
 		historyEntity.setCreatedAt(integrationEntity.getStartedAt());
 		historyEntity.setState(stateEntity);
+		historyEntity.setUserCode(userCode);
+		historyEntity.setManagerCode(managerCode);
+		historyEntity.setUserName(user);
 		integrationEntity.getHistories().add(historyEntity);
 
 		integrationEntity = integrationService.createIntegration(integrationEntity);
@@ -96,7 +100,8 @@ public class IntegrationBusiness {
 		return this.transformEntityToDto(integrationEntity);
 	}
 
-	public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId) throws BusinessException {
+	public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId, Long userCode, Long managerCode,
+			String user) throws BusinessException {
 
 		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
 		if (!(integrationEntity instanceof IntegrationEntity)) {
@@ -113,6 +118,9 @@ public class IntegrationBusiness {
 		historyEntity.setIntegration(integrationEntity);
 		historyEntity.setCreatedAt(new Date());
 		historyEntity.setState(stateEntity);
+		historyEntity.setUserCode(userCode);
+		historyEntity.setManagerCode(managerCode);
+		historyEntity.setUserName(user);
 
 		integrationEntity.getHistories().add(historyEntity);
 		integrationEntity.setState(stateEntity);
@@ -214,6 +222,7 @@ public class IntegrationBusiness {
 				IntegrationStateEntity stateHistoryEntity = historyEntity.getState();
 				historyDto.setState(new IntegrationStateDto(stateHistoryEntity.getId(), stateHistoryEntity.getName(),
 						stateHistoryEntity.getDescription()));
+				historyDto.setUserName(historyEntity.getUserName());
 
 				integrationDto.getHistories().add(historyDto);
 

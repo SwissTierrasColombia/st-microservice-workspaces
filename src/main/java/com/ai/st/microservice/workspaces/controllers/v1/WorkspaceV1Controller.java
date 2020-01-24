@@ -783,7 +783,7 @@ public class WorkspaceV1Controller {
 			}
 
 			workspaceBusiness.makeIntegrationCadastreRegistration(municipalityId, supplyCadastre, supplyRegistration,
-					managerDto.getId());
+					managerDto, userDtoSession);
 
 			httpStatus = HttpStatus.OK;
 			responseDto = new BasicResponseDto("¡Se ha iniciado la integración!", 7);
@@ -916,7 +916,8 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("Acceso denegado.");
 			}
 
-			responseDto = workspaceBusiness.startIntegrationAssisted(workspaceId, integrationId, managerDto.getId());
+			responseDto = workspaceBusiness.startIntegrationAssisted(workspaceId, integrationId, managerDto,
+					userDtoSession);
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {

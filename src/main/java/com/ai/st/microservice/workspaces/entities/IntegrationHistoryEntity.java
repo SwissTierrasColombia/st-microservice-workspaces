@@ -35,6 +35,15 @@ public class IntegrationHistoryEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date createdAt;
 
+	@Column(name = "user_name", nullable = false, length = 300)
+	private String userName;
+
+	@Column(name = "user_code", nullable = true)
+	private Long userCode;
+
+	@Column(name = "manager_code", nullable = true)
+	private Long managerCode;
+
 	public IntegrationHistoryEntity() {
 
 	}
@@ -69,6 +78,30 @@ public class IntegrationHistoryEntity {
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public String getUserName() {
+		return userName;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+
+	public Long getUserCode() {
+		return userCode;
+	}
+
+	public void setUserCode(Long userCode) {
+		this.userCode = userCode;
+	}
+
+	public Long getManagerCode() {
+		return managerCode;
+	}
+
+	public void setManagerCode(Long managerCode) {
+		this.managerCode = managerCode;
 	}
 
 }

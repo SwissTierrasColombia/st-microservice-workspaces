@@ -981,7 +981,8 @@ public class WorkspaceBusiness {
 	}
 
 	public void makeIntegrationCadastreRegistration(Long municipalityId, Long supplyIdCadastre,
-			Long supplyIdRegistration, Long managerCode) throws BusinessException {
+			Long supplyIdRegistration, MicroserviceManagerDto managerDto, MicroserviceUserDto userDto)
+			throws BusinessException {
 
 		// validate if the municipality exists
 		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -992,6 +993,10 @@ public class WorkspaceBusiness {
 		WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
 		if (!(workspaceActive instanceof WorkspaceEntity)) {
 			throw new BusinessException("El municipio no cuenta con un espacio de trabajo activo.");
+		}
+
+		if (managerDto.getId() != workspaceActive.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
 		// validate if there is an integration running
@@ -1077,11 +1082,14 @@ public class WorkspaceBusiness {
 			IntegrationStateEntity stateStarted = integrationStateService
 					.getIntegrationStateById(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
 
+			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
+
 			IntegrationDto integrationDto = integrationBusiness.createIntegration(
 					cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(databaseIntegrationPort),
 					cryptoBusiness.encrypt(randomDatabaseName), cryptoBusiness.encrypt(databaseIntegrationSchema),
 					cryptoBusiness.encrypt(randomUsername), cryptoBusiness.encrypt(randomPassword),
-					supplyCadastreDto.getId(), supplyRegisteredDto.getId(), null, workspaceActive, stateStarted);
+					supplyCadastreDto.getId(), supplyRegisteredDto.getId(), null, workspaceActive, stateStarted,
+					userDto.getId(), managerDto.getId(), textHistory);
 
 			integrationId = integrationDto.getId();
 
@@ -1105,14 +1113,15 @@ public class WorkspaceBusiness {
 			iliClient.startIntegrationCadastreRegistration(integrationDto);
 
 		} catch (Exception e) {
-			integrationBusiness.updateStateToIntegration(integrationId, IntegrationStateBusiness.STATE_ERROR);
+			integrationBusiness.updateStateToIntegration(integrationId, IntegrationStateBusiness.STATE_ERROR, null,
+					null, "SISTEMA");
 			throw new BusinessException("No se ha podido iniciar la integración.");
 		}
 
 	}
 
-	public IntegrationDto startIntegrationAssisted(Long workspaceId, Long integrationId, Long managerCode)
-			throws BusinessException {
+	public IntegrationDto startIntegrationAssisted(Long workspaceId, Long integrationId,
+			MicroserviceManagerDto managerDto, MicroserviceUserDto userDto) throws BusinessException {
 
 		IntegrationDto integrationDto = null;
 
@@ -1125,6 +1134,10 @@ public class WorkspaceBusiness {
 		if (!workspaceEntity.getIsActive()) {
 			throw new BusinessException(
 					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerDto.getId() != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
 		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
@@ -1142,8 +1155,10 @@ public class WorkspaceBusiness {
 		}
 
 		// modify integration state
+
+		String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
 		integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
-				IntegrationStateBusiness.STATE_STARTED_ASSISTED);
+				IntegrationStateBusiness.STATE_STARTED_ASSISTED, userDto.getId(), managerDto.getId(), textHistory);
 
 		// create tasks
 
@@ -1152,7 +1167,7 @@ public class WorkspaceBusiness {
 			List<Long> profiles = new ArrayList<>();
 			profiles.add(RoleBusiness.SUB_ROLE_INTEGRATOR);
 
-			List<MicroserviceManagerUserDto> listUsersIntegrators = managerClient.findUsersByManager(managerCode,
+			List<MicroserviceManagerUserDto> listUsersIntegrators = managerClient.findUsersByManager(managerDto.getId(),
 					profiles);
 
 			List<Long> users = new ArrayList<>();
