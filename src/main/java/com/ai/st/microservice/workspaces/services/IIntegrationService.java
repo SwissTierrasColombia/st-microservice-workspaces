@@ -20,4 +20,7 @@ public interface IIntegrationService {
 
 	public List<IntegrationEntity> getIntegrationByWorkspace(WorkspaceEntity workspaceEntity);
 
+	public IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
+			IntegrationStateEntity state);
+
 }

@@ -1070,6 +1070,16 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se puede realizar la integración con los insumos seleccionados.");
 		}
 
+		// validate if the integration has already been done
+		IntegrationStateEntity stateGeneratedProduct = integrationStateService
+				.getIntegrationStateById(IntegrationStateBusiness.STATE_GENERATED_PRODUCT);
+
+		IntegrationEntity integrationDone = integrationService.getIntegrationByCadastreAndSnrAndState(
+				supplyCadastreDto.getId(), supplyRegisteredDto.getId(), stateGeneratedProduct);
+		if (integrationDone instanceof IntegrationEntity) {
+			throw new BusinessException("Ya se ha hecho una integración con los insumos seleccionados.");
+		}
+
 		String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
 		String randomUsername = RandomStringUtils.random(8, true, false).toLowerCase();
 		String randomPassword = RandomStringUtils.random(10, true, true);

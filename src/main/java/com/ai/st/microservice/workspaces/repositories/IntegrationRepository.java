@@ -20,4 +20,7 @@ public interface IntegrationRepository extends CrudRepository<IntegrationEntity,
 
 	List<IntegrationEntity> findByWorkspace(WorkspaceEntity workspace);
 
+	IntegrationEntity findBySupplyCadastreIdAndSupplySnrIdAndState(Long supplyCadastreId, Long supplySnrId,
+			IntegrationStateEntity state);
+
 }
