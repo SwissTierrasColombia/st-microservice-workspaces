@@ -32,7 +32,7 @@ public class RabbitMQUpdateIntegrationListener {
 				stateId = IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC;
 				log.info("Integration automatic finished successful");
 			} else {
-				stateId = IntegrationStateBusiness.STATE_ERROR;
+				stateId = IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC;
 				log.info("Integration automatic finished with errors");
 			}
 

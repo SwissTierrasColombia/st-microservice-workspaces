@@ -19,12 +19,6 @@ public class RabbitMQSenderService {
 	@Value("${st.rabbitmq.queueFiles.routingkey}")
 	public String routingkeyFilesName;
 
-	@Value("${st.rabbitmq.queueIntegrations.exchange}")
-	public String exchangeIntegrationsName;
-
-	@Value("${st.rabbitmq.queueIntegrations.routingkey}")
-	public String routingkeyIntegrationsName;
-
 	public String sendFile(byte[] file, String filename, String namespace, String driver) {
 
 		String url = null;
@@ -33,13 +27,6 @@ public class RabbitMQSenderService {
 		url = (String) rabbitTemplate.convertSendAndReceive(exchangeFilesName, routingkeyFilesName, message);
 
 		return url;
-	}
-
-	public void sendMessage(String message) {
-
-		rabbitTemplate.convertAndSend(exchangeIntegrationsName, routingkeyIntegrationsName, message);
-
-		System.out.println("send message: " + message);
 	}
 
 }

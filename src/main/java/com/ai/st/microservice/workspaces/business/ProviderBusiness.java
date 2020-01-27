@@ -10,15 +10,12 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserivceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
@@ -29,10 +26,10 @@ public class ProviderBusiness {
 	private ProviderFeignClient providerClient;
 
 	@Autowired
-	private SupplyFeignClient supplyClient;
+	private RabbitMQSenderService rabbitMQService;
 
 	@Autowired
-	private RabbitMQSenderService rabbitMQSender;
+	private SupplyBusiness supplyBusiness;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -84,15 +81,10 @@ public class ProviderBusiness {
 
 					// send supply to microservice supplies
 					try {
-						MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
-						createSupplyDto.setMunicipalityCode(requestDto.getMunicipalityCode());
-						createSupplyDto.setObservations(observations);
-						createSupplyDto.setTypeSupplyCode(typeSupplyId);
+						List<String> urls = new ArrayList<String>();
 						if (files.length > 0) {
-							List<String> urls = new ArrayList<String>();
 							for (MultipartFile file : files) {
-
-								// save file with microservice filemanager
+								// save file with microservice file manager
 								String urlDocumentaryRepository = null;
 								try {
 
@@ -100,40 +92,23 @@ public class ProviderBusiness {
 											+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
 											+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
 
-									urlDocumentaryRepository = rabbitMQSender.sendFile(file.getBytes(),
+									urlDocumentaryRepository = rabbitMQService.sendFile(file.getBytes(),
 											StringUtils.cleanPath(file.getOriginalFilename()), urlBase, "Local");
 
 									if (urlDocumentaryRepository == null) {
 										throw new BusinessException(
 												"No se ha podido guardar el archivo en el repositorio documental.");
 									}
-
 									urls.add(urlDocumentaryRepository);
 								} catch (IOException e) {
 									throw new BusinessException("No se ha podido cargar el soporte.");
 								}
-
 							}
-							createSupplyDto.setUrlsDocumentaryRepository(urls);
 						}
-						if (url != null && !url.isEmpty()) {
-							createSupplyDto.setUrl(url);
-						}
-						List<MicroserviceCreateSupplyOwnerDto> owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
 
-						MicroserviceCreateSupplyOwnerDto owner1 = new MicroserviceCreateSupplyOwnerDto();
-						owner1.setOwnerCode(userCode);
-						owner1.setOwnerType("USER");
-						owners.add(owner1);
+						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations, typeSupplyId, urls,
+								url, userCode, providerDto.getId(), null);
 
-						MicroserviceCreateSupplyOwnerDto owner2 = new MicroserviceCreateSupplyOwnerDto();
-						owner2.setOwnerCode(providerDto.getId());
-						owner2.setOwnerType("ENTITY");
-						owners.add(owner2);
-
-						createSupplyDto.setOwners(owners);
-
-						supplyClient.createSupply(createSupplyDto);
 					} catch (Exception e) {
 						throw new BusinessException("No se ha podido cargar el insumo.");
 					}

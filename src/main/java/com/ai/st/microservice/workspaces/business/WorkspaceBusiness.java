@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
@@ -31,6 +32,7 @@ import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
@@ -79,6 +81,9 @@ public class WorkspaceBusiness {
 
 	@Value("${integrations.database.schema}")
 	private String databaseIntegrationSchema;
+
+	@Value("${st.temporalDirectory}")
+	private String stTemporalDirectory;
 
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_MANAGER = (long) 1;
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_OPERATOR = (long) 2;
@@ -1113,8 +1118,8 @@ public class WorkspaceBusiness {
 			iliClient.startIntegrationCadastreRegistration(integrationDto);
 
 		} catch (Exception e) {
-			integrationBusiness.updateStateToIntegration(integrationId, IntegrationStateBusiness.STATE_ERROR, null,
-					null, "SISTEMA");
+			integrationBusiness.updateStateToIntegration(integrationId,
+					IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC, null, null, "SISTEMA");
 			throw new BusinessException("No se ha podido iniciar la integración.");
 		}
 
@@ -1149,9 +1154,11 @@ public class WorkspaceBusiness {
 			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
 		}
 
-		if (integrationEntity.getState().getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC) {
+		IntegrationStateEntity stateIntegrationEntity = integrationEntity.getState();
+		if (stateIntegrationEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
+				&& stateIntegrationEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT) {
 			throw new BusinessException(
-					"No se puede iniciar la integración asistida ya que no se encuentra en estado finalizado automático.");
+					"No se puede iniciar la integración asistida ya que no se encuentra en estado que no lo permite.");
 		}
 
 		// modify integration state
@@ -1264,9 +1271,37 @@ public class WorkspaceBusiness {
 
 		IntegrationStateEntity stateEntity = integrationEntity.getState();
 		if (stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
-				&& stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_ASSISTED) {
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_ASSISTED
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT) {
 			throw new BusinessException(
-					"No se puede generar el producto porque la integración no esta finalizada de forma automática ni asistida.");
+					"No se puede generar el producto porque la integración se encuentra en un estado que no lo permite.");
+		}
+
+		try {
+
+			MicroserviceIli2pgExportDto exportDto = new MicroserviceIli2pgExportDto();
+
+			exportDto.setDatabaseHost(cryptoBusiness.decrypt(integrationEntity.getHostname()));
+			exportDto.setDatabaseName(cryptoBusiness.decrypt(integrationEntity.getDatabase()));
+			exportDto.setDatabasePassword(cryptoBusiness.decrypt(integrationEntity.getPassword()));
+			exportDto.setDatabasePort(cryptoBusiness.decrypt(integrationEntity.getPort()));
+			exportDto.setDatabaseSchema(cryptoBusiness.decrypt(integrationEntity.getSchema()));
+			exportDto.setDatabaseUsername(cryptoBusiness.decrypt(integrationEntity.getUsername()));
+			exportDto.setIntegrationId(integrationId);
+
+			String randomFilename = RandomStringUtils.random(10, true, false).toLowerCase();
+			exportDto.setPathFileXTF(stTemporalDirectory + File.separator + randomFilename + ".xtf");
+
+			iliClient.startExport(exportDto);
+
+			// modify integration state
+			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
+			integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
+					IntegrationStateBusiness.STATE_GENERATING_PRODUCT, userDto.getId(), managerDto.getId(),
+					textHistory);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido iniciar la generación del insumo");
 		}
 
 		return integrationDto;

@@ -27,7 +27,7 @@ import feign.form.spring.SpringFormEncoder;
 public interface SupplyFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/supplies/v1/supplies", consumes = APPLICATION_JSON_VALUE)
-	public void createSupply(@RequestBody MicroserviceCreateSupplyDto createSupply);
+	public MicroserviceSupplyDto createSupply(@RequestBody MicroserviceCreateSupplyDto createSupply);
 
 	@GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
 	public List<MicroserviceSupplyDto> getSuppliesByMunicipalityCode(@PathVariable String municipalityId);

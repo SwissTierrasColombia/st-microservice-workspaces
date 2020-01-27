@@ -11,6 +11,7 @@ public class IntegrationStateBusiness {
 	public static final Long STATE_FINISHED_ASSISTED = (long) 4;
 	public static final Long STATE_GENERATING_PRODUCT = (long) 5;
 	public static final Long STATE_GENERATED_PRODUCT = (long) 6;
-	public static final Long STATE_ERROR = (long) 7;
+	public static final Long STATE_ERROR_INTEGRATION_AUTOMATIC = (long) 7;
+	public static final Long STATE_ERROR_GENERATING_PRODUCT = (long) 8;
 
 }

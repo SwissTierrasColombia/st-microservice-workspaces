@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
 
 import feign.Feign;
@@ -23,6 +24,9 @@ public interface IliFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/integration/cadastre-registration-reference", consumes = APPLICATION_JSON_VALUE)
 	public void startIntegrationCadastreRegistration(@RequestBody MicroserviceIntegrationCadastreRegistrationDto data);
+	
+	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/export", consumes = APPLICATION_JSON_VALUE)
+	public void startExport(@RequestBody MicroserviceIli2pgExportDto data);
 
 	class Configuration {
 
