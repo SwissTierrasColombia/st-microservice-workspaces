@@ -985,9 +985,11 @@ public class WorkspaceBusiness {
 		return listPendingRequestsDto;
 	}
 
-	public void makeIntegrationCadastreRegistration(Long municipalityId, Long supplyIdCadastre,
+	public IntegrationDto makeIntegrationCadastreRegistration(Long municipalityId, Long supplyIdCadastre,
 			Long supplyIdRegistration, MicroserviceManagerDto managerDto, MicroserviceUserDto userDto)
 			throws BusinessException {
+
+		IntegrationDto integrationResponseDto = null;
 
 		// validate if the municipality exists
 		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -1099,14 +1101,14 @@ public class WorkspaceBusiness {
 
 			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
 
-			IntegrationDto integrationDto = integrationBusiness.createIntegration(
+			integrationResponseDto = integrationBusiness.createIntegration(
 					cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(databaseIntegrationPort),
 					cryptoBusiness.encrypt(randomDatabaseName), cryptoBusiness.encrypt(databaseIntegrationSchema),
 					cryptoBusiness.encrypt(randomUsername), cryptoBusiness.encrypt(randomPassword),
 					supplyCadastreDto.getId(), supplyRegisteredDto.getId(), null, workspaceActive, stateStarted,
 					userDto.getId(), managerDto.getId(), textHistory);
 
-			integrationId = integrationDto.getId();
+			integrationId = integrationResponseDto.getId();
 
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido crear la integración.");
@@ -1133,6 +1135,7 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha podido iniciar la integración.");
 		}
 
+		return integrationResponseDto;
 	}
 
 	public IntegrationDto startIntegrationAssisted(Long workspaceId, Long integrationId,
@@ -1201,7 +1204,8 @@ public class WorkspaceBusiness {
 
 			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-			String description = "Integración modelo de insumos catastro-registro " + municipalityEntity.getName().toLowerCase();
+			String description = "Integración modelo de insumos catastro-registro "
+					+ municipalityEntity.getName().toLowerCase();
 			String name = "Integración catastro-registro " + municipalityEntity.getName().toLowerCase();
 
 			List<MicroserviceCreateTaskMetadataDto> metadata = new ArrayList<>();
