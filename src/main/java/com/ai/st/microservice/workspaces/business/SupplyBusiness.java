@@ -77,16 +77,17 @@ public class SupplyBusiness {
 
 			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
 
-				try {
-					MicroserviceTypeSupplyDto typeSupplyDto = providerClient
-							.findTypeSuppleById(supplyDto.getTypeSupplyCode());
+				if (supplyDto.getTypeSupplyCode() != null) {
+					try {
+						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+								.findTypeSuppleById(supplyDto.getTypeSupplyCode());
 
-					supplyDto.setTypeSupply(typeSupplyDto);
+						supplyDto.setTypeSupply(typeSupplyDto);
 
-				} catch (Exception e) {
-					throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+					} catch (Exception e) {
+						throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+					}
 				}
-
 			}
 
 		} catch (Exception e) {
@@ -98,14 +99,17 @@ public class SupplyBusiness {
 		if (extensions != null && extensions.size() > 0) {
 
 			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
-				List<MicroserviceExtensionDto> extensionsDto = supplyDto.getTypeSupply().getExtensions();
-				for (MicroserviceExtensionDto extensionDto : extensionsDto) {
 
-					String extensionFound = extensions.stream()
-							.filter(extension -> extensionDto.getName().toLowerCase().equals(extension.toLowerCase()))
-							.findAny().orElse(null);
-					if (extensionFound != null) {
-						suppliesFinal.add(supplyDto);
+				if (supplyDto.getTypeSupply() != null) {
+					List<MicroserviceExtensionDto> extensionsDto = supplyDto.getTypeSupply().getExtensions();
+					for (MicroserviceExtensionDto extensionDto : extensionsDto) {
+
+						String extensionFound = extensions.stream().filter(
+								extension -> extensionDto.getName().toLowerCase().equals(extension.toLowerCase()))
+								.findAny().orElse(null);
+						if (extensionFound != null) {
+							suppliesFinal.add(supplyDto);
+						}
 					}
 				}
 			}
