@@ -1201,7 +1201,7 @@ public class WorkspaceBusiness {
 
 			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-			String description = "Integración catastro-registro " + municipalityEntity.getName().toLowerCase();
+			String description = "Integración modelo de insumos catastro-registro " + municipalityEntity.getName().toLowerCase();
 			String name = "Integración catastro-registro " + municipalityEntity.getName().toLowerCase();
 
 			List<MicroserviceCreateTaskMetadataDto> metadata = new ArrayList<>();
