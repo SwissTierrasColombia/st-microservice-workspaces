@@ -31,7 +31,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 	@Autowired
 	private IntegrationService integrationService;
 
-	@RabbitListener(queues = "${st.rabbitmq.queueUpdateExport.queue}")
+	@RabbitListener(queues = "${st.rabbitmq.queueUpdateExport.queue}", concurrency = "${st.rabbitmq.queueUpdateExport.concurrency}")
 	public void updateExport(MicroserviceIliExportResultDto resultExportDto) {
 
 		try {

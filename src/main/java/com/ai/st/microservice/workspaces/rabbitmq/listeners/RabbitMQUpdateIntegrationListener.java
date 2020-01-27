@@ -18,7 +18,7 @@ public class RabbitMQUpdateIntegrationListener {
 	@Autowired
 	private IntegrationBusiness integrationBusiness;
 
-	@RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}")
+	@RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}", concurrency = "${st.rabbitmq.queueUpdateIntegration.concurrency}")
 	public void updateIntegration(MicroserviceIntegrationStatDto integrationStats) {
 
 		try {
