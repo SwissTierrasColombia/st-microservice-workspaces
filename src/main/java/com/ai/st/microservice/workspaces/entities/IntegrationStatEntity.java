@@ -36,6 +36,9 @@ public class IntegrationStatEntity {
 	@Column(name = "ant_records_number", nullable = true)
 	private Long antRecordsNumber;
 
+	@Column(name = "match_number", nullable = false)
+	private Long matchNumber;
+
 	@Column(name = "percentage", precision = 10, scale = 2, nullable = false)
 	private Double percentage;
 
@@ -101,6 +104,14 @@ public class IntegrationStatEntity {
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Long getMatchNumber() {
+		return matchNumber;
+	}
+
+	public void setMatchNumber(Long matchNumber) {
+		this.matchNumber = matchNumber;
 	}
 
 }

@@ -81,7 +81,7 @@ public class IntegrationBusiness {
 	}
 
 	public IntegrationDto addStatToIntegration(Long integrationId, Long countSnr, Long countCadastre, Long countAnt,
-			Double percentage) throws BusinessException {
+			Long countMatch, Double percentage) throws BusinessException {
 
 		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
 		if (!(integrationEntity instanceof IntegrationEntity)) {
@@ -93,6 +93,7 @@ public class IntegrationBusiness {
 		statEntity.setCadastreRecordsNumber(countCadastre);
 		statEntity.setAntRecordsNumber(countAnt);
 		statEntity.setPercentage(percentage);
+		statEntity.setMatchNumber(countMatch);
 		statEntity.setSnrRecordsNumber(countSnr);
 		statEntity.setIntegration(integrationEntity);
 		integrationStatService.createIntegrationStat(statEntity);
@@ -207,6 +208,7 @@ public class IntegrationBusiness {
 				statDto.setCadastreRecordsNumber(statEntity.getCadastreRecordsNumber());
 				statDto.setSnrRecordsNumber(statEntity.getSnrRecordsNumber());
 				statDto.setPercentage(statEntity.getPercentage());
+				statDto.setMatchNumber(statEntity.getMatchNumber());
 				statDto.setCreatedAt(statEntity.getCreatedAt());
 
 				integrationDto.getStats().add(statDto);

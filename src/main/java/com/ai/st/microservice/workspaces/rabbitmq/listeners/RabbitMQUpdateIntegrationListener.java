@@ -28,7 +28,7 @@ public class RabbitMQUpdateIntegrationListener {
 			if (integrationStats.isStatus()) {
 				integrationBusiness.addStatToIntegration(integrationStats.getIntegrationId(),
 						integrationStats.getCountSNR(), integrationStats.getCountGC(), (long) 0,
-						integrationStats.getPercentage());
+						integrationStats.getCountMatch(), integrationStats.getPercentage());
 				stateId = IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC;
 				log.info("Integration automatic finished successful");
 			} else {
