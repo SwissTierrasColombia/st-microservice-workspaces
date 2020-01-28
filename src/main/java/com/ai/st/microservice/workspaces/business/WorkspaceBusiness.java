@@ -82,9 +82,6 @@ public class WorkspaceBusiness {
 
 	@Value("${integrations.database.schema}")
 	private String databaseIntegrationSchema;
-	
-	@Value("${st.temporalDirectory}")
-	public String tmpPath;
 
 	@Value("${st.temporalDirectory}")
 	private String stTemporalDirectory;
@@ -171,7 +168,7 @@ public class WorkspaceBusiness {
 		// save file with microservice filemanager
 		String urlDocumentaryRepository = null;
 		try {
-			String tmpFile = this.tmpPath + File.separatorChar + StringUtils.cleanPath(supportFile.getOriginalFilename());
+			String tmpFile = this.stTemporalDirectory + File.separatorChar + StringUtils.cleanPath(supportFile.getOriginalFilename());
 			
 			FileUtils.writeByteArrayToFile(new File(tmpFile), supportFile.getBytes());
 
