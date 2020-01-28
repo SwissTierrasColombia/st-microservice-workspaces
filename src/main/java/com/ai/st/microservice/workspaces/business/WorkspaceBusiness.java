@@ -165,17 +165,18 @@ public class WorkspaceBusiness {
 			throw new BusinessException("Ya se ha creado un espacio de trabajo para el municipio.");
 		}
 
-		// save file with microservice filemanager
+		// save file with microservice file manager
 		String urlDocumentaryRepository = null;
 		try {
-			String tmpFile = this.stTemporalDirectory + File.separatorChar + StringUtils.cleanPath(supportFile.getOriginalFilename());
-			
+			String tmpFile = this.stTemporalDirectory + File.separatorChar
+					+ StringUtils.cleanPath(supportFile.getOriginalFilename());
+
 			FileUtils.writeByteArrayToFile(new File(tmpFile), supportFile.getBytes());
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 
-			urlDocumentaryRepository = rabbitMQSenderService.sendFile(new byte[1],
-					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "");
+			urlDocumentaryRepository = rabbitMQSenderService
+					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "");
 
 		} catch (IOException e) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
@@ -364,14 +365,19 @@ public class WorkspaceBusiness {
 			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
 		}
 
-		// save file with microservice filemanager
+		// save file with microservice file manager
 		String urlDocumentaryRepository = null;
 		try {
 
+			String tmpFile = this.stTemporalDirectory + File.separatorChar
+					+ StringUtils.cleanPath(supportFile.getOriginalFilename());
+
+			FileUtils.writeByteArrayToFile(new File(tmpFile), supportFile.getBytes());
+
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
 
-			urlDocumentaryRepository = rabbitMQSenderService.sendFile(supportFile.getBytes(),
-					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+			urlDocumentaryRepository = rabbitMQSenderService
+					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
 
 		} catch (IOException e) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
@@ -1307,7 +1313,7 @@ public class WorkspaceBusiness {
 			exportDto.setDatabaseUsername(cryptoBusiness.decrypt(integrationEntity.getUsername()));
 			exportDto.setIntegrationId(integrationId);
 
-			String randomFilename = RandomStringUtils.random(10, true, false).toLowerCase();
+			String randomFilename = RandomStringUtils.random(15, true, false).toLowerCase();
 			exportDto.setPathFileXTF(stTemporalDirectory + File.separator + randomFilename + ".xtf");
 
 			iliClient.startExport(exportDto);

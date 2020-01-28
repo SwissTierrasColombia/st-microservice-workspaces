@@ -1,10 +1,13 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +24,9 @@ import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
 @Component
 public class ProviderBusiness {
+
+	@Value("${st.temporalDirectory}")
+	private String stTemporalDirectory;
 
 	@Autowired
 	private ProviderFeignClient providerClient;
@@ -88,11 +94,16 @@ public class ProviderBusiness {
 								String urlDocumentaryRepository = null;
 								try {
 
+									String tmpFile = this.stTemporalDirectory + File.separatorChar
+											+ StringUtils.cleanPath(file.getOriginalFilename());
+
+									FileUtils.writeByteArrayToFile(new File(tmpFile), file.getBytes());
+
 									String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_")
 											+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
 											+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
 
-									urlDocumentaryRepository = rabbitMQService.sendFile(file.getBytes(),
+									urlDocumentaryRepository = rabbitMQService.sendFile(
 											StringUtils.cleanPath(file.getOriginalFilename()), urlBase, "Local");
 
 									if (urlDocumentaryRepository == null) {
