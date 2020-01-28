@@ -1258,7 +1258,7 @@ public class WorkspaceBusiness {
 					steps);
 
 		} catch (Exception e) {
-
+			System.out.println("ERROR " + e.getMessage());
 		}
 
 		return integrationDto;
