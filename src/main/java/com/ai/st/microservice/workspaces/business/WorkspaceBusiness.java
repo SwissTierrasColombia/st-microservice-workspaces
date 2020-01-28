@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
@@ -8,6 +9,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -79,6 +81,9 @@ public class WorkspaceBusiness {
 
 	@Value("${integrations.database.schema}")
 	private String databaseIntegrationSchema;
+	
+	@Value("${st.temporalDirectory}")
+	public String tmpPath;
 
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_MANAGER = (long) 1;
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_OPERATOR = (long) 2;
@@ -162,11 +167,14 @@ public class WorkspaceBusiness {
 		// save file with microservice filemanager
 		String urlDocumentaryRepository = null;
 		try {
+			String tmpFile = this.tmpPath + File.separatorChar + StringUtils.cleanPath(supportFile.getOriginalFilename());
+			
+			FileUtils.writeByteArrayToFile(new File(tmpFile), supportFile.getBytes());
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 
-			urlDocumentaryRepository = rabbitMQSenderService.sendFile(supportFile.getBytes(),
-					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+			urlDocumentaryRepository = rabbitMQSenderService.sendFile(new byte[1],
+					StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "");
 
 		} catch (IOException e) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
