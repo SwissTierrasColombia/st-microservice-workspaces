@@ -26,6 +26,9 @@ public class IntegrationStatDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Percentage (Match)")
 	private Double percentage;
 
+	@ApiModelProperty(required = true, notes = "Match number")
+	private Long matchNumber;
+
 	@ApiModelProperty(required = true, notes = "Created at")
 	private Date createdAt;
 
@@ -79,6 +82,14 @@ public class IntegrationStatDto implements Serializable {
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Long getMatchNumber() {
+		return matchNumber;
+	}
+
+	public void setMatchNumber(Long matchNumber) {
+		this.matchNumber = matchNumber;
 	}
 
 }

@@ -26,15 +26,6 @@ public class RabbitMQConfig {
 	@Value("${st.rabbitmq.queueFiles.routingkey}")
 	public String routingkeyFilesName;
 
-	@Value("${st.rabbitmq.queueIntegrations.queue}")
-	public String queueIntegrationsName;
-
-	@Value("${st.rabbitmq.queueIntegrations.exchange}")
-	public String exchangeIntegrationsName;
-
-	@Value("${st.rabbitmq.queueIntegrations.routingkey}")
-	public String routingkeyIntegrationsName;
-
 	@Value("${st.rabbitmq.queueUpdateIntegration.queue}")
 	public String queueUpdateIntegrationsName;
 
@@ -43,6 +34,15 @@ public class RabbitMQConfig {
 
 	@Value("${st.rabbitmq.queueUpdateIntegration.routingkey}")
 	public String routingkeyUpdateIntegrationsName;
+
+	@Value("${st.rabbitmq.queueUpdateExport.queue}")
+	public String queueUpdateExportName;
+
+	@Value("${st.rabbitmq.queueUpdateExport.exchange}")
+	public String exchangeUpdateExportName;
+
+	@Value("${st.rabbitmq.queueUpdateExport.routingkey}")
+	public String routingkeyUpdateExportName;
 
 	@Bean
 	public Queue queueFiles() {
@@ -60,21 +60,6 @@ public class RabbitMQConfig {
 	}
 
 	@Bean
-	public Queue queueIntegrations() {
-		return new Queue(queueIntegrationsName, false);
-	}
-
-	@Bean
-	public DirectExchange exchangeIntegrations() {
-		return new DirectExchange(exchangeIntegrationsName);
-	}
-
-	@Bean
-	public Binding bindingQueueIntegrations() {
-		return BindingBuilder.bind(queueIntegrations()).to(exchangeIntegrations()).with(routingkeyIntegrationsName);
-	}
-
-	@Bean
 	public Queue queueUpdateIntegrations() {
 		return new Queue(queueUpdateIntegrationsName, false);
 	}
@@ -88,6 +73,21 @@ public class RabbitMQConfig {
 	public Binding bindingQueueUpdateIntegrations() {
 		return BindingBuilder.bind(queueUpdateIntegrations()).to(exchangeUpdateIntegrations())
 				.with(routingkeyUpdateIntegrationsName);
+	}
+
+	@Bean
+	public Queue queueUpdateExports() {
+		return new Queue(queueUpdateExportName, false);
+	}
+
+	@Bean
+	public DirectExchange exchangeUpdateExports() {
+		return new DirectExchange(exchangeUpdateExportName);
+	}
+
+	@Bean
+	public Binding bindingQueueUpdateExports() {
+		return BindingBuilder.bind(queueUpdateExports()).to(exchangeUpdateExports()).with(routingkeyUpdateExportName);
 	}
 
 	@Bean

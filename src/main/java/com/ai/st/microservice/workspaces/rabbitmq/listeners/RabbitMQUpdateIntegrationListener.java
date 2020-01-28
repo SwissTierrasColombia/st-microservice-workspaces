@@ -18,7 +18,7 @@ public class RabbitMQUpdateIntegrationListener {
 	@Autowired
 	private IntegrationBusiness integrationBusiness;
 
-	@RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}")
+	@RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}", concurrency = "${st.rabbitmq.queueUpdateIntegration.concurrency}")
 	public void updateIntegration(MicroserviceIntegrationStatDto integrationStats) {
 
 		try {
@@ -28,11 +28,11 @@ public class RabbitMQUpdateIntegrationListener {
 			if (integrationStats.isStatus()) {
 				integrationBusiness.addStatToIntegration(integrationStats.getIntegrationId(),
 						integrationStats.getCountSNR(), integrationStats.getCountGC(), (long) 0,
-						integrationStats.getPercentage());
+						integrationStats.getCountMatch(), integrationStats.getPercentage());
 				stateId = IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC;
 				log.info("Integration automatic finished successful");
 			} else {
-				stateId = IntegrationStateBusiness.STATE_ERROR;
+				stateId = IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC;
 				log.info("Integration automatic finished with errors");
 			}
 

@@ -260,10 +260,16 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 				integrationStateService.createIntegrationState(stateProductGenerated);
 
 				IntegrationStateEntity stateError = new IntegrationStateEntity();
-				stateError.setId(IntegrationStateBusiness.STATE_ERROR);
-				stateError.setName("ERROR");
+				stateError.setId(IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC);
+				stateError.setName("ERROR REALIZANDO INTEGRACIÓN AUTOMÁTICA");
 				stateError.setDescription("Ha ocurrido un error realizando la integración.");
 				integrationStateService.createIntegrationState(stateError);
+
+				IntegrationStateEntity stateErrorProduct = new IntegrationStateEntity();
+				stateErrorProduct.setId(IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT);
+				stateErrorProduct.setName("ERROR GENERANDO PRODUCTO");
+				stateErrorProduct.setDescription("Ha ocurrido un error realizando la integración.");
+				integrationStateService.createIntegrationState(stateErrorProduct);
 
 				log.info("The domains 'integration states' have been loaded!");
 			} catch (Exception e) {

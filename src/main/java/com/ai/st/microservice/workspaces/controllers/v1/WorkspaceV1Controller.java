@@ -782,11 +782,10 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("El insumo de registro es requerido.");
 			}
 
-			workspaceBusiness.makeIntegrationCadastreRegistration(municipalityId, supplyCadastre, supplyRegistration,
-					managerDto, userDtoSession);
+			responseDto = workspaceBusiness.makeIntegrationCadastreRegistration(municipalityId, supplyCadastre,
+					supplyRegistration, managerDto, userDtoSession);
 
 			httpStatus = HttpStatus.OK;
-			responseDto = new BasicResponseDto("¡Se ha iniciado la integración!", 7);
 
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@makeIntegration#Microservice ---> " + e.getMessage());

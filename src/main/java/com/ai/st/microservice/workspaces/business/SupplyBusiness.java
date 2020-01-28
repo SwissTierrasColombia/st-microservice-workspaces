@@ -10,6 +10,8 @@ import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
@@ -75,16 +77,17 @@ public class SupplyBusiness {
 
 			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
 
-				try {
-					MicroserviceTypeSupplyDto typeSupplyDto = providerClient
-							.findTypeSuppleById(supplyDto.getTypeSupplyCode());
+				if (supplyDto.getTypeSupplyCode() != null) {
+					try {
+						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+								.findTypeSuppleById(supplyDto.getTypeSupplyCode());
 
-					supplyDto.setTypeSupply(typeSupplyDto);
+						supplyDto.setTypeSupply(typeSupplyDto);
 
-				} catch (Exception e) {
-					throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+					} catch (Exception e) {
+						throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+					}
 				}
-
 			}
 
 		} catch (Exception e) {
@@ -96,14 +99,17 @@ public class SupplyBusiness {
 		if (extensions != null && extensions.size() > 0) {
 
 			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
-				List<MicroserviceExtensionDto> extensionsDto = supplyDto.getTypeSupply().getExtensions();
-				for (MicroserviceExtensionDto extensionDto : extensionsDto) {
 
-					String extensionFound = extensions.stream()
-							.filter(extension -> extensionDto.getName().toLowerCase().equals(extension.toLowerCase()))
-							.findAny().orElse(null);
-					if (extensionFound != null) {
-						suppliesFinal.add(supplyDto);
+				if (supplyDto.getTypeSupply() != null) {
+					List<MicroserviceExtensionDto> extensionsDto = supplyDto.getTypeSupply().getExtensions();
+					for (MicroserviceExtensionDto extensionDto : extensionsDto) {
+
+						String extensionFound = extensions.stream().filter(
+								extension -> extensionDto.getName().toLowerCase().equals(extension.toLowerCase()))
+								.findAny().orElse(null);
+						if (extensionFound != null) {
+							suppliesFinal.add(supplyDto);
+						}
 					}
 				}
 			}
@@ -113,6 +119,61 @@ public class SupplyBusiness {
 		}
 
 		return suppliesFinal;
+	}
+
+	public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode,
+			List<String> urlsAttachments, String url, Long userCode, Long providerCode, Long managerCode)
+			throws BusinessException {
+
+		MicroserviceSupplyDto supplyDto = null;
+
+		try {
+
+			MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
+			createSupplyDto.setMunicipalityCode(municipalityCode);
+			createSupplyDto.setObservations(observations);
+
+			if (typeSupplyCode != null) {
+				createSupplyDto.setTypeSupplyCode(typeSupplyCode);
+			}
+
+			createSupplyDto.setUrlsDocumentaryRepository(urlsAttachments);
+			if (url != null && !url.isEmpty()) {
+				createSupplyDto.setUrl(url);
+			}
+
+			List<MicroserviceCreateSupplyOwnerDto> owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
+
+			if (userCode != null) {
+				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+				owner.setOwnerCode(userCode);
+				owner.setOwnerType("USER");
+				owners.add(owner);
+			}
+
+			if (providerCode != null) {
+				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+				owner.setOwnerCode(providerCode);
+				owner.setOwnerType("ENTITY_PROVIDER");
+				owners.add(owner);
+			}
+
+			if (managerCode != null) {
+				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+				owner.setOwnerCode(managerCode);
+				owner.setOwnerType("ENTITY_MANAGER");
+				owners.add(owner);
+			}
+
+			createSupplyDto.setOwners(owners);
+
+			supplyDto = supplyClient.createSupply(createSupplyDto);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido cargar el insumo");
+		}
+
+		return supplyDto;
 	}
 
 }
