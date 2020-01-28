@@ -176,7 +176,7 @@ public class WorkspaceBusiness {
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 
 			urlDocumentaryRepository = rabbitMQSenderService
-					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "");
+					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase);
 
 		} catch (IOException e) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
@@ -377,7 +377,7 @@ public class WorkspaceBusiness {
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
 
 			urlDocumentaryRepository = rabbitMQSenderService
-					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase);
 
 		} catch (IOException e) {
 			throw new BusinessException("No se ha podido cargar el soporte.");

@@ -103,8 +103,8 @@ public class ProviderBusiness {
 											+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
 											+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
 
-									urlDocumentaryRepository = rabbitMQService.sendFile(
-											StringUtils.cleanPath(file.getOriginalFilename()), urlBase, "Local");
+									urlDocumentaryRepository = rabbitMQService
+											.sendFile(StringUtils.cleanPath(file.getOriginalFilename()), urlBase);
 
 									if (urlDocumentaryRepository == null) {
 										throw new BusinessException(
@@ -118,7 +118,7 @@ public class ProviderBusiness {
 						}
 
 						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations, typeSupplyId, urls,
-								url, userCode, providerDto.getId(), null);
+								url, requestId, userCode, providerDto.getId(), null);
 
 					} catch (Exception e) {
 						throw new BusinessException("No se ha podido cargar el insumo.");

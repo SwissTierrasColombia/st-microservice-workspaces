@@ -64,8 +64,8 @@ public class RabbitMQUpdateExportIntegrationListener {
 					Path path = Paths.get(resultExportDto.getPathFile());
 					String fileName = path.getFileName().toString();
 
-					String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName), urlBase,
-							"Local");
+					String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName),
+							urlBase);
 
 					List<String> urlsAttachments = new ArrayList<>();
 					urlsAttachments.add(urlDocumentaryRepository);
@@ -73,7 +73,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 					// load supply to municipality
 					String observations = "Archivo XTF generado para el modelo de insumos";
 					supplyBusiness.createSupply(municipalityCode, observations, null, urlsAttachments, null, null, null,
-							workspaceEntity.getManagerCode());
+							null, workspaceEntity.getManagerCode());
 
 				}
 
