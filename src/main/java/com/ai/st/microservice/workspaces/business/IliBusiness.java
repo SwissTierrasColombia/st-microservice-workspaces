@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.IliFeignClient;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
@@ -67,6 +68,28 @@ public class IliBusiness {
 
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido iniciar la integración.");
+		}
+
+	}
+
+	public void startValidation(Long requestId, String observations, String pathFile, String filenameTemporal,
+			Long supplyRequestedId, Long userCode) throws BusinessException {
+
+		try {
+
+			MicroserviceIlivalidatorBackgroundDto ilivalidatorDto = new MicroserviceIlivalidatorBackgroundDto();
+
+			ilivalidatorDto.setRequestId(requestId);
+			ilivalidatorDto.setObservations(observations);
+			ilivalidatorDto.setPathFile(pathFile);
+			ilivalidatorDto.setFilenameTemporal(filenameTemporal);
+			ilivalidatorDto.setSupplyRequestedId(supplyRequestedId);
+			ilivalidatorDto.setUserCode(userCode);
+
+			iliClient.startValidation(ilivalidatorDto);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido iniciar la validación.");
 		}
 
 	}

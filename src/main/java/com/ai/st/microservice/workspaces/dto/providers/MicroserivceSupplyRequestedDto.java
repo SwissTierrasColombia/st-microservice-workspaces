@@ -14,6 +14,7 @@ public class MicroserivceSupplyRequestedDto implements Serializable {
 	private Boolean delivered;
 	private Date deliveredAt;
 	private String justification;
+	private MicroserviceSupplyRequestedStateDto state;
 
 	public MicroserivceSupplyRequestedDto() {
 
@@ -73,6 +74,14 @@ public class MicroserivceSupplyRequestedDto implements Serializable {
 
 	public void setJustification(String justification) {
 		this.justification = justification;
+	}
+
+	public MicroserviceSupplyRequestedStateDto getState() {
+		return state;
+	}
+
+	public void setState(MicroserviceSupplyRequestedStateDto state) {
+		this.state = state;
 	}
 
 }

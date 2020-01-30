@@ -1,11 +1,11 @@
 package com.ai.st.microservice.workspaces.business;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserivceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
@@ -24,6 +25,12 @@ import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
 @Component
 public class ProviderBusiness {
+
+	public static final Long SUPPLY_REQUESTED_STATE_ACCEPTED = (long) 1;
+	public static final Long SUPPLY_REQUESTED_STATE_REJECTED = (long) 2;
+	public static final Long SUPPLY_REQUESTED_STATE_VALIDATING = (long) 3;
+	public static final Long SUPPLY_REQUESTED_STATE_PENDING = (long) 4;
+	public static final Long SUPPLY_REQUESTED_STATE_UNDELIVERED = (long) 5;
 
 	@Value("${st.temporalDirectory}")
 	private String stTemporalDirectory;
@@ -36,6 +43,9 @@ public class ProviderBusiness {
 
 	@Autowired
 	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private IliBusiness iliBusiness;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -83,6 +93,12 @@ public class ProviderBusiness {
 							"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
 				}
 
+				if (supplyRequested.getState().getId() == ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING) {
+					throw new BusinessException("Ya se ha cargado un insumo que esta en validación.");
+				}
+
+				Long supplyRequestedStateId = null;
+
 				if (delivered == true) {
 
 					// send supply to microservice supplies
@@ -90,20 +106,38 @@ public class ProviderBusiness {
 						List<String> urls = new ArrayList<String>();
 						if (files.length > 0) {
 							for (MultipartFile file : files) {
-								// save file with microservice file manager
-								String urlDocumentaryRepository = null;
-								try {
 
-									String tmpFile = this.stTemporalDirectory + File.separatorChar
-											+ StringUtils.cleanPath(file.getOriginalFilename());
+								String extension = FilenameUtils.getExtension(file.getOriginalFilename());
 
-									FileUtils.writeByteArrayToFile(new File(tmpFile), file.getBytes());
+								MicroserviceExtensionDto extensionDto = supplyRequested.getTypeSupply().getExtensions()
+										.stream().filter(ext -> ext.getName().equalsIgnoreCase(extension)).findAny()
+										.orElse(null);
 
+								if (!(extensionDto instanceof MicroserviceExtensionDto)) {
+									throw new BusinessException("El insumo no cumple los tipos de archivo permitidos.");
+								}
+
+								String tmpFile = this.stTemporalDirectory + File.separatorChar
+										+ StringUtils.cleanPath(file.getOriginalFilename());
+								FileUtils.writeByteArrayToFile(new File(tmpFile), file.getBytes());
+
+								if (extensionDto.getName().equalsIgnoreCase("xtf")) {
+									supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
+
+									// validate xtf with ilivalidator
+									System.out.println("FILEEE:" + tmpFile);
+									iliBusiness.startValidation(requestId, observations, tmpFile,
+											file.getOriginalFilename(), supplyRequested.getId(), userCode);
+
+								} else {
+									supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
+
+									// save file with microservice file manager
 									String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_")
 											+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
 											+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
 
-									urlDocumentaryRepository = rabbitMQService
+									String urlDocumentaryRepository = rabbitMQService
 											.sendFile(StringUtils.cleanPath(file.getOriginalFilename()), urlBase);
 
 									if (urlDocumentaryRepository == null) {
@@ -111,24 +145,26 @@ public class ProviderBusiness {
 												"No se ha podido guardar el archivo en el repositorio documental.");
 									}
 									urls.add(urlDocumentaryRepository);
-								} catch (IOException e) {
-									throw new BusinessException("No se ha podido cargar el soporte.");
+
+									supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations,
+											typeSupplyId, urls, url, requestId, userCode, providerDto.getId(), null);
+
 								}
 							}
 						}
 
-						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations, typeSupplyId, urls,
-								url, requestId, userCode, providerDto.getId(), null);
-
 					} catch (Exception e) {
-						throw new BusinessException("No se ha podido cargar el insumo.");
+						throw new BusinessException(e.getMessage());
 					}
+				} else {
+					supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED;
 				}
 
 				// Update request
 				try {
 					MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
 					updateSupply.setDelivered(delivered);
+					updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
 					updateSupply.setJustification(justification);
 					requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(),
 							updateSupply);
@@ -169,8 +205,8 @@ public class ProviderBusiness {
 		}
 
 		for (MicroserivceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
-			if (!supplyRequested.getDelivered()
-					&& (supplyRequested.getJustification() == null || supplyRequested.getJustification().isEmpty())) {
+			if (supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED
+					&& supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
 				throw new BusinessException(
 						"No se puede cerrar la solicitud porque no se han cargado todos los insumos.");
 			}

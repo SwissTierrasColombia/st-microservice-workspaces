@@ -44,6 +44,15 @@ public class RabbitMQConfig {
 	@Value("${st.rabbitmq.queueUpdateExport.routingkey}")
 	public String routingkeyUpdateExportName;
 
+	@Value("${st.rabbitmq.queueUpdateStateSupply.queue}")
+	public String queueUpdateStateSupplyName;
+
+	@Value("${st.rabbitmq.queueUpdateStateSupply.exchange}")
+	public String exchangeUpdateStateSupplyName;
+
+	@Value("${st.rabbitmq.queueUpdateStateSupply.routingkey}")
+	public String routingkeyUpdateStateSupplyName;
+
 	@Bean
 	public Queue queueFiles() {
 		return new Queue(queueFilesName, false);
@@ -88,6 +97,22 @@ public class RabbitMQConfig {
 	@Bean
 	public Binding bindingQueueUpdateExports() {
 		return BindingBuilder.bind(queueUpdateExports()).to(exchangeUpdateExports()).with(routingkeyUpdateExportName);
+	}
+
+	@Bean
+	public Queue queueUpdateStateSupply() {
+		return new Queue(queueUpdateStateSupplyName, false);
+	}
+
+	@Bean
+	public DirectExchange exchangeUpdateStateSupply() {
+		return new DirectExchange(exchangeUpdateStateSupplyName);
+	}
+
+	@Bean
+	public Binding bindingQueueUpdateStateSupply() {
+		return BindingBuilder.bind(queueUpdateStateSupply()).to(exchangeUpdateStateSupply())
+				.with(routingkeyUpdateStateSupplyName);
 	}
 
 	@Bean
