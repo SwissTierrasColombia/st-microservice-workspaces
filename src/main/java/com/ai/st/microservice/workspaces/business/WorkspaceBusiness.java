@@ -11,13 +11,14 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.clients.IliFeignClient;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
@@ -33,8 +34,6 @@ import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
@@ -74,6 +73,8 @@ import feign.FeignException;
 @Component
 public class WorkspaceBusiness {
 
+	private final Logger log = LoggerFactory.getLogger(WorkspaceBusiness.class);
+
 	@Value("${integrations.database.hostname}")
 	private String databaseIntegrationHost;
 
@@ -103,9 +104,6 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private SupplyFeignClient supplyClient;
-
-	@Autowired
-	private IliFeignClient iliClient;
 
 	@Autowired
 	private IMunicipalityService municipalityService;
@@ -139,6 +137,9 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private TaskBusiness taskBusiness;
+
+	@Autowired
+	private IliBusiness iliBusiness;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -1125,19 +1126,10 @@ public class WorkspaceBusiness {
 		}
 
 		try {
-			MicroserviceIntegrationCadastreRegistrationDto integrationDto = new MicroserviceIntegrationCadastreRegistrationDto();
 
-			integrationDto.setCadastrePathXTF(pathFileCadastre);
-			integrationDto.setRegistrationPathXTF(pathFileRegistration);
-			integrationDto.setDatabaseHost(databaseIntegrationHost);
-			integrationDto.setDatabaseName(randomDatabaseName);
-			integrationDto.setDatabasePassword(randomPassword);
-			integrationDto.setDatabasePort(databaseIntegrationPort);
-			integrationDto.setDatabaseSchema(databaseIntegrationSchema);
-			integrationDto.setDatabaseUsername(randomUsername);
-			integrationDto.setIntegrationId(integrationId);
-
-			iliClient.startIntegrationCadastreRegistration(integrationDto);
+			iliBusiness.startIntegration(pathFileCadastre, pathFileRegistration, databaseIntegrationHost,
+					randomDatabaseName, randomPassword, databaseIntegrationPort, databaseIntegrationSchema,
+					randomUsername, integrationId);
 
 		} catch (Exception e) {
 			integrationBusiness.updateStateToIntegration(integrationId,
@@ -1243,22 +1235,16 @@ public class WorkspaceBusiness {
 			listPropertiesIntegration
 					.add(new MicroserviceCreateTaskPropertyDto("integration", integrationEntity.getId().toString()));
 
+			metadataIntegration.setProperties(listPropertiesIntegration);
+			metadata.add(metadataIntegration);
+
 			List<MicroserviceCreateTaskStepDto> steps = new ArrayList<>();
-
-			steps.add(new MicroserviceCreateTaskStepDto("Conectar a BD remota", "Conectar a BD remota",
-					TaskBusiness.TASK_TYPE_STEP_ALWAYS));
-
-			steps.add(new MicroserviceCreateTaskStepDto("Explorar datos de Catastro y Registro.",
-					"Explorar datos de Catastro y Registro.", TaskBusiness.TASK_TYPE_STEP_ALWAYS));
-
-			steps.add(new MicroserviceCreateTaskStepDto("Realizar integración asistida.",
-					"Realizar integración asistida.", TaskBusiness.TASK_TYPE_STEP_ALWAYS));
 
 			taskBusiness.createTask(taskCategories, sdf.format(cal.getTime()), description, name, users, metadata,
 					steps);
 
 		} catch (Exception e) {
-			System.out.println("ERROR " + e.getMessage());
+			log.error("No se ha podido crear la tarea de integración: " + e.getMessage());
 		}
 
 		return integrationDto;
@@ -1303,20 +1289,15 @@ public class WorkspaceBusiness {
 
 		try {
 
-			MicroserviceIli2pgExportDto exportDto = new MicroserviceIli2pgExportDto();
+			String hostnameDecrypt = cryptoBusiness.decrypt(integrationEntity.getHostname());
+			String databaseDecrypt = cryptoBusiness.decrypt(integrationEntity.getDatabase());
+			String passwordDecrypt = cryptoBusiness.decrypt(integrationEntity.getPassword());
+			String portDecrypt = cryptoBusiness.decrypt(integrationEntity.getPort());
+			String schemaDecrypt = cryptoBusiness.decrypt(integrationEntity.getSchema());
+			String usernameDecrypt = cryptoBusiness.decrypt(integrationEntity.getUsername());
 
-			exportDto.setDatabaseHost(cryptoBusiness.decrypt(integrationEntity.getHostname()));
-			exportDto.setDatabaseName(cryptoBusiness.decrypt(integrationEntity.getDatabase()));
-			exportDto.setDatabasePassword(cryptoBusiness.decrypt(integrationEntity.getPassword()));
-			exportDto.setDatabasePort(cryptoBusiness.decrypt(integrationEntity.getPort()));
-			exportDto.setDatabaseSchema(cryptoBusiness.decrypt(integrationEntity.getSchema()));
-			exportDto.setDatabaseUsername(cryptoBusiness.decrypt(integrationEntity.getUsername()));
-			exportDto.setIntegrationId(integrationId);
-
-			String randomFilename = RandomStringUtils.random(15, true, false).toLowerCase();
-			exportDto.setPathFileXTF(stTemporalDirectory + File.separator + randomFilename + ".xtf");
-
-			iliClient.startExport(exportDto);
+			iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, passwordDecrypt, portDecrypt, schemaDecrypt,
+					usernameDecrypt, integrationId);
 
 			// modify integration state
 			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();

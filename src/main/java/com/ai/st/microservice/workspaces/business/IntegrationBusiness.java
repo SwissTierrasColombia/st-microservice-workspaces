@@ -80,6 +80,27 @@ public class IntegrationBusiness {
 		return this.transformEntityToDto(integrationEntity);
 	}
 
+	public IntegrationDto updateCredentialsIntegration(Long integrationId, String hostname, String port,
+			String database, String schema, String username, String password) throws BusinessException {
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración");
+		}
+
+		integrationEntity.setDatabase(database);
+		integrationEntity.setHostname(hostname);
+		integrationEntity.setPassword(password);
+		integrationEntity.setPort(port);
+		integrationEntity.setSchema(schema);
+		integrationEntity.setStartedAt(new Date());
+		integrationEntity.setUsername(username);
+
+		integrationEntity = integrationService.updateIntegration(integrationEntity);
+
+		return this.transformEntityToDto(integrationEntity);
+	}
+
 	public IntegrationDto addStatToIntegration(Long integrationId, Long countSnr, Long countCadastre, Long countAnt,
 			Long countMatch, Double percentage) throws BusinessException {
 

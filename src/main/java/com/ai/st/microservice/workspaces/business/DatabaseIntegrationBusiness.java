@@ -75,4 +75,31 @@ public class DatabaseIntegrationBusiness {
 		}
 	}
 
+	public void dropDatabase(String database) throws BusinessException {
+
+		try {
+
+			String url = "jdbc:postgresql://" + databaseHost + ":" + databasePort + "/postgres";
+
+			Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+			PreparedStatement stmt1 = connection
+					.prepareStatement("SELECT * FROM pg_stat_activity WHERE datname = '" + database + "';");
+			stmt1.execute();
+
+			PreparedStatement stmt2 = connection.prepareStatement(
+					"SELECT pg_terminate_backend (pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '"
+							+ database + "';");
+			stmt2.execute();
+
+			PreparedStatement stmt3 = connection.prepareStatement("drop database " + database);
+			stmt3.execute();
+
+		} catch (Exception e) {
+			System.out.println("No se puede eliminar la base de datos: " + e.getMessage());
+			throw new BusinessException("No se ha podido eliminar la base de datos");
+		}
+
+	}
+
 }

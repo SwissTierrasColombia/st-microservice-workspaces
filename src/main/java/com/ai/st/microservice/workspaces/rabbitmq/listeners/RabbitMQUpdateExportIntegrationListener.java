@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
+import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.IntegrationStateBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
@@ -28,6 +30,12 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 	@Autowired
 	private IntegrationBusiness integrationBusiness;
+
+	@Autowired
+	private DatabaseIntegrationBusiness databaseIntegration;
+
+	@Autowired
+	private CrytpoBusiness cryptoBusiness;
 
 	@Autowired
 	private SupplyBusiness supplyBusiness;
@@ -75,11 +83,18 @@ public class RabbitMQUpdateExportIntegrationListener {
 					supplyBusiness.createSupply(municipalityCode, observations, null, urlsAttachments, null, null, null,
 							null, workspaceEntity.getManagerCode());
 
+					try {
+						// delete database
+						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.getDatabase()));
+					} catch (Exception e) {
+						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
+					}
+
 				}
 
 			} else {
 				stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
-				log.info("Export finished with errors");
+				log.error("Export finished with errors");
 			}
 
 			integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null,
