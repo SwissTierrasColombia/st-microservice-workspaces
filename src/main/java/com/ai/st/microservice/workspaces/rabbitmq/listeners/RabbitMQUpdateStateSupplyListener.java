@@ -39,6 +39,8 @@ public class RabbitMQUpdateStateSupplyListener {
 
 		try {
 
+			log.info("updating supply ... " + validationDto.getSupplyRequestedId());
+
 			Long supplyRequestedStateId = null;
 
 			if (validationDto.getIsValid()) {

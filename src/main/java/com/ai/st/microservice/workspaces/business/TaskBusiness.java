@@ -267,7 +267,7 @@ public class TaskBusiness {
 							String usernameDecrypt = cryptoBusiness.decrypt(integrationEntity.getUsername());
 
 							iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, passwordDecrypt, portDecrypt,
-									schemaDecrypt, usernameDecrypt, integrationId);
+									schemaDecrypt, usernameDecrypt, integrationId, true);
 
 							// modify integration state to generating product
 							integrationBusiness.updateStateToIntegration(integrationId,

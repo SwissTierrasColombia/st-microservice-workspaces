@@ -125,7 +125,6 @@ public class ProviderBusiness {
 									supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
 
 									// validate xtf with ilivalidator
-									System.out.println("FILEEE:" + tmpFile);
 									iliBusiness.startValidation(requestId, observations, tmpFile,
 											file.getOriginalFilename(), supplyRequested.getId(), userCode);
 
@@ -151,6 +150,8 @@ public class ProviderBusiness {
 
 								}
 							}
+						} else {
+							supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
 						}
 
 					} catch (Exception e) {

@@ -62,6 +62,13 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 				if (integrationEntity instanceof IntegrationEntity) {
 
+					if (resultExportDto.getStats() != null) {
+						integrationBusiness.addStatToIntegration(integrationEntity.getId(),
+								resultExportDto.getStats().getCountSNR(), resultExportDto.getStats().getCountGC(),
+								(long) 0, resultExportDto.getStats().getCountMatch(),
+								resultExportDto.getStats().getPercentage());
+					}
+
 					WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
 					String municipalityCode = workspaceEntity.getMunicipality().getCode();
 

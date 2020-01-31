@@ -1297,7 +1297,7 @@ public class WorkspaceBusiness {
 			String usernameDecrypt = cryptoBusiness.decrypt(integrationEntity.getUsername());
 
 			iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, passwordDecrypt, portDecrypt, schemaDecrypt,
-					usernameDecrypt, integrationId);
+					usernameDecrypt, integrationId, false);
 
 			// modify integration state
 			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();

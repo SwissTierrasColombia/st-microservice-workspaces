@@ -14,6 +14,7 @@ public class MicroserviceIli2pgExportDto implements Serializable {
 	private String databaseName;
 	private String pathFileXTF;
 	private Long integrationId;
+	private Boolean withStats;
 
 	public MicroserviceIli2pgExportDto() {
 
@@ -81,6 +82,14 @@ public class MicroserviceIli2pgExportDto implements Serializable {
 
 	public void setIntegrationId(Long integrationId) {
 		this.integrationId = integrationId;
+	}
+
+	public Boolean getWithStats() {
+		return withStats;
+	}
+
+	public void setWithStats(Boolean withStats) {
+		this.withStats = withStats;
 	}
 
 }

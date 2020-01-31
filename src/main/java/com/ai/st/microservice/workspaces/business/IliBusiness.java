@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.IliFeignClient;
+import com.ai.st.microservice.workspaces.drivers.PostgresDriver;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationStatDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 @Component
@@ -23,7 +25,7 @@ public class IliBusiness {
 	private IliFeignClient iliClient;
 
 	public void startExport(String hostname, String database, String password, String port, String schema,
-			String username, Long integrationId) throws BusinessException {
+			String username, Long integrationId, Boolean withStats) throws BusinessException {
 
 		try {
 
@@ -36,6 +38,7 @@ public class IliBusiness {
 			exportDto.setDatabaseSchema(schema);
 			exportDto.setDatabaseUsername(username);
 			exportDto.setIntegrationId(integrationId);
+			exportDto.setWithStats(withStats);
 
 			String randomFilename = RandomStringUtils.random(15, true, false).toLowerCase();
 			exportDto.setPathFileXTF(stTemporalDirectory + File.separator + randomFilename + ".xtf");
@@ -92,6 +95,42 @@ public class IliBusiness {
 			throw new BusinessException("No se ha podido iniciar la validación.");
 		}
 
+	}
+
+	public MicroserviceIntegrationStatDto getIntegrationStats(String databaseHost, String databasePort,
+			String databaseName, String databaseUsername, String databasePassword, String databaseSchema) {
+
+		PostgresDriver connection = new PostgresDriver();
+
+		String urlConnection = "jdbc:postgresql://" + databaseHost + ":" + databasePort + "/" + databaseName;
+		connection.connect(urlConnection, databaseUsername, databasePassword, "org.postgresql.Driver");
+
+		String sqlCountSNR = "SELECT count(*) FROM " + databaseSchema + ".snr_predio_juridico;";
+		long countSNR = connection.count(sqlCountSNR);
+
+		String sqlCountGC = "SELECT count(*) FROM " + databaseSchema + ".gc_predio_catastro;";
+		long countGC = connection.count(sqlCountGC);
+
+		String sqlCountMatch = "SELECT count(*) FROM " + databaseSchema + ".ini_predio_insumos;";
+		long countMatch = connection.count(sqlCountMatch);
+
+		double percentage = 0.0;
+
+		if (countSNR >= countGC) {
+			percentage = (double) (countMatch * 100) / countSNR;
+		} else {
+			percentage = (double) (countMatch * 100) / countGC;
+		}
+
+		connection.disconnect();
+
+		MicroserviceIntegrationStatDto integrationStat = new MicroserviceIntegrationStatDto();
+		integrationStat.setCountGC(countGC);
+		integrationStat.setCountSNR(countSNR);
+		integrationStat.setCountMatch(countMatch);
+		integrationStat.setPercentage(percentage);
+
+		return integrationStat;
 	}
 
 }

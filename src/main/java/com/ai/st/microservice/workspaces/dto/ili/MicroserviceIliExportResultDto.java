@@ -9,6 +9,7 @@ public class MicroserviceIliExportResultDto implements Serializable {
 	private boolean status;
 	private Long integrationId;
 	private String pathFile;
+	private MicroserviceIntegrationStatDto stats;
 
 	public MicroserviceIliExportResultDto() {
 
@@ -36,6 +37,14 @@ public class MicroserviceIliExportResultDto implements Serializable {
 
 	public void setPathFile(String pathFile) {
 		this.pathFile = pathFile;
+	}
+
+	public MicroserviceIntegrationStatDto getStats() {
+		return stats;
+	}
+
+	public void setStats(MicroserviceIntegrationStatDto stats) {
+		this.stats = stats;
 	}
 
 }
