@@ -123,7 +123,7 @@ public class SupplyBusiness {
 
 	public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode,
 			List<String> urlsAttachments, String url, Long requestId, Long userCode, Long providerCode,
-			Long managerCode) throws BusinessException {
+			Long managerCode, String modelVersion) throws BusinessException {
 
 		MicroserviceSupplyDto supplyDto = null;
 
@@ -132,6 +132,7 @@ public class SupplyBusiness {
 			MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
 			createSupplyDto.setMunicipalityCode(municipalityCode);
 			createSupplyDto.setObservations(observations);
+			createSupplyDto.setModelVersion(modelVersion);
 
 			if (requestId != null) {
 				createSupplyDto.setRequestCode(requestId);

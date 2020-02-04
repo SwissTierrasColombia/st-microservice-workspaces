@@ -52,7 +52,8 @@ public class IliBusiness {
 	}
 
 	public void startIntegration(String pathFileCadastre, String pathFileRegistration, String hostname, String database,
-			String password, String port, String schema, String username, Long integrationId) throws BusinessException {
+			String password, String port, String schema, String username, Long integrationId, String versionModel)
+			throws BusinessException {
 
 		try {
 			MicroserviceIntegrationCadastreRegistrationDto integrationDto = new MicroserviceIntegrationCadastreRegistrationDto();
@@ -66,6 +67,7 @@ public class IliBusiness {
 			integrationDto.setDatabaseSchema(schema);
 			integrationDto.setDatabaseUsername(username);
 			integrationDto.setIntegrationId(integrationId);
+			integrationDto.setVersionModel(versionModel);
 
 			iliClient.startIntegrationCadastreRegistration(integrationDto);
 
@@ -76,7 +78,7 @@ public class IliBusiness {
 	}
 
 	public void startValidation(Long requestId, String observations, String pathFile, String filenameTemporal,
-			Long supplyRequestedId, Long userCode) throws BusinessException {
+			Long supplyRequestedId, Long userCode, String modelVersion) throws BusinessException {
 
 		try {
 
@@ -88,6 +90,7 @@ public class IliBusiness {
 			ilivalidatorDto.setFilenameTemporal(filenameTemporal);
 			ilivalidatorDto.setSupplyRequestedId(supplyRequestedId);
 			ilivalidatorDto.setUserCode(userCode);
+			ilivalidatorDto.setVersionModel(modelVersion);
 
 			iliClient.startValidation(ilivalidatorDto);
 

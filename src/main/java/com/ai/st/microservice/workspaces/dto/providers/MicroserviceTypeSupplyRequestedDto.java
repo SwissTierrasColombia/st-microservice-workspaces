@@ -8,6 +8,7 @@ public class MicroserviceTypeSupplyRequestedDto implements Serializable {
 
 	private Long typeSupplyId;
 	private String observation;
+	private String modelVersion;
 
 	public MicroserviceTypeSupplyRequestedDto() {
 
@@ -27,6 +28,14 @@ public class MicroserviceTypeSupplyRequestedDto implements Serializable {
 
 	public void setObservation(String observation) {
 		this.observation = observation;
+	}
+
+	public String getModelVersion() {
+		return modelVersion;
+	}
+
+	public void setModelVersion(String modelVersion) {
+		this.modelVersion = modelVersion;
 	}
 
 }

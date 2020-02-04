@@ -14,7 +14,7 @@ import com.ai.st.microservice.workspaces.business.ProviderBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceValidationDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserivceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
@@ -48,7 +48,7 @@ public class RabbitMQUpdateStateSupplyListener {
 				MicroserviceRequestDto requestDto = providerClient.findRequestById(validationDto.getRequestId());
 				MicroserviceProviderDto providerDto = requestDto.getProvider();
 
-				MicroserivceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
+				MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
 						.filter(supply -> supply.getId() == validationDto.getSupplyRequestedId()).findAny()
 						.orElse(null);
 
@@ -66,7 +66,7 @@ public class RabbitMQUpdateStateSupplyListener {
 
 				supplyBusiness.createSupply(requestDto.getMunicipalityCode(), validationDto.getObservations(),
 						supplyRequestedDto.getTypeSupply().getId(), urls, null, validationDto.getRequestId(),
-						validationDto.getUserCode(), providerDto.getId(), null);
+						validationDto.getUserCode(), providerDto.getId(), null, supplyRequestedDto.getModelVersion());
 
 				// Update request
 				MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();

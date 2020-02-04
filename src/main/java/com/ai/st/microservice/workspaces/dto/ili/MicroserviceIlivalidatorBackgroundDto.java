@@ -12,6 +12,7 @@ public class MicroserviceIlivalidatorBackgroundDto implements Serializable {
 	private String filenameTemporal;
 	private Long userCode;
 	private String observations;
+	private String versionModel;
 
 	public MicroserviceIlivalidatorBackgroundDto() {
 
@@ -63,6 +64,14 @@ public class MicroserviceIlivalidatorBackgroundDto implements Serializable {
 
 	public void setObservations(String observations) {
 		this.observations = observations;
+	}
+
+	public String getVersionModel() {
+		return versionModel;
+	}
+
+	public void setVersionModel(String versionModel) {
+		this.versionModel = versionModel;
 	}
 
 }

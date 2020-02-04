@@ -15,6 +15,7 @@ public class MicroserviceIntegrationCadastreRegistrationDto implements Serializa
 	private String cadastrePathXTF;
 	private String registrationPathXTF;
 	private Long integrationId;
+	private String versionModel;
 
 	public MicroserviceIntegrationCadastreRegistrationDto() {
 
@@ -90,6 +91,14 @@ public class MicroserviceIntegrationCadastreRegistrationDto implements Serializa
 
 	public void setIntegrationId(Long integrationId) {
 		this.integrationId = integrationId;
+	}
+
+	public String getVersionModel() {
+		return versionModel;
+	}
+
+	public void setVersionModel(String versionModel) {
+		this.versionModel = versionModel;
 	}
 
 }

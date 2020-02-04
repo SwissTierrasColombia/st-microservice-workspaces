@@ -899,9 +899,19 @@ public class WorkspaceBusiness {
 				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProvider = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
 				for (TypeSupplyRequestedDto supplyDto2 : supplies) {
 					if (supplyDto2.getProviderId() == providerId) {
+
+						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+								.findTypeSuppleById(supplyDto2.getTypeSupplyId());
+						if (typeSupplyDto.getModelRequired()
+								&& (supplyDto2.getModelVersion() == null || supplyDto2.getModelVersion().isEmpty())) {
+							throw new BusinessException(
+									"El tipo de insumo solicita que se especifique una versión del modelo.");
+						}
+
 						MicroserviceTypeSupplyRequestedDto mtsr = new MicroserviceTypeSupplyRequestedDto();
 						mtsr.setObservation(supplyDto2.getObservation());
 						mtsr.setTypeSupplyId(supplyDto2.getTypeSupplyId());
+						mtsr.setModelVersion(supplyDto2.getModelVersion());
 						listSuppliesByProvider.add(mtsr);
 					}
 				}
@@ -932,8 +942,8 @@ public class WorkspaceBusiness {
 			try {
 				MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
 				requests.add(responseRequest);
-			} catch (Exception e) {
-
+			} catch (BusinessException e) {
+				log.error("No se ha podido crear la solicitud: " + e.getMessage());
 			}
 
 		}
@@ -1083,6 +1093,11 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se puede realizar la integración con los insumos seleccionados.");
 		}
 
+		if (!supplyCadastreDto.getModelVersion().equals(supplyRegisteredDto.getModelVersion())) {
+			throw new BusinessException(
+					"No se puede realizar la integración porque la versión del modelo de insumos es diferente.");
+		}
+
 		// validate if the integration has already been done
 		IntegrationStateEntity stateGeneratedProduct = integrationStateService
 				.getIntegrationStateById(IntegrationStateBusiness.STATE_GENERATED_PRODUCT);
@@ -1129,7 +1144,7 @@ public class WorkspaceBusiness {
 
 			iliBusiness.startIntegration(pathFileCadastre, pathFileRegistration, databaseIntegrationHost,
 					randomDatabaseName, randomPassword, databaseIntegrationPort, databaseIntegrationSchema,
-					randomUsername, integrationId);
+					randomUsername, integrationId, supplyCadastreDto.getModelVersion().trim());
 
 		} catch (Exception e) {
 			integrationBusiness.updateStateToIntegration(integrationId,

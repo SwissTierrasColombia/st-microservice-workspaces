@@ -10,6 +10,7 @@ public class MicroserviceIliExportResultDto implements Serializable {
 	private Long integrationId;
 	private String pathFile;
 	private MicroserviceIntegrationStatDto stats;
+	private String modelVersion;
 
 	public MicroserviceIliExportResultDto() {
 
@@ -45,6 +46,14 @@ public class MicroserviceIliExportResultDto implements Serializable {
 
 	public void setStats(MicroserviceIntegrationStatDto stats) {
 		this.stats = stats;
+	}
+
+	public String getModelVersion() {
+		return modelVersion;
+	}
+
+	public void setModelVersion(String modelVersion) {
+		this.modelVersion = modelVersion;
 	}
 
 }

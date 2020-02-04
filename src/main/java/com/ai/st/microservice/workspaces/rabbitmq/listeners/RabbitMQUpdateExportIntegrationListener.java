@@ -88,7 +88,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 					// load supply to municipality
 					String observations = "Archivo XTF generado para el modelo de insumos";
 					supplyBusiness.createSupply(municipalityCode, observations, null, urlsAttachments, null, null, null,
-							null, workspaceEntity.getManagerCode());
+							null, workspaceEntity.getManagerCode(), resultExportDto.getModelVersion());
 
 					try {
 						// delete database

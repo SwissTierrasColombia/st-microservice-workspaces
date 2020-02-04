@@ -19,6 +19,9 @@ public class TypeSupplyRequestedDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Provider ID")
 	private Long providerId;
 
+	@ApiModelProperty(required = false, notes = "Model version")
+	private String modelVersion;
+
 	public TypeSupplyRequestedDto() {
 
 	}
@@ -45,6 +48,14 @@ public class TypeSupplyRequestedDto implements Serializable {
 
 	public void setProviderId(Long providerId) {
 		this.providerId = providerId;
+	}
+
+	public String getModelVersion() {
+		return modelVersion;
+	}
+
+	public void setModelVersion(String modelVersion) {
+		this.modelVersion = modelVersion;
 	}
 
 }

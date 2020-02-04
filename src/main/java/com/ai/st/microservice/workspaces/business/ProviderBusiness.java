@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserivceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
@@ -80,7 +80,7 @@ public class ProviderBusiness {
 		}
 
 		Boolean searchSupply = false;
-		for (MicroserivceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+		for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
 
 			if (supplyRequested.getTypeSupply().getId() == typeSupplyId) {
 
@@ -126,7 +126,8 @@ public class ProviderBusiness {
 
 									// validate xtf with ilivalidator
 									iliBusiness.startValidation(requestId, observations, tmpFile,
-											file.getOriginalFilename(), supplyRequested.getId(), userCode);
+											file.getOriginalFilename(), supplyRequested.getId(), userCode,
+											supplyRequested.getModelVersion());
 
 								} else {
 									supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
@@ -146,7 +147,8 @@ public class ProviderBusiness {
 									urls.add(urlDocumentaryRepository);
 
 									supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations,
-											typeSupplyId, urls, url, requestId, userCode, providerDto.getId(), null);
+											typeSupplyId, urls, url, requestId, userCode, providerDto.getId(), null,
+											null);
 
 								}
 							}
@@ -205,7 +207,7 @@ public class ProviderBusiness {
 			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
 		}
 
-		for (MicroserivceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+		for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
 			if (supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED
 					&& supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
 				throw new BusinessException(

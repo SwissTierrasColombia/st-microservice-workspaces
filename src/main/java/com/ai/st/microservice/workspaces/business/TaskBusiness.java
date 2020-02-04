@@ -381,7 +381,8 @@ public class TaskBusiness {
 								iliBusiness.startIntegration(attachmentCadastre.getUrlDocumentaryRepository(),
 										attachmentRegister.getUrlDocumentaryRepository(), databaseIntegrationHost,
 										randomDatabaseName, randomPassword, databaseIntegrationPort,
-										databaseIntegrationSchema, randomUsername, integrationId);
+										databaseIntegrationSchema, randomUsername, integrationId,
+										supplyCadastreDto.getModelVersion());
 
 							} catch (Exception e) {
 								log.error("No se ha podido iniciar la integración: " + e.getMessage());

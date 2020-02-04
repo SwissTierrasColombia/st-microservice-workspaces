@@ -18,6 +18,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserD
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -36,7 +37,7 @@ import java.util.List;
 public interface ProviderFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/requests", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceRequestDto createRequest(@RequestBody MicroserviceCreateRequestDto request);
+	public MicroserviceRequestDto createRequest(@RequestBody MicroserviceCreateRequestDto request) throws BusinessException;
 
 	@GetMapping("/api/providers-supplies/v1/users/{userCode}/providers")
 	public MicroserviceProviderDto findByUserCode(@PathVariable Long userCode);

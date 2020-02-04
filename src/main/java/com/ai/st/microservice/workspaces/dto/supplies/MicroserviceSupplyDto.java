@@ -18,6 +18,7 @@ public class MicroserviceSupplyDto implements Serializable {
 	private String municipalityCode;
 	private String observations;
 	private Long typeSupplyCode;
+	private String modelVersion;
 	private List<MicroserviceSupplyOwnerDto> owners;
 	private List<MicroserviceSupplyAttachmentDto> attachments;
 	private MicroserviceTypeSupplyDto typeSupply;
@@ -106,6 +107,14 @@ public class MicroserviceSupplyDto implements Serializable {
 
 	public void setTypeSupply(MicroserviceTypeSupplyDto typeSupply) {
 		this.typeSupply = typeSupply;
+	}
+
+	public String getModelVersion() {
+		return modelVersion;
+	}
+
+	public void setModelVersion(String modelVersion) {
+		this.modelVersion = modelVersion;
 	}
 
 }

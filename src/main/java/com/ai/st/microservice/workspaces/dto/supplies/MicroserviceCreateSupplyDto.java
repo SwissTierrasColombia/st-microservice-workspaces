@@ -12,6 +12,7 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 	private String observations;
 	private Long typeSupplyCode;
 	private Long requestCode;
+	private String modelVersion;
 	private List<MicroserviceCreateSupplyOwnerDto> owners;
 	private List<String> urlsDocumentaryRepository;
 
@@ -74,6 +75,14 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 
 	public void setRequestCode(Long requestCode) {
 		this.requestCode = requestCode;
+	}
+
+	public String getModelVersion() {
+		return modelVersion;
+	}
+
+	public void setModelVersion(String modelVersion) {
+		this.modelVersion = modelVersion;
 	}
 
 }
