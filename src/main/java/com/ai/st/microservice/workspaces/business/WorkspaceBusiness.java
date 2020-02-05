@@ -39,8 +39,10 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto
 import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
@@ -140,6 +142,9 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private IliBusiness iliBusiness;
+
+	@Autowired
+	private ProviderBusiness providerBusiness;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -940,8 +945,43 @@ public class WorkspaceBusiness {
 		for (MicroserviceCreateRequestDto request : groupRequests) {
 
 			try {
+
 				MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
 				requests.add(responseRequest);
+
+				if (responseRequest.getProvider().getId() == ProviderBusiness.PROVIDER_IGAC_ID) {
+
+					MicroserviceSupplyRequestedDto supplyRequested = responseRequest.getSuppliesRequested().stream()
+							.filter(sR -> sR.getTypeSupply().getId() == ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL)
+							.findAny().orElse(null);
+
+					if (supplyRequested instanceof MicroserviceSupplyRequestedDto) {
+						// new task
+
+						List<Long> profiles = new ArrayList<>();
+						profiles.add(ProviderBusiness.PROVIDER_PROFILE_CADASTRAL);
+						List<MicroserviceProviderUserDto> providerUsersDto = providerBusiness
+								.getUsersByProvider(responseRequest.getProvider().getId(), profiles);
+
+						try {
+
+							List<Long> users = new ArrayList<>();
+							for (MicroserviceProviderUserDto providerUserDto : providerUsersDto) {
+								users.add(providerUserDto.getUserCode());
+							}
+
+							taskBusiness.createTaskForGenerationSupply(users,
+									municipalityEntity.getName().toLowerCase(), responseRequest.getId(),
+									supplyRequested.getTypeSupply().getId(), null);
+
+						} catch (Exception e) {
+							log.error("No se ha podido crear la tarea de generación de insumos: " + e.getMessage());
+						}
+
+					}
+
+				}
+
 			} catch (BusinessException e) {
 				log.error("No se ha podido crear la solicitud: " + e.getMessage());
 			}
@@ -1000,7 +1040,7 @@ public class WorkspaceBusiness {
 			}
 
 		} catch (Exception e) {
-
+			log.error("No se han podido cargar las solicitudes pendientes del proveedor: " + e.getMessage());
 		}
 
 		return listPendingRequestsDto;

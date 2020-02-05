@@ -37,7 +37,8 @@ import java.util.List;
 public interface ProviderFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/requests", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceRequestDto createRequest(@RequestBody MicroserviceCreateRequestDto request) throws BusinessException;
+	public MicroserviceRequestDto createRequest(@RequestBody MicroserviceCreateRequestDto request)
+			throws BusinessException;
 
 	@GetMapping("/api/providers-supplies/v1/users/{userCode}/providers")
 	public MicroserviceProviderDto findByUserCode(@PathVariable Long userCode);
@@ -50,7 +51,7 @@ public interface ProviderFeignClient {
 	public MicroserviceRequestDto findRequestById(@PathVariable Long requestId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
-	public List<MicroserviceProviderUserDto> findUsersByProviderId(@PathVariable Long providerId);
+	public List<MicroserviceProviderUserDto> findUsersByProviderId(@PathVariable Long providerId) throws BusinessException;
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/requests/{requestId}/supplies/{supplyRequestedId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceRequestDto updateSupplyRequested(@PathVariable Long requestId,
@@ -64,6 +65,10 @@ public interface ProviderFeignClient {
 
 	@GetMapping("/api/providers-supplies/v1/types-supplies/{typeSupplyId}")
 	public MicroserviceTypeSupplyDto findTypeSuppleById(@PathVariable Long typeSupplyId);
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
+	public List<MicroserviceProviderUserDto> findUsersByProviderIdAndProfiles(@PathVariable Long providerId,
+			@RequestParam(name = "profiles", required = false) List<Long> profiles) throws BusinessException;
 
 	class Configuration {
 

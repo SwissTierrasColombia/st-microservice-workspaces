@@ -2,10 +2,13 @@ package com.ai.st.microservice.workspaces.business;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -13,6 +16,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
@@ -20,6 +24,10 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfi
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataPropertyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
@@ -32,11 +40,22 @@ public class ProviderBusiness {
 	public static final Long SUPPLY_REQUESTED_STATE_PENDING = (long) 4;
 	public static final Long SUPPLY_REQUESTED_STATE_UNDELIVERED = (long) 5;
 
+	public static final Long PROVIDER_IGAC_ID = (long) 1;
+
+	public static final Long PROVIDER_PROFILE_CADASTRAL = (long) 1;
+
+	public static final Long PROVIDER_SUPPLY_CADASTRAL = (long) 2;
+
+	private final Logger log = LoggerFactory.getLogger(ProviderBusiness.class);
+
 	@Value("${st.temporalDirectory}")
 	private String stTemporalDirectory;
 
 	@Autowired
 	private ProviderFeignClient providerClient;
+
+	@Autowired
+	private TaskFeignClient taskClient;
 
 	@Autowired
 	private RabbitMQSenderService rabbitMQService;
@@ -91,6 +110,39 @@ public class ProviderBusiness {
 				if (profileUser == null) {
 					throw new BusinessException(
 							"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
+				}
+
+				// verify if the supply is assigned to a task
+				List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+				List<Long> taskCategories = new ArrayList<>(
+						Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+				List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+				for (MicroserviceTaskDto taskDto : tasksDto) {
+					MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+							.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+					if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+						MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+								.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
+
+						MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties()
+								.stream().filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny()
+								.orElse(null);
+
+						if (propertyRequest != null && propertyTypeSupply != null) {
+
+							if (Long.parseLong(propertyRequest.getValue()) == requestId
+									&& Long.parseLong(propertyTypeSupply.getValue()) == typeSupplyId) {
+
+								MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
+										.filter(m -> m.getMemberCode() == userCode).findAny().orElse(null);
+								if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
+									throw new BusinessException(
+											"No es posible cargar el insumo, la tarea está asignada a otro usuario.");
+								}
+							}
+						}
+					}
 				}
 
 				if (supplyRequested.getState().getId() == ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING) {
@@ -224,6 +276,28 @@ public class ProviderBusiness {
 		}
 
 		return requestUpdatedDto;
+	}
+
+	public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
+			throws BusinessException {
+
+		List<MicroserviceProviderUserDto> usersDto = new ArrayList<>();
+
+		try {
+
+			if (profiles != null) {
+				usersDto = providerClient.findUsersByProviderIdAndProfiles(providerId, profiles);
+			} else {
+				usersDto = providerClient.findUsersByProviderId(providerId);
+			}
+
+		} catch (BusinessException e) {
+			String message = "No se han podido obtener los usuarios del proveedor.";
+			this.log.error(message + ": " + e.getMessage());
+			throw new BusinessException(message);
+		}
+
+		return usersDto;
 	}
 
 }

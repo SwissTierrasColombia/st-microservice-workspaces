@@ -34,6 +34,11 @@ public interface TaskFeignClient {
 			@RequestParam(required = false, name = "member") Long memberCode,
 			@RequestParam(required = false, name = "states") List<Long> taskStates);
 
+	@GetMapping("/api/tasks/v1/tasks")
+	public List<MicroserviceTaskDto> findByStateAndCategory(
+			@RequestParam(required = false, name = "states") List<Long> taskStates,
+			@RequestParam(required = false, name = "categories") List<Long> categories);
+
 	@RequestMapping(method = RequestMethod.POST, value = "/api/tasks/v1/tasks", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceTaskDto createTask(@RequestBody MicroserviceCreateTaskDto createtaskDto);
 

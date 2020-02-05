@@ -1,6 +1,9 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -11,14 +14,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskMetadataDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskPropertyDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskStepDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskCategoryDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
@@ -46,6 +54,7 @@ public class TaskBusiness {
 	private final Logger log = LoggerFactory.getLogger(TaskBusiness.class);
 
 	public static final Long TASK_CATEGORY_INTEGRATION = (long) 1;
+	public static final Long TASK_CATEGORY_CADASTRAL_INPUT_GENERATION = (long) 2;
 
 	public static final Long TASK_TYPE_STEP_ONCE = (long) 1;
 	public static final Long TASK_TYPE_STEP_ALWAYS = (long) 2;
@@ -65,6 +74,9 @@ public class TaskBusiness {
 	private SupplyFeignClient supplyClient;
 
 	@Autowired
+	private ProviderFeignClient providerClient;
+
+	@Autowired
 	private IliBusiness iliBusiness;
 
 	@Autowired
@@ -75,6 +87,9 @@ public class TaskBusiness {
 
 	@Autowired
 	private DatabaseIntegrationBusiness databaseIntegrationBusiness;
+
+	@Autowired
+	private ProviderBusiness providerBusiness;
 
 	@Autowired
 	private IIntegrationService integrationService;
@@ -159,6 +174,42 @@ public class TaskBusiness {
 		return taskDto;
 	}
 
+	public MicroserviceTaskDto createTaskForGenerationSupply(List<Long> users, String municipality, Long requestId,
+			Long typeSupplyId, Date dateDeadline) throws BusinessException {
+
+		List<Long> taskCategories = new ArrayList<>();
+		taskCategories.add(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION);
+
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String deadline = "";
+		if (dateDeadline == null) {
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DAY_OF_MONTH, 30);
+			deadline = sdf.format(cal.getTime());
+		} else {
+			deadline = sdf.format(dateDeadline.getTime());
+		}
+
+		String description = "Generación de insumo catastral para el municipio " + municipality;
+		String name = "Generar insumo catastral " + municipality;
+
+		List<MicroserviceCreateTaskMetadataDto> metadata = new ArrayList<>();
+
+		MicroserviceCreateTaskMetadataDto metadataRequest = new MicroserviceCreateTaskMetadataDto();
+		metadataRequest.setKey("request");
+		List<MicroserviceCreateTaskPropertyDto> listPropertiesRequest = new ArrayList<>();
+		listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("requestId", requestId.toString()));
+		listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("typeSupplyId", typeSupplyId.toString()));
+		listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("municipality", municipality));
+
+		metadataRequest.setProperties(listPropertiesRequest);
+		metadata.add(metadataRequest);
+
+		List<MicroserviceCreateTaskStepDto> steps = new ArrayList<>();
+
+		return this.createTask(taskCategories, deadline, description, name, users, metadata, steps);
+	}
+
 	public MicroserviceTaskDto startTask(Long taskId, Long userId) throws BusinessException {
 
 		MicroserviceTaskDto taskDto = null;
@@ -183,8 +234,9 @@ public class TaskBusiness {
 		}
 
 		MicroserviceTaskCategoryDto categoryFound = taskDto.getCategories().stream()
-				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_INTEGRATION).findAny()
-				.orElse(null);
+				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_INTEGRATION
+						|| categoryDto.getId() == TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION)
+				.findAny().orElse(null);
 
 		// task of integration
 		if (categoryFound instanceof MicroserviceTaskCategoryDto) {
@@ -231,14 +283,14 @@ public class TaskBusiness {
 			throw new BusinessException("El usuario no tiene asignada la tarea.");
 		}
 
-		MicroserviceTaskCategoryDto categoryFound = taskDto.getCategories().stream()
+		MicroserviceTaskCategoryDto categoryIntegrationFound = taskDto.getCategories().stream()
 				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_INTEGRATION).findAny()
 				.orElse(null);
 
 		// task of integration
 		try {
 
-			if (categoryFound instanceof MicroserviceTaskCategoryDto) {
+			if (categoryIntegrationFound instanceof MicroserviceTaskCategoryDto) {
 
 				MicroserviceTaskMetadataDto metadataIntegration = taskDto.getMetadata().stream()
 						.filter(metadataDto -> metadataDto.getKey().equals("integration")).findAny().orElse(null);
@@ -282,6 +334,58 @@ public class TaskBusiness {
 			log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
 		}
 
+		MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream()
+				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION)
+				.findAny().orElse(null);
+
+		// task for generation of supplies
+		if (categoryGenerationFound instanceof MicroserviceTaskCategoryDto) {
+
+			MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+					.filter(metadataDto -> metadataDto.getKey().equals("request")).findAny().orElse(null);
+
+			if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+				MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+						.filter(propertyDto -> propertyDto.getKey().equals("requestId")).findAny().orElse(null);
+
+				MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties().stream()
+						.filter(propertyDto -> propertyDto.getKey().equals("typeSupplyId")).findAny().orElse(null);
+
+				if (propertyRequest != null && propertyTypeSupply != null) {
+
+					Long requestId = Long.parseLong(propertyRequest.getValue());
+					Long typeSuppyId = Long.parseLong(propertyTypeSupply.getValue());
+
+					MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
+					if (requestDto instanceof MicroserviceRequestDto) {
+
+						MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
+								.filter(sR -> sR.getTypeSupply().getId() == typeSuppyId).findAny().orElse(null);
+						if (supplyRequestedDto instanceof MicroserviceSupplyRequestedDto) {
+
+							Long supplyStateId = supplyRequestedDto.getState().getId();
+							if (supplyStateId == ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING) {
+								throw new BusinessException(
+										"No se puede finalizar la tarea, el insumo cargado esta en proceso de validación.");
+							}
+
+							if (supplyStateId == ProviderBusiness.SUPPLY_REQUESTED_STATE_REJECTED) {
+								throw new BusinessException(
+										"No se puede finalizar la tarea, el insumo cargado ha sido rechazado.");
+							}
+
+							if (supplyStateId != ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED) {
+								throw new BusinessException(
+										"No se puede finalizar la tarea, el insumo no ha sido cargado.");
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// close task
 		try {
 			taskDto = taskClient.closeTask(taskId);
 		} catch (Exception e) {
@@ -314,14 +418,14 @@ public class TaskBusiness {
 			throw new BusinessException("El usuario no tiene asignada la tarea.");
 		}
 
-		MicroserviceTaskCategoryDto categoryFound = taskDto.getCategories().stream()
+		MicroserviceTaskCategoryDto categoryIntegrationFound = taskDto.getCategories().stream()
 				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_INTEGRATION).findAny()
 				.orElse(null);
 
 		// task of integration
 		try {
 
-			if (categoryFound instanceof MicroserviceTaskCategoryDto) {
+			if (categoryIntegrationFound instanceof MicroserviceTaskCategoryDto) {
 
 				MicroserviceTaskMetadataDto metadataIntegration = taskDto.getMetadata().stream()
 						.filter(metadataDto -> metadataDto.getKey().equals("integration")).findAny().orElse(null);
@@ -401,6 +505,62 @@ public class TaskBusiness {
 
 		} catch (Exception e) {
 			log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
+		}
+
+		MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream()
+				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION)
+				.findAny().orElse(null);
+
+		// task for generation of supplies
+		try {
+
+			if (categoryGenerationFound instanceof MicroserviceTaskCategoryDto) {
+
+				MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+						.filter(metadataDto -> metadataDto.getKey().equals("request")).findAny().orElse(null);
+
+				if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+					MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+							.filter(propertyDto -> propertyDto.getKey().equals("requestId")).findAny().orElse(null);
+
+					MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties().stream()
+							.filter(propertyDto -> propertyDto.getKey().equals("typeSupplyId")).findAny().orElse(null);
+
+					MicroserviceTaskMetadataPropertyDto propertyMunicipality = metadataRequest.getProperties().stream()
+							.filter(propertyDto -> propertyDto.getKey().equals("municipality")).findAny().orElse(null);
+
+					if (propertyRequest != null && propertyTypeSupply != null && propertyMunicipality != null) {
+
+						Long requestId = Long.parseLong(propertyRequest.getValue());
+						Long typeSuppyId = Long.parseLong(propertyTypeSupply.getValue());
+						String municipality = propertyMunicipality.getValue();
+
+						MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
+						if (requestDto instanceof MicroserviceRequestDto) {
+
+							List<Long> profiles = new ArrayList<>();
+							profiles.add(ProviderBusiness.PROVIDER_PROFILE_CADASTRAL);
+							List<MicroserviceProviderUserDto> providerUsersDto = providerBusiness
+									.getUsersByProvider(requestDto.getProvider().getId(), profiles);
+
+							List<Long> users = new ArrayList<>();
+							for (MicroserviceProviderUserDto providerUserDto : providerUsersDto) {
+								users.add(providerUserDto.getUserCode());
+							}
+
+							this.createTaskForGenerationSupply(users, municipality, requestId, typeSuppyId,
+									taskDto.getDeadline());
+						}
+
+					}
+
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("No se ha podido re-asignar la tarea.");
 		}
 
 		try {
