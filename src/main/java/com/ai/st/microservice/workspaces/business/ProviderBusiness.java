@@ -267,6 +267,57 @@ public class ProviderBusiness {
 			}
 		}
 
+		try {
+
+			for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+
+				// verify if the supply is assigned to a task
+				List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+				List<Long> taskCategories = new ArrayList<>(
+						Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+
+				List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+
+				for (MicroserviceTaskDto taskDto : tasksDto) {
+					MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+							.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+					if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+						MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+								.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
+
+						MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties()
+								.stream().filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny()
+								.orElse(null);
+
+						if (propertyRequest != null && propertyTypeSupply != null) {
+
+							Long taskRequestId = Long.parseLong(propertyRequest.getValue());
+							Long taskTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+
+							if (taskRequestId == requestId
+									&& taskTypeSupplyId == supplyRequested.getTypeSupply().getId()) {
+
+								Long supplyRequestedState = supplyRequested.getState().getId();
+
+								if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED) {
+									taskClient.closeTask(taskDto.getId());
+								} else if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
+									taskClient.cancelTask(taskDto.getId());
+								}
+
+							}
+
+						}
+					}
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("Ha ocurrido un error intentando cerrar las tareas asociadas a la solicitud");
+		}
+
 		MicroserviceRequestDto requestUpdatedDto = null;
 
 		try {

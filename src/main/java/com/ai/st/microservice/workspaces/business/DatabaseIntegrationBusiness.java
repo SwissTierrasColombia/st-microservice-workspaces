@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +13,8 @@ import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 @Component
 public class DatabaseIntegrationBusiness {
+
+	private final Logger log = LoggerFactory.getLogger(DatabaseIntegrationBusiness.class);
 
 	@Value("${integrations.database.hostname}")
 	private String databaseHost;
@@ -38,7 +42,8 @@ public class DatabaseIntegrationBusiness {
 			stmt1.execute();
 
 			PreparedStatement stmt2 = connection
-					.prepareStatement("create user " + username + " with encrypted password '" + password + "'");
+					.prepareStatement("create user " + username + " with encrypted password '" + password
+							+ "' NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION");
 			stmt2.execute();
 
 			PreparedStatement stmt3 = connection
@@ -50,10 +55,47 @@ public class DatabaseIntegrationBusiness {
 			result = true;
 
 		} catch (Exception e) {
+			log.error("Error creando base de datos: " + e.getMessage());
 			throw new BusinessException("No se ha podido generar la base de datos.");
 		}
 
 		return result;
+
+	}
+
+	public void protectedDatabase(String host, String port, String database, String schema, String username,
+			String password) throws BusinessException {
+
+		try {
+
+			String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+			Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+			PreparedStatement stmt5 = connection
+					.prepareStatement("REVOKE ALL ON ALL TABLES IN SCHEMA " + schema + " FROM " + username);
+			stmt5.execute();
+
+			PreparedStatement stmt1 = connection
+					.prepareStatement("ALTER TABLE " + schema + ".ini_predio_insumos OWNER TO " + databaseUsername);
+			stmt1.execute();
+
+			PreparedStatement stmt2 = connection
+					.prepareStatement("GRANT USAGE ON SCHEMA " + schema + " TO " + username);
+			stmt2.execute();
+
+			PreparedStatement stmt3 = connection
+					.prepareStatement("GRANT SELECT ON ALL TABLES IN SCHEMA " + schema + " TO " + username);
+			stmt3.execute();
+
+			PreparedStatement stmt4 = connection.prepareStatement(
+					"GRANT INSERT, UPDATE, DELETE ON " + schema + ".ini_predio_insumos TO " + username);
+			stmt4.execute();
+
+		} catch (Exception e) {
+			log.error("Error protegiendo base de datos: " + e.getMessage());
+			throw new BusinessException("No se ha podido configurar los permisos a la base de datos.");
+		}
 
 	}
 
@@ -71,7 +113,7 @@ public class DatabaseIntegrationBusiness {
 			stmt2.execute();
 
 		} catch (Exception e) {
-
+			log.error("Error creando extensiones a la base de datos: " + e.getMessage());
 		}
 	}
 
@@ -96,7 +138,7 @@ public class DatabaseIntegrationBusiness {
 			stmt3.execute();
 
 		} catch (Exception e) {
-			System.out.println("No se puede eliminar la base de datos: " + e.getMessage());
+			log.error("Error eliminando base de datos: " + e.getMessage());
 			throw new BusinessException("No se ha podido eliminar la base de datos");
 		}
 

@@ -1237,8 +1237,22 @@ public class WorkspaceBusiness {
 		integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
 				IntegrationStateBusiness.STATE_STARTED_ASSISTED, userDto.getId(), managerDto.getId(), textHistory);
 
-		// create tasks
+		String host = integrationEntity.getHostname();
+		String port = integrationEntity.getPort();
+		String database = integrationEntity.getDatabase();
+		String schema = integrationEntity.getSchema();
+		String username = integrationEntity.getUsername();
+		String password = integrationEntity.getPassword();
 
+		try {
+			databaseIntegrationBusiness.protectedDatabase(cryptoBusiness.decrypt(host), cryptoBusiness.decrypt(port),
+					cryptoBusiness.decrypt(database), cryptoBusiness.decrypt(schema), cryptoBusiness.decrypt(username),
+					cryptoBusiness.decrypt(password));
+		} catch (Exception e) {
+			log.error("No se ha podido restringir la base de datos");
+		}
+
+		// create task
 		try {
 
 			List<Long> profiles = new ArrayList<>();
@@ -1270,17 +1284,12 @@ public class WorkspaceBusiness {
 			MicroserviceCreateTaskMetadataDto metadataConnection = new MicroserviceCreateTaskMetadataDto();
 			metadataConnection.setKey("connection");
 			List<MicroserviceCreateTaskPropertyDto> listPropertiesConnection = new ArrayList<>();
-			listPropertiesConnection
-					.add(new MicroserviceCreateTaskPropertyDto("host", integrationEntity.getHostname()));
-			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("port", integrationEntity.getPort()));
-			listPropertiesConnection
-					.add(new MicroserviceCreateTaskPropertyDto("database", integrationEntity.getDatabase()));
-			listPropertiesConnection
-					.add(new MicroserviceCreateTaskPropertyDto("schema", integrationEntity.getSchema()));
-			listPropertiesConnection
-					.add(new MicroserviceCreateTaskPropertyDto("username", integrationEntity.getUsername()));
-			listPropertiesConnection
-					.add(new MicroserviceCreateTaskPropertyDto("password", integrationEntity.getPassword()));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("host", host));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("port", port));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("database", database));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("schema", schema));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("username", username));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("password", password));
 			metadataConnection.setProperties(listPropertiesConnection);
 			metadata.add(metadataConnection);
 
