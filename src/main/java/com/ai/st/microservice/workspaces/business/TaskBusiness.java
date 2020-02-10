@@ -24,6 +24,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskMetadataDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskPropertyDto;
@@ -395,7 +396,8 @@ public class TaskBusiness {
 		return taskDto;
 	}
 
-	public MicroserviceTaskDto cancelTask(Long taskId, MicroserviceUserDto userDto) throws BusinessException {
+	public MicroserviceTaskDto cancelTask(Long taskId, String reason, MicroserviceUserDto userDto)
+			throws BusinessException {
 
 		MicroserviceTaskDto taskDto = null;
 
@@ -564,7 +566,9 @@ public class TaskBusiness {
 		}
 
 		try {
-			taskDto = taskClient.cancelTask(taskId);
+			MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
+			cancelTaskDto.setReason(reason);
+			taskDto = taskClient.cancelTask(taskId, cancelTaskDto);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido cancelar la tarea.");
 		}

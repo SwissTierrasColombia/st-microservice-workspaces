@@ -24,6 +24,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfi
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
@@ -303,7 +304,9 @@ public class ProviderBusiness {
 								if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED) {
 									taskClient.closeTask(taskDto.getId());
 								} else if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
-									taskClient.cancelTask(taskDto.getId());
+									MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
+									cancelTaskDto.setReason("Cancelada por el sistema.");
+									taskClient.cancelTask(taskDto.getId(), cancelTaskDto);
 								}
 
 							}

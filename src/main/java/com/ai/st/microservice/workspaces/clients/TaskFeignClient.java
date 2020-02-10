@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 
@@ -56,7 +57,8 @@ public interface TaskFeignClient {
 	public MicroserviceTaskDto closeTask(@PathVariable(required = true) Long id);
 
 	@PutMapping("/api/tasks/v1/tasks/{id}/cancel")
-	public MicroserviceTaskDto cancelTask(@PathVariable(required = true) Long id);
+	public MicroserviceTaskDto cancelTask(@PathVariable(required = true) Long id,
+			@RequestBody(required = true) MicroserviceCancelTaskDto cancelTaskRequest);
 
 	class Configuration {
 

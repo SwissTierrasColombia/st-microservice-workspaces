@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ai.st.microservice.workspaces.business.TaskBusiness;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.CancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -183,7 +185,7 @@ public class TaskV1Controller {
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
 	public ResponseEntity<?> cancelTask(@RequestHeader("authorization") String headerAuthorization,
-			@PathVariable Long taskId) {
+			@PathVariable Long taskId, @RequestBody(required = true) CancelTaskDto cancelTaskRequest) {
 
 		HttpStatus httpStatus = null;
 		Object responseDto = null;
@@ -200,7 +202,7 @@ public class TaskV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			responseDto = taskBusiness.cancelTask(taskId, userDtoSession);
+			responseDto = taskBusiness.cancelTask(taskId, cancelTaskRequest.getReason(), userDtoSession);
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {
