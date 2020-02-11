@@ -92,7 +92,8 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 					try {
 						// delete database
-						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.getDatabase()));
+						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.getDatabase()),
+								cryptoBusiness.decrypt(integrationEntity.getUsername()));
 					} catch (Exception e) {
 						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
 					}

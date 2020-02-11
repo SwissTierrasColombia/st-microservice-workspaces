@@ -144,7 +144,7 @@ public class DatabaseIntegrationBusiness {
 		}
 	}
 
-	public void dropDatabase(String database) throws BusinessException {
+	public void dropDatabase(String database, String username) throws BusinessException {
 
 		try {
 
@@ -163,6 +163,9 @@ public class DatabaseIntegrationBusiness {
 
 			PreparedStatement stmt3 = connection.prepareStatement("drop database " + database);
 			stmt3.execute();
+
+			PreparedStatement stmt4 = connection.prepareStatement("drop user " + username);
+			stmt4.execute();
 
 		} catch (Exception e) {
 			log.error("Error eliminando base de datos: " + e.getMessage());
