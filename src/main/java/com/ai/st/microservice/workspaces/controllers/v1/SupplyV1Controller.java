@@ -57,7 +57,9 @@ public class SupplyV1Controller {
 	@ResponseBody
 	public ResponseEntity<?> getSuppliesByMunicipality(@PathVariable Long municipalityId,
 			@RequestParam(name = "extensions", required = false) List<String> extensions,
-			@RequestHeader("authorization") String headerAuthorization) {
+			@RequestHeader("authorization") String headerAuthorization,
+			@RequestParam(name = "page", required = false) Integer page,
+			@RequestParam(name = "requests", required = false) List<Long> requests) {
 
 		HttpStatus httpStatus = null;
 		Object responseDto = null;
@@ -82,7 +84,7 @@ public class SupplyV1Controller {
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
-				responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions);
+				responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions, page, requests);
 
 			} else if (roleManager instanceof MicroserviceRoleDto) {
 
@@ -96,7 +98,7 @@ public class SupplyV1Controller {
 				}
 
 				responseDto = supplyBusiness.getSuppliesByMunicipalityManager(municipalityId, managerDto.getId(),
-						extensions);
+						extensions, page, requests);
 			}
 
 			httpStatus = HttpStatus.OK;

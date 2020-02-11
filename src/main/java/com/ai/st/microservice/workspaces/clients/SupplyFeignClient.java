@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 
@@ -31,6 +33,11 @@ public interface SupplyFeignClient {
 
 	@GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
 	public List<MicroserviceSupplyDto> getSuppliesByMunicipalityCode(@PathVariable String municipalityId);
+
+	@GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
+	public MicroserviceDataPaginatedDto getSuppliesByMunicipalityCodeByFilters(@PathVariable String municipalityId,
+			@RequestParam(name = "page", required = false) Integer page,
+			@RequestParam(name = "requests", required = false) List<Long> requests);
 
 	@GetMapping("/api/supplies/v1/supplies/{supplyId}")
 	public MicroserviceSupplyDto findSupplyById(@PathVariable Long supplyId);

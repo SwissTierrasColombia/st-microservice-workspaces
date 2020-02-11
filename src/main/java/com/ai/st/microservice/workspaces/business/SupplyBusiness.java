@@ -10,6 +10,7 @@ import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
@@ -34,8 +35,8 @@ public class SupplyBusiness {
 	@Autowired
 	private ProviderFeignClient providerClient;
 
-	public List<MicroserviceSupplyDto> getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions)
-			throws BusinessException {
+	public Object getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions, Integer page,
+			List<Long> requests) throws BusinessException {
 
 		// validate if the municipality exists
 		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -43,11 +44,11 @@ public class SupplyBusiness {
 			throw new BusinessException("No se ha encontrado el municipio.");
 		}
 
-		return this.getSuppliesByMunicipality(municipalityEntity.getCode(), extensions);
+		return this.getSuppliesByMunicipality(municipalityEntity.getCode(), extensions, page, requests);
 	}
 
-	public List<MicroserviceSupplyDto> getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode,
-			List<String> extensions) throws BusinessException {
+	public Object getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode, List<String> extensions,
+			Integer page, List<Long> requests) throws BusinessException {
 
 		// validate if the municipality exists
 		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -64,16 +65,24 @@ public class SupplyBusiness {
 			}
 		}
 
-		return this.getSuppliesByMunicipality(municipalityEntity.getCode(), extensions);
+		return this.getSuppliesByMunicipality(municipalityEntity.getCode(), extensions, page, requests);
 	}
 
-	private List<MicroserviceSupplyDto> getSuppliesByMunicipality(String municipalityCode, List<String> extensions)
-			throws BusinessException {
+	private Object getSuppliesByMunicipality(String municipalityCode, List<String> extensions, Integer page,
+			List<Long> requests) throws BusinessException {
 
 		List<MicroserviceSupplyDto> suppliesDto = new ArrayList<>();
 
 		try {
-			suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipalityCode);
+
+			MicroserviceDataPaginatedDto dataPaginated = null;
+
+			if (page != null) {
+				dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipalityCode, page, requests);
+				suppliesDto = dataPaginated.getItems();
+			} else {
+				suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipalityCode);
+			}
 
 			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
 
@@ -88,6 +97,10 @@ public class SupplyBusiness {
 						throw new BusinessException("No se ha podido consultar el tipo de insumo.");
 					}
 				}
+			}
+
+			if (page != null) {
+				return dataPaginated;
 			}
 
 		} catch (Exception e) {
