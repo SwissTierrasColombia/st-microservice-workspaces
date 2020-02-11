@@ -1000,4 +1000,70 @@ public class WorkspaceV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
+	@RequestMapping(value = "{workspaceId}/integrations/{integrationId}", method = RequestMethod.DELETE)
+	@ApiOperation(value = "Remove integration from workspace")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Integration deleted", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> removeIntegrationFromWorkspace(@PathVariable Long workspaceId,
+			@PathVariable Long integrationId, @RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			workspaceBusiness.removeIntegrationFromWorkspace(workspaceId, integrationId, managerDto.getId());
+			responseDto = new BasicResponseDto("Se ha borrado la integración", 7);
+			httpStatus = HttpStatus.NO_CONTENT;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@removeIntegrationFromWorkspace#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@removeIntegrationFromWorkspace#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@removeIntegrationFromWorkspace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
 }

@@ -25,7 +25,7 @@ public class IliBusiness {
 	private IliFeignClient iliClient;
 
 	public void startExport(String hostname, String database, String password, String port, String schema,
-			String username, Long integrationId, Boolean withStats) throws BusinessException {
+			String username, Long integrationId, Boolean withStats, String modelVersion) throws BusinessException {
 
 		try {
 
@@ -39,6 +39,7 @@ public class IliBusiness {
 			exportDto.setDatabaseUsername(username);
 			exportDto.setIntegrationId(integrationId);
 			exportDto.setWithStats(withStats);
+			exportDto.setVersionModel(modelVersion);
 
 			String randomFilename = RandomStringUtils.random(15, true, false).toLowerCase();
 			exportDto.setPathFileXTF(stTemporalDirectory + File.separator + randomFilename + ".xtf");

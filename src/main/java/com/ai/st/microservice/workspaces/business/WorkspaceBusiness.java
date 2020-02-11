@@ -86,6 +86,12 @@ public class WorkspaceBusiness {
 	@Value("${integrations.database.schema}")
 	private String databaseIntegrationSchema;
 
+	@Value("${integrations.database.username}")
+	private String databaseIntegrationUsername;
+
+	@Value("${integrations.database.password}")
+	private String databaseIntegrationPassword;
+
 	@Value("${st.temporalDirectory}")
 	private String stTemporalDirectory;
 
@@ -1183,8 +1189,8 @@ public class WorkspaceBusiness {
 		try {
 
 			iliBusiness.startIntegration(pathFileCadastre, pathFileRegistration, databaseIntegrationHost,
-					randomDatabaseName, randomPassword, databaseIntegrationPort, databaseIntegrationSchema,
-					randomUsername, integrationId, supplyCadastreDto.getModelVersion().trim());
+					randomDatabaseName, databaseIntegrationPassword, databaseIntegrationPort, databaseIntegrationSchema,
+					databaseIntegrationUsername, integrationId, supplyCadastreDto.getModelVersion().trim());
 
 		} catch (Exception e) {
 			integrationBusiness.updateStateToIntegration(integrationId,
@@ -1355,13 +1361,16 @@ public class WorkspaceBusiness {
 
 			String hostnameDecrypt = cryptoBusiness.decrypt(integrationEntity.getHostname());
 			String databaseDecrypt = cryptoBusiness.decrypt(integrationEntity.getDatabase());
-			String passwordDecrypt = cryptoBusiness.decrypt(integrationEntity.getPassword());
 			String portDecrypt = cryptoBusiness.decrypt(integrationEntity.getPort());
 			String schemaDecrypt = cryptoBusiness.decrypt(integrationEntity.getSchema());
-			String usernameDecrypt = cryptoBusiness.decrypt(integrationEntity.getUsername());
 
-			iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, passwordDecrypt, portDecrypt, schemaDecrypt,
-					usernameDecrypt, integrationId, false);
+			// supply cadastre
+			MicroserviceSupplyDto supplyCadastreDto = supplyClient
+					.findSupplyById(integrationEntity.getSupplyCadastreId());
+
+			iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, databaseIntegrationPassword, portDecrypt,
+					schemaDecrypt, databaseIntegrationUsername, integrationId, false,
+					supplyCadastreDto.getModelVersion());
 
 			// modify integration state
 			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
@@ -1374,6 +1383,52 @@ public class WorkspaceBusiness {
 		}
 
 		return integrationDto;
+	}
+
+	public void removeIntegrationFromWorkspace(Long workspaceId, Long integrationId, Long managerCode)
+			throws BusinessException {
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerCode != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración.");
+		}
+
+		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
+		}
+
+		IntegrationStateEntity stateEntity = integrationEntity.getState();
+		if (stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC) {
+			throw new BusinessException(
+					"No se puede generar el producto porque la integración se encuentra en un estado que no lo permite.");
+		}
+
+		try {
+
+			integrationBusiness.deleteIntegration(integrationId);
+
+		} catch (Exception e) {
+			log.error("Error intentando eliminar la integración: " + e.getMessage());
+			throw new BusinessException("No se ha podido eliminar la integración.");
+		}
+
 	}
 
 }

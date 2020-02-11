@@ -57,4 +57,10 @@ public class IntegrationService implements IIntegrationService {
 		return integrationRepository.findBySupplyCadastreIdAndSupplySnrIdAndState(cadastreId, snrId, state);
 	}
 
+	@Override
+	@Transactional
+	public void deleteIntegration(Long id) {
+		integrationRepository.deleteById(id);
+	}
+
 }

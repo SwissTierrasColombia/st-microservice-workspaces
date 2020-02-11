@@ -15,6 +15,7 @@ public class MicroserviceIli2pgExportDto implements Serializable {
 	private String pathFileXTF;
 	private Long integrationId;
 	private Boolean withStats;
+	private String versionModel;
 
 	public MicroserviceIli2pgExportDto() {
 
@@ -90,6 +91,14 @@ public class MicroserviceIli2pgExportDto implements Serializable {
 
 	public void setWithStats(Boolean withStats) {
 		this.withStats = withStats;
+	}
+
+	public String getVersionModel() {
+		return versionModel;
+	}
+
+	public void setVersionModel(String versionModel) {
+		this.versionModel = versionModel;
 	}
 
 }

@@ -25,6 +25,7 @@ import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
+import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 
 import feign.FeignException;
 import io.swagger.annotations.Api;
@@ -202,11 +203,20 @@ public class TaskV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
+			String reason = cancelTaskRequest.getReason();
+			if (reason == null || reason.isEmpty()) {
+				throw new InputValidationException("Se debe justificar porque se cancelará la tarea.");
+			}
+
 			responseDto = taskBusiness.cancelTask(taskId, cancelTaskRequest.getReason(), userDtoSession);
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error TaskV1Controller@cancelTask#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (InputValidationException e) {
+			log.error("Error TaskV1Controller@cancelTask#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {

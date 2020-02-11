@@ -200,6 +200,21 @@ public class IntegrationBusiness {
 		return listIntegrationsDto;
 	}
 
+	public void deleteIntegration(Long integrationId) throws BusinessException {
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración");
+		}
+
+		try {
+			integrationService.deleteIntegration(integrationId);
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido eliminar la integración.");
+		}
+
+	}
+
 	private IntegrationDto transformEntityToDto(IntegrationEntity integrationEntity) {
 
 		IntegrationDto integrationDto = new IntegrationDto();

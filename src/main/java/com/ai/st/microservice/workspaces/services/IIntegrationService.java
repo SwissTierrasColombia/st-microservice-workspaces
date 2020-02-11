@@ -23,4 +23,6 @@ public interface IIntegrationService {
 	public IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
 			IntegrationStateEntity state);
 
+	public void deleteIntegration(Long id);
+
 }

@@ -52,6 +52,12 @@ public class TaskBusiness {
 	@Value("${integrations.database.schema}")
 	private String databaseIntegrationSchema;
 
+	@Value("${integrations.database.username}")
+	private String databaseIntegrationUsername;
+
+	@Value("${integrations.database.password}")
+	private String databaseIntegrationPassword;
+
 	private final Logger log = LoggerFactory.getLogger(TaskBusiness.class);
 
 	public static final Long TASK_CATEGORY_INTEGRATION = (long) 1;
@@ -314,13 +320,16 @@ public class TaskBusiness {
 
 							String hostnameDecrypt = cryptoBusiness.decrypt(integrationEntity.getHostname());
 							String databaseDecrypt = cryptoBusiness.decrypt(integrationEntity.getDatabase());
-							String passwordDecrypt = cryptoBusiness.decrypt(integrationEntity.getPassword());
 							String portDecrypt = cryptoBusiness.decrypt(integrationEntity.getPort());
 							String schemaDecrypt = cryptoBusiness.decrypt(integrationEntity.getSchema());
-							String usernameDecrypt = cryptoBusiness.decrypt(integrationEntity.getUsername());
 
-							iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, passwordDecrypt, portDecrypt,
-									schemaDecrypt, usernameDecrypt, integrationId, true);
+							// supply cadastre
+							MicroserviceSupplyDto supplyCadastreDto = supplyClient
+									.findSupplyById(integrationEntity.getSupplyCadastreId());
+
+							iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, databaseIntegrationPassword,
+									portDecrypt, schemaDecrypt, databaseIntegrationUsername, integrationId, true,
+									supplyCadastreDto.getModelVersion());
 
 							// modify integration state to generating product
 							integrationBusiness.updateStateToIntegration(integrationId,
@@ -486,8 +495,8 @@ public class TaskBusiness {
 
 								iliBusiness.startIntegration(attachmentCadastre.getUrlDocumentaryRepository(),
 										attachmentRegister.getUrlDocumentaryRepository(), databaseIntegrationHost,
-										randomDatabaseName, randomPassword, databaseIntegrationPort,
-										databaseIntegrationSchema, randomUsername, integrationId,
+										randomDatabaseName, databaseIntegrationPassword, databaseIntegrationPort,
+										databaseIntegrationSchema, databaseIntegrationUsername, integrationId,
 										supplyCadastreDto.getModelVersion());
 
 							} catch (Exception e) {
