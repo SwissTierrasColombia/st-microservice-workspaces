@@ -3,6 +3,8 @@ package com.ai.st.microservice.workspaces.business;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +24,8 @@ import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 
 @Component
 public class SupplyBusiness {
+
+	private final Logger log = LoggerFactory.getLogger(SupplyBusiness.class);
 
 	@Autowired
 	private IMunicipalityService municipalityService;
@@ -189,6 +193,19 @@ public class SupplyBusiness {
 
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido cargar el insumo");
+		}
+
+		return supplyDto;
+	}
+
+	public MicroserviceSupplyDto getSupplyById(Long supplyId) throws BusinessException {
+
+		MicroserviceSupplyDto supplyDto = null;
+
+		try {
+			supplyDto = supplyClient.findSupplyById(supplyId);
+		} catch (Exception e) {
+			log.error("No se ha podido consultar el insumo: " + e.getMessage());
 		}
 
 		return supplyDto;

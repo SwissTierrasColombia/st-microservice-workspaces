@@ -101,6 +101,41 @@ public class TaskBusiness {
 	@Autowired
 	private IIntegrationService integrationService;
 
+	public MicroserviceTaskDto extendTask(MicroserviceTaskDto taskDto) {
+
+		List<MicroserviceTaskMemberDto> members = new ArrayList<MicroserviceTaskMemberDto>();
+		for (MicroserviceTaskMemberDto member : taskDto.getMembers()) {
+			try {
+				MicroserviceUserDto userDto = userClient.findById(member.getMemberCode());
+				member.setUser(userDto);
+			} catch (Exception e) {
+				member.setUser(null);
+			}
+			members.add(member);
+		}
+		taskDto.setMembers(members);
+
+		JsonObject objectMetadata = new JsonObject();
+
+		for (MicroserviceTaskMetadataDto metadataDto : taskDto.getMetadata()) {
+
+			JsonObject objectProperties = new JsonObject();
+			for (MicroserviceTaskMetadataPropertyDto propertyDto : metadataDto.getProperties()) {
+				objectProperties.addProperty(propertyDto.getKey(), propertyDto.getValue());
+			}
+
+			objectMetadata.add(metadataDto.getKey(), objectProperties);
+
+		}
+
+		Gson gson = new Gson();
+		@SuppressWarnings("unchecked")
+		Map<String, Object> mapData = gson.fromJson(objectMetadata.toString(), Map.class);
+		taskDto.setData(mapData);
+
+		return taskDto;
+	}
+
 	public List<MicroserviceTaskDto> getPendingTasks(Long userCode) throws BusinessException {
 
 		List<MicroserviceTaskDto> listTasksDto = new ArrayList<MicroserviceTaskDto>();
@@ -114,37 +149,7 @@ public class TaskBusiness {
 			List<MicroserviceTaskDto> listResponseTasks = taskClient.findByUserAndState(userCode, taskStates);
 
 			for (MicroserviceTaskDto taskDto : listResponseTasks) {
-
-				List<MicroserviceTaskMemberDto> members = new ArrayList<MicroserviceTaskMemberDto>();
-				for (MicroserviceTaskMemberDto member : taskDto.getMembers()) {
-					try {
-						MicroserviceUserDto userDto = userClient.findById(member.getMemberCode());
-						member.setUser(userDto);
-					} catch (Exception e) {
-						member.setUser(null);
-					}
-					members.add(member);
-				}
-				taskDto.setMembers(members);
-
-				JsonObject objectMetadata = new JsonObject();
-
-				for (MicroserviceTaskMetadataDto metadataDto : taskDto.getMetadata()) {
-
-					JsonObject objectProperties = new JsonObject();
-					for (MicroserviceTaskMetadataPropertyDto propertyDto : metadataDto.getProperties()) {
-						objectProperties.addProperty(propertyDto.getKey(), propertyDto.getValue());
-					}
-
-					objectMetadata.add(metadataDto.getKey(), objectProperties);
-
-				}
-
-				Gson gson = new Gson();
-				@SuppressWarnings("unchecked")
-				Map<String, Object> mapData = gson.fromJson(objectMetadata.toString(), Map.class);
-				taskDto.setData(mapData);
-
+				taskDto = this.extendTask(taskDto);
 				listTasksDto.add(taskDto);
 			}
 
@@ -182,7 +187,7 @@ public class TaskBusiness {
 	}
 
 	public MicroserviceTaskDto createTaskForGenerationSupply(List<Long> users, String municipality, Long requestId,
-			Long typeSupplyId, Date dateDeadline) throws BusinessException {
+			Long typeSupplyId, Date dateDeadline, String modelVersion) throws BusinessException {
 
 		List<Long> taskCategories = new ArrayList<>();
 		taskCategories.add(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION);
@@ -208,6 +213,7 @@ public class TaskBusiness {
 		listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("requestId", requestId.toString()));
 		listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("typeSupplyId", typeSupplyId.toString()));
 		listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("municipality", municipality));
+		listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("modelVersion", modelVersion));
 
 		metadataRequest.setProperties(listPropertiesRequest);
 		metadata.add(metadataRequest);
@@ -260,6 +266,7 @@ public class TaskBusiness {
 
 		try {
 			taskDto = taskClient.startTask(taskId);
+			taskDto = this.extendTask(taskDto);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido iniciar la tarea.");
 		}
@@ -398,6 +405,7 @@ public class TaskBusiness {
 		// close task
 		try {
 			taskDto = taskClient.closeTask(taskId);
+			taskDto = this.extendTask(taskDto);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido finalizar la tarea.");
 		}
@@ -542,7 +550,11 @@ public class TaskBusiness {
 					MicroserviceTaskMetadataPropertyDto propertyMunicipality = metadataRequest.getProperties().stream()
 							.filter(propertyDto -> propertyDto.getKey().equals("municipality")).findAny().orElse(null);
 
-					if (propertyRequest != null && propertyTypeSupply != null && propertyMunicipality != null) {
+					MicroserviceTaskMetadataPropertyDto propertyModelVersion = metadataRequest.getProperties().stream()
+							.filter(propertyDto -> propertyDto.getKey().equals("modelVersion")).findAny().orElse(null);
+
+					if (propertyRequest != null && propertyTypeSupply != null && propertyMunicipality != null
+							&& propertyModelVersion != null) {
 
 						Long requestId = Long.parseLong(propertyRequest.getValue());
 						Long typeSuppyId = Long.parseLong(propertyTypeSupply.getValue());
@@ -562,7 +574,7 @@ public class TaskBusiness {
 							}
 
 							this.createTaskForGenerationSupply(users, municipality, requestId, typeSuppyId,
-									taskDto.getDeadline());
+									taskDto.getDeadline(), propertyModelVersion.getValue());
 						}
 
 					}
@@ -572,13 +584,14 @@ public class TaskBusiness {
 			}
 
 		} catch (Exception e) {
-			log.error("No se ha podido re-asignar la tarea.");
+			log.error("No se ha podido re-asignar la tarea. " + e.getMessage());
 		}
 
 		try {
 			MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
 			cancelTaskDto.setReason(reason);
 			taskDto = taskClient.cancelTask(taskId, cancelTaskDto);
+			taskDto = this.extendTask(taskDto);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido cancelar la tarea.");
 		}

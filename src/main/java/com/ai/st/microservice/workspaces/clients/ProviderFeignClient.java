@@ -51,7 +51,8 @@ public interface ProviderFeignClient {
 	public MicroserviceRequestDto findRequestById(@PathVariable Long requestId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
-	public List<MicroserviceProviderUserDto> findUsersByProviderId(@PathVariable Long providerId) throws BusinessException;
+	public List<MicroserviceProviderUserDto> findUsersByProviderId(@PathVariable Long providerId)
+			throws BusinessException;
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/requests/{requestId}/supplies/{supplyRequestedId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceRequestDto updateSupplyRequested(@PathVariable Long requestId,
@@ -69,6 +70,11 @@ public interface ProviderFeignClient {
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
 	public List<MicroserviceProviderUserDto> findUsersByProviderIdAndProfiles(@PathVariable Long providerId,
 			@RequestParam(name = "profiles", required = false) List<Long> profiles) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/requests/emmiters")
+	public List<MicroserviceRequestDto> findRequestsByEmmiters(
+			@RequestParam(name = "emmiter_code", required = true) Long emmiterCode,
+			@RequestParam(name = "emmiter_type", required = true) String emmiterType);
 
 	class Configuration {
 

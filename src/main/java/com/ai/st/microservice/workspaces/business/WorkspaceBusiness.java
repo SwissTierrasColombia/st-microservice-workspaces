@@ -978,7 +978,7 @@ public class WorkspaceBusiness {
 
 							taskBusiness.createTaskForGenerationSupply(users,
 									municipalityEntity.getName().toLowerCase(), responseRequest.getId(),
-									supplyRequested.getTypeSupply().getId(), null);
+									supplyRequested.getTypeSupply().getId(), null, supplyRequested.getModelVersion());
 
 						} catch (Exception e) {
 							log.error("No se ha podido crear la tarea de generación de insumos: " + e.getMessage());
@@ -1429,6 +1429,25 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha podido eliminar la integración.");
 		}
 
+	}
+
+	public boolean managerHasAccessToMunicipality(String municipalityCode, Long managerCode) {
+
+		Boolean hasAccess = false;
+
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityByCode(municipalityCode);
+		if (!(municipalityEntity instanceof MunicipalityEntity)) {
+			return hasAccess;
+		}
+
+		WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+		if (workspaceActive instanceof WorkspaceEntity) {
+			if (managerCode == workspaceActive.getManagerCode()) {
+				hasAccess = true;
+			}
+		}
+
+		return hasAccess;
 	}
 
 }

@@ -1,13 +1,21 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.servlet.ServletContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +31,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.RoleBusiness;
+import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
@@ -39,6 +48,8 @@ import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
@@ -67,6 +78,12 @@ public class WorkspaceV1Controller {
 
 	@Autowired
 	private IntegrationBusiness integrationBusiness;
+
+	@Autowired
+	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private ServletContext servletContext;
 
 	@RequestMapping(value = "", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Create workspace")
@@ -1064,6 +1081,102 @@ public class WorkspaceV1Controller {
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "download-supply/{supplyId}", method = RequestMethod.GET)
+	@ApiOperation(value = "Download file")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> downloadSupply(@PathVariable Long supplyId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+
+			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyId);
+			if (!(supplyDto instanceof MicroserviceSupplyDto)) {
+				throw new BusinessException("No se ha encontrado el insumo.");
+			}
+
+			if (roleManager instanceof MicroserviceRoleDto) {
+
+				// get manager
+				MicroserviceManagerDto managerDto = null;
+				MicroserviceManagerProfileDto profileDirector = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+					List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+							.findProfilesByUser(userDtoSession.getId());
+
+					profileDirector = managerProfiles.stream()
+							.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+							.orElse(null);
+
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+				if (profileDirector == null) {
+					throw new InputValidationException("Acceso denegado.");
+				}
+
+				if (!workspaceBusiness.managerHasAccessToMunicipality(supplyDto.getMunicipalityCode(),
+						managerDto.getId())) {
+					throw new InputValidationException("No tiene acceso al municipio.");
+				}
+
+			}
+
+			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
+
+			String pathFile = attachment.getUrlDocumentaryRepository();
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupply#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupply#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@downloadSupply#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length()).body(resource);
+
 	}
 
 }

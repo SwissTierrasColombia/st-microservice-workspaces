@@ -354,4 +354,19 @@ public class ProviderBusiness {
 		return usersDto;
 	}
 
+	public List<MicroserviceRequestDto> getRequestsByEmmitersManager(Long managerCode) throws BusinessException {
+
+		List<MicroserviceRequestDto> listRequestsDto = new ArrayList<>();
+
+		try {
+
+			listRequestsDto = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
+
+		} catch (Exception e) {
+			log.error("Error consultando solicitudes: " + e.getMessage());
+		}
+
+		return listRequestsDto;
+	}
+
 }
