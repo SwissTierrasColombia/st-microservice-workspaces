@@ -79,8 +79,8 @@ public class RabbitMQUpdateExportIntegrationListener {
 					Path path = Paths.get(resultExportDto.getPathFile());
 					String fileName = path.getFileName().toString();
 
-					String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName),
-							urlBase);
+					String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName), urlBase,
+							true);
 
 					List<String> urlsAttachments = new ArrayList<>();
 					urlsAttachments.add(urlDocumentaryRepository);

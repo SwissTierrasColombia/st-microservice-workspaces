@@ -48,6 +48,8 @@ public class DatabaseIntegrationBusiness {
 							+ "' NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION");
 			stmt2.execute();
 
+			System.out.println("DATABASE: " + database + " USER: " + username + " PASSWORD: " + password);
+
 			this.createExtensionsToDatabase(database);
 
 			result = true;
@@ -118,6 +120,14 @@ public class DatabaseIntegrationBusiness {
 			PreparedStatement stmt11 = connection.prepareStatement("CREATE POLICY all_users_insert_policy ON " + schema
 					+ ".ini_predio_insumos FOR INSERT WITH CHECK (t_id > " + maxId + ")");
 			stmt11.execute();
+
+			PreparedStatement stmt12 = connection.prepareStatement("ALTER TABLE " + schema
+					+ ".ini_predio_insumos ADD CONSTRAINT st_unique_gc UNIQUE (gc_predio_catastro)");
+			stmt12.execute();
+
+			PreparedStatement stmt13 = connection.prepareStatement("ALTER TABLE " + schema
+					+ ".ini_predio_insumos ADD CONSTRAINT st_unique_snr UNIQUE (snr_predio_juridico)");
+			stmt13.execute();
 
 		} catch (Exception e) {
 			log.error("Error protegiendo base de datos: " + e.getMessage());

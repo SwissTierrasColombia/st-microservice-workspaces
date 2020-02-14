@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -59,9 +60,13 @@ public class RabbitMQUpdateStateSupplyListener {
 						+ providerDto.getName().replace(" ", "_") + "/"
 						+ supplyRequestedDto.getTypeSupply().getName().replace(" ", "_");
 
+				String fileName = validationDto.getFilenameTemporal();
+				String fileExtension = FilenameUtils.getExtension(fileName);
+				Boolean zipFile = fileExtension.equalsIgnoreCase("zip") ? false : true;
+
 				List<String> urls = new ArrayList<String>();
-				String urlDocumentaryRepository = rabbitMQService
-						.sendFile(StringUtils.cleanPath(validationDto.getFilenameTemporal()), urlBase);
+				String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName), urlBase,
+						zipFile);
 				urls.add(urlDocumentaryRepository);
 
 				supplyBusiness.createSupply(requestDto.getMunicipalityCode(), validationDto.getObservations(),

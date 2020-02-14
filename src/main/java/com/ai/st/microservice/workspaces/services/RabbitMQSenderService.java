@@ -19,11 +19,11 @@ public class RabbitMQSenderService {
 	@Value("${st.rabbitmq.queueFiles.routingkey}")
 	public String routingkeyFilesName;
 
-	public String sendFile(String filename, String namespace) {
+	public String sendFile(String filename, String namespace, boolean zip) {
 
 		String url = null;
 
-		UploadFileMessageDto message = new UploadFileMessageDto(filename, namespace, "Local", new byte[1]);
+		UploadFileMessageDto message = new UploadFileMessageDto(filename, namespace, "Local", new byte[1], zip);
 		url = (String) rabbitTemplate.convertSendAndReceive(exchangeFilesName, routingkeyFilesName, message);
 
 		return url;
