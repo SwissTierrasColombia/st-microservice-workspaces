@@ -1,7 +1,5 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
@@ -9,7 +7,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,9 +90,6 @@ public class WorkspaceBusiness {
 	@Value("${integrations.database.password}")
 	private String databaseIntegrationPassword;
 
-	@Value("${st.temporalDirectory}")
-	private String stTemporalDirectory;
-
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_MANAGER = (long) 1;
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_OPERATOR = (long) 2;
 
@@ -152,6 +147,9 @@ public class WorkspaceBusiness {
 	@Autowired
 	private ProviderBusiness providerBusiness;
 
+	@Autowired
+	private FileBusiness fileBusiness;
+
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
 
@@ -180,17 +178,17 @@ public class WorkspaceBusiness {
 		// save file with microservice file manager
 		String urlDocumentaryRepository = null;
 		try {
-			String tmpFile = this.stTemporalDirectory + File.separatorChar
-					+ StringUtils.cleanPath(supportFile.getOriginalFilename());
-
-			FileUtils.writeByteArrayToFile(new File(tmpFile), supportFile.getBytes());
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 
-			urlDocumentaryRepository = rabbitMQSenderService
-					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase);
+			String fileExtension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
+			String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + fileExtension;
+			fileBusiness.loadFileToSystem(supportFile, fileNameRandom);
 
-		} catch (IOException e) {
+			urlDocumentaryRepository = rabbitMQSenderService.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase,
+					true);
+
+		} catch (Exception e) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -381,17 +379,16 @@ public class WorkspaceBusiness {
 		String urlDocumentaryRepository = null;
 		try {
 
-			String tmpFile = this.stTemporalDirectory + File.separatorChar
-					+ StringUtils.cleanPath(supportFile.getOriginalFilename());
-
-			FileUtils.writeByteArrayToFile(new File(tmpFile), supportFile.getBytes());
-
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
 
-			urlDocumentaryRepository = rabbitMQSenderService
-					.sendFile(StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase);
+			String fileExtension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
+			String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + fileExtension;
+			fileBusiness.loadFileToSystem(supportFile, fileNameRandom);
 
-		} catch (IOException e) {
+			urlDocumentaryRepository = rabbitMQSenderService.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase,
+					true);
+
+		} catch (Exception e) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
