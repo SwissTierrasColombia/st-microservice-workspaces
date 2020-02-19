@@ -110,4 +110,37 @@ public class ZipUtil {
 		return false;
 	}
 
+	public static boolean zipMustContains(String filePathZip, List<String> extensionsToSearch) {
+
+		try {
+
+			ZipFile zipFile = new ZipFile(filePathZip);
+
+			for (String extension : extensionsToSearch) {
+
+				Boolean fileFound = false;
+
+				Enumeration<? extends ZipEntry> entries = zipFile.entries();
+				while (entries.hasMoreElements()) {
+					ZipEntry entry = entries.nextElement();
+					if (FilenameUtils.getExtension(entry.getName()).equalsIgnoreCase(extension)) {
+						fileFound = true;
+						break;
+					}
+				}
+
+				if (!fileFound) {
+					return false;
+				}
+
+			}
+
+			zipFile.close();
+		} catch (IOException e) {
+			log.error("Error unzipping archive: " + e.getMessage());
+		}
+
+		return true;
+	}
+
 }

@@ -176,16 +176,41 @@ public class ProviderBusiness {
 					List<MicroserviceExtensionDto> extensionAllowed = supplyRequested.getTypeSupply().getExtensions();
 
 					Boolean fileAllowed = false;
+					Boolean isLoadShp = false;
 					List<String> loadedFileExtensions = new ArrayList<>();
 
-					if (loadedFileExtension.equalsIgnoreCase("zip")) {
-						List<String> extensionsAllowed = extensionAllowed.stream().map(ext -> {
-							return ext.getName();
-						}).collect(Collectors.toList());
+					// verify if the supply is a shp file
+					MicroserviceExtensionDto extensionShpDto = extensionAllowed.stream()
+							.filter(ext -> ext.getName().equalsIgnoreCase("shp")).findAny().orElse(null);
+					if (extensionShpDto != null) {
 
-						fileAllowed = ZipUtil.zipContainsFile(filePathTemporal, extensionsAllowed);
-						loadedFileExtensions = ZipUtil.getExtensionsFromZip(filePathTemporal);
-						zipFile = false;
+						List<String> extensionsShp = new ArrayList<String>(Arrays.asList("shp", "dbf", "shx", "prj"));
+
+						if (loadedFileExtension.equalsIgnoreCase("zip")) {
+
+							isLoadShp = ZipUtil.zipContainsFile(filePathTemporal, extensionsShp);
+							if (isLoadShp) {
+								fileAllowed = ZipUtil.zipMustContains(filePathTemporal, extensionsShp);
+								loadedFileExtensions = extensionsShp;
+								zipFile = false;
+							}
+
+						}
+
+					}
+
+					if (loadedFileExtension.equalsIgnoreCase("zip")) {
+
+						if (!isLoadShp) {
+							List<String> extensionsAllowed = extensionAllowed.stream().map(ext -> {
+								return ext.getName();
+							}).collect(Collectors.toList());
+
+							fileAllowed = ZipUtil.zipContainsFile(filePathTemporal, extensionsAllowed);
+							loadedFileExtensions = ZipUtil.getExtensionsFromZip(filePathTemporal);
+							zipFile = false;
+						}
+
 					} else {
 
 						MicroserviceExtensionDto extensionDto = extensionAllowed.stream()
