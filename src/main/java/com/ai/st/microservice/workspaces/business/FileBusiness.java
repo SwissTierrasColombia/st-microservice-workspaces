@@ -40,4 +40,14 @@ public class FileBusiness {
 		return null;
 	}
 
+	public void deleteFile(String path) {
+
+		try {
+			FileUtils.forceDelete(FileUtils.getFile(path));
+		} catch (Exception e) {
+			log.error("It has not been possible delete the file: " + e.getMessage());
+		}
+
+	}
+
 }

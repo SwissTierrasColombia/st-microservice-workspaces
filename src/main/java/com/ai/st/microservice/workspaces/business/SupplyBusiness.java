@@ -211,4 +211,16 @@ public class SupplyBusiness {
 		return supplyDto;
 	}
 
+	public void deleteSupply(Long supplyId) throws BusinessException {
+
+		try {
+
+			supplyClient.deleteSupplyById(supplyId);
+
+		} catch (Exception e) {
+			log.error("No se ha podido eliminar el insumo: " + e.getMessage());
+		}
+
+	}
+
 }

@@ -10,6 +10,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.cloud.openfeign.support.SpringEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,6 +42,9 @@ public interface SupplyFeignClient {
 
 	@GetMapping("/api/supplies/v1/supplies/{supplyId}")
 	public MicroserviceSupplyDto findSupplyById(@PathVariable Long supplyId);
+
+	@DeleteMapping("/api/supplies/v1/supplies/{supplyId}")
+	public void deleteSupplyById(@PathVariable Long supplyId);
 
 	class Configuration {
 

@@ -150,6 +150,9 @@ public class WorkspaceBusiness {
 	@Autowired
 	private FileBusiness fileBusiness;
 
+	@Autowired
+	private SupplyBusiness supplyBusiness;
+
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
 
@@ -1445,6 +1448,47 @@ public class WorkspaceBusiness {
 		}
 
 		return hasAccess;
+	}
+
+	public void removeSupply(Long workspaceId, Long supplyId, Long managerCode) throws BusinessException {
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerCode != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		MicroserviceSupplyDto supplyDto = null;
+		String pathFile = null;
+		try {
+
+			supplyDto = supplyClient.findSupplyById(supplyId);
+
+			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
+			pathFile = attachment.getUrlDocumentaryRepository();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha encontrado el insumo.");
+		}
+
+		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+		if (!supplyDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+			throw new BusinessException("El insumo no pertenece al municipio.");
+		}
+
+		supplyBusiness.deleteSupply(supplyId);
+		fileBusiness.deleteFile(pathFile);
+
 	}
 
 }
