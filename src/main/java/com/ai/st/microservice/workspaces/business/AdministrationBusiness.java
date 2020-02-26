@@ -3,6 +3,8 @@ package com.ai.st.microservice.workspaces.business;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +14,7 @@ import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleManagerDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleProviderDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceChangePasswordDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceCreateUserDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
@@ -20,6 +23,8 @@ import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 @Component
 public class AdministrationBusiness {
+
+	private final Logger log = LoggerFactory.getLogger(AdministrationBusiness.class);
 
 	@Autowired
 	private UserFeignClient userClient;
@@ -89,7 +94,7 @@ public class AdministrationBusiness {
 							providerClient.addUserToProvide(addUser);
 						}
 					} catch (Exception e) {
-
+						log.error("Error adding profile to provider: " + e.getMessage());
 					}
 				}
 
@@ -107,7 +112,7 @@ public class AdministrationBusiness {
 						}
 
 					} catch (Exception e) {
-						System.out.println("HOLAAA " + e.getMessage());
+						log.error("Error adding profile to manager: " + e.getMessage());
 					}
 				}
 
@@ -119,7 +124,28 @@ public class AdministrationBusiness {
 			throw new BusinessException("El usuario necesita tener al menos un rol.");
 		}
 
+		// TODO: Send notification
+
 		return userResponseDto;
+	}
+
+	public MicroserviceUserDto changeUserPassword(Long userId, String password) throws BusinessException {
+
+		MicroserviceUserDto userDto = null;
+
+		try {
+
+			MicroserviceChangePasswordDto requestChangePassword = new MicroserviceChangePasswordDto();
+			requestChangePassword.setPassword(password);
+
+			userDto = userClient.changeUserPassword(userId, requestChangePassword);
+
+		} catch (BusinessException e) {
+			throw new BusinessException(e.getMessage());
+		}
+
+		return userDto;
+
 	}
 
 }

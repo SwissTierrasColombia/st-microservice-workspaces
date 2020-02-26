@@ -237,6 +237,8 @@ public class WorkspaceBusiness {
 		workspaceEntity.setStatesHistory(listStates);
 
 		workspaceEntity = workspaceService.createWorkspace(workspaceEntity);
+		
+		//TODO: Send notification
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -428,6 +430,8 @@ public class WorkspaceBusiness {
 		workspaceEntity.setOperators(operators);
 
 		workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
+		
+		//TODO: Send notification
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -889,7 +893,7 @@ public class WorkspaceBusiness {
 			}
 		} catch (Exception e) {
 			throw new BusinessException("La fecha límite es inválida.");
-		}
+		}		
 
 		List<MicroserviceCreateRequestDto> groupRequests = new ArrayList<MicroserviceCreateRequestDto>();
 		List<Long> skipped = new ArrayList<Long>();
@@ -954,6 +958,8 @@ public class WorkspaceBusiness {
 
 				MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
 				requests.add(responseRequest);
+				
+				//TODO: Send notification
 
 				if (responseRequest.getProvider().getId() == ProviderBusiness.PROVIDER_IGAC_ID) {
 
@@ -1312,6 +1318,8 @@ public class WorkspaceBusiness {
 
 			taskBusiness.createTask(taskCategories, sdf.format(cal.getTime()), description, name, users, metadata,
 					steps);
+			
+			//TODO: Send notification
 
 		} catch (Exception e) {
 			log.error("No se ha podido crear la tarea de integración: " + e.getMessage());

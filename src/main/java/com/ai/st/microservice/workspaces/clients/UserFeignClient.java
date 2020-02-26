@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceChangePasswordDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceCreateUserDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -34,6 +35,10 @@ public interface UserFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/administration/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceUserDto createUser(@RequestBody MicroserviceCreateUserDto user) throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/administration/v1/users/{id}/reset-password", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceUserDto changeUserPassword(@PathVariable(required = true, name = "id") Long userId,
+			@RequestBody MicroserviceChangePasswordDto requestChangePassword) throws BusinessException;
 
 	class Configuration {
 

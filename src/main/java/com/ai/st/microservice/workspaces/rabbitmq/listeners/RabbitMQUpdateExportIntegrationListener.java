@@ -104,6 +104,8 @@ public class RabbitMQUpdateExportIntegrationListener {
 				stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
 				log.error("Export finished with errors");
 			}
+			
+			//TODO: Send notification
 
 			integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null,
 					"SISTEMA");

@@ -84,6 +84,10 @@ public class RabbitMQUpdateStateSupplyListener {
 			} else {
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_REJECTED;
 			}
+			
+			//TODO: Send notification provider
+			
+			//TODO: Send notification manager (validation)
 
 			// update request
 			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
