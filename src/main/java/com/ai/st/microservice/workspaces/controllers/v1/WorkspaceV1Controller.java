@@ -39,6 +39,8 @@ import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.CreateWorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.CreateDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
@@ -1237,6 +1239,92 @@ public class WorkspaceV1Controller {
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@removeSupply#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/operators/deliveries", method = RequestMethod.POST)
+	@ApiOperation(value = "Create delivery")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> createDelivery(@PathVariable Long workspaceId,
+			@RequestHeader("authorization") String headerAuthorization,
+			@RequestBody CreateDeliveryDto createDeliveryDto) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			// validation observations
+			String observations = createDeliveryDto.getObservations();
+			if (observations == null || observations.isEmpty()) {
+				throw new InputValidationException("Las observaciones son requeridas.");
+			}
+
+			List<CreateSupplyDeliveryDto> supplies = createDeliveryDto.getSupplies();
+			if (supplies == null || supplies.size() == 0) {
+				throw new InputValidationException("Los insumos son requeridos.");
+			} else {
+				for (CreateSupplyDeliveryDto supplyDto : supplies) {
+					if (supplyDto.getSupplyId() == null && supplyDto.getSupplyId() <= 0) {
+						throw new InputValidationException("El código del insumo es requerido.");
+					}
+				}
+			}
+
+			responseDto = workspaceBusiness.createDelivery(workspaceId, managerDto.getId(), observations, supplies);
+			httpStatus = HttpStatus.CREATED;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#Microservice ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		} catch (InputValidationException e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#Validation ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.BAD_REQUEST;
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#Business ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#General ---> " + e.getMessage());
 			responseDto = new BasicResponseDto(e.getMessage(), 3);
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		}

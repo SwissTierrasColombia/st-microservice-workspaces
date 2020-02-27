@@ -22,6 +22,7 @@ import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
 import com.ai.st.microservice.workspaces.dto.MilestoneDto;
@@ -34,7 +35,9 @@ import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
-import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
@@ -153,6 +156,9 @@ public class WorkspaceBusiness {
 	@Autowired
 	private SupplyBusiness supplyBusiness;
 
+	@Autowired
+	private OperatorBusiness operatorBusiness;
+
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
 
@@ -237,8 +243,8 @@ public class WorkspaceBusiness {
 		workspaceEntity.setStatesHistory(listStates);
 
 		workspaceEntity = workspaceService.createWorkspace(workspaceEntity);
-		
-		//TODO: Send notification
+
+		// TODO: Send notification
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -320,7 +326,7 @@ public class WorkspaceBusiness {
 
 				// get operator
 				try {
-					OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+					MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 					workspaceOperatorDto.setOperator(operatorDto);
 				} catch (FeignException e) {
 					workspaceOperatorDto.setOperator(null);
@@ -366,7 +372,7 @@ public class WorkspaceBusiness {
 		}
 
 		// validate if the operator exists
-		OperatorDto operatorDto = null;
+		MicroserviceOperatorDto operatorDto = null;
 		try {
 			operatorDto = operatorClient.findById(operatorCode);
 		} catch (Exception e) {
@@ -430,8 +436,8 @@ public class WorkspaceBusiness {
 		workspaceEntity.setOperators(operators);
 
 		workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
-		
-		//TODO: Send notification
+
+		// TODO: Send notification
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -541,7 +547,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
@@ -723,7 +729,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
@@ -779,7 +785,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
@@ -849,7 +855,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (FeignException e) {
 				workspaceOperatorDto.setOperator(null);
@@ -893,7 +899,7 @@ public class WorkspaceBusiness {
 			}
 		} catch (Exception e) {
 			throw new BusinessException("La fecha límite es inválida.");
-		}		
+		}
 
 		List<MicroserviceCreateRequestDto> groupRequests = new ArrayList<MicroserviceCreateRequestDto>();
 		List<Long> skipped = new ArrayList<Long>();
@@ -958,8 +964,8 @@ public class WorkspaceBusiness {
 
 				MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
 				requests.add(responseRequest);
-				
-				//TODO: Send notification
+
+				// TODO: Send notification
 
 				if (responseRequest.getProvider().getId() == ProviderBusiness.PROVIDER_IGAC_ID) {
 
@@ -1318,8 +1324,8 @@ public class WorkspaceBusiness {
 
 			taskBusiness.createTask(taskCategories, sdf.format(cal.getTime()), description, name, users, metadata,
 					steps);
-			
-			//TODO: Send notification
+
+			// TODO: Send notification
 
 		} catch (Exception e) {
 			log.error("No se ha podido crear la tarea de integración: " + e.getMessage());
@@ -1496,7 +1502,54 @@ public class WorkspaceBusiness {
 
 		supplyBusiness.deleteSupply(supplyId);
 		fileBusiness.deleteFile(pathFile);
+	}
 
+	public MicroserviceDeliveryDto createDelivery(Long workspaceId, Long managerCode, String observations,
+			List<CreateSupplyDeliveryDto> suppliesDto) throws BusinessException {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerCode != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		List<WorkspaceOperatorEntity> operators = workspaceEntity.getOperators();
+		if (operators.size() == 0) {
+			throw new BusinessException("El espacio de trabajo no tiene asignado un operador.");
+		}
+
+		Long operatorId = operators.get(0).getId();
+
+		List<MicroserviceCreateDeliverySupplyDto> microserviceSupplies = new ArrayList<>();
+		for (CreateSupplyDeliveryDto deliverySupplyDto : suppliesDto) {
+			try {
+				supplyClient.findSupplyById(deliverySupplyDto.getSupplyId());
+				microserviceSupplies.add(new MicroserviceCreateDeliverySupplyDto(deliverySupplyDto.getObservations(),
+						deliverySupplyDto.getSupplyId()));
+			} catch (Exception e) {
+				throw new BusinessException("No se ha encontrado el insumo.");
+			}
+		}
+
+		try {
+			deliveryDto = operatorBusiness.createDelivery(operatorId, managerCode,
+					workspaceEntity.getMunicipality().getCode(), observations, microserviceSupplies);
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido realizar la entrega al operador.");
+		}
+
+		return deliveryDto;
 	}
 
 }

@@ -3,7 +3,7 @@ package com.ai.st.microservice.workspaces.dto.operators;
 import java.io.Serializable;
 import java.util.Date;
 
-public class OperatorDto implements Serializable {
+public class MicroserviceOperatorDto implements Serializable {
 
 	private static final long serialVersionUID = 4784320463657739097L;
 
@@ -13,7 +13,7 @@ public class OperatorDto implements Serializable {
 	private Date createdAt;
 	private Boolean isPublic;
 
-	public OperatorDto() {
+	public MicroserviceOperatorDto() {
 
 	}
 
