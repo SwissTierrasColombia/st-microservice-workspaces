@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
@@ -18,6 +20,7 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOw
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
@@ -39,6 +42,9 @@ public class SupplyBusiness {
 	@Autowired
 	private ProviderFeignClient providerClient;
 
+	@Autowired
+	private OperatorBusiness operatorBusiness;
+
 	public Object getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions, Integer page,
 			List<Long> requests) throws BusinessException {
 
@@ -48,7 +54,7 @@ public class SupplyBusiness {
 			throw new BusinessException("No se ha encontrado el municipio.");
 		}
 
-		return this.getSuppliesByMunicipality(municipalityEntity.getCode(), extensions, page, requests);
+		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests);
 	}
 
 	public Object getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode, List<String> extensions,
@@ -69,10 +75,10 @@ public class SupplyBusiness {
 			}
 		}
 
-		return this.getSuppliesByMunicipality(municipalityEntity.getCode(), extensions, page, requests);
+		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests);
 	}
 
-	private Object getSuppliesByMunicipality(String municipalityCode, List<String> extensions, Integer page,
+	private Object getSuppliesByMunicipality(MunicipalityEntity municipality, List<String> extensions, Integer page,
 			List<Long> requests) throws BusinessException {
 
 		List<MicroserviceSupplyDto> suppliesDto = new ArrayList<>();
@@ -82,15 +88,17 @@ public class SupplyBusiness {
 			MicroserviceDataPaginatedDto dataPaginated = null;
 
 			if (page != null) {
-				dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipalityCode, page, requests);
+				dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipality.getCode(), page,
+						requests);
 				suppliesDto = dataPaginated.getItems();
 			} else {
-				suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipalityCode);
+				suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode());
 			}
 
 			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
 
 				if (supplyDto.getTypeSupplyCode() != null) {
+
 					try {
 						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
 								.findTypeSuppleById(supplyDto.getTypeSupplyCode());
@@ -100,6 +108,40 @@ public class SupplyBusiness {
 					} catch (Exception e) {
 						throw new BusinessException("No se ha podido consultar el tipo de insumo.");
 					}
+
+					// verify if the supply has been delivered to operator
+					try {
+
+						WorkspaceEntity workspaceActive = workspaceService
+								.getWorkspaceActiveByMunicipality(municipality);
+
+						if (workspaceActive != null) {
+							List<WorkspaceOperatorEntity> operators = workspaceActive.getOperators();
+							if (operators.size() >= 1) {
+
+								List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness
+										.getDeliveriesByOperator(operators.get(0).getId(), municipality.getCode());
+
+								for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
+
+									MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
+											.filter(sDto -> sDto.getSupplyCode() == supplyDto.getId()).findAny()
+											.orElse(null);
+
+									if (supplyFound != null) {
+										supplyDto.setDelivered(true);
+										supplyDto.setDelivery(deliveryFoundDto);
+									}
+								}
+
+							}
+						}
+
+					} catch (Exception e) {
+						log.error("No se ha podido consultar si el insumo ha sido entregado al operador: "
+								+ e.getMessage());
+					}
+
 				}
 			}
 
@@ -204,6 +246,10 @@ public class SupplyBusiness {
 
 		try {
 			supplyDto = supplyClient.findSupplyById(supplyId);
+
+			MicroserviceTypeSupplyDto typeSupplyDto = providerClient.findTypeSuppleById(supplyDto.getTypeSupplyCode());
+			supplyDto.setTypeSupply(typeSupplyDto);
+
 		} catch (Exception e) {
 			log.error("No se ha podido consultar el insumo: " + e.getMessage());
 		}

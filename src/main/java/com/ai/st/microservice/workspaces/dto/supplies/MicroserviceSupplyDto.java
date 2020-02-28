@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 
 public class MicroserviceSupplyDto implements Serializable {
@@ -22,6 +23,8 @@ public class MicroserviceSupplyDto implements Serializable {
 	private List<MicroserviceSupplyOwnerDto> owners;
 	private List<MicroserviceSupplyAttachmentDto> attachments;
 	private MicroserviceTypeSupplyDto typeSupply;
+	private Boolean delivered;
+	private MicroserviceDeliveryDto delivery;
 
 	public MicroserviceSupplyDto() {
 		this.owners = new ArrayList<MicroserviceSupplyOwnerDto>();
@@ -115,6 +118,22 @@ public class MicroserviceSupplyDto implements Serializable {
 
 	public void setModelVersion(String modelVersion) {
 		this.modelVersion = modelVersion;
+	}
+
+	public Boolean getDelivered() {
+		return delivered;
+	}
+
+	public void setDelivered(Boolean delivered) {
+		this.delivered = delivered;
+	}
+
+	public MicroserviceDeliveryDto getDelivery() {
+		return delivery;
+	}
+
+	public void setDelivery(MicroserviceDeliveryDto delivery) {
+		this.delivery = delivery;
 	}
 
 }

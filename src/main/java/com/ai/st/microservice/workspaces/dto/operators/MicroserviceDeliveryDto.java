@@ -13,6 +13,7 @@ public class MicroserviceDeliveryDto implements Serializable {
 	private Date createdAt;
 	private Long managerCode;
 	private String municipalityCode;
+	private Boolean isActive;
 	private String observations;
 	private MicroserviceOperatorDto operator;
 	private List<MicroserviceSupplyDeliveryDto> supplies;
@@ -75,6 +76,14 @@ public class MicroserviceDeliveryDto implements Serializable {
 
 	public void setSupplies(List<MicroserviceSupplyDeliveryDto> supplies) {
 		this.supplies = supplies;
+	}
+
+	public Boolean getIsActive() {
+		return isActive;
+	}
+
+	public void setIsActive(Boolean isActive) {
+		this.isActive = isActive;
 	}
 
 }

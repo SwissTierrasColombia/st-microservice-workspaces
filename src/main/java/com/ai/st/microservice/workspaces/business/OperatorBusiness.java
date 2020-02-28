@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -43,6 +44,19 @@ public class OperatorBusiness {
 		}
 
 		return deliveryDto;
+	}
+
+	public List<MicroserviceDeliveryDto> getDeliveriesByOperator(Long operatorId, String municipalityCode) {
+
+		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
+
+		try {
+			deliveries = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode);
+		} catch (Exception e) {
+			log.error("Error consultando las entregas: " + e.getMessage());
+		}
+
+		return deliveries;
 	}
 
 }

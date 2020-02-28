@@ -38,6 +38,7 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
@@ -1530,21 +1531,40 @@ public class WorkspaceBusiness {
 		}
 
 		Long operatorId = operators.get(0).getId();
+		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
 		List<MicroserviceCreateDeliverySupplyDto> microserviceSupplies = new ArrayList<>();
+
+		// verify if the supplies exists
+		List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(operatorId,
+				municipalityEntity.getCode());
+
 		for (CreateSupplyDeliveryDto deliverySupplyDto : suppliesDto) {
-			try {
-				supplyClient.findSupplyById(deliverySupplyDto.getSupplyId());
-				microserviceSupplies.add(new MicroserviceCreateDeliverySupplyDto(deliverySupplyDto.getObservations(),
-						deliverySupplyDto.getSupplyId()));
-			} catch (Exception e) {
+
+			MicroserviceSupplyDto supply = supplyBusiness.getSupplyById(deliverySupplyDto.getSupplyId());
+			if (supply == null) {
 				throw new BusinessException("No se ha encontrado el insumo.");
 			}
+
+			// verify if the supply has already delivered to operator
+			for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
+				MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
+						.filter(supplyDto -> supplyDto.getSupplyCode() == deliverySupplyDto.getSupplyId()).findAny()
+						.orElse(null);
+				if (supplyFound != null) {
+					String messageError = String.format("El insumo %s ya ha sido entregado al operador.",
+							supply.getTypeSupply().getName());
+					throw new BusinessException(messageError);
+				}
+			}
+
+			microserviceSupplies.add(new MicroserviceCreateDeliverySupplyDto(deliverySupplyDto.getObservations(),
+					deliverySupplyDto.getSupplyId()));
 		}
 
 		try {
-			deliveryDto = operatorBusiness.createDelivery(operatorId, managerCode,
-					workspaceEntity.getMunicipality().getCode(), observations, microserviceSupplies);
+			deliveryDto = operatorBusiness.createDelivery(operatorId, managerCode, municipalityEntity.getCode(),
+					observations, microserviceSupplies);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido realizar la entrega al operador.");
 		}

@@ -2,6 +2,8 @@ package com.ai.st.microservice.workspaces.clients;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+import java.util.List;
+
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
@@ -31,6 +34,10 @@ public interface OperatorFeignClient {
 	@RequestMapping(method = RequestMethod.POST, value = "/api/operators/v1/operators/{operatorId}/deliveries", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceDeliveryDto createDelivery(@PathVariable Long operatorId,
 			@RequestBody MicroserviceCreateDeliveryDto data);
+
+	@GetMapping("/api/operators/v1/operators/{operatorId}/deliveries")
+	public List<MicroserviceDeliveryDto> findDeliveriesByOperator(@PathVariable Long operatorId,
+			@RequestParam(name = "municipality", required = false) String municipalityCode);
 
 	class Configuration {
 
