@@ -12,6 +12,9 @@ import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 
 @Component
@@ -21,6 +24,9 @@ public class OperatorBusiness {
 
 	@Autowired
 	private OperatorFeignClient operatorClient;
+
+	@Autowired
+	private SupplyBusiness supplyBusiness;
 
 	public MicroserviceDeliveryDto createDelivery(Long operatorId, Long managerCode, String municipalityCode,
 			String observations, List<MicroserviceCreateDeliverySupplyDto> supplies)
@@ -46,7 +52,8 @@ public class OperatorBusiness {
 		return deliveryDto;
 	}
 
-	public List<MicroserviceDeliveryDto> getDeliveriesByOperator(Long operatorId, String municipalityCode) {
+	public List<MicroserviceDeliveryDto> getDeliveriesByOperator(Long operatorId, String municipalityCode)
+			throws BusinessException {
 
 		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
 
@@ -54,6 +61,40 @@ public class OperatorBusiness {
 			deliveries = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode);
 		} catch (Exception e) {
 			log.error("Error consultando las entregas: " + e.getMessage());
+		}
+
+		return deliveries;
+	}
+
+	public List<MicroserviceDeliveryDto> getDeliveriesActivesByOperator(Long operatorId) throws BusinessException {
+
+		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
+
+		try {
+			deliveries = operatorClient.findDeliveriesActivesByOperator(operatorId, true);
+
+			for (MicroserviceDeliveryDto deliveryDto : deliveries) {
+
+				List<MicroserviceSupplyDeliveryDto> supplyDeliveriesDto = deliveryDto.getSupplies();
+
+				for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
+
+					try {
+
+						MicroserviceSupplyDto supplyDto = supplyBusiness
+								.getSupplyById(supplyDeliveryDto.getSupplyCode());
+						supplyDeliveryDto.setSupply(supplyDto);
+
+					} catch (Exception e) {
+						log.error("Error consultando insumo: " + e.getMessage());
+					}
+
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("Error consultando las entregas activas: " + e.getMessage());
 		}
 
 		return deliveries;

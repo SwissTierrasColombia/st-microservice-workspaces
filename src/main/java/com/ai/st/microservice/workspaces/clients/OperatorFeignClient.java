@@ -39,6 +39,13 @@ public interface OperatorFeignClient {
 	public List<MicroserviceDeliveryDto> findDeliveriesByOperator(@PathVariable Long operatorId,
 			@RequestParam(name = "municipality", required = false) String municipalityCode);
 
+	@GetMapping("api/operators/v1/users/{userCode}/operators")
+	public MicroserviceOperatorDto findByUserCode(@PathVariable Long userCode);
+
+	@GetMapping("/api/operators/v1/operators/{operatorId}/deliveries")
+	public List<MicroserviceDeliveryDto> findDeliveriesActivesByOperator(@PathVariable Long operatorId,
+			@RequestParam(name = "active", required = false) Boolean isActive);
+
 	class Configuration {
 
 		@Bean

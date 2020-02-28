@@ -30,10 +30,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
+import com.ai.st.microservice.workspaces.business.OperatorBusiness;
 import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
+import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.CreateWorkspaceDto;
@@ -50,6 +52,7 @@ import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -73,6 +76,9 @@ public class WorkspaceV1Controller {
 	private ManagerFeignClient managerClient;
 
 	@Autowired
+	private OperatorFeignClient operatorClient;
+
+	@Autowired
 	private UserFeignClient userClient;
 
 	@Autowired
@@ -83,6 +89,9 @@ public class WorkspaceV1Controller {
 
 	@Autowired
 	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private OperatorBusiness operatorBusiness;
 
 	@Autowired
 	private ServletContext servletContext;
@@ -1325,6 +1334,57 @@ public class WorkspaceV1Controller {
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@createDelivery#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "operators/deliveries", method = RequestMethod.GET)
+	@ApiOperation(value = "Get deliveries")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> getSuppliesOperator(@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get operator
+			MicroserviceOperatorDto operatorDto = null;
+			try {
+				operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de operadores.");
+			}
+
+			responseDto = operatorBusiness.getDeliveriesActivesByOperator(operatorDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getSuppliesOperator#Microservice ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getSuppliesOperator#Business ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getSuppliesOperator#General ---> " + e.getMessage());
 			responseDto = new BasicResponseDto(e.getMessage(), 3);
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		}

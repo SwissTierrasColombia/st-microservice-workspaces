@@ -3,6 +3,8 @@ package com.ai.st.microservice.workspaces.dto.operators;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+
 public class MicroserviceSupplyDeliveryDto implements Serializable {
 
 	private static final long serialVersionUID = 6986943352552791077L;
@@ -13,6 +15,7 @@ public class MicroserviceSupplyDeliveryDto implements Serializable {
 	private Date downloadedAt;
 	private String observations;
 	private Long supplyCode;
+	private MicroserviceSupplyDto supply;
 
 	public MicroserviceSupplyDeliveryDto() {
 
@@ -64,6 +67,14 @@ public class MicroserviceSupplyDeliveryDto implements Serializable {
 
 	public void setSupplyCode(Long supplyCode) {
 		this.supplyCode = supplyCode;
+	}
+
+	public MicroserviceSupplyDto getSupply() {
+		return supply;
+	}
+
+	public void setSupply(MicroserviceSupplyDto supply) {
+		this.supply = supply;
 	}
 
 }
