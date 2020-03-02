@@ -114,7 +114,37 @@ public class OperatorBusiness {
 			deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
 
 		} catch (Exception e) {
-			log.error("Error actualizando la fecha de descarga del insumo.");
+			log.error("Error actualizando la fecha de descarga del insumo: " + e.getMessage());
+		}
+
+		return deliveryDto;
+	}
+
+	public MicroserviceDeliveryDto disableDelivery(Long deliveryId) throws DisconnectedMicroserviceException {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		try {
+
+			deliveryDto = operatorClient.disableDelivery(deliveryId);
+
+		} catch (Exception e) {
+			log.error("Error desactivando la entrega: " + e.getMessage());
+		}
+
+		return deliveryDto;
+	}
+
+	public MicroserviceDeliveryDto getDeliveryId(Long deliveryId) throws DisconnectedMicroserviceException {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		try {
+
+			deliveryDto = operatorClient.findDeliveryById(deliveryId);
+
+		} catch (Exception e) {
+			log.error("Error consultando entrega: " + e.getMessage());
 		}
 
 		return deliveryDto;

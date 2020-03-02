@@ -64,4 +64,33 @@ public class WorkspaceOperatorBusiness {
 		return deliveryDto;
 	}
 
+	public MicroserviceDeliveryDto disableDelivery(Long operatorId, Long deliveryId) throws BusinessException {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		try {
+			deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
+		} catch (Exception e) {
+			
+		}
+
+		if (deliveryDto == null) {
+			System.out.println("aquiiiiiiiiii I");
+			throw new BusinessException("No se ha encontrado la entrega.");
+		}
+
+		if (deliveryDto.getOperator().getId() != operatorId) {
+			System.out.println("aquiiiiiiiiii II");
+			throw new BusinessException("La entrega no pertenece al operador.");
+		}
+
+		try {
+			deliveryDto = operatorBusiness.disableDelivery(deliveryId);
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido desactivar la entrega.");
+		}
+
+		return deliveryDto;
+	}
+
 }

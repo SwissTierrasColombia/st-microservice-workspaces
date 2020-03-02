@@ -51,6 +51,12 @@ public interface OperatorFeignClient {
 	public MicroserviceDeliveryDto updateSupplyDelivered(@PathVariable Long deliveryId, @PathVariable Long supplyId,
 			@RequestBody MicroserviceUpdateDeliveredSupplyDto updateSupply);
 
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/deliveries/{deliveryId}/disable", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceDeliveryDto disableDelivery(@PathVariable Long deliveryId);
+
+	@GetMapping("/api/operators/v1/deliveries/{deliveryId}")
+	public MicroserviceDeliveryDto findDeliveryById(@PathVariable Long deliveryId);
+
 	class Configuration {
 
 		@Bean
