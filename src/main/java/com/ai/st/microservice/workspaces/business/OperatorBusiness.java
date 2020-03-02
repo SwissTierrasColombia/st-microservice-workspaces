@@ -13,6 +13,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliver
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
@@ -98,6 +99,25 @@ public class OperatorBusiness {
 		}
 
 		return deliveries;
+	}
+
+	public MicroserviceDeliveryDto updateSupplyDeliveredDownloaded(Long deliveryId, Long supplyId)
+			throws DisconnectedMicroserviceException {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		try {
+
+			MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
+			supplyDelivered.setDownloaded(true);
+
+			deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
+
+		} catch (Exception e) {
+			log.error("Error actualizando la fecha de descarga del insumo.");
+		}
+
+		return deliveryDto;
 	}
 
 }

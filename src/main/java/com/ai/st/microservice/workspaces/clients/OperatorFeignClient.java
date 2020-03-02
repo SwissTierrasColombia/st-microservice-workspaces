@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -45,6 +46,10 @@ public interface OperatorFeignClient {
 	@GetMapping("/api/operators/v1/operators/{operatorId}/deliveries")
 	public List<MicroserviceDeliveryDto> findDeliveriesActivesByOperator(@PathVariable Long operatorId,
 			@RequestParam(name = "active", required = false) Boolean isActive);
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/deliveries/{deliveryId}/supplies/{supplyId}", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceDeliveryDto updateSupplyDelivered(@PathVariable Long deliveryId, @PathVariable Long supplyId,
+			@RequestBody MicroserviceUpdateDeliveredSupplyDto updateSupply);
 
 	class Configuration {
 

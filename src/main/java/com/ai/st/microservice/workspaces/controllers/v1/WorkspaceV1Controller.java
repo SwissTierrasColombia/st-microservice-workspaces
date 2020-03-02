@@ -34,6 +34,7 @@ import com.ai.st.microservice.workspaces.business.OperatorBusiness;
 import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
+import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
@@ -52,6 +53,7 @@ import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
@@ -92,6 +94,9 @@ public class WorkspaceV1Controller {
 
 	@Autowired
 	private OperatorBusiness operatorBusiness;
+
+	@Autowired
+	private WorkspaceOperatorBusiness workspaceOperatorBusiness;
 
 	@Autowired
 	private ServletContext servletContext;
@@ -1121,6 +1126,9 @@ public class WorkspaceV1Controller {
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
 
+			MicroserviceRoleDto roleOperator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_OPERATOR).findAny().orElse(null);
+
 			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyId);
 			if (!(supplyDto instanceof MicroserviceSupplyDto)) {
 				throw new BusinessException("No se ha encontrado el insumo.");
@@ -1151,8 +1159,27 @@ public class WorkspaceV1Controller {
 
 				if (!workspaceBusiness.managerHasAccessToMunicipality(supplyDto.getMunicipalityCode(),
 						managerDto.getId())) {
-					throw new InputValidationException("No tiene acceso al municipio.");
+					throw new InputValidationException("El gestor no tiene acceso al insumo.");
 				}
+
+			} else if (roleOperator instanceof MicroserviceRoleDto) {
+
+				// get operator
+				MicroserviceOperatorDto operatorDto = null;
+				try {
+					operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
+				} catch (Exception e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de operadores.");
+				}
+
+				MicroserviceDeliveryDto deliveryDto = workspaceOperatorBusiness
+						.getDeliveryFromSupply(operatorDto.getId(), supplyDto.getId());
+				if (deliveryDto == null) {
+					throw new InputValidationException("El operador no tiene acceso al insumo.");
+				}
+
+				workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId());
 
 			}
 
