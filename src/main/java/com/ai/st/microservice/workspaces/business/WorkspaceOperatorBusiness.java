@@ -75,12 +75,10 @@ public class WorkspaceOperatorBusiness {
 		}
 
 		if (deliveryDto == null) {
-			System.out.println("aquiiiiiiiiii I");
 			throw new BusinessException("No se ha encontrado la entrega.");
 		}
 
 		if (deliveryDto.getOperator().getId() != operatorId) {
-			System.out.println("aquiiiiiiiiii II");
 			throw new BusinessException("La entrega no pertenece al operador.");
 		}
 

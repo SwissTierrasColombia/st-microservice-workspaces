@@ -117,10 +117,11 @@ public class SupplyBusiness {
 
 						if (workspaceActive != null) {
 							List<WorkspaceOperatorEntity> operators = workspaceActive.getOperators();
+
 							if (operators.size() >= 1) {
 
-								List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness
-										.getDeliveriesByOperator(operators.get(0).getId(), municipality.getCode());
+								List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
+										operators.get(0).getOperatorCode(), municipality.getCode());
 
 								for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
 

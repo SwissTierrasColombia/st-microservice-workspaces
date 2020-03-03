@@ -1530,7 +1530,7 @@ public class WorkspaceBusiness {
 			throw new BusinessException("El espacio de trabajo no tiene asignado un operador.");
 		}
 
-		Long operatorId = operators.get(0).getId();
+		Long operatorId = operators.get(0).getOperatorCode();
 		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
 		List<MicroserviceCreateDeliverySupplyDto> microserviceSupplies = new ArrayList<>();
