@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+
 public class MicroserviceDeliveryDto implements Serializable {
 
 	private static final long serialVersionUID = -5027313678039653625L;
@@ -17,6 +20,8 @@ public class MicroserviceDeliveryDto implements Serializable {
 	private String observations;
 	private MicroserviceOperatorDto operator;
 	private List<MicroserviceSupplyDeliveryDto> supplies;
+	private MicroserviceManagerDto manager;
+	private MunicipalityDto municipality;
 
 	public MicroserviceDeliveryDto() {
 		this.supplies = new ArrayList<>();
@@ -84,6 +89,22 @@ public class MicroserviceDeliveryDto implements Serializable {
 
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
+	}
+
+	public MicroserviceManagerDto getManager() {
+		return manager;
+	}
+
+	public void setManager(MicroserviceManagerDto manager) {
+		this.manager = manager;
+	}
+
+	public MunicipalityDto getMunicipality() {
+		return municipality;
+	}
+
+	public void setMunicipality(MunicipalityDto municipality) {
+		this.municipality = municipality;
 	}
 
 }

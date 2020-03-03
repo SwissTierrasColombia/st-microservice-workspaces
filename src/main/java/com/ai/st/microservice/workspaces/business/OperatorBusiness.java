@@ -8,15 +8,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
+import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 
 @Component
 public class OperatorBusiness {
@@ -27,7 +32,13 @@ public class OperatorBusiness {
 	private OperatorFeignClient operatorClient;
 
 	@Autowired
+	private ManagerFeignClient managerClient;
+
+	@Autowired
 	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private IMunicipalityService municipalityService;
 
 	public MicroserviceDeliveryDto createDelivery(Long operatorId, Long managerCode, String municipalityCode,
 			String observations, List<MicroserviceCreateDeliverySupplyDto> supplies)
@@ -75,6 +86,26 @@ public class OperatorBusiness {
 			deliveries = operatorClient.findDeliveriesActivesByOperator(operatorId, true);
 
 			for (MicroserviceDeliveryDto deliveryDto : deliveries) {
+
+				try {
+					MicroserviceManagerDto managerDto = managerClient.findById(deliveryDto.getManagerCode());
+					deliveryDto.setManager(managerDto);
+				} catch (Exception e) {
+					log.error("Error consultando gestor: " + e.getMessage());
+				}
+
+				try {
+					MunicipalityEntity municipalityEntity = municipalityService
+							.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
+
+					MunicipalityDto municipalityDto = new MunicipalityDto();
+					municipalityDto.setCode(municipalityEntity.getCode());
+					municipalityDto.setId(municipalityEntity.getId());
+					municipalityDto.setName(municipalityEntity.getName());
+					deliveryDto.setMunicipality(municipalityDto);
+				} catch (Exception e) {
+
+				}
 
 				List<MicroserviceSupplyDeliveryDto> supplyDeliveriesDto = deliveryDto.getSupplies();
 
