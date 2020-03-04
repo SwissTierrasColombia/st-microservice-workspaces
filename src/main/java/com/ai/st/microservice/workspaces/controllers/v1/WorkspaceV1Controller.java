@@ -60,6 +60,7 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+import com.google.common.io.Files;
 
 import feign.FeignException;
 import io.swagger.annotations.Api;
@@ -1213,7 +1214,8 @@ public class WorkspaceV1Controller {
 		}
 
 		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
-				.contentType(mediaType).contentLength(file.length()).body(resource);
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName())).body(resource);
 
 	}
 
