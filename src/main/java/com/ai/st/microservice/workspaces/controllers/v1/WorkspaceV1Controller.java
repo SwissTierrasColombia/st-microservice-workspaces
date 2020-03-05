@@ -1421,4 +1421,91 @@ public class WorkspaceV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
+	@RequestMapping(value = "{workspaceId}/download-support/{supportId}", method = RequestMethod.GET)
+	@ApiOperation(value = "Download file")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> downloadSupport(@PathVariable Long workspaceId, @PathVariable Long supportId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+			SupportDto supportDto = null;
+			if (roleManager instanceof MicroserviceRoleDto) {
+
+				// get manager
+				MicroserviceManagerDto managerDto = null;
+				MicroserviceManagerProfileDto profileDirector = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+					List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+							.findProfilesByUser(userDtoSession.getId());
+
+					profileDirector = managerProfiles.stream()
+							.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+							.orElse(null);
+
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+				if (profileDirector == null) {
+					throw new InputValidationException("Acceso denegado.");
+				}
+				supportDto = workspaceBusiness.getSupportByIdToDownload(workspaceId, supportId, managerDto.getId());
+			} else {
+				supportDto = workspaceBusiness.getSupportByIdToDownload(workspaceId, supportId, null);
+			}
+
+			String pathFile = supportDto.getUrlDocumentaryRepository();
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupport#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupport#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@downloadSupport#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+
+	}
+
 }
