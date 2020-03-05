@@ -109,41 +109,41 @@ public class SupplyBusiness {
 						throw new BusinessException("No se ha podido consultar el tipo de insumo.");
 					}
 
-					// verify if the supply has been delivered to operator
-					try {
+				}
 
-						WorkspaceEntity workspaceActive = workspaceService
-								.getWorkspaceActiveByMunicipality(municipality);
+				// verify if the supply has been delivered to operator
+				try {
 
-						if (workspaceActive != null) {
-							List<WorkspaceOperatorEntity> operators = workspaceActive.getOperators();
+					WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipality);
 
-							if (operators.size() >= 1) {
+					if (workspaceActive != null) {
+						List<WorkspaceOperatorEntity> operators = workspaceActive.getOperators();
 
-								List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
-										operators.get(0).getOperatorCode(), municipality.getCode());
+						if (operators.size() >= 1) {
 
-								for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
+							List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
+									operators.get(0).getOperatorCode(), municipality.getCode());
 
-									MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
-											.filter(sDto -> sDto.getSupplyCode() == supplyDto.getId()).findAny()
-											.orElse(null);
+							for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
 
-									if (supplyFound != null) {
-										supplyDto.setDelivered(true);
-										supplyDto.setDelivery(deliveryFoundDto);
-									}
+								MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
+										.filter(sDto -> sDto.getSupplyCode() == supplyDto.getId()).findAny()
+										.orElse(null);
+
+								if (supplyFound != null) {
+									supplyDto.setDelivered(true);
+									supplyDto.setDelivery(deliveryFoundDto);
 								}
-
 							}
-						}
 
-					} catch (Exception e) {
-						log.error("No se ha podido consultar si el insumo ha sido entregado al operador: "
-								+ e.getMessage());
+						}
 					}
 
+				} catch (Exception e) {
+					log.error(
+							"No se ha podido consultar si el insumo ha sido entregado al operador: " + e.getMessage());
 				}
+
 			}
 
 			if (page != null) {
@@ -248,8 +248,13 @@ public class SupplyBusiness {
 		try {
 			supplyDto = supplyClient.findSupplyById(supplyId);
 
-			MicroserviceTypeSupplyDto typeSupplyDto = providerClient.findTypeSuppleById(supplyDto.getTypeSupplyCode());
-			supplyDto.setTypeSupply(typeSupplyDto);
+			if (supplyDto.getTypeSupplyCode() != null) {
+
+				MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+						.findTypeSuppleById(supplyDto.getTypeSupplyCode());
+
+				supplyDto.setTypeSupply(typeSupplyDto);
+			}
 
 		} catch (Exception e) {
 			log.error("No se ha podido consultar el insumo: " + e.getMessage());

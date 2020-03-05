@@ -1552,8 +1552,15 @@ public class WorkspaceBusiness {
 						.filter(supplyDto -> supplyDto.getSupplyCode() == deliverySupplyDto.getSupplyId()).findAny()
 						.orElse(null);
 				if (supplyFound != null) {
-					String messageError = String.format("El insumo %s ya ha sido entregado al operador.",
-							supply.getTypeSupply().getName());
+
+					String nameSupply = "";
+					if (supply.getTypeSupply() != null) {
+						nameSupply = supply.getTypeSupply().getName();
+					} else {
+						nameSupply = supply.getObservations();
+					}
+
+					String messageError = String.format("El insumo %s ya ha sido entregado al operador.", nameSupply);
 					throw new BusinessException(messageError);
 				}
 			}
