@@ -71,6 +71,7 @@ import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
+import com.rabbitmq.client.AMQP.Basic.Return;
 
 import feign.FeignException;
 
@@ -1577,6 +1578,40 @@ public class WorkspaceBusiness {
 		}
 
 		return deliveryDto;
+	}
+
+	public SupportDto getSupportByIdToDownload(Long workspaceId, Long supportId, Long managerCode)
+			throws BusinessException {
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede descargar el soporte, porque el municipio no tiene un espacio de trabajo activo.");
+		}
+
+		if (managerCode != null) {
+			if (managerCode != workspaceEntity.getManagerCode()) {
+				throw new BusinessException("No tiene acceso al municipio.");
+			}
+		}
+
+		SupportEntity supportEntity = workspaceEntity.getSupports().stream().filter(s -> s.getId() == supportId)
+				.findAny().orElse(null);
+		if (supportEntity == null) {
+			throw new BusinessException("El soporte no pertenece al espacio de trabajo.");
+		}
+
+		SupportDto supportDto = new SupportDto();
+		supportDto.setId(supportEntity.getId());
+		supportDto.setCreatedAt(supportEntity.getCreatedAt());
+		supportDto.setUrlDocumentaryRepository(supportEntity.getUrlDocumentaryRepository());
+		return supportDto;
+
 	}
 
 }
