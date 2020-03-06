@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceAddUserToOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
@@ -56,6 +57,9 @@ public interface OperatorFeignClient {
 
 	@GetMapping("/api/operators/v1/deliveries/{deliveryId}")
 	public MicroserviceDeliveryDto findDeliveryById(@PathVariable Long deliveryId);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/operators/v1/users", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceOperatorDto addUserToOperator(@RequestBody MicroserviceAddUserToOperatorDto requestAddUser);
 
 	class Configuration {
 

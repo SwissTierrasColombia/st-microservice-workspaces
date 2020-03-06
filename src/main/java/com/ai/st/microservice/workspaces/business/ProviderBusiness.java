@@ -407,4 +407,17 @@ public class ProviderBusiness {
 		return listRequestsDto;
 	}
 
+	public MicroserviceProviderDto getProviderById(Long providerId) {
+
+		MicroserviceProviderDto providerDto = null;
+
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("No se podido consultar el proveedor: " + e.getMessage());
+		}
+
+		return providerDto;
+	}
+
 }

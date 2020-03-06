@@ -56,7 +56,8 @@ public class AdministrationV1Controller {
 			responseDto = administrationBusiness.createUser(requestCreateUser.getFirstName(),
 					requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
 					requestCreateUser.getPassword(), requestCreateUser.getRoleProvider(),
-					requestCreateUser.getRoleAdministrator(), requestCreateUser.getRoleManager());
+					requestCreateUser.getRoleAdministrator(), requestCreateUser.getRoleManager(),
+					requestCreateUser.getRoleOperator());
 			httpStatus = HttpStatus.CREATED;
 
 		} catch (BusinessException e) {

@@ -28,11 +28,14 @@ public class CreateUserDto implements Serializable {
 	@ApiModelProperty(required = false, notes = "Role Provider Supply")
 	private CreateUserRoleProviderDto roleProvider;
 
-	@ApiModelProperty(required = false, notes = "Roles Administrator")
+	@ApiModelProperty(required = false, notes = "Role Administrator")
 	private CreateUserRoleAdministratorDto roleAdministrator;
 
-	@ApiModelProperty(required = false, notes = "Roles Manager")
+	@ApiModelProperty(required = false, notes = "Role Manager")
 	private CreateUserRoleManagerDto roleManager;
+
+	@ApiModelProperty(required = false, notes = "Operator Manager")
+	private CreateUserRoleOperatorDto roleOperator;
 
 	public CreateUserDto() {
 
@@ -100,6 +103,14 @@ public class CreateUserDto implements Serializable {
 
 	public void setRoleManager(CreateUserRoleManagerDto roleManager) {
 		this.roleManager = roleManager;
+	}
+
+	public CreateUserRoleOperatorDto getRoleOperator() {
+		return roleOperator;
+	}
+
+	public void setRoleOperator(CreateUserRoleOperatorDto roleOperator) {
+		this.roleOperator = roleOperator;
 	}
 
 }

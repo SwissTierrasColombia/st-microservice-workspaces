@@ -43,6 +43,9 @@ public interface ProviderFeignClient {
 	@GetMapping("/api/providers-supplies/v1/users/{userCode}/providers")
 	public MicroserviceProviderDto findByUserCode(@PathVariable Long userCode);
 
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}")
+	public MicroserviceProviderDto findById(@PathVariable(name = "providerId", required = true) Long providerId);
+
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/requests")
 	public List<MicroserviceRequestDto> getRequestsByProvider(@PathVariable Long providerId,
 			@RequestParam(required = false, name = "state") Long requestStateId);

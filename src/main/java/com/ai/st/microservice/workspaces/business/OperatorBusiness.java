@@ -12,9 +12,11 @@ import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceAddUserToOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
@@ -179,6 +181,40 @@ public class OperatorBusiness {
 		}
 
 		return deliveryDto;
+	}
+
+	public MicroserviceOperatorDto getOperatorById(Long operatorId) {
+
+		MicroserviceOperatorDto operatorDto = null;
+
+		try {
+
+			operatorDto = operatorClient.findById(operatorId);
+
+		} catch (Exception e) {
+			log.error("Error consultando operador: " + e.getMessage());
+		}
+
+		return operatorDto;
+	}
+
+	public MicroserviceOperatorDto addUserToOperator(Long operatorId, Long userCode) {
+
+		MicroserviceOperatorDto operatorDto = null;
+
+		try {
+
+			MicroserviceAddUserToOperatorDto requestAddUser = new MicroserviceAddUserToOperatorDto();
+			requestAddUser.setOperatorId(operatorId);
+			requestAddUser.setUserCode(userCode);
+
+			operatorDto = operatorClient.addUserToOperator(requestAddUser);
+
+		} catch (Exception e) {
+			log.error("Error agregando usuario al operador: " + e.getMessage());
+		}
+
+		return operatorDto;
 	}
 
 }
