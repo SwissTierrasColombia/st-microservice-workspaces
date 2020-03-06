@@ -119,36 +119,42 @@ public class ProviderBusiness {
 					"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
 		}
 
-		// verify if the supply is assigned to a task
-		List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
-		List<Long> taskCategories = new ArrayList<>(
-				Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
-		List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
-		for (MicroserviceTaskDto taskDto : tasksDto) {
-			MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
-					.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
-			if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+		try {
 
-				MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
-						.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
+			// verify if the supply is assigned to a task
+			List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+			List<Long> taskCategories = new ArrayList<>(
+					Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+			List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+			for (MicroserviceTaskDto taskDto : tasksDto) {
+				MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+						.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+				if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
 
-				MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties().stream()
-						.filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny().orElse(null);
+					MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+							.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
 
-				if (propertyRequest != null && propertyTypeSupply != null) {
+					MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties().stream()
+							.filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny().orElse(null);
 
-					if (Long.parseLong(propertyRequest.getValue()) == requestId
-							&& Long.parseLong(propertyTypeSupply.getValue()) == typeSupplyId) {
+					if (propertyRequest != null && propertyTypeSupply != null) {
 
-						MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
-								.filter(m -> m.getMemberCode() == userCode).findAny().orElse(null);
-						if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
-							throw new BusinessException(
-									"No es posible cargar el insumo, la tarea está asignada a otro usuario.");
+						if (Long.parseLong(propertyRequest.getValue()) == requestId
+								&& Long.parseLong(propertyTypeSupply.getValue()) == typeSupplyId) {
+
+							MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
+									.filter(m -> m.getMemberCode() == userCode).findAny().orElse(null);
+							if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
+								throw new BusinessException(
+										"No es posible cargar el insumo, la tarea está asignada a otro usuario.");
+							}
 						}
 					}
 				}
 			}
+
+		} catch (Exception e) {
+			log.error("No se ha podido consultar si la tarea esta asociada al cargue de insumo: " + e.getMessage());
 		}
 
 		if (supplyRequested.getState().getId() == ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING) {

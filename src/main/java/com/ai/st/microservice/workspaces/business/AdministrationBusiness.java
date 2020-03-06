@@ -165,7 +165,7 @@ public class AdministrationBusiness {
 
 		// send notification
 		try {
-			notificationBusiness.sendNotificationCreationUser(email, password, entityName, 0, "sucess", username,
+			notificationBusiness.sendNotificationCreationUser(email, password, entityName, username,
 					userResponseDto.getId());
 		} catch (Exception e) {
 

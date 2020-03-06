@@ -21,6 +21,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceAddUserToOper
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 
 import feign.Feign;
@@ -60,6 +61,9 @@ public interface OperatorFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/operators/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceOperatorDto addUserToOperator(@RequestBody MicroserviceAddUserToOperatorDto requestAddUser);
+
+	@GetMapping("/api/operators/v1/operators/{operatorId}/users")
+	public List<MicroserviceOperatorUserDto> getUsersByOperator(@PathVariable Long operatorId);
 
 	class Configuration {
 

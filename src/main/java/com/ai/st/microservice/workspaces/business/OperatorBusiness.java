@@ -17,6 +17,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliver
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
@@ -215,6 +216,21 @@ public class OperatorBusiness {
 		}
 
 		return operatorDto;
+	}
+
+	public List<MicroserviceOperatorUserDto> getUsersByOperator(Long operatorId) {
+
+		List<MicroserviceOperatorUserDto> users = new ArrayList<>();
+
+		try {
+
+			users = operatorClient.getUsersByOperator(operatorId);
+
+		} catch (Exception e) {
+			log.error("Error consultando usuarios por operador: " + e.getMessage());
+		}
+
+		return users;
 	}
 
 }

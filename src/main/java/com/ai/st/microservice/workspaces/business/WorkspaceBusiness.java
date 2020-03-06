@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces.business;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -38,6 +39,7 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
@@ -71,7 +73,6 @@ import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
-import com.rabbitmq.client.AMQP.Basic.Return;
 
 import feign.FeignException;
 
@@ -161,6 +162,15 @@ public class WorkspaceBusiness {
 	@Autowired
 	private OperatorBusiness operatorBusiness;
 
+	@Autowired
+	private NotificationBusiness notificationBusiness;
+
+	@Autowired
+	private ManagerBusiness managerBusiness;
+
+	@Autowired
+	private UserBusiness userBusiness;
+
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
 
@@ -246,7 +256,26 @@ public class WorkspaceBusiness {
 
 		workspaceEntity = workspaceService.createWorkspace(workspaceEntity);
 
-		// TODO: Send notification
+		// send notification
+		try {
+
+			List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(managerDto.getId(),
+					new ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+
+			for (MicroserviceManagerUserDto directorDto : directors) {
+
+				MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+				if (userDto instanceof MicroserviceUserDto) {
+					notificationBusiness.sendNotificationMunicipalityManagementDto(userDto.getEmail(),
+							municipalityEntity.getDepartment().getName(), municipalityEntity.getName(), startDate,
+							userDto.getId(), "");
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("Error enviando notificación al asignar gestor: " + e.getMessage());
+		}
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -439,7 +468,26 @@ public class WorkspaceBusiness {
 
 		workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
 
-		// TODO: Send notification
+		// send notification
+		try {
+
+			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerById(managerCode);
+
+			List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorDto.getId());
+			for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
+				MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
+				if (userDto instanceof MicroserviceUserDto) {
+					notificationBusiness.sendNotificationAssignamentOperation(userDto.getEmail(), userDto.getId(),
+							managerDto.getName(), municipalityEntity.getName(),
+							municipalityEntity.getDepartment().getName(), startDate, endDate, "");
+				}
+			}
+
+		} catch (Exception e) {
+			log.error("Error enviando notificación al asignar operador: " + e.getMessage());
+		}
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -959,6 +1007,8 @@ public class WorkspaceBusiness {
 
 		}
 
+		MicroserviceManagerDto managerDto = managerBusiness.getManagerById(managerCode);
+
 		List<MicroserviceRequestDto> requests = new ArrayList<MicroserviceRequestDto>();
 		for (MicroserviceCreateRequestDto request : groupRequests) {
 
@@ -967,7 +1017,25 @@ public class WorkspaceBusiness {
 				MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
 				requests.add(responseRequest);
 
-				// TODO: Send notification
+				// send notification
+				try {
+
+					List<MicroserviceProviderUserDto> providerUsers = providerBusiness
+							.getUsersByProvider(request.getProviderId(), null);
+
+					for (MicroserviceProviderUserDto providerUser : providerUsers) {
+
+						MicroserviceUserDto userDto = userBusiness.getUserById(providerUser.getUserCode());
+
+						notificationBusiness.sendNotificationInputRequest(userDto.getEmail(), userCode,
+								managerDto.getName(), municipalityEntity.getName(),
+								municipalityEntity.getDepartment().getName(), responseRequest.getId().toString(),
+								new Date());
+					}
+
+				} catch (Exception er) {
+					log.error("Error enviando la notificación por solicitud de insumos: " + er.getMessage());
+				}
 
 				if (responseRequest.getProvider().getId() == ProviderBusiness.PROVIDER_IGAC_ID) {
 
