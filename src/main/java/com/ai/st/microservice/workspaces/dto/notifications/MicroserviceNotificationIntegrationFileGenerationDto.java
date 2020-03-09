@@ -3,7 +3,7 @@ package com.ai.st.microservice.workspaces.dto.notifications;
 import java.io.Serializable;
 import java.util.Date;
 
-public class MicroserviceNotificationInputIntegrationsDto implements Serializable {
+public class MicroserviceNotificationIntegrationFileGenerationDto implements Serializable {
 
 	private static final long serialVersionUID = 3050930525504636650L;
 
@@ -11,12 +11,11 @@ public class MicroserviceNotificationInputIntegrationsDto implements Serializabl
 	private String email;
 	private String type;
 	private int status;
-	private String integrationStatus;
 	private String mpio;
 	private String dpto;
-	private Date integrationDate;
+	private Date requestDate;
 
-	public MicroserviceNotificationInputIntegrationsDto() {
+	public MicroserviceNotificationIntegrationFileGenerationDto() {
 
 	}
 
@@ -68,20 +67,12 @@ public class MicroserviceNotificationInputIntegrationsDto implements Serializabl
 		this.dpto = dpto;
 	}
 
-	public String getIntegrationStatus() {
-		return integrationStatus;
+	public Date getRequestDate() {
+		return requestDate;
 	}
 
-	public void setIntegrationStatus(String integrationStatus) {
-		this.integrationStatus = integrationStatus;
-	}
-
-	public Date getIntegrationDate() {
-		return integrationDate;
-	}
-
-	public void setIntegrationDate(Date integrationDate) {
-		this.integrationDate = integrationDate;
+	public void setRequestDate(Date requestDate) {
+		this.requestDate = requestDate;
 	}
 
 }

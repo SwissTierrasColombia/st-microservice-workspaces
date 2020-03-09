@@ -9,11 +9,14 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.NotifierFeignClient;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationAssignmentOperationMunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationDeliveryOfInputsDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationInputIntegrationsDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationInputRequestDto;
+import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationIntegrationFileGenerationDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationLoadOfInputsDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationMunicipalityManagementDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationNewUserDto;
+import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationTaskAssignmentDto;
 
 @Component
 public class NotificationBusiness {
@@ -167,6 +170,78 @@ public class NotificationBusiness {
 
 		} catch (Exception e) {
 			log.error("Error enviando la notificación #6: " + e.getMessage());
+		}
+
+	}
+
+	public void sendNotificationTaskAssignment(String email, Long userCode, String task, String mpio, String dpto,
+			Date taskDate) {
+
+		try {
+
+			MicroserviceNotificationTaskAssignmentDto notification = new MicroserviceNotificationTaskAssignmentDto();
+
+			notification.setEmail(email);
+			notification.setUserCode(userCode);
+			notification.setStatus(0);
+			notification.setType("sucess");
+			notification.setTask(task);
+			notification.setMpio(mpio);
+			notification.setDpto(dpto);
+			notification.setTaskDate(taskDate);
+
+			notifierClient.taskAssignment(notification);
+
+		} catch (Exception e) {
+			log.error("Error enviando la notificación #7: " + e.getMessage());
+		}
+
+	}
+
+	public void sendNotificationProductGenerated(String email, Long userCode, String mpio, String dpto,
+			Date requestDate) {
+
+		try {
+
+			MicroserviceNotificationIntegrationFileGenerationDto notification = new MicroserviceNotificationIntegrationFileGenerationDto();
+
+			notification.setEmail(email);
+			notification.setUserCode(userCode);
+			notification.setStatus(0);
+			notification.setType("sucess");
+			notification.setMpio(mpio);
+			notification.setDpto(dpto);
+			notification.setRequestDate(requestDate);
+
+			notifierClient.productGenerated(notification);
+
+		} catch (Exception e) {
+			log.error("Error enviando la notificación #8: " + e.getMessage());
+		}
+
+	}
+
+	public void sendNotificationDeliverySupplies(String email, Long userCode, String manager, String mpio, String dpto,
+			String supportFile, Date requestDate) {
+
+		try {
+
+			MicroserviceNotificationDeliveryOfInputsDto notification = new MicroserviceNotificationDeliveryOfInputsDto();
+
+			notification.setEmail(email);
+			notification.setUserCode(userCode);
+			notification.setStatus(0);
+			notification.setType("sucess");
+			notification.setManager(manager);
+			notification.setMpio(mpio);
+			notification.setDpto(dpto);
+			notification.setSupportFile(supportFile);
+			notification.setRequestDate(requestDate);
+
+			notifierClient.deliverySupplies(notification);
+
+		} catch (Exception e) {
+			log.error("Error enviando la notificación #9: " + e.getMessage());
 		}
 
 	}

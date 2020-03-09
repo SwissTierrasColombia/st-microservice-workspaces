@@ -14,11 +14,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationAssignmentOperationMunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationDeliveryOfInputsDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationInputIntegrationsDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationInputRequestDto;
+import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationIntegrationFileGenerationDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationLoadOfInputsDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationMunicipalityManagementDto;
 import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationNewUserDto;
+import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationTaskAssignmentDto;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -44,6 +47,15 @@ public interface NotifierFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/input_integrations", consumes = APPLICATION_JSON_VALUE)
 	public void inputIntegration(@RequestBody MicroserviceNotificationInputIntegrationsDto data);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/task_assignment", consumes = APPLICATION_JSON_VALUE)
+	public void taskAssignment(@RequestBody MicroserviceNotificationTaskAssignmentDto data);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/integration_file_generation", consumes = APPLICATION_JSON_VALUE)
+	public void productGenerated(@RequestBody MicroserviceNotificationIntegrationFileGenerationDto data);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/delivery_of_inputs", consumes = APPLICATION_JSON_VALUE)
+	public void deliverySupplies(@RequestBody MicroserviceNotificationDeliveryOfInputsDto data);
 
 	class Configuration {
 

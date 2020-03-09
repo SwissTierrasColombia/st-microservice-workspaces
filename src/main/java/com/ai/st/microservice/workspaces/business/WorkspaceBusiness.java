@@ -1395,7 +1395,24 @@ public class WorkspaceBusiness {
 			taskBusiness.createTask(taskCategories, sdf.format(cal.getTime()), description, name, users, metadata,
 					steps);
 
-			// TODO: Send notification
+			// send notification
+			try {
+
+				for (MicroserviceManagerUserDto managerUserDto : listUsersIntegrators) {
+
+					MicroserviceUserDto userIntegratorDto = userBusiness.getUserById(managerUserDto.getUserCode());
+					if (userIntegratorDto instanceof MicroserviceUserDto) {
+						notificationBusiness.sendNotificationTaskAssignment(userIntegratorDto.getEmail(),
+								userIntegratorDto.getId(), name, municipalityEntity.getName(),
+								municipalityEntity.getDepartment().getName(), new Date());
+					}
+
+				}
+
+			} catch (Exception e) {
+				log.error("Error enviando notificación a los usuarios que se les ha asignado una tarea de integración: "
+						+ e.getMessage());
+			}
 
 		} catch (Exception e) {
 			log.error("No se ha podido crear la tarea de integración: " + e.getMessage());
@@ -1641,6 +1658,25 @@ public class WorkspaceBusiness {
 		try {
 			deliveryDto = operatorBusiness.createDelivery(operatorId, managerCode, municipalityEntity.getCode(),
 					observations, microserviceSupplies);
+
+			try {
+
+				MicroserviceManagerDto managerDto = managerBusiness.getManagerById(managerCode);
+
+				List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorId);
+				for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
+					MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
+					if (userDto instanceof MicroserviceUserDto) {
+						notificationBusiness.sendNotificationDeliverySupplies(userDto.getEmail(), userDto.getId(),
+								managerDto.getName(), municipalityEntity.getName(),
+								municipalityEntity.getDepartment().getName(), "", deliveryDto.getCreatedAt());
+					}
+				}
+
+			} catch (Exception e) {
+				log.error("Error enviando notificación de entrega de insumos al operador: " + e.getMessage());
+			}
+
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido realizar la entrega al operador.");
 		}

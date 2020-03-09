@@ -3,6 +3,8 @@ package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -16,9 +18,16 @@ import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
 import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.IntegrationStateBusiness;
+import com.ai.st.microservice.workspaces.business.ManagerBusiness;
+import com.ai.st.microservice.workspaces.business.NotificationBusiness;
+import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
+import com.ai.st.microservice.workspaces.business.UserBusiness;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIliExportResultDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IntegrationService;
 import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
@@ -30,6 +39,15 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 	@Autowired
 	private IntegrationBusiness integrationBusiness;
+
+	@Autowired
+	private ManagerBusiness managerBusiness;
+
+	@Autowired
+	private UserBusiness userBusiness;
+
+	@Autowired
+	private NotificationBusiness notificationBusiness;
 
 	@Autowired
 	private DatabaseIntegrationBusiness databaseIntegration;
@@ -53,14 +71,17 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 			Long stateId = null;
 
-			if (resultExportDto.isStatus()) {
-				stateId = IntegrationStateBusiness.STATE_GENERATED_PRODUCT;
-				log.info("Export finished successful");
+			IntegrationEntity integrationEntity = integrationService
+					.getIntegrationById(resultExportDto.getIntegrationId());
 
-				IntegrationEntity integrationEntity = integrationService
-						.getIntegrationById(resultExportDto.getIntegrationId());
+			if (integrationEntity instanceof IntegrationEntity) {
 
-				if (integrationEntity instanceof IntegrationEntity) {
+				WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
+				MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+				if (resultExportDto.isStatus()) {
+					stateId = IntegrationStateBusiness.STATE_GENERATED_PRODUCT;
+					log.info("Export finished successful");
 
 					if (resultExportDto.getStats() != null) {
 						integrationBusiness.addStatToIntegration(integrationEntity.getId(),
@@ -69,8 +90,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 								resultExportDto.getStats().getPercentage());
 					}
 
-					WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
-					String municipalityCode = workspaceEntity.getMunicipality().getCode();
+					String municipalityCode = municipalityEntity.getCode();
 
 					// notify to file manager for move the file
 					String urlBase = "/" + municipalityCode.replace(" ", "_") + "/insumos/gestores/"
@@ -98,17 +118,38 @@ public class RabbitMQUpdateExportIntegrationListener {
 						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
 					}
 
+					// send notification
+
+					try {
+
+						List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
+								workspaceEntity.getManagerCode(),
+								new ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+
+						for (MicroserviceManagerUserDto directorDto : directors) {
+
+							MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+							if (userDto instanceof MicroserviceUserDto) {
+								notificationBusiness.sendNotificationProductGenerated(userDto.getEmail(),
+										userDto.getId(), municipalityEntity.getName(),
+										municipalityEntity.getDepartment().getName(), new Date());
+							}
+
+						}
+
+					} catch (Exception e) {
+						log.error("Error enviando notificación de producto generado: " + e.getMessage());
+					}
+
+				} else {
+					stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
+					log.error("Export finished with errors");
 				}
 
-			} else {
-				stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
-				log.error("Export finished with errors");
-			}
-			
-			//TODO: Send notification
+				integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null,
+						"SISTEMA");
 
-			integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null,
-					"SISTEMA");
+			}
 
 		} catch (Exception e) {
 			log.info("Error update export integration: " + e.getMessage());
