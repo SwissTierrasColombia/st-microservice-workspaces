@@ -16,7 +16,9 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequest
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -35,10 +37,14 @@ import java.util.List;
 public interface ProviderFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/requests", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceRequestDto createRequest(@RequestBody MicroserviceCreateRequestDto request);
+	public MicroserviceRequestDto createRequest(@RequestBody MicroserviceCreateRequestDto request)
+			throws BusinessException;
 
 	@GetMapping("/api/providers-supplies/v1/users/{userCode}/providers")
 	public MicroserviceProviderDto findByUserCode(@PathVariable Long userCode);
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}")
+	public MicroserviceProviderDto findById(@PathVariable(name = "providerId", required = true) Long providerId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/requests")
 	public List<MicroserviceRequestDto> getRequestsByProvider(@PathVariable Long providerId,
@@ -48,7 +54,8 @@ public interface ProviderFeignClient {
 	public MicroserviceRequestDto findRequestById(@PathVariable Long requestId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
-	public List<MicroserviceProviderUserDto> findUsersByProviderId(@PathVariable Long providerId);
+	public List<MicroserviceProviderUserDto> findUsersByProviderId(@PathVariable Long providerId)
+			throws BusinessException;
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/requests/{requestId}/supplies/{supplyRequestedId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceRequestDto updateSupplyRequested(@PathVariable Long requestId,
@@ -59,6 +66,18 @@ public interface ProviderFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public List<MicroserviceProviderUserDto> addUserToProvide(@RequestBody MicroserviceAddUserToProviderDto data);
+
+	@GetMapping("/api/providers-supplies/v1/types-supplies/{typeSupplyId}")
+	public MicroserviceTypeSupplyDto findTypeSuppleById(@PathVariable Long typeSupplyId);
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
+	public List<MicroserviceProviderUserDto> findUsersByProviderIdAndProfiles(@PathVariable Long providerId,
+			@RequestParam(name = "profiles", required = false) List<Long> profiles) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/requests/emmiters")
+	public List<MicroserviceRequestDto> findRequestsByEmmiters(
+			@RequestParam(name = "emmiter_code", required = true) Long emmiterCode,
+			@RequestParam(name = "emmiter_type", required = true) String emmiterType);
 
 	class Configuration {
 

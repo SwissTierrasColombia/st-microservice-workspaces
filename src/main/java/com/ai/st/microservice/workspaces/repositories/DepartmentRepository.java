@@ -15,5 +15,4 @@ public interface DepartmentRepository extends CrudRepository<DepartmentEntity, L
 
 	@Query("SELECT distinct d FROM DepartmentEntity d, MunicipalityEntity m, WorkspaceEntity w WHERE w.municipality.id = m.id AND m.department.id = d.id AND w.managerCode = :managerCode AND w.isActive = TRUE")
 	List<DepartmentEntity> getDeparmentsByManagerCode(@Param("managerCode") Long managerCode);
-
 }

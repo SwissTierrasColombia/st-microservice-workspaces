@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.springframework.http.HttpStatus;
 
-import com.ai.st.microservice.workspaces.dto.ErrorDto;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,9 +25,9 @@ public class MyErrorDecoder implements ErrorDecoder {
 			return defaultErrorDecoder.decode(methodKey, response);
 		}
 
-		ErrorDto error;
+		BasicResponseDto error;
 		try {
-			error = mapper.readValue(response.body().asInputStream(), ErrorDto.class);
+			error = mapper.readValue(response.body().asInputStream(), BasicResponseDto.class);
 		} catch (IOException e) {
 			return defaultErrorDecoder.decode(methodKey, response);
 		}

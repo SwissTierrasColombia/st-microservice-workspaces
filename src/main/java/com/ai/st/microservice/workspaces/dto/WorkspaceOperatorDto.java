@@ -3,7 +3,7 @@ package com.ai.st.microservice.workspaces.dto;
 import java.io.Serializable;
 import java.util.Date;
 
-import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -35,7 +35,7 @@ public class WorkspaceOperatorDto implements Serializable {
 	private Long operatorCode;
 
 	@ApiModelProperty(required = false, notes = "Operator")
-	private OperatorDto operator;
+	private MicroserviceOperatorDto operator;
 
 	@ApiModelProperty(required = false, notes = "Observations")
 	private String observations;
@@ -100,11 +100,11 @@ public class WorkspaceOperatorDto implements Serializable {
 		this.operatorCode = operatorCode;
 	}
 
-	public OperatorDto getOperator() {
+	public MicroserviceOperatorDto getOperator() {
 		return operator;
 	}
 
-	public void setOperator(OperatorDto operator) {
+	public void setOperator(MicroserviceOperatorDto operator) {
 		this.operator = operator;
 	}
 

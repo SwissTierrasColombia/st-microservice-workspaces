@@ -23,16 +23,18 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
+import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
-import com.ai.st.microservice.workspaces.dto.ErrorDto;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -94,11 +96,23 @@ public class ProviderV1Controller {
 
 			// get manager
 			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
 			try {
 				managerDto = managerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
 				throw new DisconnectedMicroserviceException(
 						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
 			}
 
 			// validation deadline
@@ -138,19 +152,19 @@ public class ProviderV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error ProviderV1Controller@createRequest#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (InputValidationException e) {
 			log.error("Error ProviderV1Controller@createRequest#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error ProviderV1Controller@createRequest#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error ProviderV1Controller@createRequest#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -197,15 +211,15 @@ public class ProviderV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error ProviderV1Controller@getRequestsPendingByProveedor#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error ProviderV1Controller@getRequestsPendingByProveedor#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error ProviderV1Controller@getRequestsPendingByProveedor#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -261,19 +275,19 @@ public class ProviderV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error ProviderV1Controller@answerRequest#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (InputValidationException e) {
 			log.error("Error ProviderV1Controller@answerRequest#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error ProviderV1Controller@answerRequest#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error ProviderV1Controller@answerRequest#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -318,15 +332,67 @@ public class ProviderV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error ProviderV1Controller@answerRequest#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error ProviderV1Controller@answerRequest#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error ProviderV1Controller@answerRequest#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/requests/emmiters", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Close request")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Close request", response = MicroserviceRequestDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getRequestsByEmmiters(@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+
+			responseDto = providerBusiness.getRequestsByEmmitersManager(managerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@getRequestsByEmmiters#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@getRequestsByEmmiters#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@getRequestsByEmmiters#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);

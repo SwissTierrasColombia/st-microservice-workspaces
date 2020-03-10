@@ -3,21 +3,29 @@ package com.ai.st.microservice.workspaces.business;
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
+import com.ai.st.microservice.workspaces.dto.IntegrationDto;
 import com.ai.st.microservice.workspaces.dto.MilestoneDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.StateDto;
@@ -26,16 +34,29 @@ import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-
-import com.ai.st.microservice.workspaces.dto.operators.OperatorDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskMetadataDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskPropertyDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskStepDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
+import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
+import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.StateEntity;
@@ -45,16 +66,35 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceStateEntity;
 
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-
+import com.ai.st.microservice.workspaces.services.IIntegrationService;
+import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
 import feign.FeignException;
 
 @Component
 public class WorkspaceBusiness {
+
+	private final Logger log = LoggerFactory.getLogger(WorkspaceBusiness.class);
+
+	@Value("${integrations.database.hostname}")
+	private String databaseIntegrationHost;
+
+	@Value("${integrations.database.port}")
+	private String databaseIntegrationPort;
+
+	@Value("${integrations.database.schema}")
+	private String databaseIntegrationSchema;
+
+	@Value("${integrations.database.username}")
+	private String databaseIntegrationUsername;
+
+	@Value("${integrations.database.password}")
+	private String databaseIntegrationPassword;
 
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_MANAGER = (long) 1;
 	public static final Long WORKSPACE_CLONE_FROM_CHANGE_OPERATOR = (long) 2;
@@ -72,7 +112,7 @@ public class WorkspaceBusiness {
 	private UserFeignClient userClient;
 
 	@Autowired
-	private FilemanagerFeignClient filemanagerClient;
+	private SupplyFeignClient supplyClient;
 
 	@Autowired
 	private IMunicipalityService municipalityService;
@@ -85,6 +125,51 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private IStateService stateService;
+
+	@Autowired
+	private IIntegrationService integrationService;
+
+	@Autowired
+	private RabbitMQSenderService rabbitMQSenderService;
+
+	@Autowired
+	private IIntegrationStateService integrationStateService;
+
+	@Autowired
+	private DatabaseIntegrationBusiness databaseIntegrationBusiness;
+
+	@Autowired
+	private CrytpoBusiness cryptoBusiness;
+
+	@Autowired
+	private IntegrationBusiness integrationBusiness;
+
+	@Autowired
+	private TaskBusiness taskBusiness;
+
+	@Autowired
+	private IliBusiness iliBusiness;
+
+	@Autowired
+	private ProviderBusiness providerBusiness;
+
+	@Autowired
+	private FileBusiness fileBusiness;
+
+	@Autowired
+	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private OperatorBusiness operatorBusiness;
+
+	@Autowired
+	private NotificationBusiness notificationBusiness;
+
+	@Autowired
+	private ManagerBusiness managerBusiness;
+
+	@Autowired
+	private UserBusiness userBusiness;
 
 	public WorkspaceDto createWorkspace(Date startDate, Long managerCode, Long municipalityId, String observations,
 			Long parcelsNumber, Double municipalityArea, MultipartFile supportFile) throws BusinessException {
@@ -111,22 +196,24 @@ public class WorkspaceBusiness {
 			throw new BusinessException("Ya se ha creado un espacio de trabajo para el municipio.");
 		}
 
-		// save file with microservice filemanager
+		// save file with microservice file manager
 		String urlDocumentaryRepository = null;
 		try {
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 
-			MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
-					supportFile.getBytes(), StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+			String fileExtension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
+			String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + fileExtension;
+			fileBusiness.loadFileToSystem(supportFile, fileNameRandom);
 
-			if (!responseFilemanagerDto.getStatus()) {
-				throw new BusinessException("No se ha podido cargar el soporte.");
-			}
-
-			urlDocumentaryRepository = responseFilemanagerDto.getUrl();
+			urlDocumentaryRepository = rabbitMQSenderService.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase,
+					true);
 
 		} catch (Exception e) {
+			throw new BusinessException("No se ha podido cargar el soporte.");
+		}
+
+		if (urlDocumentaryRepository == null) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -168,6 +255,27 @@ public class WorkspaceBusiness {
 		workspaceEntity.setStatesHistory(listStates);
 
 		workspaceEntity = workspaceService.createWorkspace(workspaceEntity);
+
+		// send notification
+		try {
+
+			List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(managerDto.getId(),
+					new ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+
+			for (MicroserviceManagerUserDto directorDto : directors) {
+
+				MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+				if (userDto instanceof MicroserviceUserDto) {
+					notificationBusiness.sendNotificationMunicipalityManagementDto(userDto.getEmail(),
+							municipalityEntity.getDepartment().getName(), municipalityEntity.getName(), startDate,
+							userDto.getId(), "");
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("Error enviando notificación al asignar gestor: " + e.getMessage());
+		}
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -249,7 +357,7 @@ public class WorkspaceBusiness {
 
 				// get operator
 				try {
-					OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+					MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 					workspaceOperatorDto.setOperator(operatorDto);
 				} catch (FeignException e) {
 					workspaceOperatorDto.setOperator(null);
@@ -295,10 +403,10 @@ public class WorkspaceBusiness {
 		}
 
 		// validate if the operator exists
-		OperatorDto operatorDto = null;
+		MicroserviceOperatorDto operatorDto = null;
 		try {
 			operatorDto = operatorClient.findById(operatorCode);
-		} catch (FeignException e) {
+		} catch (Exception e) {
 			throw new BusinessException("No se ha encontrado el operador.");
 		}
 
@@ -309,22 +417,24 @@ public class WorkspaceBusiness {
 			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
 		}
 
-		// save support file with microservice filemanager
+		// save file with microservice file manager
 		String urlDocumentaryRepository = null;
 		try {
 
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
 
-			MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient.saveFile(
-					supportFile.getBytes(), StringUtils.cleanPath(supportFile.getOriginalFilename()), urlBase, "Local");
+			String fileExtension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
+			String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + fileExtension;
+			fileBusiness.loadFileToSystem(supportFile, fileNameRandom);
 
-			if (!responseFilemanagerDto.getStatus()) {
-				throw new BusinessException("No se ha podido cargar el soporte.");
-			}
-
-			urlDocumentaryRepository = responseFilemanagerDto.getUrl();
+			urlDocumentaryRepository = rabbitMQSenderService.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase,
+					true);
 
 		} catch (Exception e) {
+			throw new BusinessException("No se ha podido cargar el soporte.");
+		}
+
+		if (urlDocumentaryRepository == null) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -357,6 +467,27 @@ public class WorkspaceBusiness {
 		workspaceEntity.setOperators(operators);
 
 		workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
+
+		// send notification
+		try {
+
+			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerById(managerCode);
+
+			List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorDto.getId());
+			for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
+				MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
+				if (userDto instanceof MicroserviceUserDto) {
+					notificationBusiness.sendNotificationAssignamentOperation(userDto.getEmail(), userDto.getId(),
+							managerDto.getName(), municipalityEntity.getName(),
+							municipalityEntity.getDepartment().getName(), startDate, endDate, "");
+				}
+			}
+
+		} catch (Exception e) {
+			log.error("Error enviando notificación al asignar operador: " + e.getMessage());
+		}
 
 		workspaceDto = new WorkspaceDto();
 		workspaceDto.setId(workspaceEntity.getId());
@@ -466,7 +597,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
@@ -648,7 +779,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
@@ -704,7 +835,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (Exception e) {
 				workspaceOperatorDto.setOperator(null);
@@ -774,7 +905,7 @@ public class WorkspaceBusiness {
 
 			// get operator
 			try {
-				OperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
 				workspaceOperatorDto.setOperator(operatorDto);
 			} catch (FeignException e) {
 				workspaceOperatorDto.setOperator(null);
@@ -839,9 +970,19 @@ public class WorkspaceBusiness {
 				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProvider = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
 				for (TypeSupplyRequestedDto supplyDto2 : supplies) {
 					if (supplyDto2.getProviderId() == providerId) {
+
+						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+								.findTypeSuppleById(supplyDto2.getTypeSupplyId());
+						if (typeSupplyDto.getModelRequired()
+								&& (supplyDto2.getModelVersion() == null || supplyDto2.getModelVersion().isEmpty())) {
+							throw new BusinessException(
+									"El tipo de insumo solicita que se especifique una versión del modelo.");
+						}
+
 						MicroserviceTypeSupplyRequestedDto mtsr = new MicroserviceTypeSupplyRequestedDto();
 						mtsr.setObservation(supplyDto2.getObservation());
 						mtsr.setTypeSupplyId(supplyDto2.getTypeSupplyId());
+						mtsr.setModelVersion(supplyDto2.getModelVersion());
 						listSuppliesByProvider.add(mtsr);
 					}
 				}
@@ -866,14 +1007,71 @@ public class WorkspaceBusiness {
 
 		}
 
+		MicroserviceManagerDto managerDto = managerBusiness.getManagerById(managerCode);
+
 		List<MicroserviceRequestDto> requests = new ArrayList<MicroserviceRequestDto>();
 		for (MicroserviceCreateRequestDto request : groupRequests) {
 
 			try {
+
 				MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
 				requests.add(responseRequest);
-			} catch (Exception e) {
 
+				// send notification
+				try {
+
+					List<MicroserviceProviderUserDto> providerUsers = providerBusiness
+							.getUsersByProvider(request.getProviderId(), null);
+
+					for (MicroserviceProviderUserDto providerUser : providerUsers) {
+
+						MicroserviceUserDto userDto = userBusiness.getUserById(providerUser.getUserCode());
+
+						notificationBusiness.sendNotificationInputRequest(userDto.getEmail(), userCode,
+								managerDto.getName(), municipalityEntity.getName(),
+								municipalityEntity.getDepartment().getName(), responseRequest.getId().toString(),
+								new Date());
+					}
+
+				} catch (Exception er) {
+					log.error("Error enviando la notificación por solicitud de insumos: " + er.getMessage());
+				}
+
+				if (responseRequest.getProvider().getId() == ProviderBusiness.PROVIDER_IGAC_ID) {
+
+					MicroserviceSupplyRequestedDto supplyRequested = responseRequest.getSuppliesRequested().stream()
+							.filter(sR -> sR.getTypeSupply().getId() == ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL)
+							.findAny().orElse(null);
+
+					if (supplyRequested instanceof MicroserviceSupplyRequestedDto) {
+						// new task
+
+						List<Long> profiles = new ArrayList<>();
+						profiles.add(ProviderBusiness.PROVIDER_PROFILE_CADASTRAL);
+						List<MicroserviceProviderUserDto> providerUsersDto = providerBusiness
+								.getUsersByProvider(responseRequest.getProvider().getId(), profiles);
+
+						try {
+
+							List<Long> users = new ArrayList<>();
+							for (MicroserviceProviderUserDto providerUserDto : providerUsersDto) {
+								users.add(providerUserDto.getUserCode());
+							}
+
+							taskBusiness.createTaskForGenerationSupply(users,
+									municipalityEntity.getName().toLowerCase(), responseRequest.getId(),
+									supplyRequested.getTypeSupply().getId(), null, supplyRequested.getModelVersion());
+
+						} catch (Exception e) {
+							log.error("No se ha podido crear la tarea de generación de insumos: " + e.getMessage());
+						}
+
+					}
+
+				}
+
+			} catch (BusinessException e) {
+				log.error("No se ha podido crear la solicitud: " + e.getMessage());
 			}
 
 		}
@@ -930,10 +1128,594 @@ public class WorkspaceBusiness {
 			}
 
 		} catch (Exception e) {
-
+			log.error("No se han podido cargar las solicitudes pendientes del proveedor: " + e.getMessage());
 		}
 
 		return listPendingRequestsDto;
+	}
+
+	public IntegrationDto makeIntegrationCadastreRegistration(Long municipalityId, Long supplyIdCadastre,
+			Long supplyIdRegistration, MicroserviceManagerDto managerDto, MicroserviceUserDto userDto)
+			throws BusinessException {
+
+		IntegrationDto integrationResponseDto = null;
+
+		// validate if the municipality exists
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+		if (!(municipalityEntity instanceof MunicipalityEntity)) {
+			throw new BusinessException("El municipio no existe.");
+		}
+
+		WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+		if (!(workspaceActive instanceof WorkspaceEntity)) {
+			throw new BusinessException("El municipio no cuenta con un espacio de trabajo activo.");
+		}
+
+		if (managerDto.getId() != workspaceActive.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		// validate if there is an integration running
+		List<Long> statesId = new ArrayList<>();
+		statesId.add(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
+		statesId.add(IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC);
+		statesId.add(IntegrationStateBusiness.STATE_STARTED_ASSISTED);
+		statesId.add(IntegrationStateBusiness.STATE_FINISHED_ASSISTED);
+		List<IntegrationEntity> integrationsPending = integrationService
+				.getIntegrationByWorkspaceAndStates(workspaceActive.getId(), statesId);
+		if (integrationsPending.size() > 0) {
+			throw new BusinessException("Existe una integración en curso para el municipio.");
+		}
+
+		// validate cadastre
+		MicroserviceSupplyDto supplyCadastreDto = null;
+		String pathFileCadastre = null;
+		try {
+
+			supplyCadastreDto = supplyClient.findSupplyById(supplyIdCadastre);
+
+			MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+					.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode());
+
+			supplyCadastreDto.setTypeSupply(typeSupplyDto);
+
+			MicroserviceSupplyAttachmentDto attachment = supplyCadastreDto.getAttachments().get(0);
+			pathFileCadastre = attachment.getUrlDocumentaryRepository();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+		}
+		if (supplyCadastreDto.getTypeSupply().getProvider().getProviderCategory().getId() != 1) {
+			throw new BusinessException("El insumo de catastro es inválido.");
+		}
+		if (!supplyCadastreDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+			throw new BusinessException("El insumo no pertenece al municipio.");
+		}
+
+		// validate register
+		MicroserviceSupplyDto supplyRegisteredDto = null;
+		String pathFileRegistration = null;
+		try {
+
+			supplyRegisteredDto = supplyClient.findSupplyById(supplyIdRegistration);
+
+			MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+					.findTypeSuppleById(supplyRegisteredDto.getTypeSupplyCode());
+
+			supplyRegisteredDto.setTypeSupply(typeSupplyDto);
+
+			MicroserviceSupplyAttachmentDto attachment = supplyRegisteredDto.getAttachments().get(0);
+			pathFileRegistration = attachment.getUrlDocumentaryRepository();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+		}
+		if (supplyRegisteredDto.getTypeSupply().getProvider().getProviderCategory().getId() != 2) {
+			throw new BusinessException("El insumo de registro es inválido.");
+		}
+		if (!supplyRegisteredDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+			throw new BusinessException("El insumo no pertenece al municipio.");
+		}
+
+		if (pathFileCadastre == null || pathFileRegistration == null) {
+			throw new BusinessException("No se puede realizar la integración con los insumos seleccionados.");
+		}
+
+		if (!supplyCadastreDto.getModelVersion().equals(supplyRegisteredDto.getModelVersion())) {
+			throw new BusinessException(
+					"No se puede realizar la integración porque la versión del modelo de insumos es diferente.");
+		}
+
+		// validate if the integration has already been done
+		IntegrationStateEntity stateGeneratedProduct = integrationStateService
+				.getIntegrationStateById(IntegrationStateBusiness.STATE_GENERATED_PRODUCT);
+
+		IntegrationEntity integrationDone = integrationService.getIntegrationByCadastreAndSnrAndState(
+				supplyCadastreDto.getId(), supplyRegisteredDto.getId(), stateGeneratedProduct);
+		if (integrationDone instanceof IntegrationEntity) {
+			throw new BusinessException("Ya se ha hecho una integración con los insumos seleccionados.");
+		}
+
+		String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
+		String randomUsername = RandomStringUtils.random(8, true, false).toLowerCase();
+		String randomPassword = RandomStringUtils.random(10, true, true);
+
+		// create database
+		try {
+			databaseIntegrationBusiness.createDatabase(randomDatabaseName, randomUsername, randomPassword);
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido iniciar la integración.");
+		}
+
+		Long integrationId = null;
+		try {
+
+			IntegrationStateEntity stateStarted = integrationStateService
+					.getIntegrationStateById(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
+
+			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
+
+			integrationResponseDto = integrationBusiness.createIntegration(
+					cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(databaseIntegrationPort),
+					cryptoBusiness.encrypt(randomDatabaseName), cryptoBusiness.encrypt(databaseIntegrationSchema),
+					cryptoBusiness.encrypt(randomUsername), cryptoBusiness.encrypt(randomPassword),
+					supplyCadastreDto.getId(), supplyRegisteredDto.getId(), null, workspaceActive, stateStarted,
+					userDto.getId(), managerDto.getId(), textHistory);
+
+			integrationId = integrationResponseDto.getId();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido crear la integración.");
+		}
+
+		try {
+
+			iliBusiness.startIntegration(pathFileCadastre, pathFileRegistration, databaseIntegrationHost,
+					randomDatabaseName, databaseIntegrationPassword, databaseIntegrationPort, databaseIntegrationSchema,
+					databaseIntegrationUsername, integrationId, supplyCadastreDto.getModelVersion().trim());
+
+		} catch (Exception e) {
+			integrationBusiness.updateStateToIntegration(integrationId,
+					IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC, null, null, "SISTEMA");
+			throw new BusinessException("No se ha podido iniciar la integración.");
+		}
+
+		return integrationResponseDto;
+	}
+
+	public IntegrationDto startIntegrationAssisted(Long workspaceId, Long integrationId,
+			MicroserviceManagerDto managerDto, MicroserviceUserDto userDto) throws BusinessException {
+
+		IntegrationDto integrationDto = null;
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerDto.getId() != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración.");
+		}
+
+		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
+		}
+
+		IntegrationStateEntity stateIntegrationEntity = integrationEntity.getState();
+		if (stateIntegrationEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
+				&& stateIntegrationEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT) {
+			throw new BusinessException(
+					"No se puede iniciar la integración asistida ya que no se encuentra en estado que no lo permite.");
+		}
+
+		// modify integration state
+
+		String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
+		integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
+				IntegrationStateBusiness.STATE_STARTED_ASSISTED, userDto.getId(), managerDto.getId(), textHistory);
+
+		String host = integrationEntity.getHostname();
+		String port = integrationEntity.getPort();
+		String database = integrationEntity.getDatabase();
+		String schema = integrationEntity.getSchema();
+		String username = integrationEntity.getUsername();
+		String password = integrationEntity.getPassword();
+
+		try {
+			databaseIntegrationBusiness.protectedDatabase(cryptoBusiness.decrypt(host), cryptoBusiness.decrypt(port),
+					cryptoBusiness.decrypt(database), cryptoBusiness.decrypt(schema), cryptoBusiness.decrypt(username),
+					cryptoBusiness.decrypt(password));
+		} catch (Exception e) {
+			log.error("No se ha podido restringir la base de datos");
+		}
+
+		// create task
+		try {
+
+			List<Long> profiles = new ArrayList<>();
+			profiles.add(RoleBusiness.SUB_ROLE_INTEGRATOR);
+
+			List<MicroserviceManagerUserDto> listUsersIntegrators = managerClient.findUsersByManager(managerDto.getId(),
+					profiles);
+
+			List<Long> users = new ArrayList<>();
+			for (MicroserviceManagerUserDto managerUserDto : listUsersIntegrators) {
+				users.add(managerUserDto.getUserCode());
+			}
+
+			List<Long> taskCategories = new ArrayList<>();
+			taskCategories.add(TaskBusiness.TASK_CATEGORY_INTEGRATION);
+
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DAY_OF_MONTH, 30);
+
+			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+			String description = "Integración modelo de insumos catastro-registro "
+					+ municipalityEntity.getName().toLowerCase();
+			String name = "Integración catastro-registro " + municipalityEntity.getName().toLowerCase();
+
+			List<MicroserviceCreateTaskMetadataDto> metadata = new ArrayList<>();
+
+			MicroserviceCreateTaskMetadataDto metadataConnection = new MicroserviceCreateTaskMetadataDto();
+			metadataConnection.setKey("connection");
+			List<MicroserviceCreateTaskPropertyDto> listPropertiesConnection = new ArrayList<>();
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("host", host));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("port", port));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("database", database));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("schema", schema));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("username", username));
+			listPropertiesConnection.add(new MicroserviceCreateTaskPropertyDto("password", password));
+			metadataConnection.setProperties(listPropertiesConnection);
+			metadata.add(metadataConnection);
+
+			MicroserviceCreateTaskMetadataDto metadataIntegration = new MicroserviceCreateTaskMetadataDto();
+			metadataIntegration.setKey("integration");
+			List<MicroserviceCreateTaskPropertyDto> listPropertiesIntegration = new ArrayList<>();
+			listPropertiesIntegration
+					.add(new MicroserviceCreateTaskPropertyDto("integration", integrationEntity.getId().toString()));
+
+			metadataIntegration.setProperties(listPropertiesIntegration);
+			metadata.add(metadataIntegration);
+
+			List<MicroserviceCreateTaskStepDto> steps = new ArrayList<>();
+
+			taskBusiness.createTask(taskCategories, sdf.format(cal.getTime()), description, name, users, metadata,
+					steps);
+
+			// send notification
+			try {
+
+				for (MicroserviceManagerUserDto managerUserDto : listUsersIntegrators) {
+
+					MicroserviceUserDto userIntegratorDto = userBusiness.getUserById(managerUserDto.getUserCode());
+					if (userIntegratorDto instanceof MicroserviceUserDto) {
+						notificationBusiness.sendNotificationTaskAssignment(userIntegratorDto.getEmail(),
+								userIntegratorDto.getId(), name, municipalityEntity.getName(),
+								municipalityEntity.getDepartment().getName(), new Date());
+					}
+
+				}
+
+			} catch (Exception e) {
+				log.error("Error enviando notificación a los usuarios que se les ha asignado una tarea de integración: "
+						+ e.getMessage());
+			}
+
+		} catch (Exception e) {
+			log.error("No se ha podido crear la tarea de integración: " + e.getMessage());
+		}
+
+		return integrationDto;
+	}
+
+	public IntegrationDto exportXtf(Long workspaceId, Long integrationId, MicroserviceManagerDto managerDto,
+			MicroserviceUserDto userDto) throws BusinessException {
+
+		IntegrationDto integrationDto = null;
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerDto.getId() != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración.");
+		}
+
+		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
+		}
+
+		IntegrationStateEntity stateEntity = integrationEntity.getState();
+		if (stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_ASSISTED
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT) {
+			throw new BusinessException(
+					"No se puede generar el producto porque la integración se encuentra en un estado que no lo permite.");
+		}
+
+		try {
+
+			String hostnameDecrypt = cryptoBusiness.decrypt(integrationEntity.getHostname());
+			String databaseDecrypt = cryptoBusiness.decrypt(integrationEntity.getDatabase());
+			String portDecrypt = cryptoBusiness.decrypt(integrationEntity.getPort());
+			String schemaDecrypt = cryptoBusiness.decrypt(integrationEntity.getSchema());
+
+			// supply cadastre
+			MicroserviceSupplyDto supplyCadastreDto = supplyClient
+					.findSupplyById(integrationEntity.getSupplyCadastreId());
+
+			iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, databaseIntegrationPassword, portDecrypt,
+					schemaDecrypt, databaseIntegrationUsername, integrationId, false,
+					supplyCadastreDto.getModelVersion());
+
+			// modify integration state
+			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
+			integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
+					IntegrationStateBusiness.STATE_GENERATING_PRODUCT, userDto.getId(), managerDto.getId(),
+					textHistory);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido iniciar la generación del insumo");
+		}
+
+		return integrationDto;
+	}
+
+	public void removeIntegrationFromWorkspace(Long workspaceId, Long integrationId, Long managerCode)
+			throws BusinessException {
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerCode != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración.");
+		}
+
+		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
+		}
+
+		IntegrationStateEntity stateEntity = integrationEntity.getState();
+		if (stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT
+				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC) {
+			throw new BusinessException(
+					"No se puede generar el producto porque la integración se encuentra en un estado que no lo permite.");
+		}
+
+		try {
+
+			integrationBusiness.deleteIntegration(integrationId);
+
+		} catch (Exception e) {
+			log.error("Error intentando eliminar la integración: " + e.getMessage());
+			throw new BusinessException("No se ha podido eliminar la integración.");
+		}
+
+	}
+
+	public boolean managerHasAccessToMunicipality(String municipalityCode, Long managerCode) {
+
+		Boolean hasAccess = false;
+
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityByCode(municipalityCode);
+		if (!(municipalityEntity instanceof MunicipalityEntity)) {
+			return hasAccess;
+		}
+
+		WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+		if (workspaceActive instanceof WorkspaceEntity) {
+			if (managerCode == workspaceActive.getManagerCode()) {
+				hasAccess = true;
+			}
+		}
+
+		return hasAccess;
+	}
+
+	public void removeSupply(Long workspaceId, Long supplyId, Long managerCode) throws BusinessException {
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerCode != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		MicroserviceSupplyDto supplyDto = null;
+		String pathFile = null;
+		try {
+
+			supplyDto = supplyClient.findSupplyById(supplyId);
+
+			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
+			pathFile = attachment.getUrlDocumentaryRepository();
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha encontrado el insumo.");
+		}
+
+		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+		if (!supplyDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+			throw new BusinessException("El insumo no pertenece al municipio.");
+		}
+
+		supplyBusiness.deleteSupply(supplyId);
+		fileBusiness.deleteFile(pathFile);
+	}
+
+	public MicroserviceDeliveryDto createDelivery(Long workspaceId, Long managerCode, String observations,
+			List<CreateSupplyDeliveryDto> suppliesDto) throws BusinessException {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
+		}
+
+		if (managerCode != workspaceEntity.getManagerCode()) {
+			throw new BusinessException("No tiene acceso al municipio.");
+		}
+
+		List<WorkspaceOperatorEntity> operators = workspaceEntity.getOperators();
+		if (operators.size() == 0) {
+			throw new BusinessException("El espacio de trabajo no tiene asignado un operador.");
+		}
+
+		Long operatorId = operators.get(0).getOperatorCode();
+		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+		List<MicroserviceCreateDeliverySupplyDto> microserviceSupplies = new ArrayList<>();
+
+		// verify if the supplies exists
+		List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(operatorId,
+				municipalityEntity.getCode());
+
+		for (CreateSupplyDeliveryDto deliverySupplyDto : suppliesDto) {
+
+			MicroserviceSupplyDto supply = supplyBusiness.getSupplyById(deliverySupplyDto.getSupplyId());
+			if (supply == null) {
+				throw new BusinessException("No se ha encontrado el insumo.");
+			}
+
+			// verify if the supply has already delivered to operator
+			for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
+				MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
+						.filter(supplyDto -> supplyDto.getSupplyCode() == deliverySupplyDto.getSupplyId()).findAny()
+						.orElse(null);
+				if (supplyFound != null) {
+
+					String nameSupply = "";
+					if (supply.getTypeSupply() != null) {
+						nameSupply = supply.getTypeSupply().getName();
+					} else {
+						nameSupply = supply.getObservations();
+					}
+
+					String messageError = String.format("El insumo %s ya ha sido entregado al operador.", nameSupply);
+					throw new BusinessException(messageError);
+				}
+			}
+
+			microserviceSupplies.add(new MicroserviceCreateDeliverySupplyDto(deliverySupplyDto.getObservations(),
+					deliverySupplyDto.getSupplyId()));
+		}
+
+		try {
+			deliveryDto = operatorBusiness.createDelivery(operatorId, managerCode, municipalityEntity.getCode(),
+					observations, microserviceSupplies);
+
+			try {
+
+				MicroserviceManagerDto managerDto = managerBusiness.getManagerById(managerCode);
+
+				List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorId);
+				for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
+					MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
+					if (userDto instanceof MicroserviceUserDto) {
+						notificationBusiness.sendNotificationDeliverySupplies(userDto.getEmail(), userDto.getId(),
+								managerDto.getName(), municipalityEntity.getName(),
+								municipalityEntity.getDepartment().getName(), "", deliveryDto.getCreatedAt());
+					}
+				}
+
+			} catch (Exception e) {
+				log.error("Error enviando notificación de entrega de insumos al operador: " + e.getMessage());
+			}
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido realizar la entrega al operador.");
+		}
+
+		return deliveryDto;
+	}
+
+	public SupportDto getSupportByIdToDownload(Long workspaceId, Long supportId, Long managerCode)
+			throws BusinessException {
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+		if (!(workspaceEntity instanceof WorkspaceEntity)) {
+			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+		}
+
+		// validate if the workspace is active
+		if (!workspaceEntity.getIsActive()) {
+			throw new BusinessException(
+					"No se puede descargar el soporte, porque el municipio no tiene un espacio de trabajo activo.");
+		}
+
+		if (managerCode != null) {
+			if (managerCode != workspaceEntity.getManagerCode()) {
+				throw new BusinessException("No tiene acceso al municipio.");
+			}
+		}
+
+		SupportEntity supportEntity = workspaceEntity.getSupports().stream().filter(s -> s.getId() == supportId)
+				.findAny().orElse(null);
+		if (supportEntity == null) {
+			throw new BusinessException("El soporte no pertenece al espacio de trabajo.");
+		}
+
+		SupportDto supportDto = new SupportDto();
+		supportDto.setId(supportEntity.getId());
+		supportDto.setCreatedAt(supportEntity.getCreatedAt());
+		supportDto.setUrlDocumentaryRepository(supportEntity.getUrlDocumentaryRepository());
+		return supportDto;
+
 	}
 
 }

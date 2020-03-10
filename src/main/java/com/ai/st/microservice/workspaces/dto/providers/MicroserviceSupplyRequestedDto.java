@@ -3,7 +3,7 @@ package com.ai.st.microservice.workspaces.dto.providers;
 import java.io.Serializable;
 import java.util.Date;
 
-public class MicroserivceSupplyRequestedDto implements Serializable {
+public class MicroserviceSupplyRequestedDto implements Serializable {
 
 	private static final long serialVersionUID = -5639936149692833884L;
 
@@ -14,8 +14,10 @@ public class MicroserivceSupplyRequestedDto implements Serializable {
 	private Boolean delivered;
 	private Date deliveredAt;
 	private String justification;
+	private MicroserviceSupplyRequestedStateDto state;
+	private String modelVersion;
 
-	public MicroserivceSupplyRequestedDto() {
+	public MicroserviceSupplyRequestedDto() {
 
 	}
 
@@ -73,6 +75,22 @@ public class MicroserivceSupplyRequestedDto implements Serializable {
 
 	public void setJustification(String justification) {
 		this.justification = justification;
+	}
+
+	public MicroserviceSupplyRequestedStateDto getState() {
+		return state;
+	}
+
+	public void setState(MicroserviceSupplyRequestedStateDto state) {
+		this.state = state;
+	}
+
+	public String getModelVersion() {
+		return modelVersion;
+	}
+
+	public void setModelVersion(String modelVersion) {
+		this.modelVersion = modelVersion;
 	}
 
 }

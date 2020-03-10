@@ -1,38 +1,75 @@
 package com.ai.st.microservice.workspaces.business;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.clients.FilemanagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
-import com.ai.st.microservice.workspaces.dto.filemanager.MicroserviceFilemanagerResponseDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserivceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataPropertyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
+import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 @Component
 public class ProviderBusiness {
+
+	public static final Long SUPPLY_REQUESTED_STATE_ACCEPTED = (long) 1;
+	public static final Long SUPPLY_REQUESTED_STATE_REJECTED = (long) 2;
+	public static final Long SUPPLY_REQUESTED_STATE_VALIDATING = (long) 3;
+	public static final Long SUPPLY_REQUESTED_STATE_PENDING = (long) 4;
+	public static final Long SUPPLY_REQUESTED_STATE_UNDELIVERED = (long) 5;
+
+	public static final Long PROVIDER_IGAC_ID = (long) 1;
+
+	public static final Long PROVIDER_PROFILE_CADASTRAL = (long) 1;
+
+	public static final Long PROVIDER_SUPPLY_CADASTRAL = (long) 2;
+
+	private final Logger log = LoggerFactory.getLogger(ProviderBusiness.class);
+
+	@Value("${st.temporalDirectory}")
+	private String stTemporalDirectory;
 
 	@Autowired
 	private ProviderFeignClient providerClient;
 
 	@Autowired
-	private SupplyFeignClient supplyClient;
+	private TaskFeignClient taskClient;
 
 	@Autowired
-	private FilemanagerFeignClient filemanagerClient;
+	private RabbitMQSenderService rabbitMQService;
+
+	@Autowired
+	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private IliBusiness iliBusiness;
+
+	@Autowired
+	private FileBusiness fileBusiness;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -66,97 +103,182 @@ public class ProviderBusiness {
 			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
 		}
 
-		Boolean searchSupply = false;
-		for (MicroserivceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+		MicroserviceSupplyRequestedDto supplyRequested = requestDto.getSuppliesRequested().stream()
+				.filter(sR -> sR.getTypeSupply().getId() == typeSupplyId).findAny().orElse(null);
 
-			if (supplyRequested.getTypeSupply().getId() == typeSupplyId) {
+		if (supplyRequested == null) {
+			throw new BusinessException("El tipo de insumo no pertenece a la solicitud.");
+		}
 
-				// verify if the user's profile matches the input profile
-				MicroserviceProviderProfileDto profileSupply = supplyRequested.getTypeSupply().getProviderProfile();
-				MicroserviceProviderProfileDto profileUser = userProviderFound.getProfiles().stream()
-						.filter(profile -> profileSupply.getId() == profile.getId()).findAny().orElse(null);
-				if (profileUser == null) {
-					throw new BusinessException(
-							"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
-				}
+		// verify if the user's profile matches the input profile
+		MicroserviceProviderProfileDto profileSupply = supplyRequested.getTypeSupply().getProviderProfile();
+		MicroserviceProviderProfileDto profileUser = userProviderFound.getProfiles().stream()
+				.filter(profile -> profileSupply.getId() == profile.getId()).findAny().orElse(null);
+		if (profileUser == null) {
+			throw new BusinessException(
+					"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
+		}
 
-				if (delivered == true) {
+		try {
 
-					// send supply to microservice supplies
-					try {
-						MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
-						createSupplyDto.setMunicipalityCode(requestDto.getMunicipalityCode());
-						createSupplyDto.setObservations(observations);
-						createSupplyDto.setTypeSupplyCode(typeSupplyId);
-						if (files.length > 0) {
-							List<String> urls = new ArrayList<String>();
-							for (MultipartFile file : files) {
+			// verify if the supply is assigned to a task
+			List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+			List<Long> taskCategories = new ArrayList<>(
+					Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+			List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+			for (MicroserviceTaskDto taskDto : tasksDto) {
+				MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+						.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+				if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
 
-								try {
+					MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+							.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
 
-									String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_")
-											+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
-											+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
+					MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties().stream()
+							.filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny().orElse(null);
 
-									MicroserviceFilemanagerResponseDto responseFilemanagerDto = filemanagerClient
-											.saveFile(file.getBytes(),
-													StringUtils.cleanPath(file.getOriginalFilename()), urlBase,
-													"Local");
+					if (propertyRequest != null && propertyTypeSupply != null) {
 
-									if (!responseFilemanagerDto.getStatus()) {
-										throw new BusinessException(
-												"No se ha podido guardar el archivo en el repositorio documental.");
-									}
+						if (Long.parseLong(propertyRequest.getValue()) == requestId
+								&& Long.parseLong(propertyTypeSupply.getValue()) == typeSupplyId) {
 
-									urls.add(responseFilemanagerDto.getUrl());
-								} catch (Exception e) {
-									throw new BusinessException(
-											"No se ha podido guardar el archivo en el repositorio documental.");
-								}
+							MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
+									.filter(m -> m.getMemberCode() == userCode).findAny().orElse(null);
+							if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
+								throw new BusinessException(
+										"No es posible cargar el insumo, la tarea está asignada a otro usuario.");
 							}
-							createSupplyDto.setUrlsDocumentaryRepository(urls);
 						}
-						if (url != null && !url.isEmpty()) {
-							createSupplyDto.setUrl(url);
-						}
-						List<MicroserviceCreateSupplyOwnerDto> owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
-
-						MicroserviceCreateSupplyOwnerDto owner1 = new MicroserviceCreateSupplyOwnerDto();
-						owner1.setOwnerCode(userCode);
-						owner1.setOwnerType("USER");
-						owners.add(owner1);
-
-						MicroserviceCreateSupplyOwnerDto owner2 = new MicroserviceCreateSupplyOwnerDto();
-						owner2.setOwnerCode(providerDto.getId());
-						owner2.setOwnerType("ENTITY");
-						owners.add(owner2);
-
-						createSupplyDto.setOwners(owners);
-
-						supplyClient.createSupply(createSupplyDto);
-					} catch (Exception e) {
-						throw new BusinessException("No se ha podido cargar el insumo.");
 					}
 				}
-
-				// Update request
-				try {
-					MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
-					updateSupply.setDelivered(delivered);
-					updateSupply.setJustification(justification);
-					requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(),
-							updateSupply);
-				} catch (Exception e) {
-					throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
-				}
-
-				searchSupply = true;
-				break;
 			}
 
+		} catch (Exception e) {
+			log.error("No se ha podido consultar si la tarea esta asociada al cargue de insumo: " + e.getMessage());
 		}
-		if (!searchSupply) {
-			throw new BusinessException("El tipo de insumo no pertenece a la solicitud.");
+
+		if (supplyRequested.getState().getId() == ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING) {
+			throw new BusinessException("Ya se ha cargado un insumo que esta en validación.");
+		}
+
+		Long supplyRequestedStateId = null;
+
+		if (delivered == true) {
+
+			// send supply to microservice supplies
+
+			List<String> urls = new ArrayList<String>();
+			if (files.length > 0) {
+				for (MultipartFile fileUploaded : files) {
+
+					String loadedFileName = fileUploaded.getOriginalFilename();
+					String loadedFileExtension = FilenameUtils.getExtension(loadedFileName);
+
+					String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + loadedFileExtension;
+					String filePathTemporal = fileBusiness.loadFileToSystem(fileUploaded, fileNameRandom);
+
+					Boolean zipFile = false;
+
+					List<MicroserviceExtensionDto> extensionAllowed = supplyRequested.getTypeSupply().getExtensions();
+
+					Boolean fileAllowed = false;
+					Boolean isLoadShp = false;
+					List<String> loadedFileExtensions = new ArrayList<>();
+
+					// verify if the supply is a shp file
+					MicroserviceExtensionDto extensionShpDto = extensionAllowed.stream()
+							.filter(ext -> ext.getName().equalsIgnoreCase("shp")).findAny().orElse(null);
+					if (extensionShpDto != null) {
+
+						List<String> extensionsShp = new ArrayList<String>(Arrays.asList("shp", "dbf", "shx", "prj"));
+
+						if (loadedFileExtension.equalsIgnoreCase("zip")) {
+
+							isLoadShp = ZipUtil.zipContainsFile(filePathTemporal, extensionsShp);
+							if (isLoadShp) {
+								fileAllowed = ZipUtil.zipMustContains(filePathTemporal, extensionsShp);
+								loadedFileExtensions = extensionsShp;
+								zipFile = false;
+							}
+
+						}
+
+					}
+
+					if (loadedFileExtension.equalsIgnoreCase("zip")) {
+
+						if (!isLoadShp) {
+							List<String> extensionsAllowed = extensionAllowed.stream().map(ext -> {
+								return ext.getName();
+							}).collect(Collectors.toList());
+
+							fileAllowed = ZipUtil.zipContainsFile(filePathTemporal, extensionsAllowed);
+							loadedFileExtensions = ZipUtil.getExtensionsFromZip(filePathTemporal);
+							zipFile = false;
+						}
+
+					} else {
+
+						MicroserviceExtensionDto extensionDto = extensionAllowed.stream()
+								.filter(ext -> ext.getName().equalsIgnoreCase(loadedFileExtension)).findAny()
+								.orElse(null);
+						fileAllowed = extensionDto instanceof MicroserviceExtensionDto;
+						loadedFileExtensions.add(loadedFileExtension);
+						zipFile = true;
+					}
+
+					if (!fileAllowed) {
+						throw new BusinessException("El insumo no cumple los tipos de archivo permitidos.");
+					}
+
+					String supplyExtension = loadedFileExtensions.stream().filter(ext -> ext.equalsIgnoreCase("xtf"))
+							.findAny().orElse("");
+
+					if (!supplyExtension.isBlank() && !supplyExtension.isEmpty()) {
+						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
+
+						// validate xtf with ilivalidator
+						iliBusiness.startValidation(requestId, observations, filePathTemporal, fileNameRandom,
+								supplyRequested.getId(), userCode, supplyRequested.getModelVersion());
+
+					} else {
+						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
+
+						// save file with microservice file manager
+						String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_")
+								+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
+								+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
+
+						String urlDocumentaryRepository = rabbitMQService
+								.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase, zipFile);
+
+						if (urlDocumentaryRepository == null) {
+							throw new BusinessException(
+									"No se ha podido guardar el archivo en el repositorio documental.");
+						}
+						urls.add(urlDocumentaryRepository);
+
+						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations, typeSupplyId, urls,
+								url, requestId, userCode, providerDto.getId(), null, null);
+					}
+				}
+			} else {
+				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
+			}
+
+		} else {
+			supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED;
+		}
+
+		// Update request
+		try {
+			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+			updateSupply.setDelivered(delivered);
+			updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
+			updateSupply.setJustification(justification);
+			requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(), updateSupply);
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
 		}
 
 		return requestUpdatedDto;
@@ -182,12 +304,65 @@ public class ProviderBusiness {
 			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
 		}
 
-		for (MicroserivceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
-			if (!supplyRequested.getDelivered()
-					&& (supplyRequested.getJustification() == null || supplyRequested.getJustification().isEmpty())) {
+		for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+			if (supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED
+					&& supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
 				throw new BusinessException(
 						"No se puede cerrar la solicitud porque no se han cargado todos los insumos.");
 			}
+		}
+
+		try {
+
+			for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+
+				// verify if the supply is assigned to a task
+				List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+				List<Long> taskCategories = new ArrayList<>(
+						Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+
+				List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+
+				for (MicroserviceTaskDto taskDto : tasksDto) {
+					MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+							.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+					if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+						MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+								.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
+
+						MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties()
+								.stream().filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny()
+								.orElse(null);
+
+						if (propertyRequest != null && propertyTypeSupply != null) {
+
+							Long taskRequestId = Long.parseLong(propertyRequest.getValue());
+							Long taskTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+
+							if (taskRequestId == requestId
+									&& taskTypeSupplyId == supplyRequested.getTypeSupply().getId()) {
+
+								Long supplyRequestedState = supplyRequested.getState().getId();
+
+								if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED) {
+									taskClient.closeTask(taskDto.getId());
+								} else if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
+									MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
+									cancelTaskDto.setReason("Cancelada por el sistema.");
+									taskClient.cancelTask(taskDto.getId(), cancelTaskDto);
+								}
+
+							}
+
+						}
+					}
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("Ha ocurrido un error intentando cerrar las tareas asociadas a la solicitud");
 		}
 
 		MicroserviceRequestDto requestUpdatedDto = null;
@@ -199,6 +374,56 @@ public class ProviderBusiness {
 		}
 
 		return requestUpdatedDto;
+	}
+
+	public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
+			throws BusinessException {
+
+		List<MicroserviceProviderUserDto> usersDto = new ArrayList<>();
+
+		try {
+
+			if (profiles != null) {
+				usersDto = providerClient.findUsersByProviderIdAndProfiles(providerId, profiles);
+			} else {
+				usersDto = providerClient.findUsersByProviderId(providerId);
+			}
+
+		} catch (BusinessException e) {
+			String message = "No se han podido obtener los usuarios del proveedor.";
+			this.log.error(message + ": " + e.getMessage());
+			throw new BusinessException(message);
+		}
+
+		return usersDto;
+	}
+
+	public List<MicroserviceRequestDto> getRequestsByEmmitersManager(Long managerCode) throws BusinessException {
+
+		List<MicroserviceRequestDto> listRequestsDto = new ArrayList<>();
+
+		try {
+
+			listRequestsDto = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
+
+		} catch (Exception e) {
+			log.error("Error consultando solicitudes: " + e.getMessage());
+		}
+
+		return listRequestsDto;
+	}
+
+	public MicroserviceProviderDto getProviderById(Long providerId) {
+
+		MicroserviceProviderDto providerDto = null;
+
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("No se podido consultar el proveedor: " + e.getMessage());
+		}
+
+		return providerDto;
 	}
 
 }

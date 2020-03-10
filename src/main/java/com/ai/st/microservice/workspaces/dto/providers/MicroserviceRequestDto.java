@@ -16,14 +16,14 @@ public class MicroserviceRequestDto implements Serializable {
 	private Date deadline;
 	private String observations;
 	private MicroserviceRequestStateDto requestState;
-	private List<MicroserivceSupplyRequestedDto> suppliesRequested;
+	private List<MicroserviceSupplyRequestedDto> suppliesRequested;
 	private List<MicroserviceEmitterDto> emitters;
 	private MicroserviceProviderDto provider;
 	private String municipalityCode;
 	private MunicipalityDto municipality;
 
 	public MicroserviceRequestDto() {
-		suppliesRequested = new ArrayList<MicroserivceSupplyRequestedDto>();
+		suppliesRequested = new ArrayList<MicroserviceSupplyRequestedDto>();
 		emitters = new ArrayList<MicroserviceEmitterDto>();
 	}
 
@@ -67,11 +67,11 @@ public class MicroserviceRequestDto implements Serializable {
 		this.requestState = requestState;
 	}
 
-	public List<MicroserivceSupplyRequestedDto> getSuppliesRequested() {
+	public List<MicroserviceSupplyRequestedDto> getSuppliesRequested() {
 		return suppliesRequested;
 	}
 
-	public void setSuppliesRequested(List<MicroserivceSupplyRequestedDto> suppliesRequested) {
+	public void setSuppliesRequested(List<MicroserviceSupplyRequestedDto> suppliesRequested) {
 		this.suppliesRequested = suppliesRequested;
 	}
 

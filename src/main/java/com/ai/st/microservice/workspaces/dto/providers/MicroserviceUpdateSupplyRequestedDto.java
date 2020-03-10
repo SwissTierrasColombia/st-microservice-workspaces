@@ -8,6 +8,7 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
 
 	private Boolean delivered;
 	private String justification;
+	private Long supplyRequestedStateId;
 
 	public MicroserviceUpdateSupplyRequestedDto() {
 
@@ -27,6 +28,14 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
 
 	public void setJustification(String justification) {
 		this.justification = justification;
+	}
+
+	public Long getSupplyRequestedStateId() {
+		return supplyRequestedStateId;
+	}
+
+	public void setSupplyRequestedStateId(Long supplyRequestedStateId) {
+		this.supplyRequestedStateId = supplyRequestedStateId;
 	}
 
 }

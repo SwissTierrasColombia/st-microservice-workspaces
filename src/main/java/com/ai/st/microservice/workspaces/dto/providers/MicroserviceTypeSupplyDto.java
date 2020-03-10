@@ -13,9 +13,11 @@ public class MicroserviceTypeSupplyDto implements Serializable {
 	private Date createdAt;
 	private String description;
 	private Boolean metadataRequired;
+	private Boolean modelRequired;
 	private String name;
 	private MicroserviceProviderProfileDto providerProfile;
 	private List<MicroserviceExtensionDto> extensions;
+	private MicroserviceProviderDto provider;
 
 	public MicroserviceTypeSupplyDto() {
 		this.extensions = new ArrayList<MicroserviceExtensionDto>();
@@ -75,6 +77,22 @@ public class MicroserviceTypeSupplyDto implements Serializable {
 
 	public void setExtensions(List<MicroserviceExtensionDto> extensions) {
 		this.extensions = extensions;
+	}
+
+	public MicroserviceProviderDto getProvider() {
+		return provider;
+	}
+
+	public void setProvider(MicroserviceProviderDto provider) {
+		this.provider = provider;
+	}
+
+	public Boolean getModelRequired() {
+		return modelRequired;
+	}
+
+	public void setModelRequired(Boolean modelRequired) {
+		this.modelRequired = modelRequired;
 	}
 
 }

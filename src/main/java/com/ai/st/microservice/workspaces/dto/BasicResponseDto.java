@@ -6,7 +6,7 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 @ApiModel(value = "ErrorDto", description = "Error Dto")
-public class ErrorDto implements Serializable {
+public class BasicResponseDto implements Serializable {
 
 	private static final long serialVersionUID = 5898345343466699696L;
 
@@ -16,11 +16,11 @@ public class ErrorDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Code error")
 	private Integer code;
 
-	public ErrorDto() {
+	public BasicResponseDto() {
 
 	}
 
-	public ErrorDto(String message, Integer code) {
+	public BasicResponseDto(String message, Integer code) {
 		super();
 		this.message = message;
 		this.code = code;

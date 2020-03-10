@@ -7,13 +7,16 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.workspaces.business.IntegrationStateBusiness;
 import com.ai.st.microservice.workspaces.business.MilestoneBusiness;
 import com.ai.st.microservice.workspaces.business.StateBusiness;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
+import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
 import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.StateEntity;
 import com.ai.st.microservice.workspaces.services.IDepartmentService;
+import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
@@ -35,12 +38,16 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 	@Autowired
 	private IStateService stateService;
 
+	@Autowired
+	private IIntegrationStateService integrationStateService;
+
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		log.info("ST - Loading Domains ... ");
 		this.initMunicipalities();
 		this.initMilestones();
 		this.initStates();
+		this.initIntegrationStates();
 	}
 
 	public void initMunicipalities() {
@@ -96,24 +103,24 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 				municipalityOvejas.setCode("70508");
 				municipalityOvejas.setDepartment(departmentSucre);
 				municipalityService.createMunicipality(municipalityOvejas);
-				
+
 				DepartmentEntity departmentCundinamarca = new DepartmentEntity();
 				departmentCundinamarca.setName("CUNDINAMARCA");
 				departmentCundinamarca.setCode("25");
 				departmentCundinamarca = departmentService.createDepartment(departmentCundinamarca);
-				
+
 				MunicipalityEntity municipalityFacatativa = new MunicipalityEntity();
 				municipalityFacatativa.setName("FACATATIVA");
 				municipalityFacatativa.setCode("25269");
 				municipalityFacatativa.setDepartment(departmentCundinamarca);
 				municipalityService.createMunicipality(municipalityFacatativa);
-				
+
 				MunicipalityEntity municipalityGuaduas = new MunicipalityEntity();
 				municipalityGuaduas.setName("GUADUAS");
 				municipalityGuaduas.setCode("25320");
 				municipalityGuaduas.setDepartment(departmentCundinamarca);
 				municipalityService.createMunicipality(municipalityGuaduas);
-				
+
 				MunicipalityEntity municipalityLaPalma = new MunicipalityEntity();
 				municipalityLaPalma.setName("LA PALMA");
 				municipalityLaPalma.setCode("25394");
@@ -207,6 +214,70 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 			}
 
 		}
+	}
+
+	public void initIntegrationStates() {
+
+		Long countStates = integrationStateService.getCount();
+		if (countStates == 0) {
+
+			try {
+
+				IntegrationStateEntity stateStartedAutomatic = new IntegrationStateEntity();
+				stateStartedAutomatic.setId(IntegrationStateBusiness.STATE_STARTED_AUTOMATIC);
+				stateStartedAutomatic.setName("INICIADA AUTOMÁTICA");
+				stateStartedAutomatic.setDescription("La integración ha iniciado de forma automática.");
+				integrationStateService.createIntegrationState(stateStartedAutomatic);
+
+				IntegrationStateEntity stateFinishedAutomatic = new IntegrationStateEntity();
+				stateFinishedAutomatic.setId(IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC);
+				stateFinishedAutomatic.setName("FINALIZADA AUTOMÁTICA");
+				stateFinishedAutomatic.setDescription("La integración ha finalizado de forma automática.");
+				integrationStateService.createIntegrationState(stateFinishedAutomatic);
+
+				IntegrationStateEntity stateStartedAssisted = new IntegrationStateEntity();
+				stateStartedAssisted.setId(IntegrationStateBusiness.STATE_STARTED_ASSISTED);
+				stateStartedAssisted.setName("INICIADA ASISTIDA");
+				stateStartedAssisted.setDescription("La integración ha iniciado de forma asistida.");
+				integrationStateService.createIntegrationState(stateStartedAssisted);
+
+				IntegrationStateEntity stateFinishedAssisted = new IntegrationStateEntity();
+				stateFinishedAssisted.setId(IntegrationStateBusiness.STATE_FINISHED_ASSISTED);
+				stateFinishedAssisted.setName("FINALIZADA ASISTIDA");
+				stateFinishedAssisted.setDescription("La integración ha finalizado de forma asistida.");
+				integrationStateService.createIntegrationState(stateFinishedAssisted);
+
+				IntegrationStateEntity stateGeneratingProduct = new IntegrationStateEntity();
+				stateGeneratingProduct.setId(IntegrationStateBusiness.STATE_GENERATING_PRODUCT);
+				stateGeneratingProduct.setName("GENERANDO PRODUCTO");
+				stateGeneratingProduct.setDescription("Se esta generando un producto.");
+				integrationStateService.createIntegrationState(stateGeneratingProduct);
+
+				IntegrationStateEntity stateProductGenerated = new IntegrationStateEntity();
+				stateProductGenerated.setId(IntegrationStateBusiness.STATE_GENERATED_PRODUCT);
+				stateProductGenerated.setName("PRODUCTO GENERADO");
+				stateProductGenerated.setDescription("Se ha generado ya un producto.");
+				integrationStateService.createIntegrationState(stateProductGenerated);
+
+				IntegrationStateEntity stateError = new IntegrationStateEntity();
+				stateError.setId(IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC);
+				stateError.setName("ERROR REALIZANDO INTEGRACIÓN AUTOMÁTICA");
+				stateError.setDescription("Ha ocurrido un error realizando la integración.");
+				integrationStateService.createIntegrationState(stateError);
+
+				IntegrationStateEntity stateErrorProduct = new IntegrationStateEntity();
+				stateErrorProduct.setId(IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT);
+				stateErrorProduct.setName("ERROR GENERANDO PRODUCTO");
+				stateErrorProduct.setDescription("Ha ocurrido un error realizando la integración.");
+				integrationStateService.createIntegrationState(stateErrorProduct);
+
+				log.info("The domains 'integration states' have been loaded!");
+			} catch (Exception e) {
+				log.error("Failed to load 'integration states' domains");
+			}
+
+		}
+
 	}
 
 }

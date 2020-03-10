@@ -1,18 +1,27 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.servlet.ServletContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -20,13 +29,22 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
+import com.ai.st.microservice.workspaces.business.OperatorBusiness;
 import com.ai.st.microservice.workspaces.business.RoleBusiness;
+import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
+import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
+import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.CreateWorkspaceDto;
-import com.ai.st.microservice.workspaces.dto.ErrorDto;
+import com.ai.st.microservice.workspaces.dto.IntegrationDto;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.CreateDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
@@ -34,9 +52,15 @@ import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+import com.google.common.io.Files;
 
 import feign.FeignException;
 import io.swagger.annotations.Api;
@@ -55,10 +79,28 @@ public class WorkspaceV1Controller {
 	private ManagerFeignClient managerClient;
 
 	@Autowired
-	private WorkspaceBusiness workspaceBusiness;
+	private OperatorFeignClient operatorClient;
 
 	@Autowired
 	private UserFeignClient userClient;
+
+	@Autowired
+	private WorkspaceBusiness workspaceBusiness;
+
+	@Autowired
+	private IntegrationBusiness integrationBusiness;
+
+	@Autowired
+	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private OperatorBusiness operatorBusiness;
+
+	@Autowired
+	private WorkspaceOperatorBusiness workspaceOperatorBusiness;
+
+	@Autowired
+	private ServletContext servletContext;
 
 	@RequestMapping(value = "", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Create workspace")
@@ -132,15 +174,15 @@ public class WorkspaceV1Controller {
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -241,11 +283,23 @@ public class WorkspaceV1Controller {
 
 			// get manager
 			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
 			try {
 				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
 			} catch (FeignException e) {
 				throw new DisconnectedMicroserviceException(
 						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
 			}
 
 			// validation start date
@@ -311,19 +365,19 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@assignOperator#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -354,11 +408,23 @@ public class WorkspaceV1Controller {
 
 			// get manager
 			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
 			try {
 				managerDto = managerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
 				throw new DisconnectedMicroserviceException(
 						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
 			}
 
 			// validation observations
@@ -404,19 +470,19 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -476,15 +542,15 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getSupportsByWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -542,15 +608,15 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceById#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceById#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceById#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
@@ -608,15 +674,15 @@ public class WorkspaceV1Controller {
 		} catch (DisconnectedMicroserviceException e) {
 			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getOperatorsByWorkspace#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -679,18 +745,767 @@ public class WorkspaceV1Controller {
 			log.error(
 					"Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 4);
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (BusinessException e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/integration/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Make integration")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Integration done", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> makeIntegrationAutomatic(@PathVariable Long municipalityId,
+			@RequestBody MakeIntegrationDto requestMakeIntegration,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			// validation supply cadastre
+			Long supplyCadastre = requestMakeIntegration.getSupplyCadastre();
+			if (supplyCadastre == null || supplyCadastre <= 0) {
+				throw new InputValidationException("El insumo de catastro es requerido.");
+			}
+
+			// validation supply registration
+			Long supplyRegistration = requestMakeIntegration.getSupplyRegistration();
+			if (supplyRegistration == null || supplyRegistration <= 0) {
+				throw new InputValidationException("El insumo de registro es requerido.");
+			}
+
+			responseDto = workspaceBusiness.makeIntegrationCadastreRegistration(municipalityId, supplyCadastre,
+					supplyRegistration, managerDto, userDtoSession);
+
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@makeIntegration#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@makeIntegration#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@makeIntegration#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/integrations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get integrations by workspace")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get integrations", response = IntegrationDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> getIntegrationsByWorkspace(@PathVariable Long workspaceId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+
+			if (roleAdministrator instanceof MicroserviceRoleDto) {
+
+				responseDto = integrationBusiness.getIntegrationsByWorkspace(workspaceId, null);
+
+			} else if (roleManager instanceof MicroserviceRoleDto) {
+
+				// get manager
+				MicroserviceManagerDto managerDto = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+
+				responseDto = integrationBusiness.getIntegrationsByWorkspace(workspaceId, managerDto.getId());
+			}
+
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getIntegrationsByWorkspace#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getIntegrationsByWorkspace#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getIntegrationsByWorkspace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/integrations/{integrationId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Start integration assisted")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get integrations", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> startIntegrationAssisted(@PathVariable Long workspaceId, @PathVariable Long integrationId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			responseDto = workspaceBusiness.startIntegrationAssisted(workspaceId, integrationId, managerDto,
+					userDtoSession);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@startIntegrationAssisted#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@startIntegrationAssisted#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@startIntegrationAssisted#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/integrations/{integrationId}/export", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Generate supply from integration")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Supply generated", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> generateSupply(@PathVariable Long workspaceId, @PathVariable Long integrationId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			responseDto = workspaceBusiness.exportXtf(workspaceId, integrationId, managerDto, userDtoSession);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@exportXtf#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@exportXtf#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@exportXtf#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/integrations/{integrationId}", method = RequestMethod.DELETE)
+	@ApiOperation(value = "Remove integration from workspace")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Integration deleted", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> removeIntegrationFromWorkspace(@PathVariable Long workspaceId,
+			@PathVariable Long integrationId, @RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			workspaceBusiness.removeIntegrationFromWorkspace(workspaceId, integrationId, managerDto.getId());
+			responseDto = new BasicResponseDto("Se ha borrado la integración", 7);
+			httpStatus = HttpStatus.NO_CONTENT;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@removeIntegrationFromWorkspace#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@removeIntegrationFromWorkspace#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@removeIntegrationFromWorkspace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "download-supply/{supplyId}", method = RequestMethod.GET)
+	@ApiOperation(value = "Download file")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> downloadSupply(@PathVariable Long supplyId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+
+			MicroserviceRoleDto roleOperator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_OPERATOR).findAny().orElse(null);
+
+			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyId);
+			if (!(supplyDto instanceof MicroserviceSupplyDto)) {
+				throw new BusinessException("No se ha encontrado el insumo.");
+			}
+
+			if (roleManager instanceof MicroserviceRoleDto) {
+
+				// get manager
+				MicroserviceManagerDto managerDto = null;
+				MicroserviceManagerProfileDto profileDirector = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+					List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+							.findProfilesByUser(userDtoSession.getId());
+
+					profileDirector = managerProfiles.stream()
+							.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+							.orElse(null);
+
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+				if (profileDirector == null) {
+					throw new InputValidationException("Acceso denegado.");
+				}
+
+				if (!workspaceBusiness.managerHasAccessToMunicipality(supplyDto.getMunicipalityCode(),
+						managerDto.getId())) {
+					throw new InputValidationException("El gestor no tiene acceso al insumo.");
+				}
+
+			} else if (roleOperator instanceof MicroserviceRoleDto) {
+
+				// get operator
+				MicroserviceOperatorDto operatorDto = null;
+				try {
+					operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
+				} catch (Exception e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de operadores.");
+				}
+
+				MicroserviceDeliveryDto deliveryDto = workspaceOperatorBusiness
+						.getDeliveryFromSupply(operatorDto.getId(), supplyDto.getId());
+				if (deliveryDto == null) {
+					throw new InputValidationException("El operador no tiene acceso al insumo.");
+				}
+
+				workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId());
+
+			}
+
+			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
+
+			String pathFile = attachment.getUrlDocumentaryRepository();
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupply#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupply#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@downloadSupply#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+
+	}
+
+	@RequestMapping(value = "{workspaceId}/supplies/{supplyId}", method = RequestMethod.DELETE)
+	@ApiOperation(value = "Download file")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> removeSupply(@PathVariable Long workspaceId, @PathVariable Long supplyId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			workspaceBusiness.removeSupply(workspaceId, supplyId, managerDto.getId());
+			responseDto = new BasicResponseDto("Se ha eliminado el insumo", 7);
+			httpStatus = HttpStatus.NO_CONTENT;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@removeSupply#Microservice ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@removeSupply#Business ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@removeSupply#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/operators/deliveries", method = RequestMethod.POST)
+	@ApiOperation(value = "Create delivery")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> createDelivery(@PathVariable Long workspaceId,
+			@RequestHeader("authorization") String headerAuthorization,
+			@RequestBody CreateDeliveryDto createDeliveryDto) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = null;
+			MicroserviceManagerProfileDto profileDirector = null;
+			try {
+				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+						.findProfilesByUser(userDtoSession.getId());
+
+				profileDirector = managerProfiles.stream()
+						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.orElse(null);
+
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de gestores.");
+			}
+			if (profileDirector == null) {
+				throw new InputValidationException("Acceso denegado.");
+			}
+
+			// validation observations
+			String observations = createDeliveryDto.getObservations();
+			if (observations == null || observations.isEmpty()) {
+				throw new InputValidationException("Las observaciones son requeridas.");
+			}
+
+			List<CreateSupplyDeliveryDto> supplies = createDeliveryDto.getSupplies();
+			if (supplies == null || supplies.size() == 0) {
+				throw new InputValidationException("Los insumos son requeridos.");
+			} else {
+				for (CreateSupplyDeliveryDto supplyDto : supplies) {
+					if (supplyDto.getSupplyId() == null && supplyDto.getSupplyId() <= 0) {
+						throw new InputValidationException("El código del insumo es requerido.");
+					}
+				}
+			}
+
+			responseDto = workspaceBusiness.createDelivery(workspaceId, managerDto.getId(), observations, supplies);
+			httpStatus = HttpStatus.CREATED;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#Microservice ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		} catch (InputValidationException e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#Validation ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.BAD_REQUEST;
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#Business ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@createDelivery#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "operators/deliveries", method = RequestMethod.GET)
+	@ApiOperation(value = "Get deliveries")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> getSuppliesOperator(@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get operator
+			MicroserviceOperatorDto operatorDto = null;
+			try {
+				operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de operadores.");
+			}
+
+			responseDto = operatorBusiness.getDeliveriesActivesByOperator(operatorDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getSuppliesOperator#Microservice ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getSuppliesOperator#Business ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getSuppliesOperator#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{workspaceId}/download-support/{supportId}", method = RequestMethod.GET)
+	@ApiOperation(value = "Download file")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> downloadSupport(@PathVariable Long workspaceId, @PathVariable Long supportId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+			SupportDto supportDto = null;
+			if (roleManager instanceof MicroserviceRoleDto) {
+
+				// get manager
+				MicroserviceManagerDto managerDto = null;
+				MicroserviceManagerProfileDto profileDirector = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+
+					List<MicroserviceManagerProfileDto> managerProfiles = managerClient
+							.findProfilesByUser(userDtoSession.getId());
+
+					profileDirector = managerProfiles.stream()
+							.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+							.orElse(null);
+
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+				if (profileDirector == null) {
+					throw new InputValidationException("Acceso denegado.");
+				}
+				supportDto = workspaceBusiness.getSupportByIdToDownload(workspaceId, supportId, managerDto.getId());
+			} else {
+				supportDto = workspaceBusiness.getSupportByIdToDownload(workspaceId, supportId, null);
+			}
+
+			String pathFile = supportDto.getUrlDocumentaryRepository();
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupport#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@downloadSupport#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@downloadSupport#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+
 	}
 
 }
