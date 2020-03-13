@@ -317,7 +317,8 @@ public class ProviderBusiness {
 			for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
 
 				// verify if the supply is assigned to a task
-				List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+				List<Long> taskStates = new ArrayList<>(
+						Arrays.asList(TaskBusiness.TASK_STATE_STARTED, TaskBusiness.TASK_STATE_ASSIGNED));
 				List<Long> taskCategories = new ArrayList<>(
 						Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
 
