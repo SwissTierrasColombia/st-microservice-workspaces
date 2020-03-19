@@ -270,6 +270,8 @@ public class ProviderBusiness {
 			supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED;
 		}
 
+		log.info("Update request # " + requestId + " - " supplyRequested.getId());
+
 		// Update request
 		try {
 			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
