@@ -104,7 +104,7 @@ public class ProviderV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (Exception e) {

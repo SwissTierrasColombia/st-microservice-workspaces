@@ -210,6 +210,7 @@ public class WorkspaceBusiness {
 					true);
 
 		} catch (Exception e) {
+			log.error("No se ha podido cargar el soporte gestor: " + e.getMessage());
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -310,7 +311,7 @@ public class WorkspaceBusiness {
 
 			WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
 			if (workspaceActive instanceof WorkspaceEntity) {
-				if (codeManager != workspaceActive.getManagerCode()) {
+				if (!codeManager.equals(workspaceActive.getManagerCode())) {
 					throw new BusinessException("No tiene acceso al municipio.");
 				}
 			}
@@ -398,7 +399,7 @@ public class WorkspaceBusiness {
 		}
 
 		// validate access
-		if (managerCode != workspaceEntity.getManagerCode()) {
+		if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 			throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 		}
 
@@ -431,6 +432,7 @@ public class WorkspaceBusiness {
 					true);
 
 		} catch (Exception e) {
+			log.error("No se ha podido cargar el soporte operador: " + e.getMessage());
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -549,7 +551,7 @@ public class WorkspaceBusiness {
 		}
 
 		// validate access
-		if (managerCode != workspaceEntity.getManagerCode()) {
+		if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 			throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 		}
 
@@ -615,10 +617,10 @@ public class WorkspaceBusiness {
 		WorkspaceEntity cloneWorkspaceEntity = null;
 
 		List<Long> supportsToSkip = new ArrayList<Long>();
-		if (fromClone == WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_MANAGER) {
+		if (fromClone.equals(WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_MANAGER)) {
 			supportsToSkip.add(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
 			supportsToSkip.add(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
-		} else if (fromClone == WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR) {
+		} else if (fromClone.equals(WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR)) {
 			supportsToSkip.add(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
 		}
 
@@ -690,7 +692,7 @@ public class WorkspaceBusiness {
 
 		// validate access
 		if (managerCode != null) {
-			if (managerCode != workspaceEntity.getManagerCode()) {
+			if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 			}
 		}
@@ -737,7 +739,7 @@ public class WorkspaceBusiness {
 
 		// validate access
 		if (managerCode != null) {
-			if (managerCode != workspaceEntity.getManagerCode()) {
+			if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 			}
 		}
@@ -817,7 +819,7 @@ public class WorkspaceBusiness {
 
 		// validate access
 		if (managerCode != null) {
-			if (managerCode != workspaceEntity.getManagerCode()) {
+			if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 			}
 		}
@@ -863,7 +865,7 @@ public class WorkspaceBusiness {
 
 		// validate access
 		if (managerCode != null) {
-			if (managerCode != workspaceEntity.getManagerCode()) {
+			if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 			}
 		}
@@ -930,7 +932,7 @@ public class WorkspaceBusiness {
 		// validate access
 		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
 		if (workspaceEntity instanceof WorkspaceEntity) {
-			if (managerCode != workspaceEntity.getManagerCode()) {
+			if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 				throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 			}
 		} else {
@@ -969,7 +971,7 @@ public class WorkspaceBusiness {
 				// supplies by request
 				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProvider = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
 				for (TypeSupplyRequestedDto supplyDto2 : supplies) {
-					if (supplyDto2.getProviderId() == providerId) {
+					if (supplyDto2.getProviderId().equals(providerId)) {
 
 						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
 								.findTypeSuppleById(supplyDto2.getTypeSupplyId());
@@ -1037,10 +1039,10 @@ public class WorkspaceBusiness {
 					log.error("Error enviando la notificación por solicitud de insumos: " + er.getMessage());
 				}
 
-				if (responseRequest.getProvider().getId() == ProviderBusiness.PROVIDER_IGAC_ID) {
+				if (responseRequest.getProvider().getId().equals(ProviderBusiness.PROVIDER_IGAC_ID)) {
 
 					MicroserviceSupplyRequestedDto supplyRequested = responseRequest.getSuppliesRequested().stream()
-							.filter(sR -> sR.getTypeSupply().getId() == ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL)
+							.filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL))
 							.findAny().orElse(null);
 
 					if (supplyRequested instanceof MicroserviceSupplyRequestedDto) {
@@ -1085,7 +1087,7 @@ public class WorkspaceBusiness {
 
 		try {
 			List<MicroserviceRequestDto> responseRequestsDto = providerClient.getRequestsByProvider(providerId,
-					(long) 1);
+					ProviderBusiness.REQUEST_STATE_REQUESTED);
 
 			for (MicroserviceRequestDto requestDto : responseRequestsDto) {
 
@@ -1151,7 +1153,7 @@ public class WorkspaceBusiness {
 			throw new BusinessException("El municipio no cuenta con un espacio de trabajo activo.");
 		}
 
-		if (managerDto.getId() != workspaceActive.getManagerCode()) {
+		if (!managerDto.getId().equals(workspaceActive.getManagerCode())) {
 			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
@@ -1265,6 +1267,7 @@ public class WorkspaceBusiness {
 			integrationId = integrationResponseDto.getId();
 
 		} catch (Exception e) {
+			log.error("No se ha podido crear la integración: " + e.getMessage());
 			throw new BusinessException("No se ha podido crear la integración.");
 		}
 
@@ -1277,6 +1280,7 @@ public class WorkspaceBusiness {
 		} catch (Exception e) {
 			integrationBusiness.updateStateToIntegration(integrationId,
 					IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC, null, null, "SISTEMA");
+			log.error("No se ha podido iniciar la integración: " + e.getMessage());
 			throw new BusinessException("No se ha podido iniciar la integración.");
 		}
 
@@ -1299,7 +1303,7 @@ public class WorkspaceBusiness {
 					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
 		}
 
-		if (managerDto.getId() != workspaceEntity.getManagerCode()) {
+		if (!managerDto.getId().equals(workspaceEntity.getManagerCode())) {
 			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
@@ -1308,13 +1312,13 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha encontrado la integración.");
 		}
 
-		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+		if (!integrationEntity.getWorkspace().getId().equals(workspaceEntity.getId())) {
 			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
 		}
 
 		IntegrationStateEntity stateIntegrationEntity = integrationEntity.getState();
-		if (stateIntegrationEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
-				&& stateIntegrationEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT) {
+		if (!stateIntegrationEntity.getId().equals(IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC)
+				&& !stateIntegrationEntity.getId().equals(IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT)) {
 			throw new BusinessException(
 					"No se puede iniciar la integración asistida ya que no se encuentra en estado que no lo permite.");
 		}
@@ -1337,7 +1341,7 @@ public class WorkspaceBusiness {
 					cryptoBusiness.decrypt(database), cryptoBusiness.decrypt(schema), cryptoBusiness.decrypt(username),
 					cryptoBusiness.decrypt(password));
 		} catch (Exception e) {
-			log.error("No se ha podido restringir la base de datos");
+			log.error("No se ha podido restringir la base de datos: " + e.getMessage());
 		}
 
 		// create task
@@ -1437,7 +1441,7 @@ public class WorkspaceBusiness {
 					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
 		}
 
-		if (managerDto.getId() != workspaceEntity.getManagerCode()) {
+		if (!managerDto.getId().equals(workspaceEntity.getManagerCode())) {
 			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
@@ -1446,14 +1450,14 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha encontrado la integración.");
 		}
 
-		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+		if (!integrationEntity.getWorkspace().getId().equals(workspaceEntity.getId())) {
 			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
 		}
 
 		IntegrationStateEntity stateEntity = integrationEntity.getState();
-		if (stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
-				&& stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_ASSISTED
-				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT) {
+		if (!stateEntity.getId().equals(IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC)
+				&& !stateEntity.getId().equals(IntegrationStateBusiness.STATE_FINISHED_ASSISTED)
+				&& !stateEntity.getId().equals(IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT)) {
 			throw new BusinessException(
 					"No se puede generar el producto porque la integración se encuentra en un estado que no lo permite.");
 		}
@@ -1480,6 +1484,7 @@ public class WorkspaceBusiness {
 					textHistory);
 
 		} catch (Exception e) {
+			log.error("No se ha podido iniciar la generación del insumo: " + e.getMessage());
 			throw new BusinessException("No se ha podido iniciar la generación del insumo");
 		}
 
@@ -1500,7 +1505,7 @@ public class WorkspaceBusiness {
 					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
 		}
 
-		if (managerCode != workspaceEntity.getManagerCode()) {
+		if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
@@ -1509,14 +1514,14 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha encontrado la integración.");
 		}
 
-		if (integrationEntity.getWorkspace().getId() != workspaceEntity.getId()) {
+		if (!integrationEntity.getWorkspace().getId().equals(workspaceEntity.getId())) {
 			throw new BusinessException("La integración no pertenece al espacio de trabajo.");
 		}
 
 		IntegrationStateEntity stateEntity = integrationEntity.getState();
-		if (stateEntity.getId() != IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC
-				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT
-				&& stateEntity.getId() != IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC) {
+		if (!stateEntity.getId().equals(IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC)
+				&& !stateEntity.getId().equals(IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT)
+				&& !stateEntity.getId().equals(IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC)) {
 			throw new BusinessException(
 					"No se puede generar el producto porque la integración se encuentra en un estado que no lo permite.");
 		}
@@ -1543,7 +1548,7 @@ public class WorkspaceBusiness {
 
 		WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
 		if (workspaceActive instanceof WorkspaceEntity) {
-			if (managerCode == workspaceActive.getManagerCode()) {
+			if (managerCode.equals(workspaceActive.getManagerCode())) {
 				hasAccess = true;
 			}
 		}
@@ -1564,7 +1569,7 @@ public class WorkspaceBusiness {
 					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
 		}
 
-		if (managerCode != workspaceEntity.getManagerCode()) {
+		if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
@@ -1578,6 +1583,7 @@ public class WorkspaceBusiness {
 			pathFile = attachment.getUrlDocumentaryRepository();
 
 		} catch (Exception e) {
+			log.error("No se ha encontrado el insumo para eliminarlo: " + e.getMessage());
 			throw new BusinessException("No se ha encontrado el insumo.");
 		}
 
@@ -1607,7 +1613,7 @@ public class WorkspaceBusiness {
 					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
 		}
 
-		if (managerCode != workspaceEntity.getManagerCode()) {
+		if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 			throw new BusinessException("No tiene acceso al municipio.");
 		}
 
@@ -1635,8 +1641,8 @@ public class WorkspaceBusiness {
 			// verify if the supply has already delivered to operator
 			for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
 				MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
-						.filter(supplyDto -> supplyDto.getSupplyCode() == deliverySupplyDto.getSupplyId()).findAny()
-						.orElse(null);
+						.filter(supplyDto -> supplyDto.getSupplyCode().equals(deliverySupplyDto.getSupplyId()))
+						.findAny().orElse(null);
 				if (supplyFound != null) {
 
 					String nameSupply = "";
@@ -1678,6 +1684,7 @@ public class WorkspaceBusiness {
 			}
 
 		} catch (Exception e) {
+			log.error("No se ha podido realizar la entrega al operador: " + e.getMessage());
 			throw new BusinessException("No se ha podido realizar la entrega al operador.");
 		}
 
@@ -1699,12 +1706,12 @@ public class WorkspaceBusiness {
 		}
 
 		if (managerCode != null) {
-			if (managerCode != workspaceEntity.getManagerCode()) {
+			if (!managerCode.equals(workspaceEntity.getManagerCode())) {
 				throw new BusinessException("No tiene acceso al municipio.");
 			}
 		}
 
-		SupportEntity supportEntity = workspaceEntity.getSupports().stream().filter(s -> s.getId() == supportId)
+		SupportEntity supportEntity = workspaceEntity.getSupports().stream().filter(s -> s.getId().equals(supportId))
 				.findAny().orElse(null);
 		if (supportEntity == null) {
 			throw new BusinessException("El soporte no pertenece al espacio de trabajo.");
@@ -1715,7 +1722,6 @@ public class WorkspaceBusiness {
 		supportDto.setCreatedAt(supportEntity.getCreatedAt());
 		supportDto.setUrlDocumentaryRepository(supportEntity.getUrlDocumentaryRepository());
 		return supportDto;
-
 	}
 
 }

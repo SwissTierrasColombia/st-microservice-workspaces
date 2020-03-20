@@ -79,10 +79,10 @@ public class DepartmentV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 				listDeparments = departmentBusiness.getDepartments();
@@ -142,10 +142,10 @@ public class DepartmentV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 				listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
