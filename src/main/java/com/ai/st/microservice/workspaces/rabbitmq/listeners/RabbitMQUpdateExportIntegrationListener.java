@@ -102,6 +102,8 @@ public class RabbitMQUpdateExportIntegrationListener {
 					String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName), urlBase,
 							true);
 
+					log.info("saving url file: " + urlDocumentaryRepository);
+
 					List<String> urlsAttachments = new ArrayList<>();
 					urlsAttachments.add(urlDocumentaryRepository);
 
