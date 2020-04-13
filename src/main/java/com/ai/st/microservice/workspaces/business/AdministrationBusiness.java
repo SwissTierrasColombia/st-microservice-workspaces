@@ -94,7 +94,19 @@ public class AdministrationBusiness {
 			}
 
 			if (roleManager.getRoleId() != null && roleManager.getRoleId() > 0) {
-				roles.add(roleManager.getRoleId());
+
+				if (roleManager.getIsManager()) {
+
+					if (roleManager.getIsDirector()) {
+						roles.add(roleManager.getRoleId());
+					} else {
+						throw new BusinessException("No se cuenta con los permisos necesarios para asociar usuarios al gestor.");
+					}
+					
+				} else {
+					roles.add(roleManager.getRoleId());
+				}
+
 			}
 
 			MicroserviceManagerDto managerDto = managerBusiness.getManagerById(roleManager.getManagerId());
