@@ -43,6 +43,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserD
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
@@ -1081,11 +1082,20 @@ public class WorkspaceBusiness {
 		return requests;
 	}
 
-	public List<MicroserviceRequestDto> getPendingRequestByProvider(Long providerId) throws BusinessException {
+	public List<MicroserviceRequestDto> getPendingRequestByProvider(Long userCode, Long providerId)
+			throws BusinessException {
 
 		List<MicroserviceRequestDto> listPendingRequestsDto = new ArrayList<MicroserviceRequestDto>();
 
 		try {
+
+			List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerId);
+			MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
+					.filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
+			if (userProviderFound == null) {
+				throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
+			}
+
 			List<MicroserviceRequestDto> responseRequestsDto = providerClient.getRequestsByProvider(providerId,
 					ProviderBusiness.REQUEST_STATE_REQUESTED);
 
@@ -1126,7 +1136,35 @@ public class WorkspaceBusiness {
 				requestDto.setEmitters(emittersDto);
 				requestDto.setMunicipality(municipalityDto);
 
-				listPendingRequestsDto.add(requestDto);
+				// verify profiles user
+				List<MicroserviceSupplyRequestedDto> suppliesRequested = new ArrayList<>();
+
+				int countNot = 0;
+
+				for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+
+					MicroserviceProviderProfileDto profileSupply = supply.getTypeSupply().getProviderProfile();
+
+					MicroserviceProviderProfileDto profileUser = userProviderFound.getProfiles().stream()
+							.filter(profile -> profileSupply.getId().equals(profile.getId())).findAny().orElse(null);
+
+					if (profileUser != null) {
+						supply.setCanUpload(true);
+					} else {
+						supply.setCanUpload(false);
+						countNot++;
+					}
+
+					suppliesRequested.add(supply);
+
+				}
+
+				requestDto.setSuppliesRequested(suppliesRequested);
+
+				if (suppliesRequested.size() != countNot) {
+					listPendingRequestsDto.add(requestDto);
+				}
+
 			}
 
 		} catch (Exception e) {
