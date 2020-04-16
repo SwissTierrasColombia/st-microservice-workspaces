@@ -30,6 +30,7 @@ import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
+import com.ai.st.microservice.workspaces.dto.CreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
@@ -396,6 +397,44 @@ public class ProviderV1Controller {
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/{providerId}/type-supplies", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Create type supply")
+	@ApiResponses(value = { @ApiResponse(code = 201, message = "Create type supply", response = CreateTypeSupplyDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<CreateTypeSupplyDto> createTypeSupply(@PathVariable Long providerId,
+			@RequestBody CreateTypeSupplyDto createTypeSupplyDto) {
+
+		HttpStatus httpStatus = null;
+
+		try {
+
+			// validation input data
+			if (createTypeSupplyDto.getName().isEmpty()) {
+				throw new InputValidationException("The provider profile name is required.");
+			}
+			if (createTypeSupplyDto.getDescription().isEmpty()) {
+				throw new InputValidationException("The provider profile description is required.");
+			}
+			if (providerId == null) {
+				throw new InputValidationException("The provider is required.");
+			}
+			if (createTypeSupplyDto.getProviderProfileId() == null) {
+				throw new InputValidationException("The provider profile is required.");
+			}
+
+			httpStatus = HttpStatus.CREATED;
+		} catch (InputValidationException e) {
+			log.error("Error ProviderV1Controller@createTypeSupply#Validation ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@createTypeSupply#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(createTypeSupplyDto, httpStatus);
 	}
 
 }

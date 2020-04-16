@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -69,6 +70,9 @@ public interface ProviderFeignClient {
 
 	@GetMapping("/api/providers-supplies/v1/types-supplies/{typeSupplyId}")
 	public MicroserviceTypeSupplyDto findTypeSuppleById(@PathVariable Long typeSupplyId);
+	
+	@PostMapping("/api/providers-supplies/v1/{providerId}/type-supplies")
+	public MicroserviceTypeSupplyDto createTypeSupplies(@PathVariable Long providerId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
 	public List<MicroserviceProviderUserDto> findUsersByProviderIdAndProfiles(@PathVariable Long providerId,
