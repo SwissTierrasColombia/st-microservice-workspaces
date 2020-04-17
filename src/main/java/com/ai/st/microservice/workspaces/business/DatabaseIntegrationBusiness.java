@@ -48,7 +48,7 @@ public class DatabaseIntegrationBusiness {
 							+ "' NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION");
 			stmt2.execute();
 
-			System.out.println("DATABASE: " + database + " USER: " + username + " PASSWORD: " + password);
+			log.info("DATABASE: " + database + " USER: " + username + " PASSWORD: " + password);
 
 			this.createExtensionsToDatabase(database);
 

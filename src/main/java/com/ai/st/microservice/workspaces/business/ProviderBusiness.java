@@ -42,6 +42,10 @@ public class ProviderBusiness {
 	public static final Long SUPPLY_REQUESTED_STATE_PENDING = (long) 4;
 	public static final Long SUPPLY_REQUESTED_STATE_UNDELIVERED = (long) 5;
 
+	public static final Long REQUEST_STATE_REQUESTED = (long) 1;
+	public static final Long REQUEST_STATE_DELIVERED = (long) 2;
+	public static final Long REQUEST_STATE_CANCELLED = (long) 3;
+
 	public static final Long PROVIDER_IGAC_ID = (long) 1;
 
 	public static final Long PROVIDER_PROFILE_CADASTRAL = (long) 1;
@@ -83,11 +87,11 @@ public class ProviderBusiness {
 
 		MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
 
-		if (providerDto.getId() != requestDto.getProvider().getId()) {
+		if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
 			throw new BusinessException("No tiene acceso a la solicitud.");
 		}
 
-		if (requestDto.getRequestState().getId() != 1) {
+		if (!requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
 			throw new BusinessException("La solicitud esta cerrada, no se puede modificar.");
 		}
 
@@ -98,13 +102,13 @@ public class ProviderBusiness {
 
 		List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
 		MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
-				.filter(user -> userCode == user.getUserCode()).findAny().orElse(null);
+				.filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
 		if (userProviderFound == null) {
 			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
 		}
 
 		MicroserviceSupplyRequestedDto supplyRequested = requestDto.getSuppliesRequested().stream()
-				.filter(sR -> sR.getTypeSupply().getId() == typeSupplyId).findAny().orElse(null);
+				.filter(sR -> sR.getTypeSupply().getId().equals(typeSupplyId)).findAny().orElse(null);
 
 		if (supplyRequested == null) {
 			throw new BusinessException("El tipo de insumo no pertenece a la solicitud.");
@@ -113,7 +117,7 @@ public class ProviderBusiness {
 		// verify if the user's profile matches the input profile
 		MicroserviceProviderProfileDto profileSupply = supplyRequested.getTypeSupply().getProviderProfile();
 		MicroserviceProviderProfileDto profileUser = userProviderFound.getProfiles().stream()
-				.filter(profile -> profileSupply.getId() == profile.getId()).findAny().orElse(null);
+				.filter(profile -> profileSupply.getId().equals(profile.getId())).findAny().orElse(null);
 		if (profileUser == null) {
 			throw new BusinessException(
 					"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
@@ -139,11 +143,13 @@ public class ProviderBusiness {
 
 					if (propertyRequest != null && propertyTypeSupply != null) {
 
-						if (Long.parseLong(propertyRequest.getValue()) == requestId
-								&& Long.parseLong(propertyTypeSupply.getValue()) == typeSupplyId) {
+						Long metaRequestId = Long.parseLong(propertyRequest.getValue());
+						Long metaTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+
+						if (metaRequestId.equals(requestId) && metaTypeSupplyId.equals(typeSupplyId)) {
 
 							MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
-									.filter(m -> m.getMemberCode() == userCode).findAny().orElse(null);
+									.filter(m -> m.getMemberCode().equals(userCode)).findAny().orElse(null);
 							if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
 								throw new BusinessException(
 										"No es posible cargar el insumo, la tarea está asignada a otro usuario.");
@@ -157,7 +163,7 @@ public class ProviderBusiness {
 			log.error("No se ha podido consultar si la tarea esta asociada al cargue de insumo: " + e.getMessage());
 		}
 
-		if (supplyRequested.getState().getId() == ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING) {
+		if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
 			throw new BusinessException("Ya se ha cargado un insumo que esta en validación.");
 		}
 
@@ -270,6 +276,8 @@ public class ProviderBusiness {
 			supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED;
 		}
 
+		log.info("Update request # " + requestId + " - " + supplyRequested.getId());
+
 		// Update request
 		try {
 			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
@@ -289,24 +297,25 @@ public class ProviderBusiness {
 
 		MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
 
-		if (providerDto.getId() != requestDto.getProvider().getId()) {
+		if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
 			throw new BusinessException("No tiene acceso a la solicitud.");
 		}
 
-		if (requestDto.getRequestState().getId() != 1) {
+		if (!requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
 			throw new BusinessException("La solicitud esta cerrada, no se puede cerrar.");
 		}
 
 		List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
 		MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
-				.filter(user -> userCode == user.getUserCode()).findAny().orElse(null);
+				.filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
 		if (userProviderFound == null) {
 			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
 		}
 
 		for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
-			if (supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED
-					&& supplyRequested.getState().getId() != ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
+			if (!supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)
+					&& !supplyRequested.getState().getId()
+							.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
 				throw new BusinessException(
 						"No se puede cerrar la solicitud porque no se han cargado todos los insumos.");
 			}
@@ -341,14 +350,15 @@ public class ProviderBusiness {
 							Long taskRequestId = Long.parseLong(propertyRequest.getValue());
 							Long taskTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
 
-							if (taskRequestId == requestId
-									&& taskTypeSupplyId == supplyRequested.getTypeSupply().getId()) {
+							if (taskRequestId.equals(requestId)
+									&& taskTypeSupplyId.equals(supplyRequested.getTypeSupply().getId())) {
 
 								Long supplyRequestedState = supplyRequested.getState().getId();
 
-								if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED) {
+								if (supplyRequestedState.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
 									taskClient.closeTask(taskDto.getId());
-								} else if (supplyRequestedState == ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED) {
+								} else if (supplyRequestedState
+										.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
 									MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
 									cancelTaskDto.setReason("Cancelada por el sistema.");
 									taskClient.cancelTask(taskDto.getId(), cancelTaskDto);

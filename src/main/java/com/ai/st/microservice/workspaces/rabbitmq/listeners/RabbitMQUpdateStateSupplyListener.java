@@ -69,7 +69,7 @@ public class RabbitMQUpdateStateSupplyListener {
 			if (validationDto.getIsValid()) {
 
 				MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
-						.filter(supply -> supply.getId() == validationDto.getSupplyRequestedId()).findAny()
+						.filter(supply -> supply.getId().equals(validationDto.getSupplyRequestedId())).findAny()
 						.orElse(null);
 
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;

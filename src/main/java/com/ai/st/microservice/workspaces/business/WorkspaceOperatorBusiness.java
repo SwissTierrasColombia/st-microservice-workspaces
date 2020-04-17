@@ -30,7 +30,7 @@ public class WorkspaceOperatorBusiness {
 			for (MicroserviceDeliveryDto delivery : deliveries) {
 
 				MicroserviceSupplyDeliveryDto supplyDto = delivery.getSupplies().stream()
-						.filter(s -> s.getSupplyCode() == supplyCode).findAny().orElse(null);
+						.filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
 
 				if (supplyDto != null) {
 					return delivery;
@@ -51,7 +51,7 @@ public class WorkspaceOperatorBusiness {
 		try {
 
 			MicroserviceSupplyDeliveryDto supplyDto = deliveryDto.getSupplies().stream()
-					.filter(s -> s.getSupplyCode() == supplyCode).findAny().orElse(null);
+					.filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
 
 			if (supplyDto != null && !supplyDto.getDownloaded()) {
 				deliveryDto = operatorBusiness.updateSupplyDeliveredDownloaded(deliveryDto.getId(), supplyCode);
@@ -71,14 +71,14 @@ public class WorkspaceOperatorBusiness {
 		try {
 			deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
 		} catch (Exception e) {
-			
+
 		}
 
 		if (deliveryDto == null) {
 			throw new BusinessException("No se ha encontrado la entrega.");
 		}
 
-		if (deliveryDto.getOperator().getId() != operatorId) {
+		if (!deliveryDto.getOperator().getId().equals(operatorId)) {
 			throw new BusinessException("La entrega no pertenece al operador.");
 		}
 

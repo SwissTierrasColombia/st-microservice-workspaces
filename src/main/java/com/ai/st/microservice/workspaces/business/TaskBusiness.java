@@ -180,6 +180,7 @@ public class TaskBusiness {
 			taskDto = taskClient.createTask(createTask);
 
 		} catch (Exception e) {
+			log.error("No se ha podido crear la tarea: " + e.getMessage());
 			throw new BusinessException("No se ha podido crear la tarea.");
 		}
 
@@ -234,28 +235,28 @@ public class TaskBusiness {
 		}
 
 		// verify state
-		if (taskDto.getTaskState().getId() != TaskBusiness.TASK_STATE_ASSIGNED) {
+		if (!taskDto.getTaskState().getId().equals(TaskBusiness.TASK_STATE_ASSIGNED)) {
 			throw new BusinessException("No se puede iniciar la tarea porque no esta en estado asignada.");
 		}
 
 		// verify if the user is assigned the task
 		MicroserviceTaskMemberDto memberFound = taskDto.getMembers().stream()
-				.filter(memberDto -> memberDto.getMemberCode() == userId).findAny().orElse(null);
+				.filter(memberDto -> memberDto.getMemberCode().equals(userId)).findAny().orElse(null);
 
 		if (!(memberFound instanceof MicroserviceTaskMemberDto)) {
 			throw new BusinessException("El usuario no tiene asignada la tarea.");
 		}
 
 		MicroserviceTaskCategoryDto categoryFound = taskDto.getCategories().stream()
-				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_INTEGRATION
-						|| categoryDto.getId() == TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION)
+				.filter(categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_INTEGRATION)
+						|| categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
 				.findAny().orElse(null);
 
 		// task of integration
 		if (categoryFound instanceof MicroserviceTaskCategoryDto) {
 			try {
 				for (MicroserviceTaskMemberDto memberDto : taskDto.getMembers()) {
-					if (memberDto.getMemberCode() != userId) {
+					if (!memberDto.getMemberCode().equals(userId)) {
 						taskClient.removeMemberFromTask(taskId, memberDto.getMemberCode());
 					}
 				}
@@ -268,6 +269,7 @@ public class TaskBusiness {
 			taskDto = taskClient.startTask(taskId);
 			taskDto = this.extendTask(taskDto);
 		} catch (Exception e) {
+			log.error("No se ha podido iniciar la tarea: " + e.getMessage());
 			throw new BusinessException("No se ha podido iniciar la tarea.");
 		}
 
@@ -285,20 +287,20 @@ public class TaskBusiness {
 		}
 
 		// verify state
-		if (taskDto.getTaskState().getId() != TaskBusiness.TASK_STATE_STARTED) {
+		if (!taskDto.getTaskState().getId().equals(TaskBusiness.TASK_STATE_STARTED)) {
 			throw new BusinessException("No se puede iniciar la tarea porque no esta en estado iniciada.");
 		}
 
 		// verify if the user is assigned the task
 		MicroserviceTaskMemberDto memberFound = taskDto.getMembers().stream()
-				.filter(memberDto -> memberDto.getMemberCode() == userDto.getId()).findAny().orElse(null);
+				.filter(memberDto -> memberDto.getMemberCode().equals(userDto.getId())).findAny().orElse(null);
 
 		if (!(memberFound instanceof MicroserviceTaskMemberDto)) {
 			throw new BusinessException("El usuario no tiene asignada la tarea.");
 		}
 
 		MicroserviceTaskCategoryDto categoryIntegrationFound = taskDto.getCategories().stream()
-				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_INTEGRATION).findAny()
+				.filter(categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_INTEGRATION)).findAny()
 				.orElse(null);
 
 		// task of integration
@@ -351,8 +353,8 @@ public class TaskBusiness {
 			log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
 		}
 
-		MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream()
-				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION)
+		MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
+				categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
 				.findAny().orElse(null);
 
 		// task for generation of supplies
@@ -378,21 +380,21 @@ public class TaskBusiness {
 					if (requestDto instanceof MicroserviceRequestDto) {
 
 						MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
-								.filter(sR -> sR.getTypeSupply().getId() == typeSuppyId).findAny().orElse(null);
+								.filter(sR -> sR.getTypeSupply().getId().equals(typeSuppyId)).findAny().orElse(null);
 						if (supplyRequestedDto instanceof MicroserviceSupplyRequestedDto) {
 
 							Long supplyStateId = supplyRequestedDto.getState().getId();
-							if (supplyStateId == ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING) {
+							if (supplyStateId.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
 								throw new BusinessException(
 										"No se puede finalizar la tarea, el insumo cargado esta en proceso de validación.");
 							}
 
-							if (supplyStateId == ProviderBusiness.SUPPLY_REQUESTED_STATE_REJECTED) {
+							if (supplyStateId.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_REJECTED)) {
 								throw new BusinessException(
 										"No se puede finalizar la tarea, el insumo cargado ha sido rechazado.");
 							}
 
-							if (supplyStateId != ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED) {
+							if (!supplyStateId.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
 								throw new BusinessException(
 										"No se puede finalizar la tarea, el insumo no ha sido cargado.");
 							}
@@ -407,6 +409,7 @@ public class TaskBusiness {
 			taskDto = taskClient.closeTask(taskId);
 			taskDto = this.extendTask(taskDto);
 		} catch (Exception e) {
+			log.error("No se ha podido finalizar la tarea: " + e.getMessage());
 			throw new BusinessException("No se ha podido finalizar la tarea.");
 		}
 
@@ -425,20 +428,20 @@ public class TaskBusiness {
 		}
 
 		// verify state
-		if (taskDto.getTaskState().getId() != TaskBusiness.TASK_STATE_STARTED) {
+		if (!taskDto.getTaskState().getId().equals(TaskBusiness.TASK_STATE_STARTED)) {
 			throw new BusinessException("No se puede cancelar la tarea porque no esta en estado iniciada.");
 		}
 
 		// verify if the user is assigned the task
 		MicroserviceTaskMemberDto memberFound = taskDto.getMembers().stream()
-				.filter(memberDto -> memberDto.getMemberCode() == userDto.getId()).findAny().orElse(null);
+				.filter(memberDto -> memberDto.getMemberCode().equals(userDto.getId())).findAny().orElse(null);
 
 		if (!(memberFound instanceof MicroserviceTaskMemberDto)) {
 			throw new BusinessException("El usuario no tiene asignada la tarea.");
 		}
 
 		MicroserviceTaskCategoryDto categoryIntegrationFound = taskDto.getCategories().stream()
-				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_INTEGRATION).findAny()
+				.filter(categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_INTEGRATION)).findAny()
 				.orElse(null);
 
 		// task of integration
@@ -527,8 +530,8 @@ public class TaskBusiness {
 			log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
 		}
 
-		MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream()
-				.filter(categoryDto -> categoryDto.getId() == TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION)
+		MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
+				categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
 				.findAny().orElse(null);
 
 		// task for generation of supplies
@@ -584,7 +587,7 @@ public class TaskBusiness {
 			}
 
 		} catch (Exception e) {
-			log.error("No se ha podido re-asignar la tarea. " + e.getMessage());
+			log.error("No se ha podido re-asignar la tarea: " + e.getMessage());
 		}
 
 		try {

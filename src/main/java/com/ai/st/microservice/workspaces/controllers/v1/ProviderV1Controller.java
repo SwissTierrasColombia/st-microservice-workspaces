@@ -104,7 +104,7 @@ public class ProviderV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (Exception e) {
@@ -205,7 +205,7 @@ public class ProviderV1Controller {
 						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
 			}
 
-			listRequests = workspaceBusiness.getPendingRequestByProvider(providerDto.getId());
+			listRequests = workspaceBusiness.getPendingRequestByProvider(userDtoSession.getId(), providerDto.getId());
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {

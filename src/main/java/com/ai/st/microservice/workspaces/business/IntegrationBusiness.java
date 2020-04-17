@@ -166,7 +166,7 @@ public class IntegrationBusiness {
 			WorkspaceEntity workspaceActive = workspaceService
 					.getWorkspaceActiveByMunicipality(workspaceEntity.getMunicipality());
 			if (workspaceActive instanceof WorkspaceEntity) {
-				if (managerCode != workspaceActive.getManagerCode()) {
+				if (!managerCode.equals(workspaceActive.getManagerCode())) {
 					throw new BusinessException("No tiene acceso al municipio.");
 				}
 			}

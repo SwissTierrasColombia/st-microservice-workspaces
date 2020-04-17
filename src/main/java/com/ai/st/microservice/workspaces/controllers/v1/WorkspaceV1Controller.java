@@ -213,10 +213,10 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
@@ -291,7 +291,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (FeignException e) {
@@ -416,7 +416,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (Exception e) {
@@ -514,10 +514,10 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
@@ -582,10 +582,10 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 				responseDto = workspaceBusiness.getWorkspaceById(workspaceId, null);
@@ -648,10 +648,10 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 				listOperators = workspaceBusiness.getOperatorsByWorkspaceId(workspaceId, null);
@@ -714,10 +714,10 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
@@ -793,7 +793,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (Exception e) {
@@ -863,10 +863,10 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_ADMINISTRATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
@@ -938,7 +938,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (Exception e) {
@@ -1003,7 +1003,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (Exception e) {
@@ -1068,7 +1068,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (Exception e) {
@@ -1125,10 +1125,10 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
 			MicroserviceRoleDto roleOperator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_OPERATOR).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
 
 			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyId);
 			if (!(supplyDto instanceof MicroserviceSupplyDto)) {
@@ -1147,7 +1147,7 @@ public class WorkspaceV1Controller {
 							.findProfilesByUser(userDtoSession.getId());
 
 					profileDirector = managerProfiles.stream()
-							.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+							.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 							.orElse(null);
 
 				} catch (FeignException e) {
@@ -1252,7 +1252,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (FeignException e) {
@@ -1318,7 +1318,7 @@ public class WorkspaceV1Controller {
 						.findProfilesByUser(userDtoSession.getId());
 
 				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 						.orElse(null);
 
 			} catch (FeignException e) {
@@ -1446,7 +1446,7 @@ public class WorkspaceV1Controller {
 			}
 
 			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId() == RoleBusiness.ROLE_MANAGER).findAny().orElse(null);
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 			SupportDto supportDto = null;
 			if (roleManager instanceof MicroserviceRoleDto) {
 
@@ -1460,7 +1460,7 @@ public class WorkspaceV1Controller {
 							.findProfilesByUser(userDtoSession.getId());
 
 					profileDirector = managerProfiles.stream()
-							.filter(profileDto -> profileDto.getId() == RoleBusiness.SUB_ROLE_DIRECTOR).findAny()
+							.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
 							.orElse(null);
 
 				} catch (FeignException e) {

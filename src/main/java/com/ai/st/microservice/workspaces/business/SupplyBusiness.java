@@ -69,7 +69,7 @@ public class SupplyBusiness {
 		if (managerCode != null) {
 			WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
 			if (workspaceActive instanceof WorkspaceEntity) {
-				if (managerCode != workspaceActive.getManagerCode()) {
+				if (!managerCode.equals(workspaceActive.getManagerCode())) {
 					throw new BusinessException("No tiene acceso al municipio.");
 				}
 			}
@@ -127,7 +127,7 @@ public class SupplyBusiness {
 							for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
 
 								MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
-										.filter(sDto -> sDto.getSupplyCode() == supplyDto.getId()).findAny()
+										.filter(sDto -> sDto.getSupplyCode().equals(supplyDto.getId())).findAny()
 										.orElse(null);
 
 								if (supplyFound != null) {
@@ -235,6 +235,7 @@ public class SupplyBusiness {
 			supplyDto = supplyClient.createSupply(createSupplyDto);
 
 		} catch (Exception e) {
+			log.error("No se ha podido crear el insumo: " + e.getMessage());
 			throw new BusinessException("No se ha podido cargar el insumo");
 		}
 
