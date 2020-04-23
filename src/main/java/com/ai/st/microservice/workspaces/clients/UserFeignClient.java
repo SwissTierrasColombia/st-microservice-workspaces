@@ -2,6 +2,8 @@ package com.ai.st.microservice.workspaces.clients;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+import java.util.List;
+
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceChangePasswordDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceCreateUserDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUpdateUserDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
@@ -39,6 +42,19 @@ public interface UserFeignClient {
 	@RequestMapping(method = RequestMethod.POST, value = "/api/administration/v1/users/{id}/reset-password", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceUserDto changeUserPassword(@PathVariable(required = true, name = "id") Long userId,
 			@RequestBody MicroserviceChangePasswordDto requestChangePassword) throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{id}", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceUserDto updateUser(@PathVariable Long id, @RequestBody MicroserviceUpdateUserDto updateUser)
+			throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{userId}/disable", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceUserDto disableUser(@PathVariable Long userId) throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{userId}/enable", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceUserDto enableUser(@PathVariable Long userId) throws BusinessException;
+
+	@GetMapping("/api/administration/v1/users")
+	public List<MicroserviceUserDto> findUsersByRoles(@RequestParam(name = "roles", required = false) List<Long> roles);
 
 	class Configuration {
 
