@@ -957,26 +957,32 @@ public class WorkspaceBusiness {
 		List<MicroserviceCreateRequestDto> groupRequests = new ArrayList<MicroserviceCreateRequestDto>();
 		List<Long> skipped = new ArrayList<Long>();
 
+		String packageLabel = RandomStringUtils.random(4, false, true).toLowerCase() + new Date().getTime();
+
 		for (TypeSupplyRequestedDto supplyDto : supplies) {
 
-			Long providerId = supplyDto.getProviderId();
+			MicroserviceTypeSupplyDto typeSupplyDto = providerClient.findTypeSuppleById(supplyDto.getTypeSupplyId());
+			Long profileId = typeSupplyDto.getProviderProfile().getId();
 
-			if (!skipped.contains(providerId)) {
+			if (!skipped.contains(profileId)) {
 
 				MicroserviceCreateRequestDto requestDto = new MicroserviceCreateRequestDto();
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 				requestDto.setDeadline(sdf.format(deadline));
-				requestDto.setProviderId(providerId);
+				requestDto.setProviderId(supplyDto.getProviderId());
 				requestDto.setMunicipalityCode(municipalityEntity.getCode());
+				requestDto.setPackageLabel(packageLabel);
 
 				// supplies by request
-				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProvider = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
+				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProfile = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
 				for (TypeSupplyRequestedDto supplyDto2 : supplies) {
-					if (supplyDto2.getProviderId().equals(providerId)) {
 
-						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
-								.findTypeSuppleById(supplyDto2.getTypeSupplyId());
-						if (typeSupplyDto.getModelRequired()
+					MicroserviceTypeSupplyDto typeSupplyDto2 = providerClient
+							.findTypeSuppleById(supplyDto2.getTypeSupplyId());
+
+					if (typeSupplyDto2.getProviderProfile().getId().equals(profileId)) {
+
+						if (typeSupplyDto2.getModelRequired()
 								&& (supplyDto2.getModelVersion() == null || supplyDto2.getModelVersion().isEmpty())) {
 							throw new BusinessException(
 									"El tipo de insumo solicita que se especifique una versión del modelo.");
@@ -986,7 +992,7 @@ public class WorkspaceBusiness {
 						mtsr.setObservation(supplyDto2.getObservation());
 						mtsr.setTypeSupplyId(supplyDto2.getTypeSupplyId());
 						mtsr.setModelVersion(supplyDto2.getModelVersion());
-						listSuppliesByProvider.add(mtsr);
+						listSuppliesByProfile.add(mtsr);
 					}
 				}
 
@@ -1001,11 +1007,11 @@ public class WorkspaceBusiness {
 				emitter2.setEmitterType("ENTITY");
 				listEmittersByProvider.add(emitter2);
 
-				requestDto.setSupplies(listSuppliesByProvider);
+				requestDto.setSupplies(listSuppliesByProfile);
 				requestDto.setEmitters(listEmittersByProvider);
 
 				groupRequests.add(requestDto);
-				skipped.add(providerId);
+				skipped.add(profileId);
 			}
 
 		}

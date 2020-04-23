@@ -21,6 +21,7 @@ public class MicroserviceRequestDto implements Serializable {
 	private MicroserviceProviderDto provider;
 	private String municipalityCode;
 	private MunicipalityDto municipality;
+	private String packageLabel;
 
 	public MicroserviceRequestDto() {
 		suppliesRequested = new ArrayList<MicroserviceSupplyRequestedDto>();
@@ -105,6 +106,14 @@ public class MicroserviceRequestDto implements Serializable {
 
 	public void setMunicipality(MunicipalityDto municipality) {
 		this.municipality = municipality;
+	}
+
+	public String getPackageLabel() {
+		return packageLabel;
+	}
+
+	public void setPackageLabel(String packageLabel) {
+		this.packageLabel = packageLabel;
 	}
 
 }

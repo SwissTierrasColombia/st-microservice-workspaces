@@ -13,6 +13,7 @@ public class MicroserviceCreateRequestDto implements Serializable {
 	private List<MicroserviceRequestEmitterDto> emitters;
 	private List<MicroserviceTypeSupplyRequestedDto> supplies;
 	private String municipalityCode;
+	private String packageLabel;
 
 	public MicroserviceCreateRequestDto() {
 		supplies = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
@@ -57,6 +58,14 @@ public class MicroserviceCreateRequestDto implements Serializable {
 
 	public void setMunicipalityCode(String municipalityCode) {
 		this.municipalityCode = municipalityCode;
+	}
+
+	public String getPackageLabel() {
+		return packageLabel;
+	}
+
+	public void setPackageLabel(String packageLabel) {
+		this.packageLabel = packageLabel;
 	}
 
 }
