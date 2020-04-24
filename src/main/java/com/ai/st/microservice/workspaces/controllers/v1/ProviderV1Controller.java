@@ -205,7 +205,7 @@ public class ProviderV1Controller {
 						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
 			}
 
-			listRequests = workspaceBusiness.getPendingRequestByProvider(providerDto.getId());
+			listRequests = workspaceBusiness.getPendingRequestByProvider(userDtoSession.getId(), providerDto.getId());
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {

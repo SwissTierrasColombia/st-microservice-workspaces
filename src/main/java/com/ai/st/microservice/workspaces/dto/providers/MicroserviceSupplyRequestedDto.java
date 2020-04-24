@@ -16,6 +16,7 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 	private String justification;
 	private MicroserviceSupplyRequestedStateDto state;
 	private String modelVersion;
+	private Boolean canUpload;
 
 	public MicroserviceSupplyRequestedDto() {
 
@@ -91,6 +92,14 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 
 	public void setModelVersion(String modelVersion) {
 		this.modelVersion = modelVersion;
+	}
+
+	public Boolean getCanUpload() {
+		return canUpload;
+	}
+
+	public void setCanUpload(Boolean canUpload) {
+		this.canUpload = canUpload;
 	}
 
 }

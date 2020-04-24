@@ -43,6 +43,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserD
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
@@ -956,26 +957,32 @@ public class WorkspaceBusiness {
 		List<MicroserviceCreateRequestDto> groupRequests = new ArrayList<MicroserviceCreateRequestDto>();
 		List<Long> skipped = new ArrayList<Long>();
 
+		String packageLabel = RandomStringUtils.random(4, false, true).toLowerCase() + new Date().getTime();
+
 		for (TypeSupplyRequestedDto supplyDto : supplies) {
 
-			Long providerId = supplyDto.getProviderId();
+			MicroserviceTypeSupplyDto typeSupplyDto = providerClient.findTypeSuppleById(supplyDto.getTypeSupplyId());
+			Long profileId = typeSupplyDto.getProviderProfile().getId();
 
-			if (!skipped.contains(providerId)) {
+			if (!skipped.contains(profileId)) {
 
 				MicroserviceCreateRequestDto requestDto = new MicroserviceCreateRequestDto();
 				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
 				requestDto.setDeadline(sdf.format(deadline));
-				requestDto.setProviderId(providerId);
+				requestDto.setProviderId(supplyDto.getProviderId());
 				requestDto.setMunicipalityCode(municipalityEntity.getCode());
+				requestDto.setPackageLabel(packageLabel);
 
 				// supplies by request
-				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProvider = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
+				List<MicroserviceTypeSupplyRequestedDto> listSuppliesByProfile = new ArrayList<MicroserviceTypeSupplyRequestedDto>();
 				for (TypeSupplyRequestedDto supplyDto2 : supplies) {
-					if (supplyDto2.getProviderId().equals(providerId)) {
 
-						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
-								.findTypeSuppleById(supplyDto2.getTypeSupplyId());
-						if (typeSupplyDto.getModelRequired()
+					MicroserviceTypeSupplyDto typeSupplyDto2 = providerClient
+							.findTypeSuppleById(supplyDto2.getTypeSupplyId());
+
+					if (typeSupplyDto2.getProviderProfile().getId().equals(profileId)) {
+
+						if (typeSupplyDto2.getModelRequired()
 								&& (supplyDto2.getModelVersion() == null || supplyDto2.getModelVersion().isEmpty())) {
 							throw new BusinessException(
 									"El tipo de insumo solicita que se especifique una versión del modelo.");
@@ -985,7 +992,7 @@ public class WorkspaceBusiness {
 						mtsr.setObservation(supplyDto2.getObservation());
 						mtsr.setTypeSupplyId(supplyDto2.getTypeSupplyId());
 						mtsr.setModelVersion(supplyDto2.getModelVersion());
-						listSuppliesByProvider.add(mtsr);
+						listSuppliesByProfile.add(mtsr);
 					}
 				}
 
@@ -1000,11 +1007,11 @@ public class WorkspaceBusiness {
 				emitter2.setEmitterType("ENTITY");
 				listEmittersByProvider.add(emitter2);
 
-				requestDto.setSupplies(listSuppliesByProvider);
+				requestDto.setSupplies(listSuppliesByProfile);
 				requestDto.setEmitters(listEmittersByProvider);
 
 				groupRequests.add(requestDto);
-				skipped.add(providerId);
+				skipped.add(profileId);
 			}
 
 		}
@@ -1081,11 +1088,20 @@ public class WorkspaceBusiness {
 		return requests;
 	}
 
-	public List<MicroserviceRequestDto> getPendingRequestByProvider(Long providerId) throws BusinessException {
+	public List<MicroserviceRequestDto> getPendingRequestByProvider(Long userCode, Long providerId)
+			throws BusinessException {
 
 		List<MicroserviceRequestDto> listPendingRequestsDto = new ArrayList<MicroserviceRequestDto>();
 
 		try {
+
+			List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerId);
+			MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
+					.filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
+			if (userProviderFound == null) {
+				throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
+			}
+
 			List<MicroserviceRequestDto> responseRequestsDto = providerClient.getRequestsByProvider(providerId,
 					ProviderBusiness.REQUEST_STATE_REQUESTED);
 
@@ -1126,7 +1142,35 @@ public class WorkspaceBusiness {
 				requestDto.setEmitters(emittersDto);
 				requestDto.setMunicipality(municipalityDto);
 
-				listPendingRequestsDto.add(requestDto);
+				// verify profiles user
+				List<MicroserviceSupplyRequestedDto> suppliesRequested = new ArrayList<>();
+
+				int countNot = 0;
+
+				for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+
+					MicroserviceProviderProfileDto profileSupply = supply.getTypeSupply().getProviderProfile();
+
+					MicroserviceProviderProfileDto profileUser = userProviderFound.getProfiles().stream()
+							.filter(profile -> profileSupply.getId().equals(profile.getId())).findAny().orElse(null);
+
+					if (profileUser != null) {
+						supply.setCanUpload(true);
+					} else {
+						supply.setCanUpload(false);
+						countNot++;
+					}
+
+					suppliesRequested.add(supply);
+
+				}
+
+				requestDto.setSuppliesRequested(suppliesRequested);
+
+				if (suppliesRequested.size() != countNot) {
+					listPendingRequestsDto.add(requestDto);
+				}
+
 			}
 
 		} catch (Exception e) {
