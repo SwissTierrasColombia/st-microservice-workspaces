@@ -85,6 +85,14 @@ public class AdministrationBusiness {
 
 		}
 
+		if (roleOperator != null) {
+
+			if (!roleOperator.getRoleId().equals(RoleBusiness.ROLE_OPERATOR)) {
+				throw new BusinessException("El rol no corresponde con un operador.");
+			}
+
+		}
+
 		return this.createUser(firstName, lastName, email, username, password, roleProvider, roleAdmin, roleManager,
 				roleOperator);
 	}
@@ -343,10 +351,6 @@ public class AdministrationBusiness {
 
 		}
 
-		if (roleOperatorDto instanceof MicroserviceRoleDto) {
-
-		}
-
 		if (roleProviderDto instanceof MicroserviceRoleDto) {
 
 			List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = new ArrayList<>();
@@ -518,10 +522,6 @@ public class AdministrationBusiness {
 			if (!(profileDto instanceof MicroserviceManagerProfileDto)) {
 				throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
 			}
-
-		}
-
-		if (roleOperatorDto instanceof MicroserviceRoleDto) {
 
 		}
 

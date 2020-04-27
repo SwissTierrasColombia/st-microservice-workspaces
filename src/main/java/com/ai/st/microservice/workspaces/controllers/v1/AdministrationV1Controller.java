@@ -105,7 +105,9 @@ public class AdministrationV1Controller {
 
 			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
-				requestCreateUser.getRoleProvider().setFromAdministrator(true);
+				if (requestCreateUser.getRoleProvider() != null) {
+					requestCreateUser.getRoleProvider().setFromAdministrator(true);
+				}
 
 				responseDto = administrationBusiness.createUserFromAdministrator(requestCreateUser.getFirstName(),
 						requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
