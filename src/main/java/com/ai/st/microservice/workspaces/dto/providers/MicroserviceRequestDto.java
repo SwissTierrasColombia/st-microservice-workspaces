@@ -6,6 +6,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 
 public class MicroserviceRequestDto implements Serializable {
 
@@ -22,6 +23,9 @@ public class MicroserviceRequestDto implements Serializable {
 	private String municipalityCode;
 	private MunicipalityDto municipality;
 	private String packageLabel;
+	private Date closedAt;
+	private Long closedBy;
+	private MicroserviceUserDto userClosedBy;
 
 	public MicroserviceRequestDto() {
 		suppliesRequested = new ArrayList<MicroserviceSupplyRequestedDto>();
@@ -114,6 +118,30 @@ public class MicroserviceRequestDto implements Serializable {
 
 	public void setPackageLabel(String packageLabel) {
 		this.packageLabel = packageLabel;
+	}
+
+	public Date getClosedAt() {
+		return closedAt;
+	}
+
+	public void setClosedAt(Date closedAt) {
+		this.closedAt = closedAt;
+	}
+
+	public Long getClosedBy() {
+		return closedBy;
+	}
+
+	public void setClosedBy(Long closedBy) {
+		this.closedBy = closedBy;
+	}
+
+	public MicroserviceUserDto getUserClosedBy() {
+		return userClosedBy;
+	}
+
+	public void setUserClosedBy(MicroserviceUserDto userClosedBy) {
+		this.userClosedBy = userClosedBy;
 	}
 
 }

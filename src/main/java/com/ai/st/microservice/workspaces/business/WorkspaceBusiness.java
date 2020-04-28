@@ -1142,6 +1142,22 @@ public class WorkspaceBusiness {
 				requestDto.setEmitters(emittersDto);
 				requestDto.setMunicipality(municipalityDto);
 
+				for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+
+					if (supply.getDeliveredBy() != null) {
+
+						try {
+
+							MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
+							supply.setUserDeliveryBy(userDto);
+						} catch (Exception e) {
+							supply.setUserDeliveryBy(null);
+						}
+
+					}
+
+				}
+
 				// verify profiles user
 				List<MicroserviceSupplyRequestedDto> suppliesRequested = new ArrayList<>();
 
@@ -1178,6 +1194,89 @@ public class WorkspaceBusiness {
 		}
 
 		return listPendingRequestsDto;
+	}
+
+	public List<MicroserviceRequestDto> getClosedRequestByProvider(Long userCode, Long providerId)
+			throws BusinessException {
+
+		List<MicroserviceRequestDto> listClosedRequestsDto = new ArrayList<MicroserviceRequestDto>();
+
+		try {
+
+			List<MicroserviceRequestDto> responseRequestsDto = providerClient.getRequestsByProviderClosed(providerId,
+					userCode);
+
+			for (MicroserviceRequestDto requestDto : responseRequestsDto) {
+
+				List<MicroserviceEmitterDto> emittersDto = new ArrayList<MicroserviceEmitterDto>();
+				for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
+					if (emitterDto.getEmitterType().equals("ENTITY")) {
+						try {
+							MicroserviceManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
+							emitterDto.setUser(managerDto);
+						} catch (Exception e) {
+							emitterDto.setUser(null);
+						}
+					} else {
+						try {
+							MicroserviceUserDto userDto = userClient.findById(emitterDto.getEmitterCode());
+							emitterDto.setUser(userDto);
+						} catch (Exception e) {
+							emitterDto.setUser(null);
+						}
+					}
+					emittersDto.add(emitterDto);
+				}
+
+				MunicipalityEntity municipalityEntity = municipalityService
+						.getMunicipalityByCode(requestDto.getMunicipalityCode());
+
+				DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+
+				MunicipalityDto municipalityDto = new MunicipalityDto();
+				municipalityDto.setCode(municipalityEntity.getCode());
+				municipalityDto.setId(municipalityEntity.getId());
+				municipalityDto.setName(municipalityEntity.getName());
+				municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+						departmentEntity.getCode()));
+
+				requestDto.setEmitters(emittersDto);
+				requestDto.setMunicipality(municipalityDto);
+
+				try {
+					if (requestDto.getClosedBy() != null) {
+						MicroserviceUserDto userDto = userClient.findById(requestDto.getClosedBy());
+						requestDto.setUserClosedBy(userDto);
+					}
+				} catch (Exception e) {
+					requestDto.setUserClosedBy(null);
+				}
+
+				for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+
+					if (supply.getDeliveredBy() != null) {
+
+						try {
+
+							MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
+							supply.setUserDeliveryBy(userDto);
+						} catch (Exception e) {
+							supply.setUserDeliveryBy(null);
+						}
+
+					}
+
+				}
+
+				listClosedRequestsDto.add(requestDto);
+
+			}
+
+		} catch (Exception e) {
+			log.error("No se han podido cargar las solicitudes cerradas del proveedor: " + e.getMessage());
+		}
+
+		return listClosedRequestsDto;
 	}
 
 	public IntegrationDto makeIntegrationCadastreRegistration(Long municipalityId, Long supplyIdCadastre,
