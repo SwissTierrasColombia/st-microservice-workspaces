@@ -135,6 +135,7 @@ public class RabbitMQUpdateStateSupplyListener {
 			updateSupply.setDelivered(validationDto.getIsValid());
 			updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
 			updateSupply.setJustification("");
+			updateSupply.setDeliveryBy(null);
 			providerClient.updateSupplyRequested(validationDto.getRequestId(), validationDto.getSupplyRequestedId(),
 					updateSupply);
 

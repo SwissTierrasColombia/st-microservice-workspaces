@@ -206,7 +206,7 @@ public class ProviderV1Controller {
 						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
 			}
 
-			listRequests = workspaceBusiness.getPendingRequestByProvider(providerDto.getId());
+			listRequests = workspaceBusiness.getPendingRequestByProvider(userDtoSession.getId(), providerDto.getId());
 			httpStatus = HttpStatus.OK;
 
 		} catch (DisconnectedMicroserviceException e) {
@@ -219,6 +219,61 @@ public class ProviderV1Controller {
 			responseDto = new BasicResponseDto(e.getMessage(), 2);
 		} catch (Exception e) {
 			log.error("Error ProviderV1Controller@getRequestsPendingByProveedor#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
+				: new ResponseEntity<>(listRequests, httpStatus);
+	}
+
+	@RequestMapping(value = "/closed-requests", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get closed-requests")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get closed requests by provider", response = MicroserviceRequestDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getRequestsClosedByProveedor(
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		List<MicroserviceRequestDto> listRequests = new ArrayList<MicroserviceRequestDto>();
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			listRequests = workspaceBusiness.getClosedRequestByProvider(userDtoSession.getId(), providerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}
