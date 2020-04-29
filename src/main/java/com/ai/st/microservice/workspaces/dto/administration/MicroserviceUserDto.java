@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
+
 public class MicroserviceUserDto implements Serializable {
 
 	private static final long serialVersionUID = -5121529899322990688L;
@@ -19,9 +22,13 @@ public class MicroserviceUserDto implements Serializable {
 	private Date createdAt;
 	private Date updatedAt;
 	private List<MicroserviceRoleDto> roles;
+	private List<MicroserviceManagerProfileDto> profilesManager;
+	private List<MicroserviceProviderProfileDto> profilesProvider;
 
 	public MicroserviceUserDto() {
 		this.roles = new ArrayList<MicroserviceRoleDto>();
+		this.profilesManager = new ArrayList<>();
+		this.profilesProvider = new ArrayList<>();
 	}
 
 	public MicroserviceUserDto(Long id, String firstName, String lastName, String email, String username) {
@@ -111,6 +118,22 @@ public class MicroserviceUserDto implements Serializable {
 
 	public void setRoles(List<MicroserviceRoleDto> roles) {
 		this.roles = roles;
+	}
+
+	public List<MicroserviceManagerProfileDto> getProfilesManager() {
+		return profilesManager;
+	}
+
+	public void setProfilesManager(List<MicroserviceManagerProfileDto> profilesManager) {
+		this.profilesManager = profilesManager;
+	}
+
+	public List<MicroserviceProviderProfileDto> getProfilesProvider() {
+		return profilesProvider;
+	}
+
+	public void setProfilesProvider(List<MicroserviceProviderProfileDto> profilesProvider) {
+		this.profilesProvider = profilesProvider;
 	}
 
 }

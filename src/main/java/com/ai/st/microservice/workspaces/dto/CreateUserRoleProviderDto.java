@@ -21,6 +21,8 @@ public class CreateUserRoleProviderDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Profiles ID")
 	private List<Long> profiles;
 
+	private Boolean fromAdministrator;
+
 	public CreateUserRoleProviderDto() {
 		this.profiles = new ArrayList<Long>();
 	}
@@ -47,6 +49,14 @@ public class CreateUserRoleProviderDto implements Serializable {
 
 	public void setProfiles(List<Long> profiles) {
 		this.profiles = profiles;
+	}
+
+	public Boolean getFromAdministrator() {
+		return fromAdministrator;
+	}
+
+	public void setFromAdministrator(Boolean fromAdministrator) {
+		this.fromAdministrator = fromAdministrator;
 	}
 
 }
