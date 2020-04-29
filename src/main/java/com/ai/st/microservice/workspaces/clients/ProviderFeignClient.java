@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,6 +54,10 @@ public interface ProviderFeignClient {
 	public List<MicroserviceRequestDto> getRequestsByProvider(@PathVariable Long providerId,
 			@RequestParam(required = false, name = "state") Long requestStateId);
 
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/requests/closed")
+	public List<MicroserviceRequestDto> getRequestsByProviderClosed(@PathVariable Long providerId,
+			@RequestParam(required = false, name = "user") Long userCode);
+
 	@GetMapping("/api/providers-supplies/v1/requests/{requestId}")
 	public MicroserviceRequestDto findRequestById(@PathVariable Long requestId);
 
@@ -65,13 +70,17 @@ public interface ProviderFeignClient {
 			@PathVariable Long supplyRequestedId, @RequestBody MicroserviceUpdateSupplyRequestedDto updateSupply);
 
 	@PutMapping("/api/providers-supplies/v1/requests/{requestId}/delivered")
-	public MicroserviceRequestDto closeRequest(@PathVariable Long requestId);
+	public MicroserviceRequestDto closeRequest(@PathVariable Long requestId,
+			@RequestParam(name = "closed_by") Long userCode);
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public List<MicroserviceProviderUserDto> addUserToProvide(@RequestBody MicroserviceAddUserToProviderDto data);
 
 	@GetMapping("/api/providers-supplies/v1/types-supplies/{typeSupplyId}")
 	public MicroserviceTypeSupplyDto findTypeSuppleById(@PathVariable Long typeSupplyId);
+	
+	@PostMapping("/api/providers-supplies/v1/{providerId}/type-supplies")
+	public MicroserviceTypeSupplyDto createTypeSupplies(@PathVariable Long providerId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
 	public List<MicroserviceProviderUserDto> findUsersByProviderIdAndProfiles(@PathVariable Long providerId,

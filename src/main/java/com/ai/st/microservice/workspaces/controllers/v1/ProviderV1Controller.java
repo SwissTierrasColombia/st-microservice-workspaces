@@ -30,6 +30,7 @@ import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
+import com.ai.st.microservice.workspaces.dto.CreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
@@ -226,6 +227,61 @@ public class ProviderV1Controller {
 				: new ResponseEntity<>(listRequests, httpStatus);
 	}
 
+	@RequestMapping(value = "/closed-requests", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get closed-requests")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get closed requests by provider", response = MicroserviceRequestDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getRequestsClosedByProveedor(
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		List<MicroserviceRequestDto> listRequests = new ArrayList<MicroserviceRequestDto>();
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			listRequests = workspaceBusiness.getClosedRequestByProvider(userDtoSession.getId(), providerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
+				: new ResponseEntity<>(listRequests, httpStatus);
+	}
+
 	@RequestMapping(value = "/requests/{requestId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Answer request")
 	@ApiResponses(value = {
@@ -396,6 +452,44 @@ public class ProviderV1Controller {
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/{providerId}/type-supplies", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Create type supply")
+	@ApiResponses(value = { @ApiResponse(code = 201, message = "Create type supply", response = CreateTypeSupplyDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<CreateTypeSupplyDto> createTypeSupply(@PathVariable Long providerId,
+			@RequestBody CreateTypeSupplyDto createTypeSupplyDto) {
+
+		HttpStatus httpStatus = null;
+
+		try {
+
+			// validation input data
+			if (createTypeSupplyDto.getName().isEmpty()) {
+				throw new InputValidationException("The provider profile name is required.");
+			}
+			if (createTypeSupplyDto.getDescription().isEmpty()) {
+				throw new InputValidationException("The provider profile description is required.");
+			}
+			if (providerId == null) {
+				throw new InputValidationException("The provider is required.");
+			}
+			if (createTypeSupplyDto.getProviderProfileId() == null) {
+				throw new InputValidationException("The provider profile is required.");
+			}
+
+			httpStatus = HttpStatus.CREATED;
+		} catch (InputValidationException e) {
+			log.error("Error ProviderV1Controller@createTypeSupply#Validation ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@createTypeSupply#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(createTypeSupplyDto, httpStatus);
 	}
 
 }

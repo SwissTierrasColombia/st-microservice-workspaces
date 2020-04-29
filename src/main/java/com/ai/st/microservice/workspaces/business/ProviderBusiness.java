@@ -17,7 +17,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
+import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
@@ -74,6 +76,9 @@ public class ProviderBusiness {
 
 	@Autowired
 	private FileBusiness fileBusiness;
+	
+	@Autowired
+	private UserFeignClient userClient;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -282,9 +287,22 @@ public class ProviderBusiness {
 		try {
 			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
 			updateSupply.setDelivered(delivered);
+			updateSupply.setDeliveryBy(userCode);
 			updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
 			updateSupply.setJustification(justification);
 			requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(), updateSupply);
+
+			for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
+				if (supply.getDeliveredBy() != null) {
+					try {
+						MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
+						supply.setUserDeliveryBy(userDto);
+					} catch (Exception e) {
+						supply.setUserDeliveryBy(null);
+					}
+				}
+			}
+
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
 		}
@@ -312,6 +330,7 @@ public class ProviderBusiness {
 			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
 		}
 
+		Boolean canClose = false;
 		for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
 			if (!supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)
 					&& !supplyRequested.getState().getId()
@@ -319,6 +338,15 @@ public class ProviderBusiness {
 				throw new BusinessException(
 						"No se puede cerrar la solicitud porque no se han cargado todos los insumos.");
 			}
+
+			if (supplyRequested.getDeliveredBy().equals(userCode)) {
+				canClose = true;
+			}
+		}
+
+		if (!canClose) {
+			throw new BusinessException(
+					"No se puede cerrar la solicitud porque el usuario no es la persona que ha cargado los insumos.");
 		}
 
 		try {
@@ -379,7 +407,7 @@ public class ProviderBusiness {
 		MicroserviceRequestDto requestUpdatedDto = null;
 
 		try {
-			requestUpdatedDto = providerClient.closeRequest(requestId);
+			requestUpdatedDto = providerClient.closeRequest(requestId, userCode);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
 		}
