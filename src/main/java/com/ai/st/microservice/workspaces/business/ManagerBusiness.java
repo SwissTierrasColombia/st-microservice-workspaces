@@ -12,6 +12,7 @@ import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerDto;
 
 @Component
 public class ManagerBusiness {
@@ -75,6 +76,16 @@ public class ManagerBusiness {
 			managerDto = managerClient.deactivateManager(managerId);
 		} catch (Exception e) {
 			log.error("No se ha podido desactivar el gestor: " + e.getMessage());
+		}
+		return managerDto;
+	}
+	
+	public MicroserviceManagerDto updateManager(MicroserviceUpdateManagerDto manager) {
+		MicroserviceManagerDto managerDto = null;
+		try {
+			managerDto = managerClient.updateManager(manager);
+		} catch (Exception e) {
+			log.error("No se ha podido actualizar el gestor: " + e.getMessage());
 		}
 		return managerDto;
 	}

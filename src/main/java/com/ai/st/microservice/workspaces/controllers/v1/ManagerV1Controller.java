@@ -18,6 +18,7 @@ import com.ai.st.microservice.workspaces.business.ManagerBusiness;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 
@@ -64,7 +65,7 @@ public class ManagerV1Controller {
 	}
 	
 	
-	@RequestMapping(value = "/{managerId}/activate", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/{managerId}/enable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Activate manager")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Manager enabled", response = MicroserviceManagerDto.class),
@@ -102,7 +103,7 @@ public class ManagerV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 	
-	@RequestMapping(value = "/{managerId}/deactivate", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/{managerId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Activate manager")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Manager enabled", response = MicroserviceManagerDto.class),
@@ -133,6 +134,32 @@ public class ManagerV1Controller {
 			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (Exception e) {
 			log.error("Error ManagerV1Controller@deactivateManager#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+	
+	@RequestMapping(value = "", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Update manager")
+	@ApiResponses(value = {
+			@ApiResponse(code = 201, message = "Update manager", response = MicroserviceRequestDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> updateManager(@RequestBody MicroserviceUpdateManagerDto updateManagerDto,
+			@RequestHeader("authorization") String headerAuthorization) throws DisconnectedMicroserviceException {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			responseDto = managerBusiness.updateManager(updateManagerDto);
+			httpStatus = HttpStatus.CREATED;
+
+		} catch (Exception e) {
+			log.error("Error ManagerV1Controller@updateManager#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		}

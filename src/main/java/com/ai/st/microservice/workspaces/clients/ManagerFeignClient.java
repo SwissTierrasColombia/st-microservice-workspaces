@@ -22,6 +22,7 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerD
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import feign.Feign;
@@ -50,15 +51,18 @@ public interface ManagerFeignClient {
 	@RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/managers", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceManagerDto addManager(@RequestBody MicroserviceCreateManagerDto data);
 	
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers/{id}/activate", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers/{id}/enable", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceManagerDto activateManager(@PathVariable Long id);
 	
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers/{id}/deactivate", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers/{id}/disable", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceManagerDto deactivateManager(@PathVariable Long id);
 
 	@RequestMapping(method = RequestMethod.DELETE, value = "/api/managers/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceManagerUserDto removeUserToManager(@RequestBody MicroserviceAddUserToManagerDto data)
 			throws BusinessException;
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerDto updateManager(@RequestBody MicroserviceUpdateManagerDto data);
 
 	class Configuration {
 

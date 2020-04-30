@@ -6,15 +6,17 @@ import java.util.Date;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-public class MicroserviceCreateManagerDto implements Serializable {
+public class MicroserviceUpdateManagerDto implements Serializable {
 
-	private static final long serialVersionUID = 8630363838327832666L;
+	private static final long serialVersionUID = 8630363838327832667L;
+	
+	private Long id;
 
 	private String name;
 
 	private String taxIdentificationNumber;
 
-	public MicroserviceCreateManagerDto() {
+	public MicroserviceUpdateManagerDto() {
 
 	}
 
@@ -32,6 +34,14 @@ public class MicroserviceCreateManagerDto implements Serializable {
 
 	public void setTaxIdentificationNumber(String taxIdentificationNumber) {
 		this.taxIdentificationNumber = taxIdentificationNumber;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 }
