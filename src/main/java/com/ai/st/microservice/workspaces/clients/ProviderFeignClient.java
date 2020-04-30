@@ -5,17 +5,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -74,6 +78,9 @@ public interface ProviderFeignClient {
 
 	@GetMapping("/api/providers-supplies/v1/types-supplies/{typeSupplyId}")
 	public MicroserviceTypeSupplyDto findTypeSuppleById(@PathVariable Long typeSupplyId);
+	
+	@PostMapping("/api/providers-supplies/v1/{providerId}/type-supplies")
+	public MicroserviceTypeSupplyDto createTypeSupplies(@PathVariable Long providerId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
 	public List<MicroserviceProviderUserDto> findUsersByProviderIdAndProfiles(@PathVariable Long providerId,
@@ -83,6 +90,24 @@ public interface ProviderFeignClient {
 	public List<MicroserviceRequestDto> findRequestsByEmmiters(
 			@RequestParam(name = "emmiter_code", required = true) Long emmiterCode,
 			@RequestParam(name = "emmiter_type", required = true) String emmiterType);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/administrators", consumes = APPLICATION_JSON_VALUE)
+	public List<MicroserviceProviderAdministratorDto> addAdministratorToProvide(
+			@RequestBody MicroserviceAddAdministratorToProviderDto data);
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/administrators")
+	public List<MicroserviceProviderAdministratorDto> findAdministratorsByProviderId(@PathVariable Long providerId)
+			throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/administrators/{userCode}/roles")
+	public List<MicroserviceRoleDto> findRolesByUser(@PathVariable Long userCode);
+
+	@GetMapping("/api/providers-supplies/v1/administrators/{userCode}/providers")
+	public MicroserviceProviderDto findProviderByAdministrator(@PathVariable Long userCode);
+
+	@RequestMapping(method = RequestMethod.DELETE, value = "/api/providers-supplies/v1/users", consumes = APPLICATION_JSON_VALUE)
+	public List<MicroserviceProviderUserDto> removeUserToProvider(@RequestBody MicroserviceAddUserToProviderDto data)
+			throws BusinessException;
 
 	class Configuration {
 
