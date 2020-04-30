@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 
@@ -46,6 +47,36 @@ public class ManagerBusiness {
 		}
 
 		return users;
+	}
+
+	public MicroserviceManagerDto addManager(MicroserviceCreateManagerDto manager) {
+		MicroserviceManagerDto managerDto = null;
+		try {
+			managerDto = managerClient.addManager(manager);
+		} catch (Exception e) {
+			log.error("No se ha podido agregar el gestor: " + e.getMessage());
+		}
+		return managerDto;
+	}
+
+	public MicroserviceManagerDto activateManager(Long managerId) {
+		MicroserviceManagerDto managerDto = null;
+		try {
+			managerDto = managerClient.activateManager(managerId);
+		} catch (Exception e) {
+			log.error("No se ha podido activar el gestor: " + e.getMessage());
+		}
+		return managerDto;
+	}
+
+	public MicroserviceManagerDto deactivateManager(Long managerId) {
+		MicroserviceManagerDto managerDto = null;
+		try {
+			managerDto = managerClient.deactivateManager(managerId);
+		} catch (Exception e) {
+			log.error("No se ha podido desactivar el gestor: " + e.getMessage());
+		}
+		return managerDto;
 	}
 
 }

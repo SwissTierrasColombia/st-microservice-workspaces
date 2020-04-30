@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
@@ -44,6 +45,15 @@ public interface ManagerFeignClient {
 	@GetMapping("/api/managers/v1/managers/{managerId}/users")
 	public List<MicroserviceManagerUserDto> findUsersByManager(@PathVariable Long managerId,
 			@RequestParam(required = false, name = "profiles") List<Long> profiles);
+	
+	@RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/managers", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerDto addManager(@RequestBody MicroserviceCreateManagerDto data);
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers/{id}/activate", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerDto activateManager(@PathVariable Long id);
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers/{id}/deactivate", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerDto deactivateManager(@PathVariable Long id);
 
 	class Configuration {
 

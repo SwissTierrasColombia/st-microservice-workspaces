@@ -245,7 +245,7 @@ public class ProviderBusiness {
 					String supplyExtension = loadedFileExtensions.stream().filter(ext -> ext.equalsIgnoreCase("xtf"))
 							.findAny().orElse("");
 
-					if (!supplyExtension.isBlank() && !supplyExtension.isEmpty()) {
+					if (/*!supplyExtension.isBlank() &&*/ !supplyExtension.isEmpty()) {
 						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
 
 						// validate xtf with ilivalidator
