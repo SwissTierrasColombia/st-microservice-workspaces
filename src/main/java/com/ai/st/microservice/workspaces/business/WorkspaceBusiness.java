@@ -1254,6 +1254,8 @@ public class WorkspaceBusiness {
 
 				for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
 
+					log.info("description: " + supply.getDescription());
+
 					if (supply.getDeliveredBy() != null) {
 
 						try {
