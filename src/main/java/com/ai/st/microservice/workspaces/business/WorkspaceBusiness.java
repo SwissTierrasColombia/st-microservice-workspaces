@@ -1032,14 +1032,22 @@ public class WorkspaceBusiness {
 					List<MicroserviceProviderUserDto> providerUsers = providerBusiness
 							.getUsersByProvider(request.getProviderId(), null);
 
+					Long providerProfileId = responseRequest.getSuppliesRequested().get(0).getTypeSupply()
+							.getProviderProfile().getId();
+
 					for (MicroserviceProviderUserDto providerUser : providerUsers) {
 
 						MicroserviceUserDto userDto = userBusiness.getUserById(providerUser.getUserCode());
 
-						notificationBusiness.sendNotificationInputRequest(userDto.getEmail(), userCode,
-								managerDto.getName(), municipalityEntity.getName(),
-								municipalityEntity.getDepartment().getName(), responseRequest.getId().toString(),
-								new Date());
+						MicroserviceProviderProfileDto profileFound = providerUser.getProfiles().stream()
+								.filter(p -> p.getId().equals(providerProfileId)).findAny().orElse(null);
+
+						if (profileFound != null) {
+							notificationBusiness.sendNotificationInputRequest(userDto.getEmail(), userCode,
+									managerDto.getName(), municipalityEntity.getName(),
+									municipalityEntity.getDepartment().getName(), responseRequest.getId().toString(),
+									new Date());
+						}
 					}
 
 				} catch (Exception er) {
