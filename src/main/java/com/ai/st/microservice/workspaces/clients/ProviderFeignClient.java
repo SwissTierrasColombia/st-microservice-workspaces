@@ -134,9 +134,13 @@ public interface ProviderFeignClient {
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers/{providerId}/type-supplies/{typeSupplyId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceTypeSupplyDto updateTypeSupplies(@PathVariable Long providerId, @PathVariable Long typeSupplyId,
 			@RequestBody MicroserviceCreateTypeSupplyDto data) throws BusinessException;
-	
+
 	@RequestMapping(method = RequestMethod.DELETE, value = "/api/providers-supplies/v1/providers/{providerId}/type-supplies/{typeSupplyId}", consumes = APPLICATION_JSON_VALUE)
-	public void deleteTypeSupply(@PathVariable Long providerId, @PathVariable Long typeSupplyId) throws BusinessException;
+	public void deleteTypeSupply(@PathVariable Long providerId, @PathVariable Long typeSupplyId)
+			throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/users/{userCode}/profiles")
+	public List<MicroserviceProviderProfileDto> findProfilesByUser(@PathVariable Long userCode);
 
 	class Configuration {
 

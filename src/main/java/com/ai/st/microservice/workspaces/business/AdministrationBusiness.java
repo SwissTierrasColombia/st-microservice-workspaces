@@ -30,6 +30,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
@@ -628,6 +629,26 @@ public class AdministrationBusiness {
 				userDto = userClient.enableUser(userId);
 			} else {
 				userDto = userClient.disableUser(userId);
+			}
+
+			MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
+					.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+
+			MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
+					.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+
+			if (roleManagerDto instanceof MicroserviceRoleDto) {
+				List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
+				userDto.setProfilesManager(profiles);
+			} else if (roleProviderDto instanceof MicroserviceRoleDto) {
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = providerClient
+						.findRolesByUser(userDto.getId());
+				userDto.setRolesProvider(roles);
+
+				List<MicroserviceProviderProfileDto> profiles = providerClient.findProfilesByUser(userDto.getId());
+				userDto.setProfilesProvider(profiles);
+
 			}
 
 		} catch (BusinessException e) {
