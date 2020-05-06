@@ -649,7 +649,50 @@ public class AdministrationBusiness {
 		List<Long> roles = new ArrayList<>(Arrays.asList(RoleBusiness.ROLE_MANAGER, RoleBusiness.ROLE_SUPPLY_SUPPLIER,
 				RoleBusiness.ROLE_OPERATOR));
 
-		return this.getUsers(roles);
+		List<MicroserviceUserDto> users = this.getUsers(roles);
+
+		List<MicroserviceUserDto> listUsersResponse = new ArrayList<>();
+
+		for (MicroserviceUserDto userDto : users) {
+
+			MicroserviceRoleDto roleManager = userDto.getRoles().stream()
+					.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+
+			MicroserviceRoleDto roleProvider = userDto.getRoles().stream()
+					.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+
+			if (roleManager instanceof MicroserviceRoleDto) {
+
+				List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
+
+				MicroserviceManagerProfileDto profileDirector = profiles.stream()
+						.filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
+
+				if (profileDirector instanceof MicroserviceManagerProfileDto) {
+					userDto.setProfilesManager(profiles);
+					listUsersResponse.add(userDto);
+				}
+
+			} else if (roleProvider instanceof MicroserviceRoleDto) {
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> profiles = providerClient
+						.findRolesByUser(userDto.getId());
+
+				com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = profiles.stream()
+						.filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
+
+				if (roleDirector != null) {
+					userDto.setRolesProvider(profiles);
+					listUsersResponse.add(userDto);
+				}
+
+			} else {
+				listUsersResponse.add(userDto);
+			}
+
+		}
+
+		return listUsersResponse;
 	}
 
 	public List<MicroserviceUserDto> getUsersFromManager(Long managerCode) throws BusinessException {
