@@ -32,12 +32,15 @@ import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.CreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
@@ -454,42 +457,611 @@ public class ProviderV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
-	@RequestMapping(value = "/{providerId}/type-supplies", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/types-supplies", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Create type supply")
-	@ApiResponses(value = { @ApiResponse(code = 201, message = "Create type supply", response = CreateTypeSupplyDto.class),
+	@ApiResponses(value = {
+			@ApiResponse(code = 201, message = "Create type supply", response = MicroserviceTypeSupplyDto.class),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
-	public ResponseEntity<CreateTypeSupplyDto> createTypeSupply(@PathVariable Long providerId,
-			@RequestBody CreateTypeSupplyDto createTypeSupplyDto) {
+	public ResponseEntity<Object> createTypeSupply(@RequestBody CreateTypeSupplyDto createTypeSupplyDto,
+			@RequestHeader("authorization") String headerAuthorization) {
 
 		HttpStatus httpStatus = null;
+		Object responseDto = null;
 
 		try {
 
-			// validation input data
-			if (createTypeSupplyDto.getName().isEmpty()) {
-				throw new InputValidationException("The provider profile name is required.");
-			}
-			if (createTypeSupplyDto.getDescription().isEmpty()) {
-				throw new InputValidationException("The provider profile description is required.");
-			}
-			if (providerId == null) {
-				throw new InputValidationException("The provider is required.");
-			}
-			if (createTypeSupplyDto.getProviderProfileId() == null) {
-				throw new InputValidationException("The provider profile is required.");
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para crear tipos de insumo del proveedor.");
+			}
+
+			responseDto = providerBusiness.createTypeSupply(providerDto.getId(), createTypeSupplyDto.getName(),
+					createTypeSupplyDto.getDescription(), createTypeSupplyDto.getMetadataRequired(),
+					createTypeSupplyDto.getModelRequired(), createTypeSupplyDto.getProviderProfileId(),
+					createTypeSupplyDto.getExtensions());
 			httpStatus = HttpStatus.CREATED;
-		} catch (InputValidationException e) {
-			log.error("Error ProviderV1Controller@createTypeSupply#Validation ---> " + e.getMessage());
-			httpStatus = HttpStatus.BAD_REQUEST;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@createTypeSupply#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@createTypeSupply#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
 		} catch (Exception e) {
 			log.error("Error ProviderV1Controller@createTypeSupply#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 
-		return new ResponseEntity<>(createTypeSupplyDto, httpStatus);
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/types-supplies", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get types supplies")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get types supplies", response = MicroserviceTypeSupplyDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getTypeSupplies(@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para consultar los tipos de insumo del proveedor.");
+			}
+
+			responseDto = providerBusiness.getTypesSuppliesByProvider(providerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@getTypeSupplies#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@getTypeSupplies#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@getTypeSupplies#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/types-supplies/{typeSupplyId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Update type supply")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Update type supply", response = MicroserviceTypeSupplyDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> updateTypeSupply(@PathVariable Long typeSupplyId,
+			@RequestBody CreateTypeSupplyDto createTypeSupplyDto,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para editar tipos de insumo del proveedor.");
+			}
+
+			responseDto = providerBusiness.updateTypeSupply(providerDto.getId(), typeSupplyId,
+					createTypeSupplyDto.getName(), createTypeSupplyDto.getDescription(),
+					createTypeSupplyDto.getMetadataRequired(), createTypeSupplyDto.getModelRequired(),
+					createTypeSupplyDto.getProviderProfileId(), createTypeSupplyDto.getExtensions());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@updateTypeSupply#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@updateTypeSupply#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@updateTypeSupply	#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/types-supplies/{typeSupplyId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Delete type supply")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Delete type supply"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> deleteTypeSupply(@PathVariable Long typeSupplyId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para eliminar tipos de insumo del proveedor.");
+			}
+
+			providerBusiness.deleteTypeSupply(providerDto.getId(), typeSupplyId);
+			httpStatus = HttpStatus.NO_CONTENT;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@deleteTypeSupply#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@deleteTypeSupply#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@deleteTypeSupply	#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/profiles", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Create profile")
+	@ApiResponses(value = {
+			@ApiResponse(code = 201, message = "Create profile", response = MicroserviceProviderProfileDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> createProfile(@RequestBody CreateProviderProfileDto createProfileDto,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para crear perfiles del proveedor.");
+			}
+
+			responseDto = providerBusiness.createProfile(providerDto.getId(), createProfileDto.getName(),
+					createProfileDto.getDescription());
+
+			httpStatus = HttpStatus.CREATED;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@createProfile#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@createProfile#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@createProfile#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/profiles", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get profiles")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get profiles", response = MicroserviceProviderProfileDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getProfiles(@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para consultar perfiles del proveedor.");
+			}
+
+			responseDto = providerBusiness.getProfilesByProvider(providerDto.getId());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@getProfiles#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@getProfiles#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@getProfiles#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/profiles/{profileId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Update profile")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Update profile", response = MicroserviceProviderProfileDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> updateProfile(@PathVariable Long profileId,
+			@RequestHeader("authorization") String headerAuthorization,
+			@RequestBody CreateProviderProfileDto updateProfileDto) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para editar perfiles del proveedor.");
+			}
+
+			responseDto = providerBusiness.updateProfile(providerDto.getId(), profileId, updateProfileDto.getName(),
+					updateProfileDto.getDescription());
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@updateProfile#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@updateProfile#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@updateProfile#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/profiles/{profileId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Delete profile")
+	@ApiResponses(value = { @ApiResponse(code = 204, message = "Delete profile"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> deleteProfile(@PathVariable Long profileId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			}
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
+
+			try {
+
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
+
+				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+						.findRolesByUser(userDtoSession.getId());
+
+				roleDirector = providerRoles.stream()
+						.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+						.orElse(null);
+
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de proveedores.");
+			}
+
+			if (roleDirector == null) {
+				throw new BusinessException("No tiene permiso para eliminar perfiles del proveedor.");
+			}
+
+			providerBusiness.deleteProfile(providerDto.getId(), profileId);
+			httpStatus = HttpStatus.NO_CONTENT;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@deleteProfile#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@deleteProfile#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@deleteProfile#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
 }

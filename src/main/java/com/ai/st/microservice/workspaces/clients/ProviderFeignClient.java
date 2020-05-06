@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,9 +13,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto;
@@ -78,9 +80,6 @@ public interface ProviderFeignClient {
 
 	@GetMapping("/api/providers-supplies/v1/types-supplies/{typeSupplyId}")
 	public MicroserviceTypeSupplyDto findTypeSuppleById(@PathVariable Long typeSupplyId);
-	
-	@PostMapping("/api/providers-supplies/v1/{providerId}/type-supplies")
-	public MicroserviceTypeSupplyDto createTypeSupplies(@PathVariable Long providerId);
 
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/users")
 	public List<MicroserviceProviderUserDto> findUsersByProviderIdAndProfiles(@PathVariable Long providerId,
@@ -108,6 +107,36 @@ public interface ProviderFeignClient {
 	@RequestMapping(method = RequestMethod.DELETE, value = "/api/providers-supplies/v1/users", consumes = APPLICATION_JSON_VALUE)
 	public List<MicroserviceProviderUserDto> removeUserToProvider(@RequestBody MicroserviceAddUserToProviderDto data)
 			throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/providers/{providerId}/profiles", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceProviderProfileDto createProfile(@PathVariable Long providerId,
+			@RequestBody MicroserviceCreateProviderProfileDto createProviderProfileDto) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/profiles")
+	public List<MicroserviceProviderProfileDto> getProfilesByProvider(@PathVariable Long providerId)
+			throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers/{providerId}/profiles/{profileId}", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceProviderProfileDto updateProfile(@PathVariable Long providerId, @PathVariable Long profileId,
+			@RequestBody MicroserviceCreateProviderProfileDto createProviderProfileDto) throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.DELETE, value = "/api/providers-supplies/v1/providers/{providerId}/profiles/{profileId}", consumes = APPLICATION_JSON_VALUE)
+	public void deleteProfile(@PathVariable Long providerId, @PathVariable Long profileId) throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/providers/{providerId}/type-supplies", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceTypeSupplyDto createTypeSupplies(@PathVariable Long providerId,
+			@RequestBody MicroserviceCreateTypeSupplyDto createTypeSupplyDto) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/types-supplies")
+	public List<MicroserviceTypeSupplyDto> getTypesSuppliesByProvider(@PathVariable Long providerId)
+			throws BusinessException;
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers/{providerId}/type-supplies/{typeSupplyId}", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceTypeSupplyDto updateTypeSupplies(@PathVariable Long providerId, @PathVariable Long typeSupplyId,
+			@RequestBody MicroserviceCreateTypeSupplyDto data) throws BusinessException;
+	
+	@RequestMapping(method = RequestMethod.DELETE, value = "/api/providers-supplies/v1/providers/{providerId}/type-supplies/{typeSupplyId}", consumes = APPLICATION_JSON_VALUE)
+	public void deleteTypeSupply(@PathVariable Long providerId, @PathVariable Long typeSupplyId) throws BusinessException;
 
 	class Configuration {
 

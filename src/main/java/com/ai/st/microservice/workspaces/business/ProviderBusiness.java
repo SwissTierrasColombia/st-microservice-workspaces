@@ -19,7 +19,10 @@ import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
@@ -76,7 +79,7 @@ public class ProviderBusiness {
 
 	@Autowired
 	private FileBusiness fileBusiness;
-	
+
 	@Autowired
 	private UserFeignClient userClient;
 
@@ -463,6 +466,180 @@ public class ProviderBusiness {
 		}
 
 		return providerDto;
+	}
+
+	public MicroserviceProviderProfileDto createProfile(Long providerId, String name, String description)
+			throws BusinessException {
+
+		MicroserviceProviderProfileDto profileDto = null;
+
+		try {
+
+			MicroserviceCreateProviderProfileDto createProviderProfileDto = new MicroserviceCreateProviderProfileDto();
+			createProviderProfileDto.setName(name);
+			createProviderProfileDto.setDescription(description);
+
+			profileDto = providerClient.createProfile(providerId, createProviderProfileDto);
+
+		} catch (BusinessException e) {
+			log.error("Error creando perfil del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error creando perfil del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido crear el perfil del proveedor");
+		}
+
+		return profileDto;
+	}
+
+	public List<MicroserviceProviderProfileDto> getProfilesByProvider(Long providerId) throws BusinessException {
+
+		List<MicroserviceProviderProfileDto> profilesDto = new ArrayList<>();
+
+		try {
+
+			profilesDto = providerClient.getProfilesByProvider(providerId);
+
+		} catch (BusinessException e) {
+			log.error("Error consultando perfiles del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error consultando perfiles del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar los perfiles del proveedor");
+		}
+
+		return profilesDto;
+	}
+
+	public MicroserviceProviderProfileDto updateProfile(Long providerId, Long profileId, String name,
+			String description) throws BusinessException {
+
+		MicroserviceProviderProfileDto profileDto = null;
+
+		try {
+
+			MicroserviceCreateProviderProfileDto createProviderProfileDto = new MicroserviceCreateProviderProfileDto();
+			createProviderProfileDto.setName(name);
+			createProviderProfileDto.setDescription(description);
+
+			profileDto = providerClient.updateProfile(providerId, profileId, createProviderProfileDto);
+
+		} catch (BusinessException e) {
+			log.error("Error editando perfil del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error editando perfil del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido editar el perfil del proveedor");
+		}
+
+		return profileDto;
+	}
+
+	public void deleteProfile(Long providerId, Long profileId) throws BusinessException {
+
+		try {
+
+			providerClient.deleteProfile(providerId, profileId);
+
+		} catch (BusinessException e) {
+			log.error("Error eliminando perfil del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error eliminando perfil del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido eliminar el perfil del proveedor");
+		}
+	}
+
+	public MicroserviceTypeSupplyDto createTypeSupply(Long providerId, String name, String description,
+			Boolean metadataRequired, Boolean modelRequired, Long profileId, List<String> extensions)
+			throws BusinessException {
+
+		MicroserviceTypeSupplyDto typeSupplyDto = null;
+
+		try {
+
+			MicroserviceCreateTypeSupplyDto create = new MicroserviceCreateTypeSupplyDto();
+			create.setName(name);
+			create.setDescription(description);
+			create.setExtensions(extensions);
+			create.setMetadataRequired(metadataRequired);
+			create.setModelRequired(modelRequired);
+			create.setProviderProfileId(profileId);
+
+			typeSupplyDto = providerClient.createTypeSupplies(providerId, create);
+
+		} catch (BusinessException e) {
+			log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido crear el tipo de insumo para el proveedor");
+		}
+
+		return typeSupplyDto;
+	}
+
+	public List<MicroserviceTypeSupplyDto> getTypesSuppliesByProvider(Long providerId) throws BusinessException {
+
+		List<MicroserviceTypeSupplyDto> typesSuppliesDto = new ArrayList<>();
+
+		try {
+
+			typesSuppliesDto = providerClient.getTypesSuppliesByProvider(providerId);
+
+		} catch (BusinessException e) {
+			log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar los tipos de insumo del proveedor");
+		}
+
+		return typesSuppliesDto;
+	}
+
+	public MicroserviceTypeSupplyDto updateTypeSupply(Long providerId, Long typeSupplyId, String name,
+			String description, Boolean metadataRequired, Boolean modelRequired, Long profileId,
+			List<String> extensions) throws BusinessException {
+
+		MicroserviceTypeSupplyDto typeSupplyDto = null;
+
+		try {
+
+			MicroserviceCreateTypeSupplyDto data = new MicroserviceCreateTypeSupplyDto();
+			data.setName(name);
+			data.setDescription(description);
+			data.setExtensions(extensions);
+			data.setMetadataRequired(metadataRequired);
+			data.setModelRequired(modelRequired);
+			data.setProviderProfileId(profileId);
+
+			typeSupplyDto = providerClient.updateTypeSupplies(providerId, typeSupplyId, data);
+
+		} catch (BusinessException e) {
+			log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido editar el tipo de insumo para el proveedor");
+		}
+
+		return typeSupplyDto;
+	}
+
+	public void deleteTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
+
+		try {
+
+			providerClient.deleteTypeSupply(providerId, typeSupplyId);
+
+		} catch (BusinessException e) {
+			log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido eliminar el tipo de insumo del proveedor");
+		}
 	}
 
 }
