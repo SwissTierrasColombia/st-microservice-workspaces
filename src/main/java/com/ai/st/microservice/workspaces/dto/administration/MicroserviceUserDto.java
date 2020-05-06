@@ -24,11 +24,13 @@ public class MicroserviceUserDto implements Serializable {
 	private List<MicroserviceRoleDto> roles;
 	private List<MicroserviceManagerProfileDto> profilesManager;
 	private List<MicroserviceProviderProfileDto> profilesProvider;
+	private List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> rolesProvider;
 
 	public MicroserviceUserDto() {
 		this.roles = new ArrayList<MicroserviceRoleDto>();
 		this.profilesManager = new ArrayList<>();
 		this.profilesProvider = new ArrayList<>();
+		this.rolesProvider = new ArrayList<>();
 	}
 
 	public MicroserviceUserDto(Long id, String firstName, String lastName, String email, String username) {
@@ -134,6 +136,15 @@ public class MicroserviceUserDto implements Serializable {
 
 	public void setProfilesProvider(List<MicroserviceProviderProfileDto> profilesProvider) {
 		this.profilesProvider = profilesProvider;
+	}
+
+	public List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> getRolesProvider() {
+		return rolesProvider;
+	}
+
+	public void setRolesProvider(
+			List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> rolesProvider) {
+		this.rolesProvider = rolesProvider;
 	}
 
 }
