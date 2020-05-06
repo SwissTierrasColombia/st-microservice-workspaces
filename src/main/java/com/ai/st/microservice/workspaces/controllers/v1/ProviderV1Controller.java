@@ -865,7 +865,7 @@ public class ProviderV1Controller {
 			// get provider
 			MicroserviceProviderDto providerDto = null;
 			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
+				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
 			} catch (FeignException e) {
 				throw new DisconnectedMicroserviceException(
 						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");

@@ -33,7 +33,6 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfile
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 
 import feign.FeignException;
 import io.swagger.annotations.Api;
