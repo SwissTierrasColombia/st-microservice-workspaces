@@ -21,11 +21,11 @@ import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.CreateUserDto;
-import com.ai.st.microservice.workspaces.dto.UpdateUserDto;
 import com.ai.st.microservice.workspaces.dto.AddProfileToUserDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.ChangePasswordDto;
+import com.ai.st.microservice.workspaces.dto.CreateUserDto;
+import com.ai.st.microservice.workspaces.dto.UpdateUserDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
@@ -33,7 +33,6 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfile
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 
 import feign.FeignException;
 import io.swagger.annotations.Api;

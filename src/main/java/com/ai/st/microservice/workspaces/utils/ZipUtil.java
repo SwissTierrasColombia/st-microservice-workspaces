@@ -111,10 +111,10 @@ public class ZipUtil {
 	}
 
 	public static boolean zipMustContains(String filePathZip, List<String> extensionsToSearch) {
-
+		ZipFile zipFile = null;
 		try {
 
-			ZipFile zipFile = new ZipFile(filePathZip);
+			zipFile = new ZipFile(filePathZip);
 
 			for (String extension : extensionsToSearch) {
 
@@ -135,9 +135,15 @@ public class ZipUtil {
 
 			}
 
-			zipFile.close();
+			
 		} catch (IOException e) {
 			log.error("Error unzipping archive: " + e.getMessage());
+		}finally {
+			try {
+				zipFile.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 
 		return true;

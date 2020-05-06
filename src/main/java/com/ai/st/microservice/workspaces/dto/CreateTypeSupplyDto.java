@@ -2,10 +2,7 @@ package com.ai.st.microservice.workspaces.dto;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-
-import com.ai.st.microservice.workspaces.dto.ExtensionDto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
