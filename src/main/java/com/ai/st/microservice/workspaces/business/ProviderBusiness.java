@@ -18,12 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
@@ -34,6 +33,9 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserD
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPackageDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPaginatedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
@@ -266,7 +268,7 @@ public class ProviderBusiness {
 					String supplyExtension = loadedFileExtensions.stream().filter(ext -> ext.equalsIgnoreCase("xtf"))
 							.findAny().orElse("");
 
-					if (!supplyExtension.isBlank() && !supplyExtension.isEmpty()) {
+					if (/*!supplyExtension.isBlank() &&*/ !supplyExtension.isEmpty()) {
 						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
 
 						// validate xtf with ilivalidator
@@ -816,6 +818,26 @@ public class ProviderBusiness {
 			log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
 			throw new BusinessException("No se ha podido eliminar el tipo de insumo del proveedor");
 		}
+	}
+
+	public MicroserviceProviderDto addProvider(MicroserviceCreateProviderDto createProviderDto) {
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.addProvider(createProviderDto);
+		} catch (Exception e) {
+			log.error("No se ha podido agregar el gestor: " + e.getMessage());
+		}
+		return providerDto;
+	}
+
+	public MicroserviceProviderDto updateProvider(MicroserviceUpdateProviderDto updateProviderDto) {
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.updateProvider(updateProviderDto);
+		} catch (Exception e) {
+			log.error("No se ha podido agregar el gestor: " + e.getMessage());
+		}
+		return providerDto;
 	}
 
 }
