@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ai.st.microservice.workspaces.business.ManagerBusiness;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 
@@ -167,5 +170,101 @@ public class ManagerV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 	
+	/*********************/
+	/** MANAGER PROFILES */
+	/*********************/
+	
+	@RequestMapping(value = "/profiles", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get manager profiles")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get manager profiles", response = MicroserviceManagerProfileDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> getManagerProfiles() {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+			responseDto = managerBusiness.getManagerProfiles();
+			httpStatus = HttpStatus.OK;
+
+		} catch (Exception e) {
+			log.error("Error ManagerV1Controller@getManagerProfiles#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+	
+	@RequestMapping(value = "/profiles", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Create Manager Profile")
+	@ApiResponses(value = { @ApiResponse(code = 201, message = "Create Manager Profile", response = MicroserviceManagerProfileDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> createManagerProfile(@RequestBody MicroserviceCreateManagerProfileDto requestCreateManagerProfile) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+		
+		try {
+			responseDto = managerBusiness.createManagerProfiles(requestCreateManagerProfile);
+			httpStatus = HttpStatus.OK;
+
+		} catch (Exception e) {
+			log.error("Error ManagerV1Controller@createManagerProfile#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+	
+	@RequestMapping(value = "/profiles", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Delete manager profile")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Manager prrofile deleted", response = MicroserviceManagerProfileDto.class),
+			@ApiResponse(code = 404, message = "Manager profile not found"),
+			@ApiResponse(code = 500, message = "Error Server") })
+	public ResponseEntity<Object> deleteManagerProfile(@RequestBody MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
+		
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+		
+		try {
+			responseDto = managerBusiness.deleteManagerProfiles(requestUpdateManagerProfile);
+			httpStatus = HttpStatus.OK;
+
+		} catch (Exception e) {
+			log.error("Error ManagerV1Controller@createManagerProfile#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+	
+	@RequestMapping(value = "/profiles", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Update manager profile")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Update Manager Profile", response = MicroserviceManagerProfileDto.class),
+			@ApiResponse(code = 404, message = "Manager profile not found"),
+			@ApiResponse(code = 500, message = "Error Server") })
+	public ResponseEntity<Object> updateManagerProfile(@RequestBody MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
+		
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+		
+		try {
+			responseDto = managerBusiness.updateManagerProfiles(requestUpdateManagerProfile);
+			httpStatus = HttpStatus.OK;
+
+		} catch (Exception e) {
+			log.error("Error ManagerV1Controller@updateManagerProfile#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
 
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
@@ -23,6 +24,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserD
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
@@ -142,6 +144,12 @@ public interface ProviderFeignClient {
 	@GetMapping("/api/providers-supplies/v1/users/{userCode}/profiles")
 	public List<MicroserviceProviderProfileDto> findProfilesByUser(@PathVariable Long userCode);
 
+	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/providers", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceProviderDto addProvider(MicroserviceCreateProviderDto createProviderDto);
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceProviderDto updateProvider(MicroserviceUpdateProviderDto updateProviderDto);
+
 	class Configuration {
 
 		@Bean
@@ -156,5 +164,7 @@ public interface ProviderFeignClient {
 		}
 
 	}
+
+
 
 }

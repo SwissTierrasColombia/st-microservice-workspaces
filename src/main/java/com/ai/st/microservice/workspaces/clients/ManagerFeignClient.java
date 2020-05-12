@@ -19,10 +19,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerProfileDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import feign.Feign;
@@ -63,6 +65,20 @@ public interface ManagerFeignClient {
 	
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/managers", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceManagerDto updateManager(@RequestBody MicroserviceUpdateManagerDto data);
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/api/managers/v1/profiles", consumes = APPLICATION_JSON_VALUE)
+	public List<MicroserviceManagerProfileDto> getManagerProfiles();
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/profiles", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerProfileDto updateManagerProfile(MicroserviceCreateManagerProfileDto manager);
+
+	@RequestMapping(method = RequestMethod.DELETE, value = "/api/managers/v1/profiles", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerProfileDto deleteManagerProfile(
+			MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile);
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/managers/v1/profiles", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceManagerProfileDto updateManagerProfile(
+			MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile);
 
 	class Configuration {
 
@@ -78,5 +94,9 @@ public interface ManagerFeignClient {
 		}
 
 	}
+
+
+
+
 
 }

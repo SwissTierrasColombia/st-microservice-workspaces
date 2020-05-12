@@ -10,9 +10,12 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceCreateManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerProfileDto;
 
 @Component
 public class ManagerBusiness {
@@ -84,6 +87,49 @@ public class ManagerBusiness {
 		MicroserviceManagerDto managerDto = null;
 		try {
 			managerDto = managerClient.updateManager(manager);
+		} catch (Exception e) {
+			log.error("No se ha podido actualizar el gestor: " + e.getMessage());
+		}
+		return managerDto;
+	}
+	
+	public List<MicroserviceManagerProfileDto> getManagerProfiles() {
+		
+		List<MicroserviceManagerProfileDto> profiles = new ArrayList<>();
+
+		try {
+			profiles = managerClient.getManagerProfiles();
+		} catch (Exception e) {
+			log.error("No se ha podido consultar los perfiles de gestor: " + e.getMessage());
+		}
+
+		return profiles;
+	}
+
+	public MicroserviceManagerProfileDto createManagerProfiles(MicroserviceCreateManagerProfileDto manager) {
+		MicroserviceManagerProfileDto managerDto = null;
+		try {
+			managerDto = managerClient.updateManagerProfile(manager);
+		} catch (Exception e) {
+			log.error("No se ha podido actualizar el gestor: " + e.getMessage());
+		}
+		return managerDto;
+	}
+
+	public MicroserviceManagerProfileDto deleteManagerProfiles(MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
+		MicroserviceManagerProfileDto managerDto = null;
+		try {
+			managerDto = managerClient.deleteManagerProfile(requestUpdateManagerProfile);
+		} catch (Exception e) {
+			log.error("No se ha podido actualizar el gestor: " + e.getMessage());
+		}
+		return managerDto;
+	}
+
+	public MicroserviceManagerProfileDto updateManagerProfiles(MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
+		MicroserviceManagerProfileDto managerDto = null;
+		try {
+			managerDto = managerClient.updateManagerProfile(requestUpdateManagerProfile);
 		} catch (Exception e) {
 			log.error("No se ha podido actualizar el gestor: " + e.getMessage());
 		}
