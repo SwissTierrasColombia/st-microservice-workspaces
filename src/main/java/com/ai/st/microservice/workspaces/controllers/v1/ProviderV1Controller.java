@@ -481,15 +481,7 @@ public class ProviderV1Controller {
 						"No se ha podido establecer conexión con el microservicio de usuarios.");
 			}
 
-			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
@@ -560,13 +552,6 @@ public class ProviderV1Controller {
 
 			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
@@ -636,13 +621,6 @@ public class ProviderV1Controller {
 
 			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
@@ -713,13 +691,6 @@ public class ProviderV1Controller {
 
 			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
@@ -788,13 +759,6 @@ public class ProviderV1Controller {
 
 			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
@@ -864,13 +828,6 @@ public class ProviderV1Controller {
 
 			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findProviderByAdministrator(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
@@ -940,13 +897,6 @@ public class ProviderV1Controller {
 
 			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
@@ -1015,13 +965,6 @@ public class ProviderV1Controller {
 
 			// get provider
 			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
-			}
-
 			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = null;
 
 			try {
