@@ -18,15 +18,21 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.DepartmentDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPackageDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPaginatedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
@@ -36,7 +42,10 @@ import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataPropertyDto;
+import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
@@ -84,6 +93,15 @@ public class ProviderBusiness {
 
 	@Autowired
 	private UserFeignClient userClient;
+
+	@Autowired
+	private ManagerBusiness managerBusiness;
+
+	@Autowired
+	private UserBusiness userBusiness;
+
+	@Autowired
+	private IMunicipalityService municipalityService;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -455,6 +473,164 @@ public class ProviderBusiness {
 		}
 
 		return listRequestsDto;
+	}
+
+	public MicroserviceRequestPaginatedDto getRequestsByManagerAndMunicipality(int page, Long managerCode,
+			String municipalityCode) throws BusinessException {
+
+		MicroserviceRequestPaginatedDto data = null;
+
+		try {
+
+			data = providerClient.getRequestsByManagerAndMunicipality(managerCode, municipalityCode, page);
+
+			List<MicroserviceRequestDto> requests = data.getItems();
+			for (MicroserviceRequestDto requestDto : requests) {
+				requestDto = this.completeInformationRequest(requestDto);
+			}
+
+		} catch (BusinessException e) {
+			log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
+		}
+
+		return data;
+	}
+
+	public MicroserviceRequestPaginatedDto getRequestsByManagerAndProvider(int page, Long managerCode, Long providerId)
+			throws BusinessException {
+
+		MicroserviceRequestPaginatedDto data = null;
+
+		try {
+
+			data = providerClient.getRequestsByManagerAndProvider(managerCode, providerId, page);
+
+			List<MicroserviceRequestDto> requests = data.getItems();
+			for (MicroserviceRequestDto requestDto : requests) {
+				requestDto = this.completeInformationRequest(requestDto);
+			}
+
+		} catch (BusinessException e) {
+			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
+		}
+
+		return data;
+	}
+
+	public List<MicroserviceRequestPackageDto> getRequestsByManagerAndPackage(Long managerCode, String packageLabel)
+			throws BusinessException {
+
+		List<MicroserviceRequestPackageDto> packages = new ArrayList<>();
+		List<MicroserviceRequestDto> requests = new ArrayList<>();
+
+		List<String> labels = new ArrayList<String>();
+
+		try {
+
+			if (packageLabel != null) {
+				requests = providerClient.getRequestsByManagerAndPackage(managerCode, packageLabel);
+			} else {
+				requests = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
+			}
+
+			for (MicroserviceRequestDto requestDto : requests) {
+
+				requestDto = this.completeInformationRequest(requestDto);
+
+				String packageRequest = requestDto.getPackageLabel();
+
+				if (!labels.contains(packageRequest)) {
+					MicroserviceRequestPackageDto data = new MicroserviceRequestPackageDto();
+					data.setPackageLabel(packageRequest);
+					data.getRequests().add(requestDto);
+					packages.add(data);
+				} else {
+
+					MicroserviceRequestPackageDto packageFound = packages.stream()
+							.filter(p -> p.getPackageLabel().equals(packageRequest)).findAny().orElse(null);
+					if (packageFound instanceof MicroserviceRequestPackageDto) {
+						packageFound.getRequests().add(requestDto);
+					}
+
+				}
+
+			}
+
+		} catch (BusinessException e) {
+			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
+		}
+
+		return packages;
+	}
+
+	public MicroserviceRequestDto completeInformationRequest(MicroserviceRequestDto requestDto) {
+
+		List<MicroserviceEmitterDto> emittersDto = new ArrayList<MicroserviceEmitterDto>();
+		for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
+			if (emitterDto.getEmitterType().equals("ENTITY")) {
+				try {
+					MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
+					emitterDto.setUser(managerDto);
+				} catch (Exception e) {
+					emitterDto.setUser(null);
+				}
+			} else {
+				try {
+					MicroserviceUserDto userDto = userBusiness.getUserById(emitterDto.getEmitterCode());
+					emitterDto.setUser(userDto);
+				} catch (Exception e) {
+					emitterDto.setUser(null);
+				}
+			}
+			emittersDto.add(emitterDto);
+		}
+
+		MunicipalityEntity municipalityEntity = municipalityService
+				.getMunicipalityByCode(requestDto.getMunicipalityCode());
+
+		if (municipalityEntity instanceof MunicipalityEntity) {
+			DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+
+			MunicipalityDto municipalityDto = new MunicipalityDto();
+			municipalityDto.setCode(municipalityEntity.getCode());
+			municipalityDto.setId(municipalityEntity.getId());
+			municipalityDto.setName(municipalityEntity.getName());
+			municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+					departmentEntity.getCode()));
+
+			requestDto.setEmitters(emittersDto);
+			requestDto.setMunicipality(municipalityDto);
+		}
+
+		for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+
+			if (supply.getDeliveredBy() != null) {
+
+				try {
+
+					MicroserviceUserDto userDto = userBusiness.getUserById(supply.getDeliveredBy());
+					supply.setUserDeliveryBy(userDto);
+				} catch (Exception e) {
+					supply.setUserDeliveryBy(null);
+				}
+
+			}
+
+		}
+
+		return requestDto;
 	}
 
 	public MicroserviceProviderDto getProviderById(Long providerId) {

@@ -22,6 +22,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPaginatedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
@@ -150,6 +151,23 @@ public interface ProviderFeignClient {
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceProviderDto updateProvider(MicroserviceUpdateProviderDto updateProviderDto);
 
+	@GetMapping("/api/providers-supplies/v1/requests/search-manager-municipality")
+	public MicroserviceRequestPaginatedDto getRequestsByManagerAndMunicipality(
+			@RequestParam(name = "manager", required = true) Long managerCode,
+			@RequestParam(name = "municipality", required = true) String municipalityCode,
+			@RequestParam(name = "page", required = true) Integer page) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/requests/search-manager-provider")
+	public MicroserviceRequestPaginatedDto getRequestsByManagerAndProvider(
+			@RequestParam(name = "manager", required = true) Long managerCode,
+			@RequestParam(name = "provider", required = true) Long providerId,
+			@RequestParam(name = "page", required = true) Integer page) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/requests/search-manager-package")
+	public List<MicroserviceRequestDto> getRequestsByManagerAndPackage(
+			@RequestParam(name = "manager", required = true) Long managerCode,
+			@RequestParam(name = "package_label", required = true) String packageLabel) throws BusinessException;
+
 	class Configuration {
 
 		@Bean
@@ -164,7 +182,5 @@ public interface ProviderFeignClient {
 		}
 
 	}
-
-
 
 }
