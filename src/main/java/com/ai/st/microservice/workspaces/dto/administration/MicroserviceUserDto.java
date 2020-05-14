@@ -5,7 +5,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 
 public class MicroserviceUserDto implements Serializable {
@@ -25,6 +28,7 @@ public class MicroserviceUserDto implements Serializable {
 	private List<MicroserviceManagerProfileDto> profilesManager;
 	private List<MicroserviceProviderProfileDto> profilesProvider;
 	private List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> rolesProvider;
+	private Object entity;
 
 	public MicroserviceUserDto() {
 		this.roles = new ArrayList<MicroserviceRoleDto>();
@@ -145,6 +149,14 @@ public class MicroserviceUserDto implements Serializable {
 	public void setRolesProvider(
 			List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> rolesProvider) {
 		this.rolesProvider = rolesProvider;
+	}
+
+	public Object getEntity() {
+		return entity;
+	}
+
+	public void setEntity(Object entity) {
+		this.entity = entity;
 	}
 
 }

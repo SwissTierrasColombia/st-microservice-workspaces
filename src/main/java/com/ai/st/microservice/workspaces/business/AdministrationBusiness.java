@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
+import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
@@ -47,6 +48,9 @@ public class AdministrationBusiness {
 
 	@Autowired
 	private ManagerFeignClient managerClient;
+
+	@Autowired
+	private OperatorFeignClient operatorClient;
 
 	@Autowired
 	private NotificationBusiness notificationBusiness;
@@ -690,7 +694,11 @@ public class AdministrationBusiness {
 						.filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
 
 				if (profileDirector instanceof MicroserviceManagerProfileDto) {
+
+					MicroserviceManagerDto managerDto = managerClient.findByUserCode(userDto.getId());
+
 					userDto.setProfilesManager(profiles);
+					userDto.setEntity(managerDto);
 					listUsersResponse.add(userDto);
 				}
 
@@ -703,11 +711,19 @@ public class AdministrationBusiness {
 						.filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
 
 				if (roleDirector != null) {
+
+					MicroserviceProviderDto providerDto = providerClient.findProviderByAdministrator(userDto.getId());
+
 					userDto.setRolesProvider(profiles);
+					userDto.setEntity(providerDto);
 					listUsersResponse.add(userDto);
 				}
 
 			} else {
+
+				MicroserviceOperatorDto operatorDto = operatorClient.findByUserCode(userDto.getId());
+				userDto.setEntity(operatorDto);
+
 				listUsersResponse.add(userDto);
 			}
 
