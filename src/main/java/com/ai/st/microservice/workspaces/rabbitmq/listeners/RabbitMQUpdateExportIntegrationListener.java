@@ -7,12 +7,16 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import java.io.File;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
 import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
@@ -31,11 +35,17 @@ import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IntegrationService;
 import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
+import com.ai.st.microservice.workspaces.utils.ZipUtil;
+
+import io.micrometer.core.instrument.MockClock;
 
 @Component
 public class RabbitMQUpdateExportIntegrationListener {
 
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+	@Value("${st.filesDirectory}")
+	private String stFilesDirectory;
 
 	@Autowired
 	private IntegrationBusiness integrationBusiness;
@@ -60,9 +70,6 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 	@Autowired
 	private IntegrationService integrationService;
-
-	@Autowired
-	private RabbitMQSenderService rabbitMQService;
 
 	@RabbitListener(queues = "${st.rabbitmq.queueUpdateExport.queue}", concurrency = "${st.rabbitmq.queueUpdateExport.concurrency}")
 	public void updateExport(MicroserviceIliExportResultDto resultExportDto) {
@@ -92,15 +99,19 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 					String municipalityCode = municipalityEntity.getCode();
 
-					// notify to file manager for move the file
-					String urlBase = "/" + municipalityCode.replace(" ", "_") + "/insumos/gestores/"
+					String urlBase = stFilesDirectory + "/"
+							+ workspaceEntity.getMunicipality().getCode().replace(" ", "_") + "/insumos/gestores/"
 							+ workspaceEntity.getManagerCode();
 
-					Path path = Paths.get(resultExportDto.getPathFile());
-					String fileName = path.getFileName().toString();
+					String zipName = RandomStringUtils.random(20, true, false);
 
-					String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName), urlBase,
-							true);
+					Path path = Paths.get(resultExportDto.getPathFile());
+					String originalFilename = path.getFileName().toString();
+					String fileExtension = FilenameUtils.getExtension(originalFilename);
+					String fileName = RandomStringUtils.random(20, true, false) + "." + fileExtension;
+
+					String urlDocumentaryRepository = ZipUtil.zipping(new File(resultExportDto.getPathFile()), zipName,
+							fileName, urlBase);
 
 					log.info("saving url file: " + urlDocumentaryRepository);
 

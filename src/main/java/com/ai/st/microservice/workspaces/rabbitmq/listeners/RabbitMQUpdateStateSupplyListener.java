@@ -1,16 +1,16 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import com.ai.st.microservice.workspaces.business.NotificationBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
@@ -26,15 +26,11 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
-import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
 @Component
 public class RabbitMQUpdateStateSupplyListener {
 
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
-
-	@Autowired
-	private RabbitMQSenderService rabbitMQService;
 
 	@Autowired
 	private SupplyBusiness supplyBusiness;
@@ -74,19 +70,9 @@ public class RabbitMQUpdateStateSupplyListener {
 
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
 
-				// save file with microservice file manager
-				String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
-						+ providerDto.getName().replace(" ", "_") + "/"
-						+ supplyRequestedDto.getTypeSupply().getName().replace(" ", "_");
-
-				String fileName = validationDto.getFilenameTemporal();
-				String fileExtension = FilenameUtils.getExtension(fileName);
-				Boolean zipFile = fileExtension.equalsIgnoreCase("zip") ? false : true;
-
 				List<String> urls = new ArrayList<String>();
-				String urlDocumentaryRepository = rabbitMQService.sendFile(StringUtils.cleanPath(fileName), urlBase,
-						zipFile);
-				urls.add(urlDocumentaryRepository);
+
+				urls.add(validationDto.getFilenameTemporal());
 
 				supplyBusiness.createSupply(requestDto.getMunicipalityCode(), validationDto.getObservations(),
 						supplyRequestedDto.getTypeSupply().getId(), urls, null, validationDto.getRequestId(),
@@ -102,6 +88,13 @@ public class RabbitMQUpdateStateSupplyListener {
 
 			} else {
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_REJECTED;
+
+				try {
+					FileUtils.deleteQuietly(new File(validationDto.getFilenameTemporal()));
+				} catch (Exception e) {
+					log.error("No se ha podido eliminar el insumo rechazado: " + e.getMessage());
+				}
+
 			}
 
 			// send notification provider

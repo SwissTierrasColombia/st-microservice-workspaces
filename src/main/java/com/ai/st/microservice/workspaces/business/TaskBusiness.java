@@ -35,6 +35,7 @@ import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataPropertyDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
 import com.google.gson.Gson;
@@ -332,13 +333,18 @@ public class TaskBusiness {
 							String portDecrypt = cryptoBusiness.decrypt(integrationEntity.getPort());
 							String schemaDecrypt = cryptoBusiness.decrypt(integrationEntity.getSchema());
 
+							WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
+
 							// supply cadastre
 							MicroserviceSupplyDto supplyCadastreDto = supplyClient
 									.findSupplyById(integrationEntity.getSupplyCadastreId());
 
+							String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace(" ", "_")
+									+ "/insumos/gestores/" + workspaceEntity.getManagerCode();
+
 							iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, databaseIntegrationPassword,
 									portDecrypt, schemaDecrypt, databaseIntegrationUsername, integrationId, true,
-									supplyCadastreDto.getModelVersion());
+									supplyCadastreDto.getModelVersion(), urlBase);
 
 							// modify integration state to generating product
 							integrationBusiness.updateStateToIntegration(integrationId,
