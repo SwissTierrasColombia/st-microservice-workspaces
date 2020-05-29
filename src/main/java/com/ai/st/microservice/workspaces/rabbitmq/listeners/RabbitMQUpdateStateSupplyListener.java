@@ -1,9 +1,7 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -14,15 +12,12 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.business.NotificationBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.UserBusiness;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceValidationDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
@@ -33,13 +28,7 @@ public class RabbitMQUpdateStateSupplyListener {
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
 	@Autowired
-	private SupplyBusiness supplyBusiness;
-
-	@Autowired
 	private ProviderFeignClient providerClient;
-
-	@Autowired
-	private ProviderBusiness providerBusiness;
 
 	@Autowired
 	private UserBusiness userBusiness;
@@ -57,34 +46,16 @@ public class RabbitMQUpdateStateSupplyListener {
 
 			log.info("updating supply ... " + validationDto.getSupplyRequestedId());
 
+			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+
 			Long supplyRequestedStateId = null;
 
 			MicroserviceRequestDto requestDto = providerClient.findRequestById(validationDto.getRequestId());
-			MicroserviceProviderDto providerDto = requestDto.getProvider();
 
 			if (validationDto.getIsValid()) {
 
-				MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
-						.filter(supply -> supply.getId().equals(validationDto.getSupplyRequestedId())).findAny()
-						.orElse(null);
-
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
-
-				List<String> urls = new ArrayList<String>();
-
-				urls.add(validationDto.getFilenameTemporal());
-
-				supplyBusiness.createSupply(requestDto.getMunicipalityCode(), validationDto.getObservations(),
-						supplyRequestedDto.getTypeSupply().getId(), urls, null, validationDto.getRequestId(),
-						validationDto.getUserCode(), providerDto.getId(), null, supplyRequestedDto.getModelVersion());
-
-				// Update request
-				MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
-				updateSupply.setDelivered(validationDto.getIsValid());
-				updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
-				updateSupply.setJustification("");
-				providerClient.updateSupplyRequested(validationDto.getRequestId(), supplyRequestedDto.getId(),
-						updateSupply);
+				updateSupply.setUrl(validationDto.getFilenameTemporal());
 
 			} else {
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_REJECTED;
@@ -101,16 +72,15 @@ public class RabbitMQUpdateStateSupplyListener {
 
 			try {
 
+				MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
+						.filter(supply -> supply.getId().equals(validationDto.getSupplyRequestedId())).findAny()
+						.orElse(null);
+
 				MunicipalityEntity municipalityEntity = municipalityService
 						.getMunicipalityByCode(requestDto.getMunicipalityCode());
 
-				List<MicroserviceProviderUserDto> providerUsers = providerBusiness
-						.getUsersByProvider(providerDto.getId(), null);
-
-				for (MicroserviceProviderUserDto providerUser : providerUsers) {
-
-					MicroserviceUserDto userDto = userBusiness.getUserById(providerUser.getUserCode());
-
+				MicroserviceUserDto userDto = userBusiness.getUserById(supplyRequestedDto.getDeliveredBy());
+				if (userDto instanceof MicroserviceUserDto) {
 					notificationBusiness.sendNotificationLoadOfInputs(userDto.getEmail(), userDto.getId(),
 							validationDto.getIsValid(), municipalityEntity.getName(),
 							municipalityEntity.getDepartment().getName(), validationDto.getRequestId().toString(),
@@ -121,14 +91,12 @@ public class RabbitMQUpdateStateSupplyListener {
 				log.error("Error enviando notificación para informar de la carga del insumo: " + e.getMessage());
 			}
 
-			// TODO: Send notification manager (validation)
-
 			// update request
-			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
 			updateSupply.setDelivered(validationDto.getIsValid());
 			updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
 			updateSupply.setJustification("");
 			updateSupply.setDeliveryBy(null);
+			updateSupply.setObservations(validationDto.getObservations());
 			providerClient.updateSupplyRequested(validationDto.getRequestId(), validationDto.getSupplyRequestedId(),
 					updateSupply);
 

@@ -10,6 +10,9 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
 	private String justification;
 	private Long supplyRequestedStateId;
 	private Long deliveryBy;
+	private String url;
+	private String observations;
+	private String ftp;
 
 	public MicroserviceUpdateSupplyRequestedDto() {
 
@@ -45,6 +48,30 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
 
 	public void setDeliveryBy(Long deliveryBy) {
 		this.deliveryBy = deliveryBy;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getObservations() {
+		return observations;
+	}
+
+	public void setObservations(String observations) {
+		this.observations = observations;
+	}
+
+	public String getFtp() {
+		return ftp;
+	}
+
+	public void setFtp(String ftp) {
+		this.ftp = ftp;
 	}
 
 }

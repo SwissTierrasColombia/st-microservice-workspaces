@@ -34,10 +34,7 @@ import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IntegrationService;
-import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
-
-import io.micrometer.core.instrument.MockClock;
 
 @Component
 public class RabbitMQUpdateExportIntegrationListener {

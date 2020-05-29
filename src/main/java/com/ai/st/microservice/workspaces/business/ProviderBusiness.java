@@ -194,6 +194,8 @@ public class ProviderBusiness {
 
 		Long supplyRequestedStateId = null;
 
+		MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+
 		if (delivered == true) {
 
 			// send supply to microservice supplies
@@ -285,17 +287,23 @@ public class ProviderBusiness {
 								urlDocumentaryRepository, supplyRequested.getId(), userCode,
 								supplyRequested.getModelVersion());
 
+						updateSupply.setUrl(null);
+						updateSupply.setFtp(null);
+
 					} else {
 
 						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
 
 						urls.add(urlDocumentaryRepository);
 
-						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations, typeSupplyId, urls,
-								url, requestId, userCode, providerDto.getId(), null, null);
+						updateSupply.setUrl(urls.get(0));
+						updateSupply.setObservations(observations);
+
 					}
 				}
 			} else {
+				updateSupply.setFtp(url);
+				updateSupply.setObservations(observations);
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
 			}
 
@@ -307,7 +315,7 @@ public class ProviderBusiness {
 
 		// Update request
 		try {
-			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+
 			updateSupply.setDelivered(delivered);
 			updateSupply.setDeliveryBy(userCode);
 			updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
@@ -427,6 +435,29 @@ public class ProviderBusiness {
 		}
 
 		MicroserviceRequestDto requestUpdatedDto = null;
+
+		try {
+
+			for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+
+				if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
+
+					List<String> urls = new ArrayList<>();
+					if (supplyRequested.getUrl() != null) {
+						urls.add(supplyRequested.getUrl());
+					}
+
+					supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
+							supplyRequested.getTypeSupply().getId(), urls, supplyRequested.getFtp(), requestId,
+							userCode, providerDto.getId(), null, supplyRequested.getModelVersion());
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("No se ha podido crear los insumos: " + e.getMessage());
+			throw new BusinessException("No se ha podido disponer los insumos al municipio.");
+		}
 
 		try {
 			requestUpdatedDto = providerClient.closeRequest(requestId, userCode);
