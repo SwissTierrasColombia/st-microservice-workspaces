@@ -1,10 +1,12 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
@@ -12,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
@@ -46,7 +47,6 @@ import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
-import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 @Component
@@ -78,9 +78,6 @@ public class ProviderBusiness {
 
 	@Autowired
 	private TaskFeignClient taskClient;
-
-	@Autowired
-	private RabbitMQSenderService rabbitMQService;
 
 	@Autowired
 	private SupplyBusiness supplyBusiness;
@@ -197,6 +194,8 @@ public class ProviderBusiness {
 
 		Long supplyRequestedStateId = null;
 
+		MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+
 		if (delivered == true) {
 
 			// send supply to microservice supplies
@@ -268,35 +267,43 @@ public class ProviderBusiness {
 					String supplyExtension = loadedFileExtensions.stream().filter(ext -> ext.equalsIgnoreCase("xtf"))
 							.findAny().orElse("");
 
+					try {
+						FileUtils.deleteQuietly(new File(filePathTemporal));
+					} catch (Exception e) {
+						log.error("No se ha podido eliminar el archivo temporal: " + e.getMessage());
+					}
+
+					// save file
+					String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
+							+ providerDto.getName().replace(" ", "_") + "/"
+							+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
+					String urlDocumentaryRepository = fileBusiness.saveFileToSystem(fileUploaded, urlBase, zipFile);
+
 					if (!supplyExtension.isEmpty()) {
 						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
 
 						// validate xtf with ilivalidator
-						iliBusiness.startValidation(requestId, observations, filePathTemporal, fileNameRandom,
-								supplyRequested.getId(), userCode, supplyRequested.getModelVersion());
+						iliBusiness.startValidation(requestId, observations, urlDocumentaryRepository,
+								urlDocumentaryRepository, supplyRequested.getId(), userCode,
+								supplyRequested.getModelVersion());
+
+						updateSupply.setUrl(null);
+						updateSupply.setFtp(null);
 
 					} else {
+
 						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
 
-						// save file with microservice file manager
-						String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_")
-								+ "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
-								+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
-
-						String urlDocumentaryRepository = rabbitMQService
-								.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase, zipFile);
-
-						if (urlDocumentaryRepository == null) {
-							throw new BusinessException(
-									"No se ha podido guardar el archivo en el repositorio documental.");
-						}
 						urls.add(urlDocumentaryRepository);
 
-						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), observations, typeSupplyId, urls,
-								url, requestId, userCode, providerDto.getId(), null, null);
+						updateSupply.setUrl(urls.get(0));
+						updateSupply.setObservations(observations);
+
 					}
 				}
 			} else {
+				updateSupply.setFtp(url);
+				updateSupply.setObservations(observations);
 				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
 			}
 
@@ -308,7 +315,7 @@ public class ProviderBusiness {
 
 		// Update request
 		try {
-			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+
 			updateSupply.setDelivered(delivered);
 			updateSupply.setDeliveryBy(userCode);
 			updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
@@ -428,6 +435,29 @@ public class ProviderBusiness {
 		}
 
 		MicroserviceRequestDto requestUpdatedDto = null;
+
+		try {
+
+			for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+
+				if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
+
+					List<String> urls = new ArrayList<>();
+					if (supplyRequested.getUrl() != null) {
+						urls.add(supplyRequested.getUrl());
+					}
+
+					supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
+							supplyRequested.getTypeSupply().getId(), urls, supplyRequested.getFtp(), requestId,
+							userCode, providerDto.getId(), null, supplyRequested.getModelVersion());
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("No se ha podido crear los insumos: " + e.getMessage());
+			throw new BusinessException("No se ha podido disponer los insumos al municipio.");
+		}
 
 		try {
 			requestUpdatedDto = providerClient.closeRequest(requestId, userCode);

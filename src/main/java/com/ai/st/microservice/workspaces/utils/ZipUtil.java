@@ -4,15 +4,18 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.multipart.MultipartFile;
 
 public class ZipUtil {
 
@@ -135,10 +138,9 @@ public class ZipUtil {
 
 			}
 
-			
 		} catch (IOException e) {
 			log.error("Error unzipping archive: " + e.getMessage());
-		}finally {
+		} finally {
 			try {
 				zipFile.close();
 			} catch (IOException e) {
@@ -147,6 +149,62 @@ public class ZipUtil {
 		}
 
 		return true;
+	}
+
+	public static String zipping(MultipartFile file, String zipName, String fileName, String namespace) {
+
+		try {
+
+			String path = namespace + File.separatorChar + zipName + ".zip";
+
+			new File(namespace).mkdirs();
+			File f = new File(path);
+			if (f.exists()) {
+				f.delete();
+			}
+			ZipOutputStream o = new ZipOutputStream(new FileOutputStream(f));
+			ZipEntry e = new ZipEntry(fileName);
+			o.putNextEntry(e);
+			byte[] data = file.getBytes();
+			o.write(data, 0, data.length);
+			o.closeEntry();
+			o.close();
+
+			return path;
+
+		} catch (IOException e) {
+			log.error("Error zipping archive: " + e.getMessage());
+		}
+
+		return null;
+	}
+
+	public static String zipping(File file, String zipName, String fileName, String namespace) {
+
+		try {
+
+			String path = namespace + File.separatorChar + zipName + ".zip";
+
+			new File(namespace).mkdirs();
+			File f = new File(path);
+			if (f.exists()) {
+				f.delete();
+			}
+			ZipOutputStream o = new ZipOutputStream(new FileOutputStream(f));
+			ZipEntry e = new ZipEntry(fileName);
+			o.putNextEntry(e);
+			byte[] data = Files.readAllBytes(file.toPath());
+			o.write(data, 0, data.length);
+			o.closeEntry();
+			o.close();
+
+			return path;
+
+		} catch (IOException e) {
+			log.error("Error zipping archive: " + e.getMessage());
+		}
+
+		return null;
 	}
 
 }

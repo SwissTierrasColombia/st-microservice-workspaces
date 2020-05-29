@@ -21,6 +21,9 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 	private Boolean canUpload;
 	private Long deliveredBy;
 	private MicroserviceUserDto userDeliveryBy;
+	private String url;
+	private String observations;
+	private String ftp;
 
 	public MicroserviceSupplyRequestedDto() {
 
@@ -120,6 +123,30 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 
 	public void setUserDeliveryBy(MicroserviceUserDto userDeliveryBy) {
 		this.userDeliveryBy = userDeliveryBy;
+	}
+
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String getObservations() {
+		return observations;
+	}
+
+	public void setObservations(String observations) {
+		this.observations = observations;
+	}
+
+	public String getFtp() {
+		return ftp;
+	}
+
+	public void setFtp(String ftp) {
+		this.ftp = ftp;
 	}
 
 }

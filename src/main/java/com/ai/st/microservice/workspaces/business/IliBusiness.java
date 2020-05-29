@@ -21,11 +21,15 @@ public class IliBusiness {
 	@Value("${st.temporalDirectory}")
 	private String stTemporalDirectory;
 
+	@Value("${st.filesDirectory}")
+	private String stFilesDirectory;
+
 	@Autowired
 	private IliFeignClient iliClient;
 
 	public void startExport(String hostname, String database, String password, String port, String schema,
-			String username, Long integrationId, Boolean withStats, String modelVersion) throws BusinessException {
+			String username, Long integrationId, Boolean withStats, String modelVersion, String namespace)
+			throws BusinessException {
 
 		try {
 
@@ -41,8 +45,8 @@ public class IliBusiness {
 			exportDto.setWithStats(withStats);
 			exportDto.setVersionModel(modelVersion);
 
-			String randomFilename = RandomStringUtils.random(15, true, false).toLowerCase();
-			exportDto.setPathFileXTF(stTemporalDirectory + File.separator + randomFilename + ".xtf");
+			String randomFilename = RandomStringUtils.random(20, true, false).toLowerCase();
+			exportDto.setPathFileXTF(stFilesDirectory + namespace + File.separator + randomFilename + ".xtf");
 
 			iliClient.startExport(exportDto);
 

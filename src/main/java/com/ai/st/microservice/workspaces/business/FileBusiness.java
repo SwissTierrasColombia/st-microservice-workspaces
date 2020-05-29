@@ -13,11 +13,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ai.st.microservice.workspaces.utils.ZipUtil;
+
 @Component
 public class FileBusiness {
 
 	@Value("${st.temporalDirectory}")
 	private String stTemporalDirectory;
+
+	@Value("${st.filesDirectory}")
+	private String stFilesDirectory;
 
 	private final static Logger log = LoggerFactory.getLogger(FileBusiness.class);
 
@@ -48,6 +53,34 @@ public class FileBusiness {
 			log.error("It has not been possible delete the file: " + e.getMessage());
 		}
 
+	}
+
+	public String saveFileToSystem(MultipartFile file, String namespace, Boolean zip) {
+
+		try {
+
+			String pathFile = null;
+
+			String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+			String fileName = RandomStringUtils.random(20, true, false) + "." + fileExtension;
+
+			namespace = stFilesDirectory + namespace;
+
+			if (zip) {
+				String zipName = RandomStringUtils.random(20, true, false);
+				pathFile = ZipUtil.zipping(file, zipName, fileName, namespace);
+			} else {
+				pathFile = namespace + File.separatorChar + StringUtils.cleanPath(fileName);
+				FileUtils.writeByteArrayToFile(new File(pathFile), file.getBytes());
+			}
+
+			return pathFile;
+
+		} catch (IOException e) {
+			log.error("Error saving file: " + e.getMessage());
+		}
+
+		return null;
 	}
 
 }

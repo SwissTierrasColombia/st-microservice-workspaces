@@ -8,14 +8,12 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
@@ -73,7 +71,6 @@ import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
-import com.ai.st.microservice.workspaces.services.RabbitMQSenderService;
 
 import feign.FeignException;
 
@@ -129,9 +126,6 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private IIntegrationService integrationService;
-
-	@Autowired
-	private RabbitMQSenderService rabbitMQSenderService;
 
 	@Autowired
 	private IIntegrationStateService integrationStateService;
@@ -197,25 +191,14 @@ public class WorkspaceBusiness {
 			throw new BusinessException("Ya se ha creado un espacio de trabajo para el municipio.");
 		}
 
-		// save file with microservice file manager
 		String urlDocumentaryRepository = null;
 		try {
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
-
-			String fileExtension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
-			String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + fileExtension;
-			fileBusiness.loadFileToSystem(supportFile, fileNameRandom);
-
-			urlDocumentaryRepository = rabbitMQSenderService.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase,
-					true);
+			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
 
 		} catch (Exception e) {
 			log.error("No se ha podido cargar el soporte gestor: " + e.getMessage());
-			throw new BusinessException("No se ha podido cargar el soporte.");
-		}
-
-		if (urlDocumentaryRepository == null) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -419,25 +402,14 @@ public class WorkspaceBusiness {
 			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
 		}
 
-		// save file with microservice file manager
 		String urlDocumentaryRepository = null;
 		try {
 
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
-
-			String fileExtension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
-			String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + fileExtension;
-			fileBusiness.loadFileToSystem(supportFile, fileNameRandom);
-
-			urlDocumentaryRepository = rabbitMQSenderService.sendFile(StringUtils.cleanPath(fileNameRandom), urlBase,
-					true);
+			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
 
 		} catch (Exception e) {
 			log.error("No se ha podido cargar el soporte operador: " + e.getMessage());
-			throw new BusinessException("No se ha podido cargar el soporte.");
-		}
-
-		if (urlDocumentaryRepository == null) {
 			throw new BusinessException("No se ha podido cargar el soporte.");
 		}
 
@@ -1626,9 +1598,12 @@ public class WorkspaceBusiness {
 			MicroserviceSupplyDto supplyCadastreDto = supplyClient
 					.findSupplyById(integrationEntity.getSupplyCadastreId());
 
+			String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace(" ", "_") + "/insumos/gestores/"
+					+ workspaceEntity.getManagerCode();
+
 			iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, databaseIntegrationPassword, portDecrypt,
 					schemaDecrypt, databaseIntegrationUsername, integrationId, false,
-					supplyCadastreDto.getModelVersion());
+					supplyCadastreDto.getModelVersion(), urlBase);
 
 			// modify integration state
 			String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
