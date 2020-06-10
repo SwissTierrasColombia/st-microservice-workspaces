@@ -22,6 +22,7 @@ public class MicroserviceDeliveryDto implements Serializable {
 	private List<MicroserviceSupplyDeliveryDto> supplies;
 	private MicroserviceManagerDto manager;
 	private MunicipalityDto municipality;
+	private String downloadReportUrl;
 
 	public MicroserviceDeliveryDto() {
 		this.supplies = new ArrayList<>();
@@ -105,6 +106,14 @@ public class MicroserviceDeliveryDto implements Serializable {
 
 	public void setMunicipality(MunicipalityDto municipality) {
 		this.municipality = municipality;
+	}
+
+	public String getDownloadReportUrl() {
+		return downloadReportUrl;
+	}
+
+	public void setDownloadReportUrl(String downloadReportUrl) {
+		this.downloadReportUrl = downloadReportUrl;
 	}
 
 }

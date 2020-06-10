@@ -6,14 +6,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import javax.servlet.ServletContext;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,6 +64,8 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+import com.ai.st.microservice.workspaces.utils.FileTool;
+import com.ai.st.microservice.workspaces.utils.ZipUtil;
 import com.google.common.io.Files;
 
 import feign.FeignException;
@@ -74,6 +80,9 @@ import io.swagger.annotations.ApiResponses;
 public class WorkspaceV1Controller {
 
 	private final Logger log = LoggerFactory.getLogger(WorkspaceV1Controller.class);
+
+	@Value("${st.temporalDirectory}")
+	private String stTemporalDirectory;
 
 	@Autowired
 	private ManagerFeignClient managerClient;
@@ -1180,13 +1189,31 @@ public class WorkspaceV1Controller {
 					throw new InputValidationException("El operador no tiene acceso al insumo.");
 				}
 
-				workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId());
+				workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId(),
+						userDtoSession.getId());
 
 			}
 
-			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
+			String pathFile = null;
 
-			String pathFile = attachment.getUrlDocumentaryRepository();
+			// this supply has not file for download
+			if (supplyDto.getUrl() != null) {
+
+				String randomCode = RandomStringUtils.random(10, false, true);
+
+				String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + ".txt";
+
+				File fileSupply = FileTool.createSimpleFile(supplyDto.getUrl(), filename);
+				File fileObservations = FileTool.createSimpleFile(supplyDto.getObservations(),
+						stTemporalDirectory + File.separatorChar + "observaciones_" + randomCode + ".txt");
+
+				pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileSupply, fileObservations)),
+						"insumo_" + randomCode, stTemporalDirectory);
+
+			} else {
+				MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
+				pathFile = attachment.getUrlDocumentaryRepository();
+			}
 
 			Path path = Paths.get(pathFile);
 			String fileName = path.getFileName().toString();
@@ -1372,7 +1399,7 @@ public class WorkspaceV1Controller {
 
 	@RequestMapping(value = "operators/deliveries", method = RequestMethod.GET)
 	@ApiOperation(value = "Get deliveries")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get deliveries", response = BasicResponseDto.class),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
 	public ResponseEntity<?> getSuppliesOperator(@RequestHeader("authorization") String headerAuthorization) {
@@ -1506,6 +1533,59 @@ public class WorkspaceV1Controller {
 				.contentType(mediaType).contentLength(file.length())
 				.header("extension", Files.getFileExtension(file.getName())).body(resource);
 
+	}
+
+	@RequestMapping(value = "operators/deliveries/closed", method = RequestMethod.GET)
+	@ApiOperation(value = "Get deliveries closed")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get deliveries closed", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> getDeliveriesClosed(@RequestHeader("authorization") String headerAuthorization,
+			@RequestParam(required = false, name = "municipality") Long municipalityId) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get operator
+			MicroserviceOperatorDto operatorDto = null;
+			try {
+				operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de operadores.");
+			}
+
+			responseDto = operatorBusiness.getDeliveriesClosedByOperator(operatorDto.getId(), municipalityId);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getDeliveriesClosed#Microservice ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getDeliveriesClosed#Business ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getDeliveriesClosed#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
 }

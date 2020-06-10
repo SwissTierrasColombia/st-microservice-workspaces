@@ -207,4 +207,35 @@ public class ZipUtil {
 		return null;
 	}
 
+	public static String zipping(List<File> files, String zipName, String namespace) {
+
+		try {
+
+			String path = namespace + File.separatorChar + zipName + ".zip";
+
+			new File(namespace).mkdirs();
+			File f = new File(path);
+			if (f.exists()) {
+				f.delete();
+			}
+			ZipOutputStream o = new ZipOutputStream(new FileOutputStream(f));
+
+			for (File file : files) {
+				ZipEntry e = new ZipEntry(file.getName());
+				o.putNextEntry(e);
+				byte[] data = Files.readAllBytes(file.toPath());
+				o.write(data, 0, data.length);
+				o.closeEntry();
+			}
+
+			o.close();
+
+			return path;
+		} catch (IOException e) {
+			log.error("Error zipping archive: " + e.getMessage());
+		}
+
+		return null;
+	}
+
 }

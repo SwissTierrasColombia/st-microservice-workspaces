@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces.dto.operators;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 
 public class MicroserviceSupplyDeliveryDto implements Serializable {
@@ -16,6 +17,9 @@ public class MicroserviceSupplyDeliveryDto implements Serializable {
 	private String observations;
 	private Long supplyCode;
 	private MicroserviceSupplyDto supply;
+	private Long downloadedBy;
+	private String downloadReportUrl;
+	private MicroserviceUserDto userDownloaded;
 
 	public MicroserviceSupplyDeliveryDto() {
 
@@ -75,6 +79,30 @@ public class MicroserviceSupplyDeliveryDto implements Serializable {
 
 	public void setSupply(MicroserviceSupplyDto supply) {
 		this.supply = supply;
+	}
+
+	public Long getDownloadedBy() {
+		return downloadedBy;
+	}
+
+	public void setDownloadedBy(Long downloadedBy) {
+		this.downloadedBy = downloadedBy;
+	}
+
+	public String getDownloadReportUrl() {
+		return downloadReportUrl;
+	}
+
+	public void setDownloadReportUrl(String downloadReportUrl) {
+		this.downloadReportUrl = downloadReportUrl;
+	}
+
+	public MicroserviceUserDto getUserDownloaded() {
+		return userDownloaded;
+	}
+
+	public void setUserDownloaded(MicroserviceUserDto userDownloaded) {
+		this.userDownloaded = userDownloaded;
 	}
 
 }
