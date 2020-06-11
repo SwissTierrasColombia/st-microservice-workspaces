@@ -14,8 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDownloadSupplyIndividualDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDownloadSupplyTotalDto;
+import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDownloadSupplyDto;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -24,13 +23,9 @@ import feign.form.spring.SpringFormEncoder;
 @FeignClient(name = "st-microservice-reports", configuration = ReportFeignClient.Configuration.class)
 public interface ReportFeignClient {
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/download-supplies-individual", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceReportInformationDto createReportDownloadSuppliesIndiviual(
-			@RequestBody MicroserviceRequestReportDownloadSupplyIndividualDto data);
-
-	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/download-supplies-total", consumes = APPLICATION_JSON_VALUE)
+	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/download-supplies", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceReportInformationDto createReportDownloadSuppliesTotal(
-			@RequestBody MicroserviceRequestReportDownloadSupplyTotalDto data);
+			@RequestBody MicroserviceRequestReportDownloadSupplyDto data);
 
 	class Configuration {
 
