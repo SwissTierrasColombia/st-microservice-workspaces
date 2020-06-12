@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
+import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
 import com.ai.st.microservice.workspaces.business.OperatorBusiness;
 import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
@@ -49,6 +50,7 @@ import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
@@ -64,6 +66,7 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 import com.google.common.io.Files;
@@ -104,6 +107,9 @@ public class WorkspaceV1Controller {
 
 	@Autowired
 	private OperatorBusiness operatorBusiness;
+
+	@Autowired
+	private MunicipalityBusiness municipalityBusiness;
 
 	@Autowired
 	private WorkspaceOperatorBusiness workspaceOperatorBusiness;
@@ -1201,14 +1207,33 @@ public class WorkspaceV1Controller {
 
 				String randomCode = RandomStringUtils.random(10, false, true);
 
-				String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + ".txt";
+				String typeSupplyName = supplyDto.getTypeSupply().getName().replace(" ", "_");
 
-				File fileSupply = FileTool.createSimpleFile(supplyDto.getUrl(), filename);
-				File fileObservations = FileTool.createSimpleFile(supplyDto.getObservations(),
-						stTemporalDirectory + File.separatorChar + "observaciones_" + randomCode + ".txt");
+				String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + "_"
+						+ typeSupplyName + ".txt";
 
-				pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileSupply, fileObservations)),
-						"insumo_" + randomCode, stTemporalDirectory);
+				MunicipalityDto municipalityDto = municipalityBusiness
+						.getMunicipalityByCode(supplyDto.getMunicipalityCode());
+
+				String content = "***********************************************" + "\n";
+				content += "Sistema de transición Barrido Predial \n";
+				content += "Fecha de Cargue del Insumo: " + DateTool.formatDate(supplyDto.getCreatedAt(), "yyyy-mm-dd") + "\n";
+				content += "***********************************************" + "\n";
+				content += "Código de Municipio: " + municipalityDto.getCode() + "\n";
+				content += "Municipio: " + municipalityDto.getName() + "\n";
+				content += "Departamento: " + municipalityDto.getDepartment().getName() + "\n";
+				content += "***********************************************" + "\n";
+				content += "Nombre Insumo: " + typeSupplyName + "\n";
+				content += "Proveedor: " + supplyDto.getTypeSupply().getProvider().getName() + "\n";
+				content += "***********************************************" + "\n";
+				content += "URL: " + supplyDto.getUrl() + "\n";
+				content += "Observaciones: " + supplyDto.getObservations() + "\n";
+				content += "***********************************************" + "\n";
+
+				File fileSupply = FileTool.createSimpleFile(content, filename);
+
+				pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileSupply)), "insumo_" + randomCode,
+						stTemporalDirectory);
 
 			} else {
 				MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
