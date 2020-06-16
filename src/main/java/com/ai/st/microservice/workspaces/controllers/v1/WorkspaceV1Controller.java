@@ -1217,7 +1217,7 @@ public class WorkspaceV1Controller {
 
 				String content = "***********************************************" + "\n";
 				content += "Sistema de transición Barrido Predial \n";
-				content += "Fecha de Cargue del Insumo: " + DateTool.formatDate(supplyDto.getCreatedAt(), "yyyy-mm-dd") + "\n";
+				content += "Fecha de Cargue del Insumo: " + DateTool.formatDate(supplyDto.getCreatedAt(), "yyyy-MM-dd") + "\n";
 				content += "***********************************************" + "\n";
 				content += "Código de Municipio: " + municipalityDto.getCode() + "\n";
 				content += "Municipio: " + municipalityDto.getName() + "\n";
