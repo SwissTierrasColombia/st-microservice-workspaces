@@ -271,7 +271,7 @@ public class WorkspaceOperatorBusiness {
 			throw new BusinessException("No se ha encontrado el gestor.");
 		}
 
-		String format = "yyyy-mm-dd hh:mm:ss";
+		String format = "yyyy-MM-dd hh:mm:ss";
 
 		// configuration params
 		String namespace = "/" + deliveryDto.getMunicipalityCode() + "/reportes/entregas/" + deliveryDto.getId() + "/";
