@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceAddUserToOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
@@ -21,6 +22,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateOperatorDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
@@ -41,6 +43,9 @@ public class OperatorBusiness {
 
 	@Autowired
 	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private UserBusiness userBusiness;
 
 	@Autowired
 	private IMunicipalityService municipalityService;
@@ -126,6 +131,15 @@ public class OperatorBusiness {
 						log.error("Error consultando insumo: " + e.getMessage());
 					}
 
+					if (supplyDeliveryDto.getDownloadedBy() != null) {
+						try {
+							MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+							supplyDeliveryDto.setUserDownloaded(userDto);
+						} catch (Exception e) {
+							log.error("Error consultando usuario: " + e.getMessage());
+						}
+					}
+
 				}
 
 			}
@@ -137,7 +151,7 @@ public class OperatorBusiness {
 		return deliveries;
 	}
 
-	public MicroserviceDeliveryDto updateSupplyDeliveredDownloaded(Long deliveryId, Long supplyId)
+	public MicroserviceDeliveryDto updateSupplyDeliveredDownloaded(Long deliveryId, Long supplyId, Long userCode)
 			throws DisconnectedMicroserviceException {
 
 		MicroserviceDeliveryDto deliveryDto = null;
@@ -146,6 +160,7 @@ public class OperatorBusiness {
 
 			MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
 			supplyDelivered.setDownloaded(true);
+			supplyDelivered.setDownloadedBy(userCode);
 
 			deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
 
@@ -234,7 +249,7 @@ public class OperatorBusiness {
 
 		return users;
 	}
-	
+
 	public MicroserviceOperatorDto addOperator(MicroserviceCreateOperatorDto operator) {
 		MicroserviceOperatorDto operatorDto = null;
 		try {
@@ -264,7 +279,7 @@ public class OperatorBusiness {
 		}
 		return operatorDto;
 	}
-	
+
 	public MicroserviceOperatorDto updateOperator(MicroserviceUpdateOperatorDto operator) {
 		MicroserviceOperatorDto operatorDto = null;
 		try {
@@ -273,6 +288,120 @@ public class OperatorBusiness {
 			log.error("No se ha podido actualizar el operador: " + e.getMessage());
 		}
 		return operatorDto;
+	}
+
+	public MicroserviceDeliveryDto updateSupplyDeliveredReportURL(Long deliveryId, Long supplyId, String reportUrl) {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		try {
+
+			MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
+			supplyDelivered.setReportUrl(reportUrl);
+
+			deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
+
+		} catch (Exception e) {
+			log.error("Error actualizando la url del reporte de descarga del insumo: " + e.getMessage());
+		}
+
+		return deliveryDto;
+	}
+
+	public MicroserviceDeliveryDto updateReportDelivery(Long deliveryId, String reportUrl) {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+
+		try {
+
+			MicroserviceUpdateDeliveryDto data = new MicroserviceUpdateDeliveryDto();
+			data.setReportUrl(reportUrl);
+
+			deliveryDto = operatorClient.updateDelivery(deliveryId, data);
+
+		} catch (Exception e) {
+			log.error("Error actualizando el reporte de descarga de la entrega: " + e.getMessage());
+		}
+
+		return deliveryDto;
+	}
+
+	public List<MicroserviceDeliveryDto> getDeliveriesClosedByOperator(Long operatorId, Long municipalityId)
+			throws BusinessException {
+
+		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
+
+		try {
+
+			String municipalityCode = null;
+
+			if (municipalityId != null) {
+
+				MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+				if (!(municipalityEntity instanceof MunicipalityEntity)) {
+					throw new BusinessException("No se ha encontrado el municipio");
+				}
+
+				municipalityCode = municipalityEntity.getCode();
+
+			}
+
+			deliveries = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode, false);
+
+			for (MicroserviceDeliveryDto deliveryDto : deliveries) {
+
+				try {
+					MicroserviceManagerDto managerDto = managerClient.findById(deliveryDto.getManagerCode());
+					deliveryDto.setManager(managerDto);
+				} catch (Exception e) {
+					log.error("Error consultando gestor: " + e.getMessage());
+				}
+
+				try {
+					MunicipalityEntity municipalityEntity = municipalityService
+							.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
+
+					MunicipalityDto municipalityDto = new MunicipalityDto();
+					municipalityDto.setCode(municipalityEntity.getCode());
+					municipalityDto.setId(municipalityEntity.getId());
+					municipalityDto.setName(municipalityEntity.getName());
+					deliveryDto.setMunicipality(municipalityDto);
+				} catch (Exception e) {
+
+				}
+
+				List<MicroserviceSupplyDeliveryDto> supplyDeliveriesDto = deliveryDto.getSupplies();
+
+				for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
+
+					try {
+
+						MicroserviceSupplyDto supplyDto = supplyBusiness
+								.getSupplyById(supplyDeliveryDto.getSupplyCode());
+						supplyDeliveryDto.setSupply(supplyDto);
+
+					} catch (Exception e) {
+						log.error("Error consultando insumo: " + e.getMessage());
+					}
+
+					if (supplyDeliveryDto.getDownloadedBy() != null) {
+						try {
+							MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+							supplyDeliveryDto.setUserDownloaded(userDto);
+						} catch (Exception e) {
+							log.error("Error consultando usuario: " + e.getMessage());
+						}
+					}
+
+				}
+
+			}
+
+		} catch (Exception e) {
+			log.error("Error consultando las entregas cerradas: " + e.getMessage());
+		}
+
+		return deliveries;
 	}
 
 }

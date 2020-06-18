@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
@@ -61,6 +62,26 @@ public class MunicipalityBusiness {
 		}
 
 		return listMunicipalitiesDto;
+	}
+
+	public MunicipalityDto getMunicipalityByCode(String code) {
+
+		MunicipalityDto municipalityDto = null;
+
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityByCode(code);
+		if (municipalityEntity instanceof MunicipalityEntity) {
+			municipalityDto = new MunicipalityDto();
+			municipalityDto.setCode(municipalityEntity.getCode());
+			municipalityDto.setId(municipalityEntity.getId());
+			municipalityDto.setName(municipalityEntity.getName());
+
+			DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+			municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+					departmentEntity.getCode()));
+
+		}
+
+		return municipalityDto;
 	}
 
 }

@@ -1,8 +1,17 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import javax.servlet.ServletContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +37,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateOperato
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
+import com.google.common.io.Files;
 
 import feign.FeignException;
 import io.swagger.annotations.Api;
@@ -50,9 +60,12 @@ public class OperatorV1Controller {
 
 	@Autowired
 	private OperatorFeignClient operatorClient;
-	
+
 	@Autowired
 	private OperatorBusiness operatorBusiness;
+
+	@Autowired
+	private ServletContext servletContext;
 
 	@RequestMapping(value = "/deliveries/{deliveryId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Disable delivery")
@@ -106,9 +119,7 @@ public class OperatorV1Controller {
 
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
-	
-	
-	
+
 	@RequestMapping(value = "", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Create operator")
 	@ApiResponses(value = {
@@ -134,8 +145,7 @@ public class OperatorV1Controller {
 
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
-	
-	
+
 	@RequestMapping(value = "/{operatorId}/enable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Activate operator")
 	@ApiResponses(value = {
@@ -173,7 +183,7 @@ public class OperatorV1Controller {
 
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
-	
+
 	@RequestMapping(value = "/{operatorId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Disable operator")
 	@ApiResponses(value = {
@@ -211,7 +221,7 @@ public class OperatorV1Controller {
 
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
-	
+
 	@RequestMapping(value = "", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Update operator")
 	@ApiResponses(value = {
@@ -236,6 +246,138 @@ public class OperatorV1Controller {
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/deliveries/{deliveryId}/reports-individual/{supplyId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Download report individual")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Download report individual"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> reportDownloadSupplyIndividual(@PathVariable Long deliveryId, @PathVariable Long supplyId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get operator
+			MicroserviceOperatorDto operatorDto = null;
+			try {
+				operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de operadores.");
+			}
+
+			String pathFile = workspaceOperatorBusiness.generateReportDownloadSupplyIndividual(operatorDto.getId(),
+					deliveryId, supplyId);
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error OperatorV1Controller@reportDownloadSupplyIndividual#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error OperatorV1Controller@reportDownloadSupplyIndividual#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error OperatorV1Controller@reportDownloadSupplyIndividual#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+	}
+
+	@RequestMapping(value = "/deliveries/{deliveryId}/reports-total", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Download report total")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Download report total"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> reportDownloadSupplyTotal(@PathVariable Long deliveryId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			MicroserviceUserDto userDtoSession = null;
+			try {
+				userDtoSession = userClient.findByToken(token);
+			} catch (FeignException e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			}
+
+			// get operator
+			MicroserviceOperatorDto operatorDto = null;
+			try {
+				operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
+			} catch (Exception e) {
+				throw new DisconnectedMicroserviceException(
+						"No se ha podido establecer conexión con el microservicio de operadores.");
+			}
+
+			String pathFile = workspaceOperatorBusiness.generateReportDownloadSupplyTotal(operatorDto.getId(),
+					deliveryId);
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error OperatorV1Controller@reportDownloadSupplyTotal#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error OperatorV1Controller@reportDownloadSupplyTotal#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error OperatorV1Controller@reportDownloadSupplyTotal#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName())).body(resource);
 	}
 
 }

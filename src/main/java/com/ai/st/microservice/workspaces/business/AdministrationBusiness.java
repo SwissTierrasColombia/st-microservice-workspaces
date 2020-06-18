@@ -690,34 +690,37 @@ public class AdministrationBusiness {
 
 				List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
 
-				MicroserviceManagerProfileDto profileDirector = profiles.stream()
-						.filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
+				MicroserviceManagerDto managerDto = managerClient.findByUserCode(userDto.getId());
 
-				if (profileDirector instanceof MicroserviceManagerProfileDto) {
-
-					MicroserviceManagerDto managerDto = managerClient.findByUserCode(userDto.getId());
-
-					userDto.setProfilesManager(profiles);
-					userDto.setEntity(managerDto);
-					listUsersResponse.add(userDto);
-				}
+				userDto.setProfilesManager(profiles);
+				userDto.setEntity(managerDto);
+				listUsersResponse.add(userDto);
 
 			} else if (roleProvider instanceof MicroserviceRoleDto) {
 
-				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> profiles = providerClient
-						.findRolesByUser(userDto.getId());
-
-				com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = profiles.stream()
-						.filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
-
-				if (roleDirector != null) {
+				try {
+					List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> profiles = providerClient
+							.findRolesByUser(userDto.getId());
+					userDto.setRolesProvider(profiles);
 
 					MicroserviceProviderDto providerDto = providerClient.findProviderByAdministrator(userDto.getId());
-
-					userDto.setRolesProvider(profiles);
 					userDto.setEntity(providerDto);
-					listUsersResponse.add(userDto);
+				} catch (Exception e) {
+
 				}
+
+				try {
+					List<MicroserviceProviderProfileDto> profiles = providerClient.findProfilesByUser(userDto.getId());
+					userDto.setProfilesProvider(profiles);
+
+					MicroserviceProviderDto providerDto = providerClient.findByUserCode(userDto.getId());
+					userDto.setEntity(providerDto);
+
+				} catch (Exception e) {
+
+				}
+
+				listUsersResponse.add(userDto);
 
 			} else {
 
