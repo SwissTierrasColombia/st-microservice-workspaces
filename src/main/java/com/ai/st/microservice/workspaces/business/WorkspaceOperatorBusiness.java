@@ -246,10 +246,6 @@ public class WorkspaceOperatorBusiness {
 			throw new BusinessException("La entrega no pertenece al operador.");
 		}
 
-		if (!deliveryDto.getIsActive()) {
-			throw new BusinessException("La entrega no se encuentra activa para generar el reporte solicitado.");
-		}
-
 		for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : deliveryDto.getSupplies()) {
 			if (!supplyDeliveryDto.getDownloaded()) {
 				throw new BusinessException(
