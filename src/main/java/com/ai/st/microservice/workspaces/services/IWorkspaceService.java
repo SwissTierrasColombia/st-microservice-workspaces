@@ -19,4 +19,6 @@ public interface IWorkspaceService {
 
 	public WorkspaceEntity updateWorkspace(WorkspaceEntity workspaceEntity);
 
+	public List<WorkspaceEntity> getWorkspacesByManagerAndIsActive(Long managerCode, Boolean isActive);
+
 }

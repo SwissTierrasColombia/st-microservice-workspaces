@@ -31,4 +31,20 @@ public class UserBusiness {
 		return userDto;
 	}
 
+	public MicroserviceUserDto getUserByToken(String headerAuthorization) {
+
+		MicroserviceUserDto userDto = null;
+
+		try {
+
+			String token = headerAuthorization.replace("Bearer ", "").trim();
+			userDto = userClient.findByToken(token);
+
+		} catch (Exception e) {
+			log.info("Error consultando el usuario: " + e.getMessage());
+		}
+
+		return userDto;
+	}
+
 }
