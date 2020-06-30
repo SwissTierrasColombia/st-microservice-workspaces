@@ -15,4 +15,6 @@ public interface WorkspaceRepository extends CrudRepository<WorkspaceEntity, Lon
 
 	WorkspaceEntity findByIsActiveAndMunicipality(Boolean isActive, MunicipalityEntity municipality);
 
+	List<WorkspaceEntity> findByManagerCodeAndIsActive(Long managerCode, Boolean isActive);
+
 }

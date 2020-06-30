@@ -13,11 +13,15 @@ import com.ai.st.microservice.workspaces.dto.IntegrationDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationHistoryDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStatDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStateDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.PossibleIntegrationDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationHistoryEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStatEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
@@ -45,6 +49,12 @@ public class IntegrationBusiness {
 
 	@Autowired
 	private IWorkspaceService workspaceService;
+
+	@Autowired
+	private SupplyBusiness supplyBusiness;
+
+	@Autowired
+	private MunicipalityBusiness municipalityBusiness;
 
 	public IntegrationDto createIntegration(String hostname, String port, String database, String schema,
 			String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
@@ -268,6 +278,84 @@ public class IntegrationBusiness {
 		}
 
 		return integrationDto;
+	}
+
+	public List<IntegrationDto> getIntegrationsRunning(MicroserviceManagerDto managerDto) throws BusinessException {
+
+		List<IntegrationDto> listIntegrationsDto = new ArrayList<>();
+
+		List<WorkspaceEntity> workspacesEntity = workspaceService.getWorkspacesByManagerAndIsActive(managerDto.getId(),
+				true);
+
+		List<IntegrationEntity> listIntegrationsEntity = integrationService
+				.getIntegrationsByWorkspaces(workspacesEntity);
+
+		for (IntegrationEntity integrationEntity : listIntegrationsEntity) {
+			listIntegrationsDto.add(this.transformEntityToDto(integrationEntity));
+		}
+
+		for (IntegrationDto integrationDto : listIntegrationsDto) {
+
+			try {
+
+				MicroserviceSupplyDto supplyCadastreDto = supplyBusiness
+						.getSupplyById(integrationDto.getSupplyCadastreId());
+				integrationDto.setSupplyCadastre(supplyCadastreDto);
+
+				MicroserviceSupplyDto supplySnrDto = supplyBusiness.getSupplyById(integrationDto.getSupplySnrId());
+				integrationDto.setSupplySnr(supplySnrDto);
+
+			} catch (Exception e) {
+
+			}
+
+		}
+
+		return listIntegrationsDto;
+	}
+
+	public List<PossibleIntegrationDto> getPossiblesIntegrations(MicroserviceManagerDto managerDto)
+			throws BusinessException {
+
+		List<PossibleIntegrationDto> listIntegrationsDto = new ArrayList<>();
+
+		List<WorkspaceEntity> workspacesEntity = workspaceService.getWorkspacesByManagerAndIsActive(managerDto.getId(),
+				true);
+
+		for (WorkspaceEntity workspaceEntity : workspacesEntity) {
+
+			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+			@SuppressWarnings("unchecked")
+			List<MicroserviceSupplyDto> suppliesDto = (List<MicroserviceSupplyDto>) supplyBusiness
+					.getSuppliesByMunicipalityManager(municipalityEntity.getId(), managerDto.getId(), null, null, null);
+
+			MicroserviceSupplyDto supplyCadastralDto = suppliesDto.stream()
+					.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 1))
+					.findAny().orElse(null);
+			if (supplyCadastralDto != null) {
+
+				MicroserviceSupplyDto supplyRegistralDto = suppliesDto.stream()
+						.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 2))
+						.findAny().orElse(null);
+
+				MicroserviceSupplyDto supplyAntDto = suppliesDto.stream()
+						.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 3))
+						.findAny().orElse(null);
+
+				if (supplyRegistralDto != null || supplyAntDto != null) {
+
+					MunicipalityDto municipalityDto = municipalityBusiness
+							.getMunicipalityByCode(municipalityEntity.getCode());
+
+					listIntegrationsDto.add(new PossibleIntegrationDto(municipalityDto));
+				}
+
+			}
+
+		}
+
+		return listIntegrationsDto;
 	}
 
 }

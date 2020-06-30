@@ -17,6 +17,8 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceUpdateManagerProfileDto;
 
+import feign.FeignException;
+
 @Component
 public class ManagerBusiness {
 
@@ -32,6 +34,21 @@ public class ManagerBusiness {
 		try {
 
 			managerDto = managerClient.findById(managerId);
+
+		} catch (Exception e) {
+			log.error("No se ha podido consultar el gestor: " + e.getMessage());
+		}
+
+		return managerDto;
+	}
+
+	public MicroserviceManagerDto getManagerByUserCode(Long userCode) {
+
+		MicroserviceManagerDto managerDto = null;
+
+		try {
+
+			managerDto = managerClient.findByUserCode(userCode);
 
 		} catch (Exception e) {
 			log.error("No se ha podido consultar el gestor: " + e.getMessage());
@@ -82,7 +99,7 @@ public class ManagerBusiness {
 		}
 		return managerDto;
 	}
-	
+
 	public MicroserviceManagerDto updateManager(MicroserviceUpdateManagerDto manager) {
 		MicroserviceManagerDto managerDto = null;
 		try {
@@ -92,9 +109,9 @@ public class ManagerBusiness {
 		}
 		return managerDto;
 	}
-	
+
 	public List<MicroserviceManagerProfileDto> getManagerProfiles() {
-		
+
 		List<MicroserviceManagerProfileDto> profiles = new ArrayList<>();
 
 		try {
@@ -116,7 +133,8 @@ public class ManagerBusiness {
 		return managerDto;
 	}
 
-	public MicroserviceManagerProfileDto deleteManagerProfiles(MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
+	public MicroserviceManagerProfileDto deleteManagerProfiles(
+			MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
 		MicroserviceManagerProfileDto managerDto = null;
 		try {
 			managerDto = managerClient.deleteManagerProfile(requestUpdateManagerProfile);
@@ -126,7 +144,8 @@ public class ManagerBusiness {
 		return managerDto;
 	}
 
-	public MicroserviceManagerProfileDto updateManagerProfiles(MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
+	public MicroserviceManagerProfileDto updateManagerProfiles(
+			MicroserviceUpdateManagerProfileDto requestUpdateManagerProfile) {
 		MicroserviceManagerProfileDto managerDto = null;
 		try {
 			managerDto = managerClient.updateManagerProfile(requestUpdateManagerProfile);
@@ -134,6 +153,29 @@ public class ManagerBusiness {
 			log.error("No se ha podido actualizar el gestor: " + e.getMessage());
 		}
 		return managerDto;
+	}
+
+	public boolean userManagerIsDirector(Long userCode) {
+
+		Boolean isDirector = false;
+
+		try {
+
+			List<MicroserviceManagerProfileDto> managerProfiles = managerClient.findProfilesByUser(userCode);
+
+			MicroserviceManagerProfileDto profileDirector = managerProfiles.stream()
+					.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
+					.orElse(null);
+
+			if (profileDirector instanceof MicroserviceManagerProfileDto) {
+				isDirector = true;
+			}
+
+		} catch (FeignException e) {
+			log.error("No se ha podido verificar si el usuario es un director(gestor): " + e.getMessage());
+		}
+
+		return isDirector;
 	}
 
 }

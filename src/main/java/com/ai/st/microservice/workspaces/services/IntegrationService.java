@@ -63,4 +63,9 @@ public class IntegrationService implements IIntegrationService {
 		integrationRepository.deleteById(id);
 	}
 
+	@Override
+	public List<IntegrationEntity> getIntegrationsByWorkspaces(List<WorkspaceEntity> workspaces) {
+		return integrationRepository.findByWorkspaceIn(workspaces);
+	}
+
 }

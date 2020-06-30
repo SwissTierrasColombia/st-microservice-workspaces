@@ -25,4 +25,6 @@ public interface IIntegrationService {
 
 	public void deleteIntegration(Long id);
 
+	public List<IntegrationEntity> getIntegrationsByWorkspaces(List<WorkspaceEntity> workspaces);
+
 }
