@@ -1,7 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
 import java.io.File;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,9 +47,8 @@ import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
-
-import antlr.StringUtils;
 
 @Component
 public class ProviderBusiness {
@@ -280,12 +278,10 @@ public class ProviderBusiness {
 					String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
 							+ providerDto.getName().replace(" ", "_") + "/"
 							+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
-					
-					urlBase = Normalizer.normalize(urlBase, Normalizer.Form.NFD);
-					
-					String urlDocumentaryRepository = fileBusiness.saveFileToSystem(fileUploaded, urlBase, zipFile);
 
-					
+					urlBase = FileTool.removeAccents(urlBase);
+
+					String urlDocumentaryRepository = fileBusiness.saveFileToSystem(fileUploaded, urlBase, zipFile);
 
 					if (!supplyExtension.isEmpty()) {
 						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;

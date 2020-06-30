@@ -26,4 +26,22 @@ public class FileTool {
 		return file;
 	}
 
+	public static String removeAccents(String str) {
+
+		final String original = "ÁáÉéÍíÓóÚúÑñÜü";
+		final String replace = "AaEeIiOoUuNnUu";
+
+		if (str == null) {
+			return null;
+		}
+		char[] array = str.toCharArray();
+		for (int indice = 0; indice < array.length; indice++) {
+			int pos = original.indexOf(array[indice]);
+			if (pos > -1) {
+				array[indice] = replace.charAt(pos);
+			}
+		}
+		return new String(array);
+	}
+
 }
