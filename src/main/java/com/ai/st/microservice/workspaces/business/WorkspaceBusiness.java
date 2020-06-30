@@ -71,6 +71,7 @@ import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.utils.FileTool;
 
 import feign.FeignException;
 
@@ -195,6 +196,7 @@ public class WorkspaceBusiness {
 		try {
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
+			urlBase = FileTool.removeAccents(urlBase);
 			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
 
 		} catch (Exception e) {
@@ -406,6 +408,9 @@ public class WorkspaceBusiness {
 		try {
 
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
+			
+			urlBase = FileTool.removeAccents(urlBase);
+			
 			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
 
 		} catch (Exception e) {
