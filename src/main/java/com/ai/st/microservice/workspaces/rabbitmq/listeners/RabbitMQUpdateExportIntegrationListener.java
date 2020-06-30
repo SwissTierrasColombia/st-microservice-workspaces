@@ -34,6 +34,7 @@ import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IntegrationService;
+import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 @Component
@@ -99,6 +100,8 @@ public class RabbitMQUpdateExportIntegrationListener {
 					String urlBase = stFilesDirectory + "/"
 							+ workspaceEntity.getMunicipality().getCode().replace(" ", "_") + "/insumos/gestores/"
 							+ workspaceEntity.getManagerCode();
+					
+					urlBase = FileTool.removeAccents(urlBase);
 
 					String zipName = RandomStringUtils.random(20, true, false);
 
