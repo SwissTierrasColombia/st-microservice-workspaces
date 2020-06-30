@@ -280,9 +280,12 @@ public class ProviderBusiness {
 					String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
 							+ providerDto.getName().replace(" ", "_") + "/"
 							+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
+					
+					urlBase = Normalizer.normalize(urlBase, Normalizer.Form.NFD);
+					
 					String urlDocumentaryRepository = fileBusiness.saveFileToSystem(fileUploaded, urlBase, zipFile);
 
-					urlBase = Normalizer.normalize(urlBase, Normalizer.Form.NFD);
+					
 
 					if (!supplyExtension.isEmpty()) {
 						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
