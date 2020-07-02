@@ -277,6 +277,16 @@ public class IntegrationBusiness {
 			}
 		}
 
+		try {
+			MunicipalityDto municipalityDto = municipalityBusiness
+					.getMunicipalityByCode(integrationEntity.getWorkspace().getMunicipality().getCode());
+			if (municipalityDto != null) {
+				integrationDto.setMunicipalityDto(municipalityDto);
+			}
+		} catch (Exception e) {
+
+		}
+
 		return integrationDto;
 	}
 
@@ -330,18 +340,34 @@ public class IntegrationBusiness {
 			List<MicroserviceSupplyDto> suppliesDto = (List<MicroserviceSupplyDto>) supplyBusiness
 					.getSuppliesByMunicipalityManager(municipalityEntity.getId(), managerDto.getId(), null, null, null);
 
-			MicroserviceSupplyDto supplyCadastralDto = suppliesDto.stream()
-					.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 1))
-					.findAny().orElse(null);
+			MicroserviceSupplyDto supplyCadastralDto = null;
+			try {
+				supplyCadastralDto = suppliesDto.stream()
+						.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 1))
+						.findAny().orElse(null);
+			} catch (Exception e) {
+
+			}
+
 			if (supplyCadastralDto != null) {
 
-				MicroserviceSupplyDto supplyRegistralDto = suppliesDto.stream()
-						.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 2))
-						.findAny().orElse(null);
+				MicroserviceSupplyDto supplyRegistralDto = null;
+				try {
+					supplyRegistralDto = suppliesDto.stream()
+							.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 2))
+							.findAny().orElse(null);
+				} catch (Exception e) {
 
-				MicroserviceSupplyDto supplyAntDto = suppliesDto.stream()
-						.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 3))
-						.findAny().orElse(null);
+				}
+
+				MicroserviceSupplyDto supplyAntDto = null;
+				try {
+					supplyAntDto = suppliesDto.stream()
+							.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 3))
+							.findAny().orElse(null);
+				} catch (Exception e) {
+
+				}
 
 				if (supplyRegistralDto != null || supplyAntDto != null) {
 

@@ -69,6 +69,9 @@ public class IntegrationDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Histories")
 	private List<IntegrationHistoryDto> histories;
 
+	@ApiModelProperty(required = true, notes = "Municipality")
+	private MunicipalityDto municipalityDto;
+
 	public IntegrationDto() {
 		this.stats = new ArrayList<>();
 		this.histories = new ArrayList<>();
@@ -216,6 +219,14 @@ public class IntegrationDto implements Serializable {
 
 	public void setHistories(List<IntegrationHistoryDto> histories) {
 		this.histories = histories;
+	}
+
+	public MunicipalityDto getMunicipalityDto() {
+		return municipalityDto;
+	}
+
+	public void setMunicipalityDto(MunicipalityDto municipalityDto) {
+		this.municipalityDto = municipalityDto;
 	}
 
 }
