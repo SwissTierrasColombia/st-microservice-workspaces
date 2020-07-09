@@ -442,15 +442,29 @@ public class AdministrationBusiness {
 			throw new BusinessException("No se puede editar usuarios que no son proveedores");
 		}
 
-		MicroserviceProviderDto providerDto = null;
+		MicroserviceProviderDto providerDtoByUser = null;
 		try {
 
-			providerDto = providerClient.findByUserCode(userId);
+			providerDtoByUser = providerClient.findByUserCode(userId);
 
 		} catch (Exception e) {
-			log.error("Error consultando proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido modificar el usuario.");
+			log.error("Error consultando proveedor por usuario: " + e.getMessage());
 		}
+
+		MicroserviceProviderDto providerDtoByAdmin = null;
+		try {
+
+			providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
+
+		} catch (Exception e) {
+			log.error("Error consultando proveedor por administrador: " + e.getMessage());
+		}
+
+		if (providerDtoByAdmin == null && providerDtoByUser == null) {
+			throw new BusinessException("No se ha encontrado el usuario.");
+		}
+
+		MicroserviceProviderDto providerDto = (providerDtoByAdmin != null) ? providerDtoByAdmin : providerDtoByUser;
 
 		if (!providerDto.getId().equals(providerCode)) {
 			throw new BusinessException("El usuario que se desea editar no pertenece al proveedor.");
@@ -630,7 +644,7 @@ public class AdministrationBusiness {
 
 			providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
 
-		} catch (Exception e) {	
+		} catch (Exception e) {
 			log.error("Error consultando proveedor por administrador: " + e.getMessage());
 		}
 
