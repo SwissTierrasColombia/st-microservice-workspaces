@@ -53,21 +53,31 @@ import com.ai.st.microservice.workspaces.utils.ZipUtil;
 @Component
 public class ProviderBusiness {
 
+	// Supplies requested states
 	public static final Long SUPPLY_REQUESTED_STATE_ACCEPTED = (long) 1;
 	public static final Long SUPPLY_REQUESTED_STATE_REJECTED = (long) 2;
 	public static final Long SUPPLY_REQUESTED_STATE_VALIDATING = (long) 3;
 	public static final Long SUPPLY_REQUESTED_STATE_PENDING = (long) 4;
 	public static final Long SUPPLY_REQUESTED_STATE_UNDELIVERED = (long) 5;
+	public static final Long SUPPLY_REQUESTED_STATE_PENDING_REVIEW = (long) 6;
+	public static final Long SUPPLY_REQUESTED_STATE_SETTING_REVIEW = (long) 7;
+	public static final Long SUPPLY_REQUESTED_STATE_IN_REVIEW = (long) 8;
 
+	// Requests States
 	public static final Long REQUEST_STATE_REQUESTED = (long) 1;
 	public static final Long REQUEST_STATE_DELIVERED = (long) 2;
 	public static final Long REQUEST_STATE_CANCELLED = (long) 3;
 
+	// Providers
 	public static final Long PROVIDER_IGAC_ID = (long) 1;
+	public static final Long PROVIDER_SNR_ID = (long) 8;
 
+	// Profiles
 	public static final Long PROVIDER_PROFILE_CADASTRAL = (long) 1;
 
+	// Types supplies
 	public static final Long PROVIDER_SUPPLY_CADASTRAL = (long) 2;
+	public static final Long PROVIDER_SNR_SUPPLY_REGISTRAL = (long) 12;
 
 	private final Logger log = LoggerFactory.getLogger(ProviderBusiness.class);
 
@@ -383,90 +393,133 @@ public class ProviderBusiness {
 					"No se puede cerrar la solicitud porque el usuario no es la persona que ha cargado los insumos.");
 		}
 
-		try {
+		Boolean sendToReview = false;
+		MicroserviceSupplyRequestedDto supplyRegistral = null;
+		if (requestDto.getProvider().getId().equals(ProviderBusiness.PROVIDER_SNR_ID)) {
 
-			for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
-
-				// verify if the supply is assigned to a task
-				List<Long> taskStates = new ArrayList<>(
-						Arrays.asList(TaskBusiness.TASK_STATE_STARTED, TaskBusiness.TASK_STATE_ASSIGNED));
-				List<Long> taskCategories = new ArrayList<>(
-						Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
-
-				List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
-
-				for (MicroserviceTaskDto taskDto : tasksDto) {
-					MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
-							.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
-					if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
-
-						MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
-								.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
-
-						MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties()
-								.stream().filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny()
-								.orElse(null);
-
-						if (propertyRequest != null && propertyTypeSupply != null) {
-
-							Long taskRequestId = Long.parseLong(propertyRequest.getValue());
-							Long taskTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
-
-							if (taskRequestId.equals(requestId)
-									&& taskTypeSupplyId.equals(supplyRequested.getTypeSupply().getId())) {
-
-								Long supplyRequestedState = supplyRequested.getState().getId();
-
-								if (supplyRequestedState.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
-									taskClient.closeTask(taskDto.getId());
-								} else if (supplyRequestedState
-										.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
-									MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
-									cancelTaskDto.setReason("Cancelada por el sistema.");
-									taskClient.cancelTask(taskDto.getId(), cancelTaskDto);
-								}
-
-							}
-
-						}
-					}
-				}
-
-			}
-
-		} catch (Exception e) {
-			log.error("Ha ocurrido un error intentando cerrar las tareas asociadas a la solicitud");
+			supplyRegistral = requestDto.getSuppliesRequested().stream()
+					.filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SNR_SUPPLY_REGISTRAL))
+					.findAny().orElse(null);
+			sendToReview = (supplyRegistral != null);
 		}
 
 		MicroserviceRequestDto requestUpdatedDto = null;
 
-		try {
+		if (sendToReview) {
 
-			for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+			// Update supply requested
+			try {
 
-				if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
+				MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+				updateSupply.setDelivered(null);
+				updateSupply.setDeliveryBy(null);
+				updateSupply.setSupplyRequestedStateId(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
+				updateSupply.setJustification(null);
+				requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRegistral.getId(),
+						updateSupply);
 
-					List<String> urls = new ArrayList<>();
-					if (supplyRequested.getUrl() != null) {
-						urls.add(supplyRequested.getUrl());
+				for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
+					if (supply.getDeliveredBy() != null) {
+						try {
+							MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
+							supply.setUserDeliveryBy(userDto);
+						} catch (Exception e) {
+							supply.setUserDeliveryBy(null);
+						}
 					}
-
-					supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
-							supplyRequested.getTypeSupply().getId(), urls, supplyRequested.getFtp(), requestId,
-							userCode, providerDto.getId(), null, supplyRequested.getModelVersion());
 				}
 
+			} catch (Exception e) {
+				throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
 			}
 
-		} catch (Exception e) {
-			log.error("No se ha podido crear los insumos: " + e.getMessage());
-			throw new BusinessException("No se ha podido disponer los insumos al municipio.");
-		}
+		} else {
 
-		try {
-			requestUpdatedDto = providerClient.closeRequest(requestId, userCode);
-		} catch (Exception e) {
-			throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+			try {
+
+				for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+
+					// verify if the supply is assigned to a task
+					List<Long> taskStates = new ArrayList<>(
+							Arrays.asList(TaskBusiness.TASK_STATE_STARTED, TaskBusiness.TASK_STATE_ASSIGNED));
+					List<Long> taskCategories = new ArrayList<>(
+							Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+
+					List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+
+					for (MicroserviceTaskDto taskDto : tasksDto) {
+						MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+								.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+						if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+							MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties()
+									.stream().filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny()
+									.orElse(null);
+
+							MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties()
+									.stream().filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny()
+									.orElse(null);
+
+							if (propertyRequest != null && propertyTypeSupply != null) {
+
+								Long taskRequestId = Long.parseLong(propertyRequest.getValue());
+								Long taskTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+
+								if (taskRequestId.equals(requestId)
+										&& taskTypeSupplyId.equals(supplyRequested.getTypeSupply().getId())) {
+
+									Long supplyRequestedState = supplyRequested.getState().getId();
+
+									if (supplyRequestedState.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
+										taskClient.closeTask(taskDto.getId());
+									} else if (supplyRequestedState
+											.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
+										MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
+										cancelTaskDto.setReason("Cancelada por el sistema.");
+										taskClient.cancelTask(taskDto.getId(), cancelTaskDto);
+									}
+
+								}
+
+							}
+						}
+					}
+
+				}
+
+			} catch (Exception e) {
+				log.error("Ha ocurrido un error intentando cerrar las tareas asociadas a la solicitud");
+			}
+
+			try {
+
+				for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+
+					if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
+
+						List<String> urls = new ArrayList<>();
+						if (supplyRequested.getUrl() != null) {
+							urls.add(supplyRequested.getUrl());
+						}
+
+						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
+								supplyRequested.getTypeSupply().getId(), urls, supplyRequested.getFtp(), requestId,
+								userCode, providerDto.getId(), null, supplyRequested.getModelVersion());
+					}
+
+				}
+
+			} catch (Exception e) {
+				log.error("No se ha podido crear los insumos: " + e.getMessage());
+				throw new BusinessException("No se ha podido disponer los insumos al municipio.");
+			}
+
+			try {
+				requestUpdatedDto = providerClient.closeRequest(requestId, userCode);
+			} catch (Exception e) {
+				throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+			}
+
 		}
 
 		return requestUpdatedDto;
