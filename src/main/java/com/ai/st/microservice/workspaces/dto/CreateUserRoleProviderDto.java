@@ -21,10 +21,14 @@ public class CreateUserRoleProviderDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Profiles ID")
 	private List<Long> profiles;
 
+	@ApiModelProperty(required = true, notes = "Is technical?")
+	private Boolean isTechnical;
+
 	private Boolean fromAdministrator;
 
 	public CreateUserRoleProviderDto() {
 		this.profiles = new ArrayList<Long>();
+		this.isTechnical = false;
 	}
 
 	public Long getRoleId() {
@@ -57,6 +61,14 @@ public class CreateUserRoleProviderDto implements Serializable {
 
 	public void setFromAdministrator(Boolean fromAdministrator) {
 		this.fromAdministrator = fromAdministrator;
+	}
+
+	public Boolean getIsTechnical() {
+		return isTechnical;
+	}
+
+	public void setIsTechnical(Boolean isTechnical) {
+		this.isTechnical = isTechnical;
 	}
 
 }

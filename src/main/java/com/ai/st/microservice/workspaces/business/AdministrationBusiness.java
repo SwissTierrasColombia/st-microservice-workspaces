@@ -30,6 +30,7 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
@@ -126,6 +127,15 @@ public class AdministrationBusiness {
 			throw new BusinessException("Se debe especificar al menos un perfil para el usuario.");
 		}
 
+		if (!roleProvider.getIsTechnical()) {
+			Long profileDirector = roleProvider.getProfiles().stream()
+					.filter(profileId -> profileId.equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+					.orElse(null);
+			if (profileDirector != null) {
+				throw new BusinessException("No se pueden crear usuarios administradores.");
+			}
+		}
+
 		return this.createUser(firstName, lastName, email, username, password, roleProvider, null, null, null);
 	}
 
@@ -198,22 +208,7 @@ public class AdministrationBusiness {
 
 				if (roleProvider != null) {
 
-					if (roleProvider.getFromAdministrator()) {
-
-						try {
-							for (Long profileId : roleProvider.getProfiles()) {
-								MicroserviceAddAdministratorToProviderDto addUser = new MicroserviceAddAdministratorToProviderDto();
-								addUser.setUserCode(userResponseDto.getId());
-								addUser.setRoleId(profileId);
-								addUser.setProviderId(roleProvider.getProviderId());
-
-								providerClient.addAdministratorToProvide(addUser);
-							}
-						} catch (Exception e) {
-							log.error("Error asignando role proveedor al usuario: " + e.getMessage());
-						}
-
-					} else {
+					if (roleProvider.getIsTechnical()) {
 
 						try {
 							for (Long profileId : roleProvider.getProfiles()) {
@@ -226,6 +221,21 @@ public class AdministrationBusiness {
 							}
 						} catch (Exception e) {
 							log.error("Error asignando perfil proveedor al usuario: " + e.getMessage());
+						}
+
+					} else {
+
+						try {
+							for (Long profileId : roleProvider.getProfiles()) {
+								MicroserviceAddAdministratorToProviderDto addUser = new MicroserviceAddAdministratorToProviderDto();
+								addUser.setUserCode(userResponseDto.getId());
+								addUser.setRoleId(profileId);
+								addUser.setProviderId(roleProvider.getProviderId());
+
+								providerClient.addAdministratorToProvide(addUser);
+							}
+						} catch (Exception e) {
+							log.error("Error asignando role proveedor al usuario: " + e.getMessage());
 						}
 
 					}
@@ -606,15 +616,29 @@ public class AdministrationBusiness {
 			throw new BusinessException("No se puede editar usuarios que no son proveedores");
 		}
 
-		MicroserviceProviderDto providerDto = null;
+		MicroserviceProviderDto providerDtoByUser = null;
 		try {
 
-			providerDto = providerClient.findByUserCode(userId);
+			providerDtoByUser = providerClient.findByUserCode(userId);
 
 		} catch (Exception e) {
-			log.error("Error consultando proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido modificar el usuario.");
+			log.error("Error consultando proveedor por usuario: " + e.getMessage());
 		}
+
+		MicroserviceProviderDto providerDtoByAdmin = null;
+		try {
+
+			providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
+
+		} catch (Exception e) {	
+			log.error("Error consultando proveedor por administrador: " + e.getMessage());
+		}
+
+		if (providerDtoByAdmin == null && providerDtoByUser == null) {
+			throw new BusinessException("No se ha encontrado el usuario.");
+		}
+
+		MicroserviceProviderDto providerDto = (providerDtoByAdmin != null) ? providerDtoByAdmin : providerDtoByUser;
 
 		if (!providerDto.getId().equals(providerCode)) {
 			throw new BusinessException("El usuario que se desea editar no pertenece al proveedor.");
@@ -780,6 +804,31 @@ public class AdministrationBusiness {
 			} catch (Exception e) {
 				log.error("Error consultando usuario: " + e.getMessage());
 			}
+		}
+
+		List<MicroserviceProviderAdministratorDto> adminsProviderDto = new ArrayList<>();
+
+		try {
+			adminsProviderDto = providerClient.findAdministratorsByProviderId(providerCode);
+		} catch (Exception e) {
+			log.error("Error consultando usuarios (administradores) de un proveedor: " + e.getMessage());
+		}
+
+		for (MicroserviceProviderAdministratorDto userProviderDto : adminsProviderDto) {
+
+			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = userProviderDto
+					.getRoles().stream().filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER))
+					.findAny().orElse(null);
+			if (roleDirector == null) {
+				try {
+					MicroserviceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
+					userDto.setRolesProvider(userProviderDto.getRoles());
+					users.add(userDto);
+				} catch (Exception e) {
+					log.error("Error consultando usuario: " + e.getMessage());
+				}
+			}
+
 		}
 
 		return users;
