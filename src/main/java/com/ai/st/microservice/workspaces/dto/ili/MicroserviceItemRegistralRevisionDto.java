@@ -14,6 +14,12 @@ public class MicroserviceItemRegistralRevisionDto implements Serializable {
 	private String nomenclature;
 	private String boundarySpace;
 	private Long fileId;
+	private Long boundaryId;
+	private String issuingCity;
+	private String issuingEntity;
+	private String documentDate;
+	private String documentNumber;
+	private String documentType;
 
 	public MicroserviceItemRegistralRevisionDto() {
 
@@ -81,6 +87,54 @@ public class MicroserviceItemRegistralRevisionDto implements Serializable {
 
 	public void setFileId(Long fileId) {
 		this.fileId = fileId;
+	}
+
+	public Long getBoundaryId() {
+		return boundaryId;
+	}
+
+	public void setBoundaryId(Long boundaryId) {
+		this.boundaryId = boundaryId;
+	}
+
+	public String getIssuingCity() {
+		return issuingCity;
+	}
+
+	public void setIssuingCity(String issuingCity) {
+		this.issuingCity = issuingCity;
+	}
+
+	public String getIssuingEntity() {
+		return issuingEntity;
+	}
+
+	public void setIssuingEntity(String issuingEntity) {
+		this.issuingEntity = issuingEntity;
+	}
+
+	public String getDocumentDate() {
+		return documentDate;
+	}
+
+	public void setDocumentDate(String documentDate) {
+		this.documentDate = documentDate;
+	}
+
+	public String getDocumentNumber() {
+		return documentNumber;
+	}
+
+	public void setDocumentNumber(String documentNumber) {
+		this.documentNumber = documentNumber;
+	}
+
+	public String getDocumentType() {
+		return documentType;
+	}
+
+	public void setDocumentType(String documentType) {
+		this.documentType = documentType;
 	}
 
 }
