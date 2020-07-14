@@ -3,6 +3,8 @@ package com.ai.st.microservice.workspaces.business;
 import java.io.File;
 
 import org.apache.commons.lang.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -10,9 +12,11 @@ import org.springframework.stereotype.Component;
 import com.ai.st.microservice.workspaces.clients.IliFeignClient;
 import com.ai.st.microservice.workspaces.drivers.PostgresDriver;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgImportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationStatDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 @Component
@@ -23,6 +27,11 @@ public class IliBusiness {
 
 	@Value("${st.filesDirectory}")
 	private String stFilesDirectory;
+
+	private final Logger log = LoggerFactory.getLogger(IliBusiness.class);
+
+	public static final Long ILI_CONCEPT_OPERATION = (long) 1;
+	public static final Long ILI_CONCEPT_INTEGRATION = (long) 2;
 
 	@Autowired
 	private IliFeignClient iliClient;
@@ -139,6 +148,47 @@ public class IliBusiness {
 		integrationStat.setPercentage(percentage);
 
 		return integrationStat;
+	}
+
+	public void startImport(String pathFile, String hostname, String database, String password, String port,
+			String schema, String username, String reference, String versionModel, Long conceptId)
+			throws BusinessException {
+
+		try {
+			MicroserviceIli2pgImportReferenceDto importDto = new MicroserviceIli2pgImportReferenceDto();
+
+			importDto.setPathXTF(pathFile);
+			importDto.setDatabaseHost(hostname);
+			importDto.setDatabaseName(database);
+			importDto.setDatabasePassword(password);
+			importDto.setDatabasePort(port);
+			importDto.setDatabaseSchema(schema);
+			importDto.setDatabaseUsername(username);
+			importDto.setReference(reference);
+			importDto.setVersionModel(versionModel);
+			importDto.setConceptId(conceptId);
+
+			iliClient.startImport(importDto);
+
+		} catch (Exception e) {
+			throw new BusinessException("No se ha podido iniciar la impotación.");
+		}
+
+	}
+
+	public MicroserviceQueryResultRegistralRevisionDto getResultQueryRegistralRevision(String host, String database,
+			String password, String port, String schema, String username, String versionModel, int page, int limit) {
+
+		MicroserviceQueryResultRegistralRevisionDto resultDto = null;
+
+		try {
+			resultDto = iliClient.getRecordsFromQueryRegistralRevision(host, database, schema, port, username, password,
+					versionModel, IliBusiness.ILI_CONCEPT_INTEGRATION, page, limit);
+		} catch (Exception e) {
+			log.error("No se ha podido realizar la consulta: " + e.getMessage());
+		}
+
+		return resultDto;
 	}
 
 }

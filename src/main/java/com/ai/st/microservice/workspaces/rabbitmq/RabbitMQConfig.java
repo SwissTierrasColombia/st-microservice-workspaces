@@ -53,6 +53,15 @@ public class RabbitMQConfig {
 	@Value("${st.rabbitmq.queueUpdateStateSupply.routingkey}")
 	public String routingkeyUpdateStateSupplyName;
 
+	@Value("${st.rabbitmq.queueResultImport.queue}")
+	public String queueResultImportName;
+
+	@Value("${st.rabbitmq.queueResultImport.exchange}")
+	public String exchangeResultImportName;
+
+	@Value("${st.rabbitmq.queueResultImport.routingkey}")
+	public String routingkeyResultImportName;
+
 	@Bean
 	public Queue queueFiles() {
 		return new Queue(queueFilesName, false);
@@ -113,6 +122,23 @@ public class RabbitMQConfig {
 	public Binding bindingQueueUpdateStateSupply() {
 		return BindingBuilder.bind(queueUpdateStateSupply()).to(exchangeUpdateStateSupply())
 				.with(routingkeyUpdateStateSupplyName);
+	}
+
+	// queue result imports reference
+
+	@Bean
+	public Queue queueResultImport() {
+		return new Queue(queueResultImportName, false);
+	}
+
+	@Bean
+	public DirectExchange exchangeResultImport() {
+		return new DirectExchange(exchangeResultImportName);
+	}
+
+	@Bean
+	public Binding bindingQueueResultImport() {
+		return BindingBuilder.bind(queueResultImport()).to(exchangeResultImport()).with(routingkeyResultImportName);
 	}
 
 	@Bean

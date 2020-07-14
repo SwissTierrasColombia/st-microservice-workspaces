@@ -8,13 +8,17 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.cloud.openfeign.support.SpringEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Scope;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgImportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -31,6 +35,17 @@ public interface IliFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ilivalidator/v1/validate/background", consumes = APPLICATION_JSON_VALUE)
 	public void startValidation(@RequestBody MicroserviceIlivalidatorBackgroundDto data);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/import-reference", consumes = APPLICATION_JSON_VALUE)
+	public void startImport(@RequestBody MicroserviceIli2pgImportReferenceDto data);
+
+	@GetMapping("/api/ili/query/v1/execute/registral-to-revision")
+	public MicroserviceQueryResultRegistralRevisionDto getRecordsFromQueryRegistralRevision(
+			@RequestParam(name = "host") String host, @RequestParam(name = "database") String database,
+			@RequestParam(name = "schema") String schema, @RequestParam(name = "port") String port,
+			@RequestParam(name = "username") String username, @RequestParam(name = "password") String password,
+			@RequestParam(name = "modelVersion") String modelVersion, @RequestParam(name = "concept") Long conceptId,
+			@RequestParam(name = "page") int page, @RequestParam(name = "limit") int limit);
 
 	class Configuration {
 

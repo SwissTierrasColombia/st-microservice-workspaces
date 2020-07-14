@@ -24,6 +24,7 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 	private String url;
 	private String observations;
 	private String ftp;
+	private MicroserviceRequestDto request;
 
 	public MicroserviceSupplyRequestedDto() {
 
@@ -147,6 +148,14 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 
 	public void setFtp(String ftp) {
 		this.ftp = ftp;
+	}
+
+	public MicroserviceRequestDto getRequest() {
+		return request;
+	}
+
+	public void setRequest(MicroserviceRequestDto request) {
+		this.request = request;
 	}
 
 }
