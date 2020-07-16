@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceExecuteQueryUpdateToRevisionDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgImportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
@@ -46,6 +48,12 @@ public interface IliFeignClient {
 			@RequestParam(name = "username") String username, @RequestParam(name = "password") String password,
 			@RequestParam(name = "modelVersion") String modelVersion, @RequestParam(name = "concept") Long conceptId,
 			@RequestParam(name = "page") int page, @RequestParam(name = "limit") int limit);
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/ili/query/v1/execute/update-to-revision", consumes = APPLICATION_JSON_VALUE)
+	public void updateRecordFromRevision(@RequestBody MicroserviceExecuteQueryUpdateToRevisionDto data);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/export-reference", consumes = APPLICATION_JSON_VALUE)
+	public void startExportReference(@RequestBody MicroserviceIli2pgExportReferenceDto data);
 
 	class Configuration {
 

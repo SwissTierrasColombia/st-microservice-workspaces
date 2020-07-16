@@ -11,7 +11,9 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.IliFeignClient;
 import com.ai.st.microservice.workspaces.drivers.PostgresDriver;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceExecuteQueryUpdateToRevisionDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
+import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgImportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
@@ -189,6 +191,59 @@ public class IliBusiness {
 		}
 
 		return resultDto;
+	}
+
+	public void updateRecordFromRevision(String host, String database, String password, String port, String schema,
+			String username, String versionModel, Long boundarySpaceId, Long entityId, String namespace,
+			String urlFile) {
+
+		try {
+
+			MicroserviceExecuteQueryUpdateToRevisionDto data = new MicroserviceExecuteQueryUpdateToRevisionDto();
+			data.setBoundarySpaceId(boundarySpaceId);
+			data.setConceptId(IliBusiness.ILI_CONCEPT_INTEGRATION);
+			data.setDatabaseHost(host);
+			data.setDatabaseName(database);
+			data.setDatabasePassword(password);
+			data.setDatabasePort(port);
+			data.setDatabaseSchema(schema);
+			data.setDatabaseUsername(username);
+			data.setEntityId(entityId);
+			data.setNamespace(namespace);
+			data.setUrlFile(urlFile);
+			data.setVersionModel(versionModel);
+
+			iliClient.updateRecordFromRevision(data);
+		} catch (Exception e) {
+			log.error("No se ha podido realizar la actualizacion del registro: " + e.getMessage());
+		}
+	}
+
+	public void startExportReference(String pathFile, String hostname, String database, String password, String port,
+			String schema, String username, String reference, String versionModel, Long conceptId)
+			throws BusinessException {
+
+		try {
+			MicroserviceIli2pgExportReferenceDto exportDto = new MicroserviceIli2pgExportReferenceDto();
+
+			exportDto.setPathFileXTF(pathFile);
+			exportDto.setDatabaseHost(hostname);
+			exportDto.setDatabaseName(database);
+			exportDto.setDatabasePassword(password);
+			exportDto.setDatabasePort(port);
+			exportDto.setDatabaseSchema(schema);
+			exportDto.setDatabaseUsername(username);
+			exportDto.setReference(reference);
+			exportDto.setVersionModel(versionModel);
+			exportDto.setConceptId(conceptId);
+
+			iliClient.startExportReference(exportDto);
+
+		} catch (Exception e) {
+			log.error("No se ha podido iniciar la exportacion de la base de datos: " + e.getMessage());
+			throw new BusinessException("No se ha podido iniciar la exportación.");
+		}
+
 	}
 
 }

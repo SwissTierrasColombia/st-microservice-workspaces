@@ -1406,4 +1406,107 @@ public class ProviderV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
+	@RequestMapping(value = "/supplies-review/{supplyRequestedId}/update/{boundarySpaceId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Start revision")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Start revision", response = MicroserviceQueryResultRegistralRevisionDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> updateRecordBoundarySpace(@RequestHeader("authorization") String headerAuthorization,
+			@PathVariable Long supplyRequestedId, @PathVariable Long boundarySpaceId,
+			@RequestParam(name = "file", required = true) MultipartFile file) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = providerBusiness
+					.getProviderByUserAdministrator(userDtoSession.getId());
+			if (providerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
+			}
+			if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
+				throw new BusinessException("No tiene permiso para consultar esta información.");
+			}
+
+			providerBusiness.uploadAttachmentToRevision(providerDto, file, supplyRequestedId, boundarySpaceId,
+					userDtoSession.getId());
+			responseDto = new BasicResponseDto("Registro actualizado", 7);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@updateRecordBoundarySpace#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@updateRecordBoundarySpace#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@updateRecordBoundarySpace#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/supplies-review/{supplyRequestedId}/close", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Start revision")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> closeRevision(@RequestHeader("authorization") String headerAuthorization,
+			@PathVariable Long supplyRequestedId) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = providerBusiness
+					.getProviderByUserAdministrator(userDtoSession.getId());
+			if (providerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
+			}
+			if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
+				throw new BusinessException("No tiene permiso para cerrar la revisión.");
+			}
+
+			providerBusiness.closeRevision(supplyRequestedId, userDtoSession.getId(), providerDto);
+			responseDto = new BasicResponseDto("El proceso de cerrar revisión ha iniciado", 7);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@startRevision#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@startRevision#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@startRevision#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
 }

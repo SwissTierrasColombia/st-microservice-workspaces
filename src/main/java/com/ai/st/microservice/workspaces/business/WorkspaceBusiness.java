@@ -408,9 +408,9 @@ public class WorkspaceBusiness {
 		try {
 
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
-			
+
 			urlBase = FileTool.removeAccents(urlBase);
-			
+
 			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
 
 		} catch (Exception e) {
@@ -1156,7 +1156,21 @@ public class WorkspaceBusiness {
 							.filter(profile -> profileSupply.getId().equals(profile.getId())).findAny().orElse(null);
 
 					if (profileUser != null) {
-						supply.setCanUpload(true);
+
+						if (supply.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)
+								|| supply.getState().getId()
+										.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW)
+								|| supply.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)
+								|| supply.getState().getId()
+										.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW)) {
+
+							supply.setCanUpload(false);
+							countNot++;
+
+						} else {
+							supply.setCanUpload(true);
+						}
+
 					} else {
 						supply.setCanUpload(false);
 						countNot++;

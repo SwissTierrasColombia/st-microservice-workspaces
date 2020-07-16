@@ -24,6 +24,8 @@ import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAttachmentDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
@@ -41,6 +43,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisio
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
@@ -73,6 +76,9 @@ public class ProviderBusiness {
 
 	@Value("${st.temporalDirectory}")
 	private String stTemporalDirectory;
+
+	@Value("${st.filesDirectory}")
+	private String stFilesDirectory;
 
 	// Supplies requested states
 	public static final Long SUPPLY_REQUESTED_STATE_ACCEPTED = (long) 1;
@@ -226,6 +232,12 @@ public class ProviderBusiness {
 
 		if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
 			throw new BusinessException("Ya se ha cargado un insumo que esta en validación.");
+		}
+		if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)
+				|| supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW)
+				|| supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)
+				|| supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW)) {
+			throw new BusinessException("No se puede cargar el insumo porque el insumo esta en revisión.");
 		}
 
 		Long supplyRequestedStateId = null;
@@ -548,6 +560,19 @@ public class ProviderBusiness {
 		}
 
 		return requestUpdatedDto;
+	}
+
+	public MicroserviceRequestDto closeRequest(Long requestId, Long userCode) {
+
+		MicroserviceRequestDto requestDto = null;
+
+		try {
+			requestDto = providerClient.closeRequest(requestId, userCode);
+		} catch (Exception e) {
+			log.error("Error cerrando solicitud: " + e.getMessage());
+		}
+
+		return requestDto;
 	}
 
 	public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
@@ -1103,6 +1128,21 @@ public class ProviderBusiness {
 		return requestDto;
 	}
 
+	public MicroserviceRequestDto updateSupplyRequested(Long requestId, Long supplyRequestedId,
+			MicroserviceUpdateSupplyRequestedDto updateSupplyData) {
+
+		MicroserviceRequestDto requestDto = null;
+
+		try {
+
+			providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
+		} catch (Exception e) {
+			log.error("No se ha podido actualizar el insumo solicitado: " + e.getMessage());
+		}
+
+		return requestDto;
+	}
+
 	public void startRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
 			throws BusinessException {
 
@@ -1241,7 +1281,162 @@ public class ProviderBusiness {
 		}
 
 		return resultDto;
+	}
 
+	public MicroserviceAttachmentDto createAttachment(Long supplyRequestedId, Long boundaryId, String urlFile,
+			Long createdBy) {
+
+		MicroserviceAttachmentDto attachmentDto = null;
+
+		try {
+
+			MicroserviceCreateAttachmentDto createAttachmentDto = new MicroserviceCreateAttachmentDto();
+			createAttachmentDto.setBoundaryId(boundaryId);
+			createAttachmentDto.setCreatedBy(createdBy);
+			createAttachmentDto.setFileUrl(urlFile);
+
+			attachmentDto = providerClient.createAttachment(supplyRequestedId, createAttachmentDto);
+		} catch (Exception e) {
+			log.error("No se ha podido crear el anexo: " + e.getMessage());
+		}
+
+		return attachmentDto;
+	}
+
+	public void uploadAttachmentToRevision(MicroserviceProviderDto prodiverDto, MultipartFile fileUploaded,
+			Long supplyRequestedId, Long boundaryId, Long userCode) throws BusinessException {
+
+		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+		if (supplyRequestedDto == null) {
+			throw new BusinessException("El insumo solicitado no existe");
+		}
+
+		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+		}
+
+		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
+			throw new BusinessException(
+					"El estado en el que se encuentra el insumo no permite actualizar el registro.");
+		}
+
+		MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+		if (supplyRevisionDto == null) {
+			throw new BusinessException("No existe una revisión para el insumo.");
+		}
+
+		// save file
+		String urlBase = "/anexos/" + supplyRequestedId + "/";
+		urlBase = FileTool.removeAccents(urlBase);
+
+		String urlFile = fileBusiness.saveFileToSystem(fileUploaded, urlBase, true);
+
+		try {
+
+			String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
+			String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
+			String password = databaseIntegrationPassword;
+			String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
+			String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
+			String username = databaseIntegrationUsername;
+
+			String namespace = supplyRequestedDto.getTypeSupply().getProvider().getName() + "_FUENTECABIDALINDEROS";
+
+			iliBusiness.updateRecordFromRevision(host, database, password, port, schema, username,
+					supplyRequestedDto.getModelVersion(), boundaryId, ProviderBusiness.PROVIDER_SNR_ID, namespace,
+					urlFile);
+
+		} catch (Exception e) {
+			log.error("No se ha podido realizar la consulta: " + e.getMessage());
+			throw new BusinessException("No se ha podido actualizar el registro.");
+		}
+
+		MicroserviceAttachmentDto attachmentDto = createAttachment(supplyRequestedId, boundaryId, urlFile, userCode);
+		if (attachmentDto == null) {
+			throw new BusinessException("No se ha podido actualizar el registro.");
+		}
+
+	}
+
+	public void closeRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+			throws BusinessException {
+
+		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+		if (supplyRequestedDto == null) {
+			throw new BusinessException("El insumo solicitado no existe");
+		}
+
+		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+		}
+
+		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
+			throw new BusinessException("El estado en el que se encuentra el insumo no permite cerrar una revisión.");
+		}
+
+		MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+		if (supplyRevisionDto == null) {
+			throw new BusinessException("No existe una revisión para el insumo.");
+		}
+
+		// start export
+		try {
+
+			String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
+			String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
+			String password = databaseIntegrationPassword;
+			String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
+			String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
+			String username = databaseIntegrationUsername;
+
+			String reference = "export-" + supplyRequestedDto.getId() + "-" + supplyRequestedDto.getRequest().getId()
+					+ "-" + userCode;
+
+			String randomFilename = RandomStringUtils.random(20, true, false).toLowerCase();
+			String pathFile = stFilesDirectory + "/anexos/" + supplyRequestedId + File.separator + randomFilename
+					+ ".xtf";
+
+			iliBusiness.startExportReference(pathFile, host, database, password, port, schema, username, reference,
+					supplyRequestedDto.getModelVersion().trim(), IliBusiness.ILI_CONCEPT_INTEGRATION);
+
+		} catch (Exception e) {
+			log.error("No se ha podido iniciar la exportación: " + e.getMessage());
+			throw new BusinessException("No se ha podido iniciar la exportación.");
+		}
+
+		// update state supply requested to Closing Revision
+		updateStateToSupplyRequested(supplyRequestedDto.getRequest().getId(), supplyRequestedId,
+				ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW);
+
+	}
+
+	public MicroserviceRequestDto getRequestById(Long requestId) {
+
+		MicroserviceRequestDto requestDto = null;
+
+		try {
+			requestDto = providerClient.findRequestById(requestId);
+		} catch (Exception e) {
+			log.error("Error consultando solicitud por id: " + e.getMessage());
+		}
+
+		return requestDto;
+	}
+
+	public MicroserviceSupplyRevisionDto updateSupplyRevision(Long supplyRequestedId, Long supplyRevisionId,
+			MicroserviceUpdateSupplyRevisionDto updateData) {
+
+		MicroserviceSupplyRevisionDto supplyRevisionDto = null;
+
+		try {
+
+			supplyRevisionDto = providerClient.updateSupplyRevision(supplyRequestedId, supplyRevisionId, updateData);
+
+		} catch (Exception e) {
+			log.error("No se ha podido actualizar la revisión: " + e.getMessage());
+		}
+
+		return supplyRevisionDto;
 	}
 
 }
