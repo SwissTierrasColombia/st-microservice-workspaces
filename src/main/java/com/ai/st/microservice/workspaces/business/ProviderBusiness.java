@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,6 +142,9 @@ public class ProviderBusiness {
 
 	@Autowired
 	private CrytpoBusiness cryptoBusiness;
+
+	@Autowired
+	private FTPBusiness ftpBusiness;
 
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -1003,6 +1007,22 @@ public class ProviderBusiness {
 		return providerDto;
 	}
 
+	public MicroserviceProviderDto getProviderByUserTechnicalOrAdministrator(Long userCode) {
+
+		MicroserviceProviderDto providerDtoByAdministrator = getProviderByUserAdministrator(userCode);
+		MicroserviceProviderDto providerDtoByTechnical = getProviderByUserTechnical(userCode);
+
+		if (providerDtoByAdministrator != null) {
+			return providerDtoByAdministrator;
+		}
+
+		if (providerDtoByTechnical != null) {
+			return providerDtoByTechnical;
+		}
+
+		return null;
+	}
+
 	public boolean userProviderIsDirector(Long userCode) {
 
 		Boolean isDirector = false;
@@ -1159,12 +1179,18 @@ public class ProviderBusiness {
 			throw new BusinessException("El estado en el que se encuentra el insumo no permite iniciar una revisión.");
 		}
 
-		String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
 		String randomUsername = RandomStringUtils.random(8, true, false).toLowerCase();
 		String randomPassword = RandomStringUtils.random(10, true, true);
-		String schema = "import_snr";
+
+		// create FTP credentials
+		boolean credentialsCreated = ftpBusiness.createFTPCredentials(randomUsername, randomPassword);
+		if (!credentialsCreated) {
+			throw new BusinessException("No se ha podido crear el espacio para el almacenamiento de archivos.");
+		}
 
 		// create database
+		String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
+		String schema = "import_snr";
 		try {
 			databaseIntegrationBusiness.createDatabase(randomDatabaseName, randomUsername, randomPassword);
 		} catch (Exception e) {
@@ -1326,10 +1352,25 @@ public class ProviderBusiness {
 		}
 
 		// save file
-		String urlBase = "/anexos/" + supplyRequestedId + "/";
+		String urlBase = "/anexos/" + supplyRequestedId;
 		urlBase = FileTool.removeAccents(urlBase);
-
 		String urlFile = fileBusiness.saveFileToSystem(fileUploaded, urlBase, true);
+
+		String FTPFileName = boundaryId + ".zip";
+
+		String usernameFTP = null;
+		String passwordFTP = null;
+		try {
+			usernameFTP = cryptoBusiness.decrypt(supplyRevisionDto.getUsername());
+			passwordFTP = cryptoBusiness.decrypt(supplyRevisionDto.getPassword());
+		} catch (Exception e) {
+			log.error("Error consultando datos de conexión al FTP:" + e.getMessage());
+		}
+
+		Boolean uploadFilToFTPServer = ftpBusiness.uploadFileToFTP(urlFile, FTPFileName, usernameFTP, passwordFTP);
+		if (!uploadFilToFTPServer) {
+			throw new BusinessException("No se ha podido cargar el archivo al servidor FTP.");
+		}
 
 		try {
 
@@ -1344,7 +1385,7 @@ public class ProviderBusiness {
 
 			iliBusiness.updateRecordFromRevision(host, database, password, port, schema, username,
 					supplyRequestedDto.getModelVersion(), boundaryId, ProviderBusiness.PROVIDER_SNR_ID, namespace,
-					urlFile);
+					FTPFileName);
 
 		} catch (Exception e) {
 			log.error("No se ha podido realizar la consulta: " + e.getMessage());
@@ -1354,6 +1395,13 @@ public class ProviderBusiness {
 		MicroserviceAttachmentDto attachmentDto = createAttachment(supplyRequestedId, boundaryId, urlFile, userCode);
 		if (attachmentDto == null) {
 			throw new BusinessException("No se ha podido actualizar el registro.");
+		}
+
+		// delete file
+		try {
+			FileUtils.deleteQuietly(new File(urlFile));
+		} catch (Exception e) {
+			log.error("No se ha podido eliminar el archivo temporal: " + e.getMessage());
 		}
 
 	}

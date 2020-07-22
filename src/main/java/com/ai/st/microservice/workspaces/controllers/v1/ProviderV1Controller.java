@@ -254,22 +254,16 @@ public class ProviderV1Controller {
 		try {
 
 			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
 			}
 
 			// get provider
-			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findByUserCode(userDtoSession.getId());
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de proveedores de insumo.");
+			MicroserviceProviderDto providerDto = providerBusiness
+					.getProviderByUserTechnicalOrAdministrator(userDtoSession.getId());
+			if (providerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
 			}
 
 			listRequests = workspaceBusiness.getClosedRequestByProvider(userDtoSession.getId(), providerDto.getId());
