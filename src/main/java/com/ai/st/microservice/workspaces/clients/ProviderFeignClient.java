@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAttachmentDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
@@ -190,10 +188,6 @@ public interface ProviderFeignClient {
 
 	@GetMapping("/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/revision")
 	public MicroserviceSupplyRevisionDto getSupplyRevisionFromSupplyRequested(@PathVariable Long supplyRequestedId);
-
-	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/attachments", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceAttachmentDto createAttachment(@PathVariable Long supplyRequestedId,
-			@RequestBody MicroserviceCreateAttachmentDto createAttachmentDto);
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/revision/{revisionId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceSupplyRevisionDto updateSupplyRevision(@PathVariable Long supplyRequestedId,

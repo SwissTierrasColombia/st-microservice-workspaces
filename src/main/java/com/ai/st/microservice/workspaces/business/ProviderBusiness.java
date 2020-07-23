@@ -25,8 +25,6 @@ import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAttachmentDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
@@ -1316,26 +1314,6 @@ public class ProviderBusiness {
 		return resultDto;
 	}
 
-	public MicroserviceAttachmentDto createAttachment(Long supplyRequestedId, Long boundaryId, String urlFile,
-			Long createdBy) {
-
-		MicroserviceAttachmentDto attachmentDto = null;
-
-		try {
-
-			MicroserviceCreateAttachmentDto createAttachmentDto = new MicroserviceCreateAttachmentDto();
-			createAttachmentDto.setBoundaryId(boundaryId);
-			createAttachmentDto.setCreatedBy(createdBy);
-			createAttachmentDto.setFileUrl(urlFile);
-
-			attachmentDto = providerClient.createAttachment(supplyRequestedId, createAttachmentDto);
-		} catch (Exception e) {
-			log.error("No se ha podido crear el anexo: " + e.getMessage());
-		}
-
-		return attachmentDto;
-	}
-
 	public void uploadAttachmentToRevision(MicroserviceProviderDto prodiverDto, MultipartFile fileUploaded,
 			Long supplyRequestedId, Long boundaryId, Long userCode) throws BusinessException {
 
@@ -1396,11 +1374,6 @@ public class ProviderBusiness {
 
 		} catch (Exception e) {
 			log.error("No se ha podido realizar la consulta: " + e.getMessage());
-			throw new BusinessException("No se ha podido actualizar el registro.");
-		}
-
-		MicroserviceAttachmentDto attachmentDto = createAttachment(supplyRequestedId, boundaryId, urlFile, userCode);
-		if (attachmentDto == null) {
 			throw new BusinessException("No se ha podido actualizar el registro.");
 		}
 
