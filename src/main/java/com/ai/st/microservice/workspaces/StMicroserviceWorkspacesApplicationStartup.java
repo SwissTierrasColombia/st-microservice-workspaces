@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,9 @@ import com.ai.st.microservice.workspaces.services.IStateService;
 @Component
 public class StMicroserviceWorkspacesApplicationStartup implements ApplicationListener<ContextRefreshedEvent> {
 
+	@Value("${spring.profiles.active}")
+	private String activeProfile;
+
 	private static final Logger log = LoggerFactory.getLogger(StMicroserviceWorkspacesApplicationStartup.class);
 
 	@Autowired
@@ -44,10 +48,15 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		log.info("ST - Loading Domains ... ");
-		this.initMunicipalities();
+
 		this.initMilestones();
 		this.initStates();
 		this.initIntegrationStates();
+
+		if (activeProfile.equalsIgnoreCase("develop")) {
+			this.initMunicipalities();
+		}
+
 	}
 
 	public void initMunicipalities() {

@@ -2,8 +2,7 @@ spring:
   application:
     name: st-microservice-workspaces
   profiles:
-    active: 
-      - "develop"
+    active: "develop"
   cloud:
     config:
       enabled: true
