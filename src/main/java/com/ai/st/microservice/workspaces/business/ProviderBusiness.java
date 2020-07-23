@@ -45,6 +45,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
 import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
@@ -538,14 +539,20 @@ public class ProviderBusiness {
 
 					if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
 
-						List<String> urls = new ArrayList<>();
+						List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
 						if (supplyRequested.getUrl() != null) {
-							urls.add(supplyRequested.getUrl());
+							attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getUrl(),
+									SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+						}
+
+						if (supplyRequested.getFtp() != null) {
+							attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getFtp(),
+									SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 						}
 
 						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
-								supplyRequested.getTypeSupply().getId(), urls, supplyRequested.getFtp(), requestId,
-								userCode, providerDto.getId(), null, supplyRequested.getModelVersion());
+								supplyRequested.getTypeSupply().getId(), attachments, requestId, userCode,
+								providerDto.getId(), null, supplyRequested.getModelVersion());
 					}
 
 				}

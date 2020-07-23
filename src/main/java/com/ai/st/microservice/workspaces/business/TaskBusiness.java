@@ -502,20 +502,26 @@ public class TaskBusiness {
 								// file cadastre
 								MicroserviceSupplyDto supplyCadastreDto = supplyClient
 										.findSupplyById(integrationEntity.getSupplyCadastreId());
+
 								MicroserviceSupplyAttachmentDto attachmentCadastre = supplyCadastreDto.getAttachments()
-										.get(0);
+										.stream()
+										.filter(a -> a.getAttachmentType().getId()
+												.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
+										.findAny().orElse(null);
 
 								// file register
 								MicroserviceSupplyDto supplyRegisteredDto = supplyClient
 										.findSupplyById(integrationEntity.getSupplySnrId());
 								MicroserviceSupplyAttachmentDto attachmentRegister = supplyRegisteredDto
-										.getAttachments().get(0);
+										.getAttachments().stream()
+										.filter(a -> a.getAttachmentType().getId()
+												.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
+										.findAny().orElse(null);
 
-								iliBusiness.startIntegration(attachmentCadastre.getUrlDocumentaryRepository(),
-										attachmentRegister.getUrlDocumentaryRepository(), databaseIntegrationHost,
-										randomDatabaseName, databaseIntegrationPassword, databaseIntegrationPort,
-										databaseIntegrationSchema, databaseIntegrationUsername, integrationId,
-										supplyCadastreDto.getModelVersion());
+								iliBusiness.startIntegration(attachmentCadastre.getData(), attachmentRegister.getData(),
+										databaseIntegrationHost, randomDatabaseName, databaseIntegrationPassword,
+										databaseIntegrationPort, databaseIntegrationSchema, databaseIntegrationUsername,
+										integrationId, supplyCadastreDto.getModelVersion());
 
 							} catch (Exception e) {
 								log.error("No se ha podido iniciar la integración: " + e.getMessage());

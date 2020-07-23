@@ -30,6 +30,7 @@ import com.ai.st.microservice.workspaces.business.UserBusiness;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIliExportResultDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
@@ -100,7 +101,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 					String urlBase = stFilesDirectory + "/"
 							+ workspaceEntity.getMunicipality().getCode().replace(" ", "_") + "/insumos/gestores/"
 							+ workspaceEntity.getManagerCode();
-					
+
 					urlBase = FileTool.removeAccents(urlBase);
 
 					String zipName = RandomStringUtils.random(20, true, false);
@@ -115,13 +116,14 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 					log.info("saving url file: " + urlDocumentaryRepository);
 
-					List<String> urlsAttachments = new ArrayList<>();
-					urlsAttachments.add(urlDocumentaryRepository);
+					List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+					attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
+							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
 
 					// load supply to municipality
 					String observations = "Archivo XTF generado para el modelo de insumos";
-					supplyBusiness.createSupply(municipalityCode, observations, null, urlsAttachments, null, null, null,
-							null, workspaceEntity.getManagerCode(), resultExportDto.getModelVersion());
+					supplyBusiness.createSupply(municipalityCode, observations, null, attachments, null, null, null,
+							workspaceEntity.getManagerCode(), resultExportDto.getModelVersion());
 
 					try {
 						// delete database

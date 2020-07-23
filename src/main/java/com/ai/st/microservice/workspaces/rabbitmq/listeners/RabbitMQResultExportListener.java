@@ -3,6 +3,8 @@ package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
@@ -16,12 +18,14 @@ import org.springframework.stereotype.Component;
 import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
 import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
+import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceResultExportDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
@@ -30,6 +34,12 @@ public class RabbitMQResultExportListener {
 
 	@Value("${st.filesDirectory}")
 	private String stFilesDirectory;
+
+	@Value("${st.ftp.host}")
+	private String hostFTP;
+
+	@Value("${st.ftp.port}")
+	private int portFTP;
 
 	private final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -41,6 +51,9 @@ public class RabbitMQResultExportListener {
 
 	@Autowired
 	private CrytpoBusiness cryptoBusiness;
+
+	@Autowired
+	private SupplyBusiness supplyBusiness;
 
 	@RabbitListener(queues = "${st.rabbitmq.queueResultExport.queue}", concurrency = "${st.rabbitmq.queueResultExport.concurrency}")
 	public void updateIntegration(MicroserviceResultExportDto resultDto) {
@@ -98,19 +111,38 @@ public class RabbitMQResultExportListener {
 					providerBusiness.updateSupplyRevision(supplyRequestedId, supplyRevisionDto.getId(),
 							updateRevisionData);
 
-					// delete database
-
-//					try { 
-//						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(supplyRevisionDto.getDatabase()),
-//								cryptoBusiness.decrypt(supplyRevisionDto.getUsername()));
-//					} catch (Exception e) {
-//						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
-//					}
-
 					// close request
 					providerBusiness.closeRequest(requestId, userId);
 
-					// TODO: create supply
+					// create supply
+
+					List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+
+					attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
+							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+
+					String ftpData = null;
+					try {
+						ftpData = "Servidor: " + hostFTP + " Puerto: " + portFTP + " Usuario: "
+								+ cryptoBusiness.decrypt(supplyRevisionDto.getUsername()) + " Contraseña: "
+								+ cryptoBusiness.decrypt(supplyRevisionDto.getPassword());
+					} catch (Exception e) {
+						log.error("Error creando información FTP: " + e.getMessage());
+					}
+
+					attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftpData,
+							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
+					supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
+							supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userId,
+							requestDto.getProvider().getId(), null, supplyRequestedDto.getModelVersion());
+
+					// delete database
+					try {
+						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(supplyRevisionDto.getDatabase()),
+								cryptoBusiness.decrypt(supplyRevisionDto.getUsername()));
+					} catch (Exception e) {
+						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
+					}
 
 				} else {
 

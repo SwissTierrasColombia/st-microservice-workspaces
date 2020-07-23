@@ -1,20 +1,26 @@
 package com.ai.st.microservice.workspaces.business;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
@@ -24,11 +30,19 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.utils.DateTool;
+import com.ai.st.microservice.workspaces.utils.FileTool;
 
 @Component
 public class SupplyBusiness {
 
+	@Value("${st.temporalDirectory}")
+	private String stTemporalDirectory;
+
 	private final Logger log = LoggerFactory.getLogger(SupplyBusiness.class);
+
+	public static final Long SUPPLY_ATTACHMENT_TYPE_SUPPLY = (long) 1;
+	public static final Long SUPPLY_ATTACHMENT_TYPE_FTP = (long) 2;
 
 	@Autowired
 	private IMunicipalityService municipalityService;
@@ -182,7 +196,7 @@ public class SupplyBusiness {
 	}
 
 	public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode,
-			List<String> urlsAttachments, String url, Long requestId, Long userCode, Long providerCode,
+			List<MicroserviceCreateSupplyAttachmentDto> attachments, Long requestId, Long userCode, Long providerCode,
 			Long managerCode, String modelVersion) throws BusinessException {
 
 		MicroserviceSupplyDto supplyDto = null;
@@ -202,10 +216,7 @@ public class SupplyBusiness {
 				createSupplyDto.setTypeSupplyCode(typeSupplyCode);
 			}
 
-			createSupplyDto.setUrlsDocumentaryRepository(urlsAttachments);
-			if (url != null && !url.isEmpty()) {
-				createSupplyDto.setUrl(url);
-			}
+			createSupplyDto.setAttachments(attachments);
 
 			List<MicroserviceCreateSupplyOwnerDto> owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
 
@@ -274,6 +285,39 @@ public class SupplyBusiness {
 			log.error("No se ha podido eliminar el insumo: " + e.getMessage());
 		}
 
+	}
+
+	public File generateFTPFile(MicroserviceSupplyDto supplyDto, MunicipalityDto municipalityDto) {
+
+		String randomCode = RandomStringUtils.random(10, false, true);
+
+		String typeSupplyName = supplyDto.getTypeSupply().getName().replace(" ", "_");
+
+		String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + "_" + typeSupplyName
+				+ ".txt";
+
+		MicroserviceSupplyAttachmentDto attachmentFtp = supplyDto.getAttachments().stream()
+				.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP)).findAny()
+				.orElse(null);
+
+		String content = "***********************************************" + "\n";
+		content += "Sistema de transición Barrido Predial \n";
+		content += "Fecha de Cargue del Insumo: " + DateTool.formatDate(supplyDto.getCreatedAt(), "yyyy-MM-dd") + "\n";
+		content += "***********************************************" + "\n";
+		content += "Código de Municipio: " + municipalityDto.getCode() + "\n";
+		content += "Municipio: " + municipalityDto.getName() + "\n";
+		content += "Departamento: " + municipalityDto.getDepartment().getName() + "\n";
+		content += "***********************************************" + "\n";
+		content += "Nombre Insumo: " + typeSupplyName + "\n";
+		content += "Proveedor: " + supplyDto.getTypeSupply().getProvider().getName() + "\n";
+		content += "***********************************************" + "\n";
+		content += "URL: " + attachmentFtp.getData() + "\n";
+		content += "Observaciones: " + supplyDto.getObservations() + "\n";
+		content += "***********************************************" + "\n";
+
+		File fileSupply = FileTool.createSimpleFile(content, filename);
+
+		return fileSupply;
 	}
 
 }

@@ -9,7 +9,8 @@ public class MicroserviceSupplyAttachmentDto implements Serializable {
 
 	private Long id;
 	private Date createdAt;
-	private String urlDocumentaryRepository;
+	private String data;
+	private MicroserviceSupplyAttachmentTypeDto attachmentType;
 
 	public MicroserviceSupplyAttachmentDto() {
 
@@ -31,12 +32,20 @@ public class MicroserviceSupplyAttachmentDto implements Serializable {
 		this.createdAt = createdAt;
 	}
 
-	public String getUrlDocumentaryRepository() {
-		return urlDocumentaryRepository;
+	public String getData() {
+		return data;
 	}
 
-	public void setUrlDocumentaryRepository(String urlDocumentaryRepository) {
-		this.urlDocumentaryRepository = urlDocumentaryRepository;
+	public void setData(String data) {
+		this.data = data;
+	}
+
+	public MicroserviceSupplyAttachmentTypeDto getAttachmentType() {
+		return attachmentType;
+	}
+
+	public void setAttachmentType(MicroserviceSupplyAttachmentTypeDto attachmentType) {
+		this.attachmentType = attachmentType;
 	}
 
 }

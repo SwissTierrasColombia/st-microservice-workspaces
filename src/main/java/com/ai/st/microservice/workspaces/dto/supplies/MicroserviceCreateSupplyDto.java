@@ -7,26 +7,18 @@ import java.util.List;
 public class MicroserviceCreateSupplyDto implements Serializable {
 
 	private static final long serialVersionUID = 7367459622173301312L;
-	private String url;
+
 	private String municipalityCode;
 	private String observations;
 	private Long typeSupplyCode;
 	private Long requestCode;
 	private String modelVersion;
 	private List<MicroserviceCreateSupplyOwnerDto> owners;
-	private List<String> urlsDocumentaryRepository;
+	private List<MicroserviceCreateSupplyAttachmentDto> attachments;
 
 	public MicroserviceCreateSupplyDto() {
 		this.owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
-		this.urlsDocumentaryRepository = new ArrayList<String>();
-	}
-
-	public String getUrl() {
-		return url;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
+		this.attachments = new ArrayList<MicroserviceCreateSupplyAttachmentDto>();
 	}
 
 	public String getMunicipalityCode() {
@@ -61,14 +53,6 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 		this.owners = owners;
 	}
 
-	public List<String> getUrlsDocumentaryRepository() {
-		return urlsDocumentaryRepository;
-	}
-
-	public void setUrlsDocumentaryRepository(List<String> urlsDocumentaryRepository) {
-		this.urlsDocumentaryRepository = urlsDocumentaryRepository;
-	}
-
 	public Long getRequestCode() {
 		return requestCode;
 	}
@@ -83,6 +67,14 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 
 	public void setModelVersion(String modelVersion) {
 		this.modelVersion = modelVersion;
+	}
+
+	public List<MicroserviceCreateSupplyAttachmentDto> getAttachments() {
+		return attachments;
+	}
+
+	public void setAttachments(List<MicroserviceCreateSupplyAttachmentDto> attachments) {
+		this.attachments = attachments;
 	}
 
 }
