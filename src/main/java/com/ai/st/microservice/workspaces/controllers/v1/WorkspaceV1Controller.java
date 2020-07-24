@@ -66,8 +66,6 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
-import com.ai.st.microservice.workspaces.utils.DateTool;
-import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 import com.google.common.io.Files;
 
@@ -77,7 +75,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Workspaces", description = "Manage Workspaces", tags = { "Workspaces" })
+@Api(value = "Manage Workspaces", tags = { "Workspaces" })
 @RestController
 @RequestMapping("api/workspaces/v1/workspaces")
 public class WorkspaceV1Controller {
@@ -1202,42 +1200,41 @@ public class WorkspaceV1Controller {
 
 			String pathFile = null;
 
-			// this supply has not file for download
-			if (supplyDto.getUrl() != null) {
+			MicroserviceSupplyAttachmentDto attachmentFtp = supplyDto.getAttachments().stream()
+					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP))
+					.findAny().orElse(null);
+
+			MicroserviceSupplyAttachmentDto attachmentSupply = supplyDto.getAttachments().stream()
+					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
+					.findAny().orElse(null);
+
+			MunicipalityDto municipalityDto = municipalityBusiness
+					.getMunicipalityByCode(supplyDto.getMunicipalityCode());
+
+			// the supply has FTP
+			if (attachmentFtp != null && attachmentSupply == null) {
+
+				File fileFTP = supplyBusiness.generateFTPFile(supplyDto, municipalityDto);
 
 				String randomCode = RandomStringUtils.random(10, false, true);
-
-				String typeSupplyName = supplyDto.getTypeSupply().getName().replace(" ", "_");
-
-				String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + "_"
-						+ typeSupplyName + ".txt";
-
-				MunicipalityDto municipalityDto = municipalityBusiness
-						.getMunicipalityByCode(supplyDto.getMunicipalityCode());
-
-				String content = "***********************************************" + "\n";
-				content += "Sistema de transición Barrido Predial \n";
-				content += "Fecha de Cargue del Insumo: " + DateTool.formatDate(supplyDto.getCreatedAt(), "yyyy-MM-dd") + "\n";
-				content += "***********************************************" + "\n";
-				content += "Código de Municipio: " + municipalityDto.getCode() + "\n";
-				content += "Municipio: " + municipalityDto.getName() + "\n";
-				content += "Departamento: " + municipalityDto.getDepartment().getName() + "\n";
-				content += "***********************************************" + "\n";
-				content += "Nombre Insumo: " + typeSupplyName + "\n";
-				content += "Proveedor: " + supplyDto.getTypeSupply().getProvider().getName() + "\n";
-				content += "***********************************************" + "\n";
-				content += "URL: " + supplyDto.getUrl() + "\n";
-				content += "Observaciones: " + supplyDto.getObservations() + "\n";
-				content += "***********************************************" + "\n";
-
-				File fileSupply = FileTool.createSimpleFile(content, filename);
-
-				pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileSupply)), "insumo_" + randomCode,
+				pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileFTP)), "insumo_" + randomCode,
 						stTemporalDirectory);
 
-			} else {
-				MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
-				pathFile = attachment.getUrlDocumentaryRepository();
+			}
+			// the supply has file to download
+			else if (attachmentFtp == null && attachmentSupply != null) {
+				pathFile = attachmentSupply.getData();
+			}
+			// the supply has both attachments types (file and FTP)
+			else {
+
+				File fileFTP = supplyBusiness.generateFTPFile(supplyDto, municipalityDto);
+				File fileSupply = new File(attachmentSupply.getData());
+
+				String randomCode = RandomStringUtils.random(10, false, true);
+				pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileFTP, fileSupply)),
+						"insumo_" + randomCode, stTemporalDirectory);
+
 			}
 
 			Path path = Paths.get(pathFile);

@@ -15,5 +15,6 @@ public class RoleBusiness {
 	public static final Long SUB_ROLE_INTEGRATOR = (long) 2;
 
 	public static final Long SUB_ROLE_DIRECTOR_PROVIDER = (long) 1;
+	public static final Long SUB_ROLE_DELEGATE_PROVIDER = (long) 2;
 
 }

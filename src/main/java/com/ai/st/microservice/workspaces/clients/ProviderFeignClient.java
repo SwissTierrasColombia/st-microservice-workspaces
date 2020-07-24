@@ -16,6 +16,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProv
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
@@ -24,9 +25,12 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserD
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPaginatedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import feign.Feign;
@@ -147,7 +151,7 @@ public interface ProviderFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/providers", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceProviderDto addProvider(MicroserviceCreateProviderDto createProviderDto);
-	
+
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceProviderDto updateProvider(MicroserviceUpdateProviderDto updateProviderDto);
 
@@ -167,6 +171,27 @@ public interface ProviderFeignClient {
 	public List<MicroserviceRequestDto> getRequestsByManagerAndPackage(
 			@RequestParam(name = "manager", required = true) Long managerCode,
 			@RequestParam(name = "package_label", required = true) String packageLabel) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/supplies-requested")
+	public List<MicroserviceSupplyRequestedDto> getSuppliesRequestedToReview(@PathVariable Long providerId,
+			@RequestParam(name = "states", required = true) List<Long> states) throws BusinessException;
+
+	@GetMapping("/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}")
+	public MicroserviceSupplyRequestedDto getSupplyRequested(@PathVariable Long supplyRequestedId);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/revision", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceSupplyRevisionDto createSupplyRevision(@PathVariable Long supplyRequestedId,
+			@RequestBody MicroserviceCreateSupplyRevisionDto createRevisionDto);
+
+	@RequestMapping(method = RequestMethod.DELETE, value = "/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/revision/{supplyRevisionId}", consumes = APPLICATION_JSON_VALUE)
+	public void deleteSupplyRevision(@PathVariable Long supplyRequestedId, @PathVariable Long supplyRevisionId);
+
+	@GetMapping("/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/revision")
+	public MicroserviceSupplyRevisionDto getSupplyRevisionFromSupplyRequested(@PathVariable Long supplyRequestedId);
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/revision/{revisionId}", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceSupplyRevisionDto updateSupplyRevision(@PathVariable Long supplyRequestedId,
+			@PathVariable Long revisionId, @RequestBody MicroserviceUpdateSupplyRevisionDto createRevisionDto);
 
 	class Configuration {
 

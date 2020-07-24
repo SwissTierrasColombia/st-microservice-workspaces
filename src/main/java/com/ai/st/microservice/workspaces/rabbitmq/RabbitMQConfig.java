@@ -53,6 +53,24 @@ public class RabbitMQConfig {
 	@Value("${st.rabbitmq.queueUpdateStateSupply.routingkey}")
 	public String routingkeyUpdateStateSupplyName;
 
+	@Value("${st.rabbitmq.queueResultImport.queue}")
+	public String queueResultImportName;
+
+	@Value("${st.rabbitmq.queueResultImport.exchange}")
+	public String exchangeResultImportName;
+
+	@Value("${st.rabbitmq.queueResultImport.routingkey}")
+	public String routingkeyResultImportName;
+
+	@Value("${st.rabbitmq.queueResultExport.queue}")
+	public String queueResultExportName;
+
+	@Value("${st.rabbitmq.queueResultExport.exchange}")
+	public String exchangeResultExportName;
+
+	@Value("${st.rabbitmq.queueResultExport.routingkey}")
+	public String routingkeyResultExportName;
+
 	@Bean
 	public Queue queueFiles() {
 		return new Queue(queueFilesName, false);
@@ -113,6 +131,40 @@ public class RabbitMQConfig {
 	public Binding bindingQueueUpdateStateSupply() {
 		return BindingBuilder.bind(queueUpdateStateSupply()).to(exchangeUpdateStateSupply())
 				.with(routingkeyUpdateStateSupplyName);
+	}
+
+	// queue result imports reference
+
+	@Bean
+	public Queue queueResultImport() {
+		return new Queue(queueResultImportName, false);
+	}
+
+	@Bean
+	public DirectExchange exchangeResultImport() {
+		return new DirectExchange(exchangeResultImportName);
+	}
+
+	@Bean
+	public Binding bindingQueueResultImport() {
+		return BindingBuilder.bind(queueResultImport()).to(exchangeResultImport()).with(routingkeyResultImportName);
+	}
+
+	// queue result exports reference
+
+	@Bean
+	public Queue queueResultExport() {
+		return new Queue(queueResultExportName, false);
+	}
+
+	@Bean
+	public DirectExchange exchangeResultExport() {
+		return new DirectExchange(exchangeResultExportName);
+	}
+
+	@Bean
+	public Binding bindingQueueResultExport() {
+		return BindingBuilder.bind(queueResultExport()).to(exchangeResultExport()).with(routingkeyResultExportName);
 	}
 
 	@Bean

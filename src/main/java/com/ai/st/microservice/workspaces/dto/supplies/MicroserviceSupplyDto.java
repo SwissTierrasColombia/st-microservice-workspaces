@@ -14,7 +14,6 @@ public class MicroserviceSupplyDto implements Serializable {
 
 	private Long id;
 	private Date createdAt;
-	private String url;
 	private MicroserviceSupplyStateDto state;
 	private String municipalityCode;
 	private String observations;
@@ -46,14 +45,6 @@ public class MicroserviceSupplyDto implements Serializable {
 
 	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
-	}
-
-	public String getUrl() {
-		return url;
-	}
-
-	public void setUrl(String url) {
-		this.url = url;
 	}
 
 	public MicroserviceSupplyStateDto getState() {

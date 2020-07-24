@@ -408,9 +408,9 @@ public class WorkspaceBusiness {
 		try {
 
 			String urlBase = "/" + workspaceEntity.getMunicipality().getCode() + "/soportes/operadores";
-			
+
 			urlBase = FileTool.removeAccents(urlBase);
-			
+
 			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
 
 		} catch (Exception e) {
@@ -1156,7 +1156,21 @@ public class WorkspaceBusiness {
 							.filter(profile -> profileSupply.getId().equals(profile.getId())).findAny().orElse(null);
 
 					if (profileUser != null) {
-						supply.setCanUpload(true);
+
+						if (supply.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)
+								|| supply.getState().getId()
+										.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW)
+								|| supply.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)
+								|| supply.getState().getId()
+										.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW)) {
+
+							supply.setCanUpload(false);
+							countNot++;
+
+						} else {
+							supply.setCanUpload(true);
+						}
+
 					} else {
 						supply.setCanUpload(false);
 						countNot++;
@@ -1311,8 +1325,10 @@ public class WorkspaceBusiness {
 
 			supplyCadastreDto.setTypeSupply(typeSupplyDto);
 
-			MicroserviceSupplyAttachmentDto attachment = supplyCadastreDto.getAttachments().get(0);
-			pathFileCadastre = attachment.getUrlDocumentaryRepository();
+			MicroserviceSupplyAttachmentDto attachment = supplyCadastreDto.getAttachments().stream()
+					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
+					.findAny().orElse(null);
+			pathFileCadastre = attachment.getData();
 
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
@@ -1336,8 +1352,10 @@ public class WorkspaceBusiness {
 
 			supplyRegisteredDto.setTypeSupply(typeSupplyDto);
 
-			MicroserviceSupplyAttachmentDto attachment = supplyRegisteredDto.getAttachments().get(0);
-			pathFileRegistration = attachment.getUrlDocumentaryRepository();
+			MicroserviceSupplyAttachmentDto attachment = supplyRegisteredDto.getAttachments().stream()
+					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
+					.findAny().orElse(null);
+			pathFileRegistration = attachment.getData();
 
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido consultar el tipo de insumo.");
@@ -1712,8 +1730,10 @@ public class WorkspaceBusiness {
 
 			supplyDto = supplyClient.findSupplyById(supplyId);
 
-			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().get(0);
-			pathFile = attachment.getUrlDocumentaryRepository();
+			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().stream()
+					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
+					.findAny().orElse(null);
+			pathFile = attachment.getData();
 
 		} catch (Exception e) {
 			log.error("No se ha encontrado el insumo para eliminarlo: " + e.getMessage());
