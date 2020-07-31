@@ -73,7 +73,7 @@ public class DatabaseIntegrationBusiness {
 			Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
 			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery("select max(t.t_id) from " + schema + ".ini_predio_insumos t");
+			ResultSet rs = stmt.executeQuery("select max(t.t_id) from " + schema + ".ini_predioinsumos t");
 			rs.next();
 			long maxId = rs.getLong(1);
 
@@ -82,7 +82,7 @@ public class DatabaseIntegrationBusiness {
 			stmt5.execute();
 
 			PreparedStatement stmt1 = connection
-					.prepareStatement("ALTER TABLE " + schema + ".ini_predio_insumos OWNER TO " + databaseUsername);
+					.prepareStatement("ALTER TABLE " + schema + ".ini_predioinsumos OWNER TO " + databaseUsername);
 			stmt1.execute();
 
 			PreparedStatement stmt2 = connection
@@ -94,39 +94,39 @@ public class DatabaseIntegrationBusiness {
 			stmt3.execute();
 
 			PreparedStatement stmt4 = connection.prepareStatement(
-					"GRANT INSERT, UPDATE, DELETE ON " + schema + ".ini_predio_insumos TO " + username);
+					"GRANT INSERT, UPDATE, DELETE ON " + schema + ".ini_predioinsumos TO " + username);
 			stmt4.execute();
 
 			PreparedStatement stmt6 = connection
-					.prepareStatement("ALTER TABLE " + schema + ".ini_predio_insumos ENABLE ROW LEVEL SECURITY");
+					.prepareStatement("ALTER TABLE " + schema + ".ini_predioinsumos ENABLE ROW LEVEL SECURITY");
 			stmt6.execute();
 
 			PreparedStatement stmt7 = connection.prepareStatement(
-					"CREATE POLICY all_users_policy ON " + schema + ".ini_predio_insumos USING (false)");
+					"CREATE POLICY all_users_policy ON " + schema + ".ini_predioinsumos USING (false)");
 			stmt7.execute();
 
 			PreparedStatement stmt8 = connection.prepareStatement("CREATE POLICY all_users_select_policy ON " + schema
-					+ ".ini_predio_insumos FOR SELECT USING (true)");
+					+ ".ini_predioinsumos FOR SELECT USING (true)");
 			stmt8.execute();
 
 			PreparedStatement stmt9 = connection.prepareStatement("CREATE POLICY all_users_delete_policy ON " + schema
-					+ ".ini_predio_insumos FOR DELETE USING (t_id > " + maxId + ")");
+					+ ".ini_predioinsumos FOR DELETE USING (t_id > " + maxId + ")");
 			stmt9.execute();
 
 			PreparedStatement stmt10 = connection.prepareStatement("CREATE POLICY all_users_update_policy ON " + schema
-					+ ".ini_predio_insumos FOR UPDATE WITH CHECK (t_id > " + maxId + ")");
+					+ ".ini_predioinsumos FOR UPDATE WITH CHECK (t_id > " + maxId + ")");
 			stmt10.execute();
 
 			PreparedStatement stmt11 = connection.prepareStatement("CREATE POLICY all_users_insert_policy ON " + schema
-					+ ".ini_predio_insumos FOR INSERT WITH CHECK (t_id > " + maxId + ")");
+					+ ".ini_predioinsumos FOR INSERT WITH CHECK (t_id > " + maxId + ")");
 			stmt11.execute();
 
 			PreparedStatement stmt12 = connection.prepareStatement("ALTER TABLE " + schema
-					+ ".ini_predio_insumos ADD CONSTRAINT st_unique_gc UNIQUE (gc_predio_catastro)");
+					+ ".ini_predioinsumos ADD CONSTRAINT st_unique_gc UNIQUE (gc_predio_catastro)");
 			stmt12.execute();
 
 			PreparedStatement stmt13 = connection.prepareStatement("ALTER TABLE " + schema
-					+ ".ini_predio_insumos ADD CONSTRAINT st_unique_snr UNIQUE (snr_predio_juridico)");
+					+ ".ini_predioinsumos ADD CONSTRAINT st_unique_snr UNIQUE (snr_predio_juridico)");
 			stmt13.execute();
 
 		} catch (Exception e) {
