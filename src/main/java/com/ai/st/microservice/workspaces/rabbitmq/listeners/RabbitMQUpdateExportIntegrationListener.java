@@ -34,6 +34,7 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAt
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
+import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IntegrationService;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
@@ -168,6 +169,14 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 		} catch (Exception e) {
 			log.info("Error update export integration: " + e.getMessage());
+
+			Long stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
+			try {
+				integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null,
+						"SISTEMA");
+			} catch (BusinessException e1) {
+				log.error("Error actualizando el estado de la integración por error: " + e.getMessage());
+			}
 		}
 
 	}
