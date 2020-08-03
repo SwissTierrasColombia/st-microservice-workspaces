@@ -1503,4 +1503,54 @@ public class ProviderV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
+	@RequestMapping(value = "/supplies-review/{supplyRequestedId}/skip", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Start revision")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> skipRevision(@RequestHeader("authorization") String headerAuthorization,
+			@PathVariable Long supplyRequestedId) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = providerBusiness
+					.getProviderByUserAdministrator(userDtoSession.getId());
+			if (providerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
+			}
+			if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
+				throw new BusinessException("No tiene permiso para omitir la revisión.");
+			}
+
+			providerBusiness.skipRevision(supplyRequestedId, userDtoSession.getId(), providerDto);
+			responseDto = new BasicResponseDto("Revisión omitida", 7);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@skipRevision#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.BAD_REQUEST;
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@skipRevision#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@skipRevision#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
 }

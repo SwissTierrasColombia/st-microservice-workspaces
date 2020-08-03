@@ -145,6 +145,9 @@ public class ProviderBusiness {
 	@Autowired
 	private FTPBusiness ftpBusiness;
 
+	@Autowired
+	private MunicipalityBusiness municipalityBusiness;
+
 	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
 			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
 			throws BusinessException {
@@ -1089,6 +1092,14 @@ public class ProviderBusiness {
 
 			suppliesRequestedDto = providerClient.getSuppliesRequestedToReview(providerId, states);
 
+			for (MicroserviceSupplyRequestedDto sR : suppliesRequestedDto) {
+
+				MunicipalityDto municipalityDto = municipalityBusiness
+						.getMunicipalityByCode(sR.getRequest().getMunicipalityCode());
+
+				sR.getRequest().setMunicipality(municipalityDto);
+			}
+
 		} catch (Exception e) {
 			log.error("No se ha podido consultar los insumos pendiente de revisión: " + e.getMessage());
 		}
@@ -1465,6 +1476,44 @@ public class ProviderBusiness {
 		}
 
 		return supplyRevisionDto;
+	}
+
+	public void skipRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+			throws BusinessException {
+
+		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+		if (supplyRequestedDto == null) {
+			throw new BusinessException("El insumo solicitado no existe");
+		}
+
+		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+		}
+
+		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)) {
+			throw new BusinessException("El estado en el que se encuentra el insumo no permite omitir la revisión.");
+		}
+
+		// create supply
+
+		Long requestId = supplyRequestedDto.getRequest().getId();
+		String urlDocumentaryRepository = supplyRequestedDto.getUrl();
+
+		MicroserviceRequestDto requestDto = this.getRequestById(requestId);
+
+		List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+
+		attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
+				SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+
+		supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
+				supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userCode,
+				requestDto.getProvider().getId(), null, supplyRequestedDto.getModelVersion());
+
+		updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
+
+		// close request
+		closeRequest(requestId, userCode);
 	}
 
 }
