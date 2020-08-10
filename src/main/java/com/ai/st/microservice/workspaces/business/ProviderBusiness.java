@@ -25,12 +25,14 @@ import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreatePetitionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroservicePetitionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
@@ -40,6 +42,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPagina
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdatePetitionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
@@ -95,6 +98,11 @@ public class ProviderBusiness {
 	public static final Long REQUEST_STATE_REQUESTED = (long) 1;
 	public static final Long REQUEST_STATE_DELIVERED = (long) 2;
 	public static final Long REQUEST_STATE_CANCELLED = (long) 3;
+
+	// Petitions States
+	public static final Long PETITION_STATE_PENDING = (long) 1;
+	public static final Long PETITION_STATE_ACCEPT = (long) 2;
+	public static final Long PETITION_STATE_REJECT = (long) 3;
 
 	// Providers
 	public static final Long PROVIDER_IGAC_ID = (long) 1;
@@ -1514,6 +1522,224 @@ public class ProviderBusiness {
 
 		// close request
 		closeRequest(requestId, userCode);
+	}
+
+	public MicroservicePetitionDto createPetition(Long providerId, Long managerId, String description)
+			throws BusinessException {
+
+		MicroservicePetitionDto petitionDto = null;
+
+		// validate provider
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+		}
+		if (providerDto == null) {
+			throw new BusinessException("El proveedor de insumo no existe.");
+		}
+
+		try {
+
+			MicroserviceCreatePetitionDto data = new MicroserviceCreatePetitionDto();
+			data.setManagerCode(managerId);
+			data.setObservations(description);
+
+			petitionDto = providerClient.createPetition(providerId, data);
+			petitionDto = addAdditionalDataToPetition(petitionDto);
+
+		} catch (Exception e) {
+			log.error("Error creando petición: " + e.getMessage());
+			throw new BusinessException("No se ha podido crear la petición.");
+		}
+
+		return petitionDto;
+	}
+
+	public List<MicroservicePetitionDto> getPetitionsForManager(Long providerId, Long managerId)
+			throws BusinessException {
+
+		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+
+		// validate provider
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+		}
+		if (providerDto == null) {
+			throw new BusinessException("El proveedor de insumo no existe.");
+		}
+
+		try {
+
+			listPetitionsDto = providerClient.getPetitionsForManager(providerId, managerId);
+			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+				petitionDto = addAdditionalDataToPetition(petitionDto);
+			}
+
+		} catch (Exception e) {
+			log.error("Error obteniendo las peticiones para el gestor: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar las peticiones del gestor.");
+		}
+
+		return listPetitionsDto;
+	}
+
+	public List<MicroservicePetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
+
+		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+
+		// validate provider
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+		}
+		if (providerDto == null) {
+			throw new BusinessException("El proveedor de insumo no existe.");
+		}
+
+		try {
+
+			List<Long> states = new ArrayList<Long>(Arrays.asList(ProviderBusiness.PETITION_STATE_PENDING));
+
+			listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
+
+			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+				petitionDto = addAdditionalDataToPetition(petitionDto);
+			}
+
+		} catch (Exception e) {
+			log.error("Error obteniendo las peticiones pendientes para el proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
+		}
+
+		return listPetitionsDto;
+	}
+
+	public List<MicroservicePetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
+
+		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+
+		// validate provider
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+		}
+		if (providerDto == null) {
+			throw new BusinessException("El proveedor de insumo no existe.");
+		}
+
+		try {
+
+			List<Long> states = new ArrayList<Long>(
+					Arrays.asList(ProviderBusiness.PETITION_STATE_ACCEPT, ProviderBusiness.PETITION_STATE_REJECT));
+
+			listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
+
+			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+				petitionDto = addAdditionalDataToPetition(petitionDto);
+			}
+
+		} catch (Exception e) {
+			log.error("Error obteniendo las peticiones cerradas para el proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
+		}
+
+		return listPetitionsDto;
+	}
+
+	public MicroservicePetitionDto acceptPetition(Long providerId, Long petitionId, String justification)
+			throws BusinessException {
+
+		MicroservicePetitionDto petitionDto = null;
+
+		// validate provider
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
+		}
+		if (providerDto == null) {
+			throw new BusinessException("El proveedor de insumo no existe.");
+		}
+
+		try {
+
+			MicroserviceUpdatePetitionDto data = new MicroserviceUpdatePetitionDto();
+			data.setJustitication(justification);
+			data.setPetitionStateId(ProviderBusiness.PETITION_STATE_ACCEPT);
+
+			petitionDto = providerClient.updatePetition(providerId, petitionId, data);
+			petitionDto = addAdditionalDataToPetition(petitionDto);
+
+		} catch (BusinessException e) {
+			log.error("Error aceptando la petición: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error aceptando la petición: " + e.getMessage());
+			throw new BusinessException("No se ha podido aceptar la petición.");
+		}
+
+		return petitionDto;
+	}
+
+	public MicroservicePetitionDto rejectPetition(Long providerId, Long petitionId, String justification)
+			throws BusinessException {
+
+		MicroservicePetitionDto petitionDto = null;
+
+		// validate provider
+		MicroserviceProviderDto providerDto = null;
+		try {
+			providerDto = providerClient.findById(providerId);
+		} catch (Exception e) {
+			log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
+		}
+		if (providerDto == null) {
+			throw new BusinessException("El proveedor de insumo no existe.");
+		}
+
+		try {
+
+			MicroserviceUpdatePetitionDto data = new MicroserviceUpdatePetitionDto();
+			data.setJustitication(justification);
+			data.setPetitionStateId(ProviderBusiness.PETITION_STATE_REJECT);
+
+			petitionDto = providerClient.updatePetition(providerId, petitionId, data);
+			petitionDto = addAdditionalDataToPetition(petitionDto);
+
+		} catch (BusinessException e) {
+			log.error("Error rechazando la petición: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error rechazando la petición: " + e.getMessage());
+			throw new BusinessException("No se ha podido rechazar la petición.");
+		}
+
+		return petitionDto;
+	}
+
+	private MicroservicePetitionDto addAdditionalDataToPetition(MicroservicePetitionDto petitionDto) {
+
+		try {
+
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerById(petitionDto.getManagerCode());
+			petitionDto.setManager(managerDto);
+
+		} catch (Exception e) {
+			petitionDto.setManager(null);
+			log.error("Error agregando información adicional a una petición: " + e.getMessage());
+		}
+
+		return petitionDto;
 	}
 
 }
