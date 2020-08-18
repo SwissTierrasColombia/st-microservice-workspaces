@@ -24,6 +24,7 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAt
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceUpdateSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
@@ -41,8 +42,14 @@ public class SupplyBusiness {
 
 	private final Logger log = LoggerFactory.getLogger(SupplyBusiness.class);
 
+	// attachments types
 	public static final Long SUPPLY_ATTACHMENT_TYPE_SUPPLY = (long) 1;
 	public static final Long SUPPLY_ATTACHMENT_TYPE_FTP = (long) 2;
+
+	// states
+	public static final Long SUPPLY_STATE_ACTIVE = (long) 1;
+	public static final Long SUPPLY_STATE_INACTIVE = (long) 2;
+	public static final Long SUPPLY_STATE_REMOVED = (long) 3;
 
 	@Autowired
 	private IMunicipalityService municipalityService;
@@ -60,7 +67,7 @@ public class SupplyBusiness {
 	private OperatorBusiness operatorBusiness;
 
 	public Object getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions, Integer page,
-			List<Long> requests) throws BusinessException {
+			List<Long> requests, boolean active) throws BusinessException {
 
 		// validate if the municipality exists
 		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -68,11 +75,11 @@ public class SupplyBusiness {
 			throw new BusinessException("No se ha encontrado el municipio.");
 		}
 
-		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests);
+		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active);
 	}
 
 	public Object getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode, List<String> extensions,
-			Integer page, List<Long> requests) throws BusinessException {
+			Integer page, List<Long> requests, boolean active) throws BusinessException {
 
 		// validate if the municipality exists
 		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -89,11 +96,21 @@ public class SupplyBusiness {
 			}
 		}
 
-		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests);
+		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active);
 	}
 
 	private Object getSuppliesByMunicipality(MunicipalityEntity municipality, List<String> extensions, Integer page,
-			List<Long> requests) throws BusinessException {
+			List<Long> requests, boolean active) throws BusinessException {
+
+		List<Long> states = new ArrayList<>();
+
+		if (active) {
+			states.add(SupplyBusiness.SUPPLY_STATE_ACTIVE);
+		} else {
+			states.add(SupplyBusiness.SUPPLY_STATE_ACTIVE);
+			states.add(SupplyBusiness.SUPPLY_STATE_INACTIVE);
+			states.add(SupplyBusiness.SUPPLY_STATE_REMOVED);
+		}
 
 		List<MicroserviceSupplyDto> suppliesDto = new ArrayList<>();
 
@@ -103,10 +120,10 @@ public class SupplyBusiness {
 
 			if (page != null) {
 				dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipality.getCode(), page,
-						requests);
+						requests, states);
 				suppliesDto = dataPaginated.getItems();
 			} else {
-				suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode());
+				suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode(), states);
 			}
 
 			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
@@ -318,6 +335,46 @@ public class SupplyBusiness {
 		File fileSupply = FileTool.createSimpleFile(content, filename);
 
 		return fileSupply;
+	}
+
+	public MicroserviceSupplyDto changeStateSupply(Long supplyId, Long stateId, Long managerCode)
+			throws BusinessException {
+
+		List<WorkspaceEntity> workspaces = workspaceService.getWorkspacesByManagerAndIsActive(managerCode, true);
+
+		MicroserviceSupplyDto supplyDto = getSupplyById(supplyId);
+		if (supplyDto == null) {
+			throw new BusinessException("No se ha encontrado el insumo");
+		}
+
+		boolean belong = false;
+		for (WorkspaceEntity workspace : workspaces) {
+			if (workspace.getMunicipality().getCode().equals(supplyDto.getMunicipalityCode())) {
+				belong = true;
+				break;
+			}
+		}
+
+		if (!belong) {
+			throw new BusinessException("El gestor no tiene permisos para modificar el insumo");
+		}
+
+		try {
+
+			MicroserviceUpdateSupplyDto data = new MicroserviceUpdateSupplyDto();
+			data.setStateId(stateId);
+
+			supplyDto = supplyClient.updateSupply(supplyId, data);
+
+		} catch (BusinessException e) {
+			log.error("Error actualizando el estado del insumo: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error actualizando el estado del insumo: " + e.getMessage());
+			throw new BusinessException("No se ha podido cambiar el estado del insumo.");
+		}
+
+		return supplyDto;
 	}
 
 }
