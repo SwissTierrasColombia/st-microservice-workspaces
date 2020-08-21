@@ -13,11 +13,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreatePetitionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroservicePetitionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
@@ -28,6 +30,7 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdatePetitionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
@@ -192,6 +195,23 @@ public interface ProviderFeignClient {
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/supplies-requested/{supplyRequestedId}/revision/{revisionId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceSupplyRevisionDto updateSupplyRevision(@PathVariable Long supplyRequestedId,
 			@PathVariable Long revisionId, @RequestBody MicroserviceUpdateSupplyRevisionDto createRevisionDto);
+
+	// Petitions Module
+	@RequestMapping(method = RequestMethod.POST, value = "/api/providers-supplies/v1/providers/{providerId}/petitions", consumes = APPLICATION_JSON_VALUE)
+	public MicroservicePetitionDto createPetition(@PathVariable Long providerId,
+			@RequestBody MicroserviceCreatePetitionDto createPetitionDto);
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/petitions-manager/{managerId}")
+	public List<MicroservicePetitionDto> getPetitionsForManager(@PathVariable Long providerId,
+			@PathVariable Long managerId);
+
+	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/petitions")
+	public List<MicroservicePetitionDto> getPetitionsForProvider(@PathVariable Long providerId,
+			@RequestParam(name = "states", required = true) List<Long> states);
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers/{providerId}/petitions/{petitionId}", consumes = APPLICATION_JSON_VALUE)
+	public MicroservicePetitionDto updatePetition(@PathVariable Long providerId, @PathVariable Long petitionId,
+			@RequestBody MicroserviceUpdatePetitionDto updatePetitionDto) throws BusinessException;
 
 	class Configuration {
 

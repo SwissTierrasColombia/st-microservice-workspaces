@@ -338,7 +338,7 @@ public class IntegrationBusiness {
 
 			@SuppressWarnings("unchecked")
 			List<MicroserviceSupplyDto> suppliesDto = (List<MicroserviceSupplyDto>) supplyBusiness
-					.getSuppliesByMunicipalityManager(municipalityEntity.getId(), managerDto.getId(), null, null, null);
+					.getSuppliesByMunicipalityManager(municipalityEntity.getId(), managerDto.getId(), null, null, null, true);
 
 			MicroserviceSupplyDto supplyCadastralDto = null;
 			try {

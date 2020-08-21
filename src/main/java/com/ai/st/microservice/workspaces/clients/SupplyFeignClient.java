@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceUpdateSupplyDto;
+import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -33,18 +35,24 @@ public interface SupplyFeignClient {
 	public MicroserviceSupplyDto createSupply(@RequestBody MicroserviceCreateSupplyDto createSupply);
 
 	@GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
-	public List<MicroserviceSupplyDto> getSuppliesByMunicipalityCode(@PathVariable String municipalityId);
+	public List<MicroserviceSupplyDto> getSuppliesByMunicipalityCode(@PathVariable String municipalityId,
+			@RequestParam(name = "states", required = false) List<Long> states);
 
 	@GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
 	public MicroserviceDataPaginatedDto getSuppliesByMunicipalityCodeByFilters(@PathVariable String municipalityId,
 			@RequestParam(name = "page", required = false) Integer page,
-			@RequestParam(name = "requests", required = false) List<Long> requests);
+			@RequestParam(name = "requests", required = false) List<Long> requests,
+			@RequestParam(name = "states", required = false) List<Long> states);
 
 	@GetMapping("/api/supplies/v1/supplies/{supplyId}")
 	public MicroserviceSupplyDto findSupplyById(@PathVariable Long supplyId);
 
 	@DeleteMapping("/api/supplies/v1/supplies/{supplyId}")
 	public void deleteSupplyById(@PathVariable Long supplyId);
+
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/supplies/v1/supplies/{supplyId}", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceSupplyDto updateSupply(@PathVariable Long supplyId,
+			@RequestBody MicroserviceUpdateSupplyDto updateSupply) throws BusinessException;
 
 	class Configuration {
 
