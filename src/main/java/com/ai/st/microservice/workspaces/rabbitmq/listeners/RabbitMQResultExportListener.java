@@ -1,13 +1,8 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -26,8 +21,6 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisio
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
-import com.ai.st.microservice.workspaces.utils.FileTool;
-import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 @Component
 public class RabbitMQResultExportListener {
@@ -84,20 +77,9 @@ public class RabbitMQResultExportListener {
 					MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
 							.filter(sR -> sR.getId().equals(supplyRequestedId)).findAny().orElse(null);
 
-					String urlBase = stFilesDirectory + "/" + requestDto.getMunicipalityCode().replace(" ", "_")
-							+ "/insumos/proveedores/" + requestDto.getProvider().getName().replace(" ", "_") + "/"
-							+ supplyRequestedDto.getTypeSupply().getName().replace(" ", "_");
-					urlBase = FileTool.removeAccents(urlBase);
-
-					String zipName = RandomStringUtils.random(20, true, false);
-
-					Path path = Paths.get(resultDto.getPathFile());
-					String originalFilename = path.getFileName().toString();
-					String fileExtension = FilenameUtils.getExtension(originalFilename);
-					String fileName = RandomStringUtils.random(20, true, false) + "." + fileExtension;
-
-					String urlDocumentaryRepository = ZipUtil.zipping(new File(resultDto.getPathFile()), zipName,
-							fileName, urlBase);
+					String urlDocumentaryRepository = resultDto.getPathFile();
+					
+					log.info("url file (snr export): " + urlDocumentaryRepository);
 
 					// update state and URL from supply requested
 

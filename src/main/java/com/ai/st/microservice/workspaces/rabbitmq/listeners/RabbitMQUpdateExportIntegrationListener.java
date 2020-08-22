@@ -1,16 +1,10 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import java.io.File;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -36,8 +30,6 @@ import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IntegrationService;
-import com.ai.st.microservice.workspaces.utils.FileTool;
-import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 @Component
 public class RabbitMQUpdateExportIntegrationListener {
@@ -99,21 +91,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 					String municipalityCode = municipalityEntity.getCode();
 
-					String urlBase = stFilesDirectory + "/"
-							+ workspaceEntity.getMunicipality().getCode().replace(" ", "_") + "/insumos/gestores/"
-							+ workspaceEntity.getManagerCode();
-
-					urlBase = FileTool.removeAccents(urlBase);
-
-					String zipName = RandomStringUtils.random(20, true, false);
-
-					Path path = Paths.get(resultExportDto.getPathFile());
-					String originalFilename = path.getFileName().toString();
-					String fileExtension = FilenameUtils.getExtension(originalFilename);
-					String fileName = RandomStringUtils.random(20, true, false) + "." + fileExtension;
-
-					String urlDocumentaryRepository = ZipUtil.zipping(new File(resultExportDto.getPathFile()), zipName,
-							fileName, urlBase);
+					String urlDocumentaryRepository = resultExportDto.getPathFile();
 
 					log.info("saving url file: " + urlDocumentaryRepository);
 
