@@ -17,15 +17,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-	@Value("${st.rabbitmq.queueFiles.queue}")
-	public String queueFilesName;
-
-	@Value("${st.rabbitmq.queueFiles.exchange}")
-	public String exchangeFilesName;
-
-	@Value("${st.rabbitmq.queueFiles.routingkey}")
-	public String routingkeyFilesName;
-
 	@Value("${st.rabbitmq.queueUpdateIntegration.queue}")
 	public String queueUpdateIntegrationsName;
 
@@ -70,21 +61,6 @@ public class RabbitMQConfig {
 
 	@Value("${st.rabbitmq.queueResultExport.routingkey}")
 	public String routingkeyResultExportName;
-
-	@Bean
-	public Queue queueFiles() {
-		return new Queue(queueFilesName, false);
-	}
-
-	@Bean
-	public DirectExchange exchangeFiles() {
-		return new DirectExchange(exchangeFilesName);
-	}
-
-	@Bean
-	public Binding bindingQueueFiles() {
-		return BindingBuilder.bind(queueFiles()).to(exchangeFiles()).with(routingkeyFilesName);
-	}
 
 	@Bean
 	public Queue queueUpdateIntegrations() {
