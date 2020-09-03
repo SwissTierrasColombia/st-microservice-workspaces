@@ -45,6 +45,7 @@ public class SupplyBusiness {
 	// attachments types
 	public static final Long SUPPLY_ATTACHMENT_TYPE_SUPPLY = (long) 1;
 	public static final Long SUPPLY_ATTACHMENT_TYPE_FTP = (long) 2;
+	public static final Long SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE = (long) 3;
 
 	// states
 	public static final Long SUPPLY_STATE_ACTIVE = (long) 1;
@@ -214,7 +215,7 @@ public class SupplyBusiness {
 
 	public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode,
 			List<MicroserviceCreateSupplyAttachmentDto> attachments, Long requestId, Long userCode, Long providerCode,
-			Long managerCode, String modelVersion) throws BusinessException {
+			Long managerCode, Long cadastralAuthority, String modelVersion) throws BusinessException {
 
 		MicroserviceSupplyDto supplyDto = null;
 
@@ -255,6 +256,13 @@ public class SupplyBusiness {
 				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
 				owner.setOwnerCode(managerCode);
 				owner.setOwnerType("ENTITY_MANAGER");
+				owners.add(owner);
+			}
+
+			if (cadastralAuthority != null) {
+				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+				owner.setOwnerCode(cadastralAuthority);
+				owner.setOwnerType("CADASTRAL_AUTHORITY");
 				owners.add(owner);
 			}
 
@@ -308,10 +316,7 @@ public class SupplyBusiness {
 
 		String randomCode = RandomStringUtils.random(10, false, true);
 
-		String typeSupplyName = supplyDto.getTypeSupply().getName().replace(" ", "_");
-
-		String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + "_" + typeSupplyName
-				+ ".txt";
+		String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + ".txt";
 
 		MicroserviceSupplyAttachmentDto attachmentFtp = supplyDto.getAttachments().stream()
 				.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP)).findAny()
@@ -325,9 +330,14 @@ public class SupplyBusiness {
 		content += "Municipio: " + municipalityDto.getName() + "\n";
 		content += "Departamento: " + municipalityDto.getDepartment().getName() + "\n";
 		content += "***********************************************" + "\n";
-		content += "Nombre Insumo: " + typeSupplyName + "\n";
-		content += "Proveedor: " + supplyDto.getTypeSupply().getProvider().getName() + "\n";
-		content += "***********************************************" + "\n";
+
+		if (supplyDto.getTypeSupply() != null) {
+			String typeSupplyName = supplyDto.getTypeSupply().getName().replace(" ", "_");
+			content += "Nombre Insumo: " + typeSupplyName + "\n";
+			content += "Proveedor: " + supplyDto.getTypeSupply().getProvider().getName() + "\n";
+			content += "***********************************************" + "\n";
+		}
+
 		content += "URL: " + attachmentFtp.getData() + "\n";
 		content += "Observaciones: " + supplyDto.getObservations() + "\n";
 		content += "***********************************************" + "\n";

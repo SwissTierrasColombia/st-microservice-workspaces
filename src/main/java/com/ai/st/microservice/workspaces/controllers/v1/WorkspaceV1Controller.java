@@ -1205,7 +1205,8 @@ public class WorkspaceV1Controller {
 					.findAny().orElse(null);
 
 			MicroserviceSupplyAttachmentDto attachmentSupply = supplyDto.getAttachments().stream()
-					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
+					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY) || a
+							.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE))
 					.findAny().orElse(null);
 
 			MunicipalityDto municipalityDto = municipalityBusiness

@@ -83,5 +83,25 @@ public class MunicipalityBusiness {
 
 		return municipalityDto;
 	}
+	
+	public MunicipalityDto getMunicipalityById(Long id) {
+
+		MunicipalityDto municipalityDto = null;
+
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(id);
+		if (municipalityEntity instanceof MunicipalityEntity) {
+			municipalityDto = new MunicipalityDto();
+			municipalityDto.setCode(municipalityEntity.getCode());
+			municipalityDto.setId(municipalityEntity.getId());
+			municipalityDto.setName(municipalityEntity.getName());
+
+			DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+			municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+					departmentEntity.getCode()));
+
+		}
+
+		return municipalityDto;
+	}
 
 }
