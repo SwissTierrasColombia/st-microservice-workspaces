@@ -668,6 +668,106 @@ public class ProviderV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
+	@RequestMapping(value = "/types-supplies/{typeSupplyId}/enable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Enable type supply")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Type supply enabled", response = MicroserviceTypeSupplyDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> enableTypeSupply(@PathVariable Long typeSupplyId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = providerBusiness
+					.getProviderByUserAdministrator(userDtoSession.getId());
+			if (providerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
+			}
+			if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
+				throw new BusinessException("No tiene permiso para modificar el tipo de insumo.");
+			}
+
+			responseDto = providerBusiness.enableTypeSupply(providerDto.getId(), typeSupplyId);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@enableTypeSupply#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@enableTypeSupply#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@enableTypeSupply	#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/types-supplies/{typeSupplyId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Disable type supply")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Type supply disabled", response = MicroserviceTypeSupplyDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> disableTypeSupply(@PathVariable Long typeSupplyId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get provider
+			MicroserviceProviderDto providerDto = providerBusiness
+					.getProviderByUserAdministrator(userDtoSession.getId());
+			if (providerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
+			}
+			if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
+				throw new BusinessException("No tiene permiso para modificar el tipo de insumo.");
+			}
+
+			responseDto = providerBusiness.disableTypeSupply(providerDto.getId(), typeSupplyId);
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error ProviderV1Controller@disableTypeSupply#Microservice ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		} catch (BusinessException e) {
+			log.error("Error ProviderV1Controller@disableTypeSupply#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		} catch (Exception e) {
+			log.error("Error ProviderV1Controller@disableTypeSupply	#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 4);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
 	@RequestMapping(value = "/types-supplies/{typeSupplyId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Delete type supply")
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Delete type supply"),

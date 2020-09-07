@@ -409,37 +409,6 @@ public class WorkspaceV1Controller {
 
 		try {
 
-			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
-			}
-
-			// get manager
-			MicroserviceManagerDto managerDto = null;
-			MicroserviceManagerProfileDto profileDirector = null;
-			try {
-				managerDto = managerClient.findByUserCode(userDtoSession.getId());
-
-				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-						.findProfilesByUser(userDtoSession.getId());
-
-				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-						.orElse(null);
-
-			} catch (Exception e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de gestores.");
-			}
-			if (profileDirector == null) {
-				throw new InputValidationException("Acceso denegado.");
-			}
-
 			// validation observations
 			String observations = requestUpdateWorkspace.getObservations();
 			if (observations == null || observations.isEmpty()) {
@@ -477,13 +446,9 @@ public class WorkspaceV1Controller {
 			}
 
 			responseDto = workspaceBusiness.updateWorkspace(workspaceId, startDate, observations, parcelsNumber,
-					municipalityArea, managerDto.getId());
+					municipalityArea);
 			httpStatus = HttpStatus.OK;
 
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error WorkspaceV1Controller@updateWorkspace#Microservice ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new BasicResponseDto(e.getMessage(), 4);
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@updateWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
