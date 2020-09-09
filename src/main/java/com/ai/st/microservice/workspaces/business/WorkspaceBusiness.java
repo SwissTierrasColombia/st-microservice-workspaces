@@ -512,7 +512,7 @@ public class WorkspaceBusiness {
 	}
 
 	public WorkspaceDto updateWorkspace(Long workspaceId, Date startDate, String observations,
-			Long numberAlphanumericParcels, Double municipalityArea, Long managerCode) throws BusinessException {
+			Long numberAlphanumericParcels, Double municipalityArea) throws BusinessException {
 
 		WorkspaceDto workspaceDto = null;
 
@@ -526,11 +526,6 @@ public class WorkspaceBusiness {
 		if (!workspaceEntity.getIsActive()) {
 			throw new BusinessException(
 					"No se puede asignar el operador porque el espacio de trabajo no es el actual.");
-		}
-
-		// validate access
-		if (!managerCode.equals(workspaceEntity.getManagerCode())) {
-			throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
 		}
 
 		workspaceEntity.setStartDate(startDate);

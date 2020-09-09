@@ -561,7 +561,7 @@ public class ProviderBusiness {
 
 						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
 								supplyRequested.getTypeSupply().getId(), attachments, requestId, userCode,
-								providerDto.getId(), null, supplyRequested.getModelVersion());
+								providerDto.getId(), null, null, supplyRequested.getModelVersion());
 					}
 
 				}
@@ -1516,7 +1516,7 @@ public class ProviderBusiness {
 
 		supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
 				supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userCode,
-				requestDto.getProvider().getId(), null, supplyRequestedDto.getModelVersion());
+				requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion());
 
 		updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
 
@@ -1740,6 +1740,78 @@ public class ProviderBusiness {
 		}
 
 		return petitionDto;
+	}
+
+	public MicroserviceTypeSupplyDto enableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
+
+		MicroserviceTypeSupplyDto typeSupplyDto = null;
+
+		Boolean belongToProvider = false;
+		try {
+
+			List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
+			MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
+					.filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
+
+			belongToProvider = (foundTypeSpplyDto != null);
+
+		} catch (Exception e) {
+			belongToProvider = false;
+			log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
+		}
+		if (!belongToProvider) {
+			throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
+		}
+
+		try {
+
+			typeSupplyDto = providerClient.enableTypeSupply(typeSupplyId);
+
+		} catch (BusinessException e) {
+			log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido activar el tipo de insumo.");
+		}
+
+		return typeSupplyDto;
+	}
+
+	public MicroserviceTypeSupplyDto disableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
+
+		MicroserviceTypeSupplyDto typeSupplyDto = null;
+
+		Boolean belongToProvider = false;
+		try {
+
+			List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
+			MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
+					.filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
+
+			belongToProvider = (foundTypeSpplyDto != null);
+
+		} catch (Exception e) {
+			belongToProvider = false;
+			log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
+		}
+		if (!belongToProvider) {
+			throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
+		}
+
+		try {
+
+			typeSupplyDto = providerClient.disableTypeSupply(typeSupplyId);
+
+		} catch (BusinessException e) {
+			log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
+			throw new BusinessException("No se ha podido desactivar el tipo de insumo.");
+		}
+
+		return typeSupplyDto;
 	}
 
 }

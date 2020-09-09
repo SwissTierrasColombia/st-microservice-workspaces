@@ -212,6 +212,15 @@ public interface ProviderFeignClient {
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/providers/{providerId}/petitions/{petitionId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroservicePetitionDto updatePetition(@PathVariable Long providerId, @PathVariable Long petitionId,
 			@RequestBody MicroserviceUpdatePetitionDto updatePetitionDto) throws BusinessException;
+	
+	// Supplies Module
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/types-supplies/{typeSupplyId}/enable", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceTypeSupplyDto enableTypeSupply(@PathVariable Long typeSupplyId) throws BusinessException;
+	
+	@RequestMapping(method = RequestMethod.PUT, value = "/api/providers-supplies/v1/types-supplies/{typeSupplyId}/disable", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceTypeSupplyDto disableTypeSupply(@PathVariable Long typeSupplyId) throws BusinessException;
+	
 
 	class Configuration {
 

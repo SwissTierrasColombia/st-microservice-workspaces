@@ -78,7 +78,7 @@ public class RabbitMQResultExportListener {
 							.filter(sR -> sR.getId().equals(supplyRequestedId)).findAny().orElse(null);
 
 					String urlDocumentaryRepository = resultDto.getPathFile();
-					
+
 					log.info("url file (snr export): " + urlDocumentaryRepository);
 
 					// update state and URL from supply requested
@@ -116,7 +116,7 @@ public class RabbitMQResultExportListener {
 							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 					supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
 							supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userId,
-							requestDto.getProvider().getId(), null, supplyRequestedDto.getModelVersion());
+							requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion());
 
 					// delete database
 					try {
