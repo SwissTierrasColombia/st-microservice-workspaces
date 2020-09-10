@@ -34,10 +34,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
+import com.ai.st.microservice.workspaces.business.ManagerBusiness;
 import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
 import com.ai.st.microservice.workspaces.business.OperatorBusiness;
 import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
+import com.ai.st.microservice.workspaces.business.UserBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
@@ -101,10 +103,16 @@ public class WorkspaceV1Controller {
 	private IntegrationBusiness integrationBusiness;
 
 	@Autowired
+	private UserBusiness userBusiness;
+
+	@Autowired
 	private SupplyBusiness supplyBusiness;
 
 	@Autowired
 	private OperatorBusiness operatorBusiness;
+
+	@Autowired
+	private ManagerBusiness managerBusiness;
 
 	@Autowired
 	private MunicipalityBusiness municipalityBusiness;
@@ -1235,8 +1243,8 @@ public class WorkspaceV1Controller {
 	}
 
 	@RequestMapping(value = "{workspaceId}/supplies/{supplyId}", method = RequestMethod.DELETE)
-	@ApiOperation(value = "Download file")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+	@ApiOperation(value = "Delete supply")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Supply Deleted", response = BasicResponseDto.class),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
 	public ResponseEntity<?> removeSupply(@PathVariable Long workspaceId, @PathVariable Long supplyId,
@@ -1248,37 +1256,35 @@ public class WorkspaceV1Controller {
 		try {
 
 			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
 			}
 
-			// get manager
-			MicroserviceManagerDto managerDto = null;
-			MicroserviceManagerProfileDto profileDirector = null;
-			try {
-				managerDto = managerClient.findByUserCode(userDtoSession.getId());
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
-				List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-						.findProfilesByUser(userDtoSession.getId());
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-				profileDirector = managerProfiles.stream()
-						.filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-						.orElse(null);
+			if (roleAdministrator instanceof MicroserviceRoleDto) {
 
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de gestores.");
+				workspaceBusiness.removeSupply(workspaceId, supplyId, null);
+
+			} else if (roleManager instanceof MicroserviceRoleDto) {
+
+				// get manager
+				MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+				if (managerDto == null) {
+					throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+				}
+				if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+					throw new InputValidationException("El usuario no tiene permisos para activar insumos.");
+				}
+
+				workspaceBusiness.removeSupply(workspaceId, supplyId, managerDto.getId());
 			}
-			if (profileDirector == null) {
-				throw new InputValidationException("Acceso denegado.");
-			}
 
-			workspaceBusiness.removeSupply(workspaceId, supplyId, managerDto.getId());
 			responseDto = new BasicResponseDto("Se ha eliminado el insumo", 7);
 			httpStatus = HttpStatus.NO_CONTENT;
 

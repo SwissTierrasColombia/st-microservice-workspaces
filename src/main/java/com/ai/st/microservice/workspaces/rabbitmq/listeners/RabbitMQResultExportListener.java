@@ -116,7 +116,7 @@ public class RabbitMQResultExportListener {
 							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 					supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
 							supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userId,
-							requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion());
+							requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE);
 
 					// delete database
 					try {

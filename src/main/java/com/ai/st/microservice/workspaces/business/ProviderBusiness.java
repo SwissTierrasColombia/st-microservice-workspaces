@@ -561,7 +561,7 @@ public class ProviderBusiness {
 
 						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
 								supplyRequested.getTypeSupply().getId(), attachments, requestId, userCode,
-								providerDto.getId(), null, null, supplyRequested.getModelVersion());
+								providerDto.getId(), null, null, supplyRequested.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE);
 					}
 
 				}
@@ -1516,7 +1516,7 @@ public class ProviderBusiness {
 
 		supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
 				supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userCode,
-				requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion());
+				requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE);
 
 		updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
 

@@ -1704,21 +1704,6 @@ public class WorkspaceBusiness {
 
 	public void removeSupply(Long workspaceId, Long supplyId, Long managerCode) throws BusinessException {
 
-		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
-		if (!(workspaceEntity instanceof WorkspaceEntity)) {
-			throw new BusinessException("No se ha encontrado el espacio de trabajo.");
-		}
-
-		// validate if the workspace is active
-		if (!workspaceEntity.getIsActive()) {
-			throw new BusinessException(
-					"No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
-		}
-
-		if (!managerCode.equals(workspaceEntity.getManagerCode())) {
-			throw new BusinessException("No tiene acceso al municipio.");
-		}
-
 		MicroserviceSupplyDto supplyDto = null;
 		String pathFile = null;
 		try {
@@ -1735,10 +1720,28 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha encontrado el insumo.");
 		}
 
-		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+		if (managerCode != null) {
 
-		if (!supplyDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
-			throw new BusinessException("El insumo no pertenece al municipio.");
+			WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+			if (!(workspaceEntity instanceof WorkspaceEntity)) {
+				throw new BusinessException("No se ha encontrado el espacio de trabajo.");
+			}
+
+			// validate if the workspace is active
+			if (!workspaceEntity.getIsActive()) {
+				throw new BusinessException("El espacio de trabajo no se encuentra activo.");
+			}
+
+			if (!managerCode.equals(workspaceEntity.getManagerCode())) {
+				throw new BusinessException("No tiene acceso al municipio.");
+			}
+
+			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+
+			if (!supplyDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+				throw new BusinessException("El insumo no pertenece al municipio.");
+			}
+
 		}
 
 		supplyBusiness.deleteSupply(supplyId);

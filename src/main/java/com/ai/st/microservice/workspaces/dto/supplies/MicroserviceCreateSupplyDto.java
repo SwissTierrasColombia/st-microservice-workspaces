@@ -13,6 +13,7 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 	private Long typeSupplyCode;
 	private Long requestCode;
 	private String modelVersion;
+	private Long supplyStateId;
 	private List<MicroserviceCreateSupplyOwnerDto> owners;
 	private List<MicroserviceCreateSupplyAttachmentDto> attachments;
 
@@ -75,6 +76,14 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 
 	public void setAttachments(List<MicroserviceCreateSupplyAttachmentDto> attachments) {
 		this.attachments = attachments;
+	}
+
+	public Long getSupplyStateId() {
+		return supplyStateId;
+	}
+
+	public void setSupplyStateId(Long supplyStateId) {
+		this.supplyStateId = supplyStateId;
 	}
 
 }
