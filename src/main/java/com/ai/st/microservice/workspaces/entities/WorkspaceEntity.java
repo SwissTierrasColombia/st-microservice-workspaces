@@ -69,13 +69,13 @@ public class WorkspaceEntity {
 	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = true)
 	private WorkspaceEntity workspace;
 
-	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "workspace")
 	private List<SupportEntity> supports = new ArrayList<SupportEntity>();
 
 	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
 	private List<WorkspaceStateEntity> statesHistory = new ArrayList<WorkspaceStateEntity>();
 
-	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(mappedBy = "workspace", fetch = FetchType.LAZY)
 	private List<WorkspaceOperatorEntity> operators = new ArrayList<WorkspaceOperatorEntity>();
 
 	public WorkspaceEntity() {

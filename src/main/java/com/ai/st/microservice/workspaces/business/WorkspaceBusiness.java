@@ -70,6 +70,8 @@ import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IStateService;
+import com.ai.st.microservice.workspaces.services.ISupportService;
+import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 
@@ -130,6 +132,12 @@ public class WorkspaceBusiness {
 
 	@Autowired
 	private IIntegrationStateService integrationStateService;
+
+	@Autowired
+	private IWorkspaceOperatorService workspaceOperatorService;
+
+	@Autowired
+	private ISupportService supportService;
 
 	@Autowired
 	private DatabaseIntegrationBusiness databaseIntegrationBusiness;
@@ -221,16 +229,11 @@ public class WorkspaceBusiness {
 		workspaceEntity.setMunicipality(municipalityEntity);
 		workspaceEntity.setState(stateStart);
 
-		// support
-		SupportEntity supporEntity = new SupportEntity();
-		supporEntity.setCreatedAt(new Date());
-		supporEntity.setUrlDocumentaryRepository(urlDocumentaryRepository);
-		supporEntity.setWorkspace(workspaceEntity);
-		supporEntity.setMilestone(milestoneNewWorkspace);
-
-		List<SupportEntity> supports = workspaceEntity.getSupports();
-		supports.add(supporEntity);
-		workspaceEntity.setSupports(supports);
+		/*
+		 * List<SupportEntity> supports = workspaceEntity.getSupports();
+		 * supports.add(supporEntity);
+		 */
+		workspaceEntity.setSupports(new ArrayList<SupportEntity>());
 
 		// states history
 		WorkspaceStateEntity workspaceState = new WorkspaceStateEntity();
@@ -242,6 +245,14 @@ public class WorkspaceBusiness {
 		workspaceEntity.setStatesHistory(listStates);
 
 		workspaceEntity = workspaceService.createWorkspace(workspaceEntity);
+
+		// support
+		SupportEntity supporEntity = new SupportEntity();
+		supporEntity.setCreatedAt(new Date());
+		supporEntity.setUrlDocumentaryRepository(urlDocumentaryRepository);
+		supporEntity.setWorkspace(workspaceEntity);
+		supporEntity.setMilestone(milestoneNewWorkspace);
+		supportService.createSupport(supporEntity);
 
 		// send notification
 		try {
@@ -397,13 +408,6 @@ public class WorkspaceBusiness {
 			throw new BusinessException("No se ha encontrado el operador.");
 		}
 
-		// validate that the workspace does not already have an operator assigned
-		if (workspaceEntity.getOperators().size() > 0) {
-
-			// generate new workspace
-			workspaceEntity = cloneWorkspace(workspaceId, WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR);
-		}
-
 		String urlDocumentaryRepository = null;
 		try {
 
@@ -421,7 +425,13 @@ public class WorkspaceBusiness {
 		MilestoneEntity milestoneAssignOperator = milestoneService
 				.getMilestoneById(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
 
-		// operator
+		List<WorkspaceOperatorEntity> operators = workspaceEntity.getOperators();
+
+		if (operators.size() > 0) {
+			WorkspaceOperatorEntity workspaceOperatorEntity = workspaceEntity.getOperators().get(0);
+			workspaceOperatorService.deleteWorkspaceOperatorById(workspaceOperatorEntity.getId());
+		}
+
 		WorkspaceOperatorEntity workspaceOperatorEntity = new WorkspaceOperatorEntity();
 		workspaceOperatorEntity.setCreatedAt(new Date());
 		workspaceOperatorEntity.setEndDate(endDate);
@@ -431,8 +441,7 @@ public class WorkspaceBusiness {
 		workspaceOperatorEntity.setObservations(observations);
 		workspaceOperatorEntity.setWorkArea(workArea);
 		workspaceOperatorEntity.setWorkspace(workspaceEntity);
-		List<WorkspaceOperatorEntity> operators = workspaceEntity.getOperators();
-		operators.add(workspaceOperatorEntity);
+		workspaceOperatorService.createOperator(workspaceOperatorEntity);
 
 		// support
 		SupportEntity supporEntity = new SupportEntity();
@@ -440,13 +449,13 @@ public class WorkspaceBusiness {
 		supporEntity.setUrlDocumentaryRepository(urlDocumentaryRepository);
 		supporEntity.setWorkspace(workspaceEntity);
 		supporEntity.setMilestone(milestoneAssignOperator);
-		List<SupportEntity> supports = workspaceEntity.getSupports();
-		supports.add(supporEntity);
+		supportService.createSupport(supporEntity);
 
-		workspaceEntity.setSupports(supports);
-		workspaceEntity.setOperators(operators);
+		try {
+			workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
+		} catch (Exception e) {
 
-		workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
+		}
 
 		// send notification
 		try {
@@ -505,7 +514,6 @@ public class WorkspaceBusiness {
 			workspaceOperatorDto.setOperator(operatorDto);
 			operatorsDto.add(workspaceOperatorDto);
 		}
-
 		workspaceDto.setOperators(operatorsDto);
 
 		return workspaceDto;
