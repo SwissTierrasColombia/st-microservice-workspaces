@@ -10,6 +10,7 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 
 	private String municipalityCode;
 	private String observations;
+	private String name;
 	private Long typeSupplyCode;
 	private Long requestCode;
 	private String modelVersion;
@@ -84,6 +85,14 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 
 	public void setSupplyStateId(Long supplyStateId) {
 		this.supplyStateId = supplyStateId;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

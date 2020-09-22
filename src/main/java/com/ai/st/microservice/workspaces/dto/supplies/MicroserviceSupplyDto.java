@@ -17,6 +17,7 @@ public class MicroserviceSupplyDto implements Serializable {
 	private MicroserviceSupplyStateDto state;
 	private String municipalityCode;
 	private String observations;
+	private String name;
 	private Long typeSupplyCode;
 	private String modelVersion;
 	private List<MicroserviceSupplyOwnerDto> owners;
@@ -125,6 +126,14 @@ public class MicroserviceSupplyDto implements Serializable {
 
 	public void setDelivery(MicroserviceDeliveryDto delivery) {
 		this.delivery = delivery;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }

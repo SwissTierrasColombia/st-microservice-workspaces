@@ -178,7 +178,7 @@ public class WorkspaceOperatorBusiness {
 
 		String format = "yyyy-MM-dd hh:mm:ss";
 
-		// configuration params
+		// configuration parameters
 		String namespace = "/" + deliveryDto.getMunicipalityCode() + "/reportes/entregas/" + deliveryDto.getId() + "/";
 		String dateCreation = DateTool.formatDate(new Date(), format);
 		String dateDelivery = DateTool.formatDate(deliveryDto.getCreatedAt(), format);
@@ -211,7 +211,7 @@ public class WorkspaceOperatorBusiness {
 				dateDelivery, deliveryId.toString(), departmentName, managerName, municipalityCode, municipalityName,
 				observations, operatorName, supplies);
 
-		// update url report
+		// update URL report
 		operatorBusiness.updateSupplyDeliveredReportURL(deliveryId, supplyId, report.getUrlReport());
 
 		return report.getUrlReport();

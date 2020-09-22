@@ -19,6 +19,9 @@ public class CreateSupplyCadastralAuthorityDto implements Serializable {
 	@ApiModelProperty(required = false, notes = "Observations")
 	private String observations;
 
+	@ApiModelProperty(required = false, notes = "Name")
+	private String name;
+
 	public CreateSupplyCadastralAuthorityDto() {
 
 	}
@@ -45,6 +48,14 @@ public class CreateSupplyCadastralAuthorityDto implements Serializable {
 
 	public void setObservations(String observations) {
 		this.observations = observations;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 }
