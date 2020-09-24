@@ -18,6 +18,7 @@ import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliver
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceDownloadedSupplyDto;
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 
@@ -178,7 +179,7 @@ public class WorkspaceOperatorBusiness {
 
 		String format = "yyyy-MM-dd hh:mm:ss";
 
-		// configuration params
+		// configuration parameters
 		String namespace = "/" + deliveryDto.getMunicipalityCode() + "/reportes/entregas/" + deliveryDto.getId() + "/";
 		String dateCreation = DateTool.formatDate(new Date(), format);
 		String dateDelivery = DateTool.formatDate(deliveryDto.getCreatedAt(), format);
@@ -194,8 +195,23 @@ public class WorkspaceOperatorBusiness {
 		String providerName = "";
 		MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
 		if (supplyDto != null) {
-			supplyName = (supplyDto.getTypeSupply() != null) ? supplyDto.getTypeSupply().getName() : "";
-			providerName = (supplyDto.getTypeSupply() != null) ? supplyDto.getTypeSupply().getProvider().getName() : "";
+
+			if (supplyDto.getTypeSupply() != null) {
+
+				supplyName = supplyDto.getTypeSupply().getName();
+				providerName = supplyDto.getTypeSupply().getProvider().getName();
+
+			} else {
+
+				MicroserviceSupplyOwnerDto owner = supplyDto.getOwners().stream()
+						.filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny().orElse(null);
+				if (owner != null) {
+					supplyName = supplyDto.getName();
+					providerName = "Autoridad Catastral";
+				}
+
+			}
+
 		}
 
 		String downloadedBy = "";
@@ -211,7 +227,7 @@ public class WorkspaceOperatorBusiness {
 				dateDelivery, deliveryId.toString(), departmentName, managerName, municipalityCode, municipalityName,
 				observations, operatorName, supplies);
 
-		// update url report
+		// update URL report
 		operatorBusiness.updateSupplyDeliveredReportURL(deliveryId, supplyId, report.getUrlReport());
 
 		return report.getUrlReport();
@@ -286,9 +302,24 @@ public class WorkspaceOperatorBusiness {
 			String providerName = "";
 			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
 			if (supplyDto != null) {
-				supplyName = (supplyDto.getTypeSupply() != null) ? supplyDto.getTypeSupply().getName() : "";
-				providerName = (supplyDto.getTypeSupply() != null) ? supplyDto.getTypeSupply().getProvider().getName()
-						: "";
+
+				if (supplyDto.getTypeSupply() != null) {
+
+					supplyName = supplyDto.getTypeSupply().getName();
+					providerName = supplyDto.getTypeSupply().getProvider().getName();
+
+				} else {
+
+					MicroserviceSupplyOwnerDto owner = supplyDto.getOwners().stream()
+							.filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny()
+							.orElse(null);
+					if (owner != null) {
+						supplyName = supplyDto.getName();
+						providerName = "Autoridad Catastral";
+					}
+
+				}
+
 			}
 
 			String downloadedBy = "";

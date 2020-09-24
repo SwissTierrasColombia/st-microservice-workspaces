@@ -72,6 +72,12 @@ public class CadastralAuthorityV1Controller {
 				throw new InputValidationException("El tipo de adjunto es inválido.");
 			}
 
+			// validation name
+			String name = supplyCadastralAuthorityDto.getName();
+			if (name == null || name.isEmpty()) {
+				throw new InputValidationException("El nombre es requerido.");
+			}
+
 			// validation observations
 			String observations = supplyCadastralAuthorityDto.getObservations();
 			if (observations == null || observations.isEmpty()) {
@@ -79,7 +85,7 @@ public class CadastralAuthorityV1Controller {
 			}
 
 			responseDto = cadastralAuthorityBusiness.createSupplyCadastralAuthority(municipalityId, attachmentTypeId,
-					observations, supplyCadastralAuthorityDto.getFtp(), file, userDtoSession.getId());
+					name, observations, supplyCadastralAuthorityDto.getFtp(), file, userDtoSession.getId());
 			httpStatus = HttpStatus.CREATED;
 
 		} catch (DisconnectedMicroserviceException e) {

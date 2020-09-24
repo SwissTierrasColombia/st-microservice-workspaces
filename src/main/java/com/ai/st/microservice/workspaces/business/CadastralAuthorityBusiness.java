@@ -30,7 +30,7 @@ public class CadastralAuthorityBusiness {
 	@Autowired
 	private SupplyBusiness supplyBusiness;
 
-	public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long attachmentTypeId,
+	public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long attachmentTypeId, String name,
 			String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
 
 		MicroserviceSupplyDto supplyDto = null;
@@ -76,13 +76,12 @@ public class CadastralAuthorityBusiness {
 				throw new BusinessException("No se puede cargar FTP para el tipo de insumo seleccionado.");
 			}
 
-			attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftp + " observaciones: " + observations,
-					SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
+			attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftp, SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 		}
 
 		try {
 			supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null, attachments, null, userCode,
-					null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE);
+					null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name);
 		} catch (Exception e) {
 			throw new BusinessException("No se ha podido cargar el insumo.");
 		}
