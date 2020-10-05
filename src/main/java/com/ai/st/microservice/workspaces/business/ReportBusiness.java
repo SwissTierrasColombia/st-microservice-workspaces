@@ -10,7 +10,9 @@ import org.springframework.stereotype.Service;
 import com.ai.st.microservice.workspaces.clients.ReportFeignClient;
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceDownloadedSupplyDto;
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
+import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDeliveryACDto;
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDownloadSupplyDto;
+import com.ai.st.microservice.workspaces.dto.reports.MicroserviceSupplyACDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 @Service
@@ -50,6 +52,36 @@ public class ReportBusiness {
 		}
 
 		return informationDto;
+	}
+
+	public MicroserviceReportInformationDto generateReportDeliveryAC(String namespace, String createdAt,
+			String departmentName, String managerName, String municipalityCode, String municipalityName,
+			List<MicroserviceSupplyACDto> supplies) throws BusinessException {
+
+		MicroserviceReportInformationDto informationDto = null;
+
+		try {
+
+			MicroserviceRequestReportDeliveryACDto data = new MicroserviceRequestReportDeliveryACDto();
+			data.setNamespace(namespace);
+			data.setCreatedAt(createdAt);
+
+			data.setDepartmentName(departmentName);
+			data.setManagerName(managerName);
+			data.setMunicipalityCode(municipalityCode);
+			data.setMunicipalityName(municipalityName);
+
+			data.setSupplies(supplies);
+
+			informationDto = reportClient.createReportDeliverySuppliesAC(data);
+		} catch (Exception e) {
+			log.error("Error creando reporte (entrega de insumos por parte de la autoridad catastral): "
+					+ e.getMessage());
+			throw new BusinessException("No se ha podido generar el reporte.");
+		}
+
+		return informationDto;
+
 	}
 
 }
