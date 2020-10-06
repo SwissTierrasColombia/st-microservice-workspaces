@@ -155,13 +155,15 @@ public class CadastralAuthorityBusiness {
 				String supplyName = supply.getName();
 				String providerName = "Autoridad Catastral";
 
+				String type = supply.getAttachments().get(0).getAttachmentType().getName().toUpperCase();
+
 				suppliesReport.add(new MicroserviceSupplyACDto(supplyName,
-						DateTool.formatDate(supply.getCreatedAt(), format), supply.getObservations(), providerName));
+						DateTool.formatDate(supply.getCreatedAt(), format), type, providerName));
 
 			}
 
 		}
-		
+
 		if (suppliesReport.size() == 0) {
 			throw new BusinessException("No se puede generar el reporte porque no hay insumos entregados.");
 		}
