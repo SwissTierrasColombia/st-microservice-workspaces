@@ -16,14 +16,12 @@ import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceAddUserToOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateOperatorDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -248,46 +246,6 @@ public class OperatorBusiness {
 		}
 
 		return users;
-	}
-
-	public MicroserviceOperatorDto addOperator(MicroserviceCreateOperatorDto operator) {
-		MicroserviceOperatorDto operatorDto = null;
-		try {
-			operatorDto = operatorClient.addOperator(operator);
-		} catch (Exception e) {
-			log.error("No se ha podido agregar el operador: " + e.getMessage());
-		}
-		return operatorDto;
-	}
-
-	public MicroserviceOperatorDto activateOperator(Long operatorId) {
-		MicroserviceOperatorDto operatorDto = null;
-		try {
-			operatorDto = operatorClient.activateOperator(operatorId);
-		} catch (Exception e) {
-			log.error("No se ha podido activar el operador: " + e.getMessage());
-		}
-		return operatorDto;
-	}
-
-	public MicroserviceOperatorDto deactivateOperator(Long operatorId) {
-		MicroserviceOperatorDto operatorDto = null;
-		try {
-			operatorDto = operatorClient.deactivateOperator(operatorId);
-		} catch (Exception e) {
-			log.error("No se ha podido desactivar el operador: " + e.getMessage());
-		}
-		return operatorDto;
-	}
-
-	public MicroserviceOperatorDto updateOperator(MicroserviceUpdateOperatorDto operator) {
-		MicroserviceOperatorDto operatorDto = null;
-		try {
-			operatorDto = operatorClient.updateOperator(operator);
-		} catch (Exception e) {
-			log.error("No se ha podido actualizar el operador: " + e.getMessage());
-		}
-		return operatorDto;
 	}
 
 	public MicroserviceDeliveryDto updateSupplyDeliveredReportURL(Long deliveryId, Long supplyId, String reportUrl) {

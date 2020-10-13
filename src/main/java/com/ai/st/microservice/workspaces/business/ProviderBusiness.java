@@ -26,7 +26,6 @@ import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
@@ -43,7 +42,6 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequest
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
@@ -976,26 +974,6 @@ public class ProviderBusiness {
 			log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
 			throw new BusinessException("No se ha podido eliminar el tipo de insumo del proveedor");
 		}
-	}
-
-	public MicroserviceProviderDto addProvider(MicroserviceCreateProviderDto createProviderDto) {
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.addProvider(createProviderDto);
-		} catch (Exception e) {
-			log.error("No se ha podido agregar el gestor: " + e.getMessage());
-		}
-		return providerDto;
-	}
-
-	public MicroserviceProviderDto updateProvider(MicroserviceUpdateProviderDto updateProviderDto) {
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.updateProvider(updateProviderDto);
-		} catch (Exception e) {
-			log.error("No se ha podido agregar el gestor: " + e.getMessage());
-		}
-		return providerDto;
 	}
 
 	public MicroserviceProviderDto getProviderByUserAdministrator(Long userCode) {
