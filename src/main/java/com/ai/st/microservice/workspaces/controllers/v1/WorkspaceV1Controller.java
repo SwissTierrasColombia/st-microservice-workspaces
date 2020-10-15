@@ -1097,6 +1097,7 @@ public class WorkspaceV1Controller {
 		MediaType mediaType = null;
 		File file = null;
 		InputStreamResource resource = null;
+		MicroserviceSupplyDto supplyDto = null;
 
 		try {
 
@@ -1116,7 +1117,7 @@ public class WorkspaceV1Controller {
 			MicroserviceRoleDto roleOperator = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
 
-			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyId);
+			supplyDto = supplyBusiness.getSupplyById(supplyId);
 			if (!(supplyDto instanceof MicroserviceSupplyDto)) {
 				throw new BusinessException("No se ha encontrado el insumo.");
 			}
@@ -1236,9 +1237,14 @@ public class WorkspaceV1Controller {
 			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION,
+						"attachment;filename=" + supplyDto.getMunicipalityCode() + "_" + supplyDto.getName())
 				.contentType(mediaType).contentLength(file.length())
-				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+				.header("extension", Files.getFileExtension(file.getName()))
+				.header("filename", supplyDto.getMunicipalityCode() + "_" + supplyDto.getName()
+						+ Files.getFileExtension(file.getName()))
+				.body(resource);
 
 	}
 
