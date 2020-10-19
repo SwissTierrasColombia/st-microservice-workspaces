@@ -1528,10 +1528,13 @@ public class WorkspaceV1Controller {
 			log.error("Error WorkspaceV1Controller@downloadSupport#General ---> " + e.getMessage());
 			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-
-		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+		
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
 				.contentType(mediaType).contentLength(file.length())
-				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+				.header("extension", Files.getFileExtension(file.getName()))
+				.header("filename", file.getName() + Files.getFileExtension(file.getName()))
+				.body(resource);
 
 	}
 

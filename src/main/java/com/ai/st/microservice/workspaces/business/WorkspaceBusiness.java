@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -200,12 +201,17 @@ public class WorkspaceBusiness {
 			throw new BusinessException("Ya se ha creado un espacio de trabajo para el municipio.");
 		}
 
+		String extension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
+		if (!extension.equalsIgnoreCase("pdf")) {
+			throw new BusinessException("El formato del soporte es inválido, se deben cargar archivos en formato pdf.");
+		}
+
 		String urlDocumentaryRepository = null;
 		try {
 
 			String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
 			urlBase = FileTool.removeAccents(urlBase);
-			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
+			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, false);
 
 		} catch (Exception e) {
 			log.error("No se ha podido cargar el soporte gestor: " + e.getMessage());
@@ -229,10 +235,6 @@ public class WorkspaceBusiness {
 		workspaceEntity.setMunicipality(municipalityEntity);
 		workspaceEntity.setState(stateStart);
 
-		/*
-		 * List<SupportEntity> supports = workspaceEntity.getSupports();
-		 * supports.add(supporEntity);
-		 */
 		workspaceEntity.setSupports(new ArrayList<SupportEntity>());
 
 		// states history
@@ -407,6 +409,11 @@ public class WorkspaceBusiness {
 		} catch (Exception e) {
 			throw new BusinessException("No se ha encontrado el operador.");
 		}
+		
+		String extension = FilenameUtils.getExtension(supportFile.getOriginalFilename());
+		if (!extension.equalsIgnoreCase("pdf")) {
+			throw new BusinessException("El formato del soporte es inválido, se deben cargar archivos en formato pdf.");
+		}
 
 		String urlDocumentaryRepository = null;
 		try {
@@ -415,7 +422,7 @@ public class WorkspaceBusiness {
 
 			urlBase = FileTool.removeAccents(urlBase);
 
-			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, true);
+			urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, false);
 
 		} catch (Exception e) {
 			log.error("No se ha podido cargar el soporte operador: " + e.getMessage());
