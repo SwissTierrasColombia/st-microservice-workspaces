@@ -18,4 +18,8 @@ public interface IMunicipalityService {
 
 	public MunicipalityEntity getMunicipalityByCode(String code);
 
+	public List<MunicipalityEntity> getMunicipalitiesByManagerCode(Long managerCode);
+
+	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCode(Long managerCode);
+
 }

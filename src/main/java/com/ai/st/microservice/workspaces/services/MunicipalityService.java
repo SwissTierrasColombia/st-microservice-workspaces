@@ -47,4 +47,14 @@ public class MunicipalityService implements IMunicipalityService {
 		return municipalityRepository.findByCode(code);
 	}
 
+	@Override
+	public List<MunicipalityEntity> getMunicipalitiesByManagerCode(Long managerCode) {
+		return municipalityRepository.getMunicipalitiesByManagerCode(managerCode);
+	}
+
+	@Override
+	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCode(Long managerCode) {
+		return municipalityRepository.getMunicipalitiesNotIntManagerCode(managerCode);
+	}
+
 }
