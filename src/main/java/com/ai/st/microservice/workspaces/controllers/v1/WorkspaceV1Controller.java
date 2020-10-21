@@ -142,9 +142,9 @@ public class WorkspaceV1Controller {
 			}
 
 			// validation municipality
-			Long municipalityId = requestCreateWorkspace.getMunicipalityId();
-			if (municipalityId == null || municipalityId <= 0) {
-				throw new InputValidationException("El municipio es requerido.");
+			List<Long> municipalities = requestCreateWorkspace.getMunicipalities();
+			if (municipalities == null || municipalities.size() == 0) {
+				throw new InputValidationException("Se debe seleccionar mínimo un municipio.");
 			}
 
 			// validation observations
@@ -173,25 +173,10 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("El archivo de soporte es requerido.");
 			}
 
-			// validation number alphanumeric parcels
-			Long parcelsNumber = requestCreateWorkspace.getNumberAlphanumericParcels();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El número de predios alfanuméricos es inválido.");
-				}
-			}
-
-			// validation municipality area
-			Double municipalityArea = requestCreateWorkspace.getMunicipalityArea();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El área del municipio es inválida.");
-				}
-			}
-
-			responseDto = workspaceBusiness.createWorkspace(startDate, managerCode, municipalityId, observations,
-					parcelsNumber, municipalityArea, requestCreateWorkspace.getSupportFile());
+			responseDto = workspaceBusiness.createWorkspace(startDate, managerCode, municipalities, observations,
+					requestCreateWorkspace.getSupportFile());
 			httpStatus = HttpStatus.CREATED;
+
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
@@ -351,6 +336,18 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("La fecha de finalización es requerida.");
 			}
 
+			// validation operator code
+			Long operatorCode = requestAssignOperator.getOperatorCode();
+			if (operatorCode == null || operatorCode <= 0) {
+				throw new InputValidationException("El operador es requerido.");
+			}
+
+			// validation support
+			MultipartFile supportFile = requestAssignOperator.getSupportFile();
+			if (supportFile.isEmpty()) {
+				throw new InputValidationException("El archivo de soporte es requerido.");
+			}
+
 			// validation number parcels expected
 			Long parcelsNumber = requestAssignOperator.getNumberParcelsExpected();
 			if (parcelsNumber != null) {
@@ -359,24 +356,12 @@ public class WorkspaceV1Controller {
 				}
 			}
 
-			// validation operator code
-			Long operatorCode = requestAssignOperator.getOperatorCode();
-			if (operatorCode == null || operatorCode <= 0) {
-				throw new InputValidationException("El operador es requerido.");
-			}
-
 			// validation municipality area
 			Double workArea = requestAssignOperator.getWorkArea();
 			if (workArea != null) {
 				if (workArea < 0) {
 					throw new InputValidationException("El área es inválida.");
 				}
-			}
-
-			// validation support
-			MultipartFile supportFile = requestAssignOperator.getSupportFile();
-			if (supportFile.isEmpty()) {
-				throw new InputValidationException("El archivo de soporte es requerido.");
 			}
 
 			responseDto = workspaceBusiness.assignOperator(workspaceId, startDate, endDate, operatorCode, parcelsNumber,
@@ -437,24 +422,7 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("La fecha de inicio es requerida.");
 			}
 
-			// validation number alphanumeric parcels
-			Long parcelsNumber = requestUpdateWorkspace.getNumberAlphanumericParcels();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El número de predios alfanuméricos es inválido.");
-				}
-			}
-
-			// validation municipality area
-			Double municipalityArea = requestUpdateWorkspace.getMunicipalityArea();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El área del municipio es inválida.");
-				}
-			}
-
-			responseDto = workspaceBusiness.updateWorkspace(workspaceId, startDate, observations, parcelsNumber,
-					municipalityArea);
+			responseDto = workspaceBusiness.updateWorkspace(workspaceId, startDate, observations);
 			httpStatus = HttpStatus.OK;
 
 		} catch (InputValidationException e) {
@@ -1528,13 +1496,11 @@ public class WorkspaceV1Controller {
 			log.error("Error WorkspaceV1Controller@downloadSupport#General ---> " + e.getMessage());
 			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
-		return ResponseEntity.ok()
-				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
 				.contentType(mediaType).contentLength(file.length())
 				.header("extension", Files.getFileExtension(file.getName()))
-				.header("filename", file.getName() + Files.getFileExtension(file.getName()))
-				.body(resource);
+				.header("filename", file.getName() + Files.getFileExtension(file.getName())).body(resource);
 
 	}
 
