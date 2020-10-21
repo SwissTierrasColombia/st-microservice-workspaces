@@ -22,4 +22,6 @@ public interface IMunicipalityService {
 
 	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCode(Long managerCode);
 
+	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCodeAndDepartment(Long managerCode, Long departmentId);
+
 }
