@@ -1960,7 +1960,8 @@ public class WorkspaceBusiness {
 
 		MunicipalityDto municipalityDto = new MunicipalityDto();
 		municipalityDto.setId(municipalityEntity.getId());
-		municipalityDto.setName(municipalityDto.getName());
+		municipalityDto.setName(municipalityEntity.getName());
+		municipalityDto.setCode(municipalityEntity.getCode());
 		municipalityDto.setDepartment(
 				new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
 
