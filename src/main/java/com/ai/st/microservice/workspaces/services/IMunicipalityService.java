@@ -20,8 +20,6 @@ public interface IMunicipalityService {
 
 	public List<MunicipalityEntity> getMunicipalitiesByManagerCode(Long managerCode);
 
-	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCode(Long managerCode);
-
-	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCodeAndDepartment(Long managerCode, Long departmentId);
+	public List<MunicipalityEntity> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId);
 
 }

@@ -116,26 +116,12 @@ public class MunicipalityBusiness {
 		return listMunicipalities;
 	}
 
-	public List<MunicipalityDto> getMunicipalitiesNotInManager(Long managerCode) throws BusinessException {
+	public List<MunicipalityDto> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId) throws BusinessException {
 
 		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
 
 		List<MunicipalityEntity> municipalitiesEntity = municipalityService
-				.getMunicipalitiesNotInManagerCode(managerCode);
-		for (MunicipalityEntity mEntity : municipalitiesEntity) {
-			listMunicipalities.add(entityParseDto(mEntity));
-		}
-
-		return listMunicipalities;
-	}
-
-	public List<MunicipalityDto> getMunicipalitiesNotInManagerAndDepartment(Long managerCode, Long departmentId)
-			throws BusinessException {
-
-		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
-
-		List<MunicipalityEntity> municipalitiesEntity = municipalityService
-				.getMunicipalitiesNotInManagerCodeAndDepartment(managerCode, departmentId);
+				.getMunicipalitiesNotWorkspaceByDepartment(departmentId);
 		for (MunicipalityEntity mEntity : municipalitiesEntity) {
 			listMunicipalities.add(entityParseDto(mEntity));
 		}

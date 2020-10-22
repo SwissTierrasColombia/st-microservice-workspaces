@@ -63,13 +63,13 @@ public class MunicipalityV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
-	@RequestMapping(value = "/not-manager/{managerId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/not-workspace/departments/{departmentId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Get municipalities by department")
 	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get municipalities not manager", response = MunicipalityDto.class, responseContainer = "List"),
+			@ApiResponse(code = 200, message = "Get municipalities not workspaces", response = MunicipalityDto.class, responseContainer = "List"),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
-	public ResponseEntity<?> getMunicipalitiesNotInManager(@PathVariable Long managerId,
+	public ResponseEntity<?> getMunicipalitiesNotWorkspaceByDepartment(@PathVariable Long departmentId,
 			@RequestHeader("authorization") String headerAuthorization) {
 
 		HttpStatus httpStatus = null;
@@ -77,47 +77,17 @@ public class MunicipalityV1Controller {
 
 		try {
 
-			responseDto = municipalityBusiness.getMunicipalitiesNotInManager(managerId);
+			responseDto = municipalityBusiness.getMunicipalitiesNotWorkspaceByDepartment(departmentId);
 			httpStatus = HttpStatus.OK;
 
 		} catch (BusinessException e) {
 			responseDto = new BasicResponseDto(e.getMessage(), 4);
-			log.error("Error MunicipalityV1Controller@getMunicipalitiesNotInManager#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			responseDto = new BasicResponseDto(e.getMessage(), 5);
-			log.error("Error MunicipalityV1Controller@getMunicipalitiesNotInManager#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
-
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
-
-	@RequestMapping(value = "/not-manager/{managerId}/departments/{departmentId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get municipalities by department")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get municipalities not manager and department", response = MunicipalityDto.class, responseContainer = "List"),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<?> getMunicipalitiesNotInManagerAndDepartment(@PathVariable Long managerId,
-			@PathVariable Long departmentId, @RequestHeader("authorization") String headerAuthorization) {
-
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
-
-		try {
-
-			responseDto = municipalityBusiness.getMunicipalitiesNotInManagerAndDepartment(managerId, departmentId);
-			httpStatus = HttpStatus.OK;
-
-		} catch (BusinessException e) {
-			responseDto = new BasicResponseDto(e.getMessage(), 4);
-			log.error("Error MunicipalityV1Controller@getMunicipalitiesNotInManagerAndDepartment#Business ---> "
+			log.error("Error MunicipalityV1Controller@getMunicipalitiesNotWorkspaceByDepartment#Business ---> "
 					+ e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
 		} catch (Exception e) {
 			responseDto = new BasicResponseDto(e.getMessage(), 5);
-			log.error("Error MunicipalityV1Controller@getMunicipalitiesNotInManagerAndDepartment#General ---> "
+			log.error("Error MunicipalityV1Controller@getMunicipalitiesNotWorkspaceByDepartment#General ---> "
 					+ e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		}

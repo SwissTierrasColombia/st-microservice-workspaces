@@ -54,4 +54,9 @@ public class WorkspaceService implements IWorkspaceService {
 		return workspaceRepository.findByManagerCodeAndIsActive(managerCode, isActive);
 	}
 
+	@Override
+	public List<WorkspaceEntity> getWorkspacesByDepartment(Long departmentId) {
+		return workspaceRepository.getWorkspacesByDepartment(departmentId);
+	}
+
 }

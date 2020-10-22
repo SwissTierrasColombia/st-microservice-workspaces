@@ -53,14 +53,8 @@ public class MunicipalityService implements IMunicipalityService {
 	}
 
 	@Override
-	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCode(Long managerCode) {
-		return municipalityRepository.getMunicipalitiesNotIntManagerCode(managerCode);
-	}
-
-	@Override
-	public List<MunicipalityEntity> getMunicipalitiesNotInManagerCodeAndDepartment(Long managerCode,
-			Long departmentId) {
-		return municipalityRepository.getMunicipalitiesNotIntManagerCodeDepartment(managerCode, departmentId);
+	public List<MunicipalityEntity> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId) {
+		return municipalityRepository.getMunicipalitiesNotWorkspaceInDepartment(departmentId);
 	}
 
 }

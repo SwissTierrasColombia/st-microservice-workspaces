@@ -1904,4 +1904,91 @@ public class WorkspaceBusiness {
 		return supportDto;
 	}
 
+	public List<WorkspaceDto> getWorskpacesByLocation(Long departmentId, Long municipalityId, Long managerCode)
+			throws BusinessException {
+
+		List<WorkspaceEntity> workspacesEntity = new ArrayList<WorkspaceEntity>();
+
+		if (municipalityId == null) {
+			workspacesEntity = workspaceService.getWorkspacesByDepartment(departmentId);
+		} else {
+
+			MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+			if (municipalityEntity != null) {
+				workspacesEntity = workspaceService.getWorkspacesByMunicipality(municipalityEntity);
+			}
+
+		}
+
+		List<WorkspaceDto> workspacesDto = new ArrayList<>();
+
+		for (WorkspaceEntity workspaceEntity : workspacesEntity) {
+
+			if (managerCode != null) {
+
+				if (workspaceEntity.getManagerCode().equals(managerCode)) {
+					workspacesDto.add(entityParseToDto(workspaceEntity));
+				}
+
+			} else {
+				workspacesDto.add(entityParseToDto(workspaceEntity));
+			}
+
+		}
+
+		return workspacesDto;
+	}
+
+	protected WorkspaceDto entityParseToDto(WorkspaceEntity workspaceEntity) {
+
+		WorkspaceDto workspaceDto = new WorkspaceDto();
+		workspaceDto.setId(workspaceEntity.getId());
+		workspaceDto.setCreatedAt(workspaceEntity.getCreatedAt());
+		workspaceDto.setUpdatedAt(workspaceEntity.getUdpatedAt());
+		workspaceDto.setIsActive(workspaceEntity.getIsActive());
+		workspaceDto.setManagerCode(workspaceEntity.getManagerCode());
+		workspaceDto.setMunicipalityArea(workspaceEntity.getMunicipalityArea());
+		workspaceDto.setNumberAlphanumericParcels(workspaceEntity.getNumberAlphanumericParcels());
+		workspaceDto.setObservations(workspaceEntity.getObservations());
+		workspaceDto.setStartDate(workspaceEntity.getStartDate());
+		workspaceDto.setVersion(workspaceEntity.getVersion());
+		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
+				workspaceEntity.getState().getDescription()));
+
+		// get the manager
+		try {
+			MicroserviceManagerDto managerDto = managerClient.findById(workspaceEntity.getManagerCode());
+			workspaceDto.setManager(managerDto);
+		} catch (Exception e) {
+			workspaceDto.setManager(null);
+		}
+
+		List<WorkspaceOperatorDto> operatorsDto = new ArrayList<WorkspaceOperatorDto>();
+		for (WorkspaceOperatorEntity wOEntity : workspaceEntity.getOperators()) {
+			WorkspaceOperatorDto workspaceOperatorDto = new WorkspaceOperatorDto();
+			workspaceOperatorDto.setId(wOEntity.getId());
+			workspaceOperatorDto.setCreatedAt(wOEntity.getCreatedAt());
+			workspaceOperatorDto.setEndDate(wOEntity.getEndDate());
+			workspaceOperatorDto.setNumberParcelsExpected(wOEntity.getNumberParcelsExpected());
+			workspaceOperatorDto.setOperatorCode(wOEntity.getOperatorCode());
+			workspaceOperatorDto.setStartDate(wOEntity.getStartDate());
+			workspaceOperatorDto.setWorkArea(wOEntity.getWorkArea());
+			workspaceOperatorDto.setObservations(wOEntity.getObservations());
+
+			// get operator
+			try {
+				MicroserviceOperatorDto operatorDto = operatorClient.findById(wOEntity.getOperatorCode());
+				workspaceOperatorDto.setOperator(operatorDto);
+			} catch (FeignException e) {
+				workspaceOperatorDto.setOperator(null);
+			}
+
+			operatorsDto.add(workspaceOperatorDto);
+		}
+
+		workspaceDto.setOperators(operatorsDto);
+
+		return workspaceDto;
+	}
+
 }

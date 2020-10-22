@@ -40,8 +40,7 @@ public interface MunicipalityRepository extends CrudRepository<MunicipalityEntit
 			"	from\n" + 
 			"		workspaces.municipalities m2 , workspaces.workspaces w\n" + 
 			"	where\n" + 
-			"		w.municipality_id = m2.id \n" + 
-			"		and w.manager_code = :managerCode)")
-	List<MunicipalityEntity> getMunicipalitiesNotIntManagerCodeDepartment(@Param("managerCode") Long managerCode, @Param("departmentId") Long departmentId);
+			"		w.municipality_id = m2.id)")
+	List<MunicipalityEntity> getMunicipalitiesNotWorkspaceInDepartment(@Param("departmentId") Long departmentId);
 
 }
