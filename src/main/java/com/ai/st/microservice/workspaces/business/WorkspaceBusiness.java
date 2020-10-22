@@ -1955,6 +1955,17 @@ public class WorkspaceBusiness {
 		workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(), workspaceEntity.getState().getName(),
 				workspaceEntity.getState().getDescription()));
 
+		MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+		DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+
+		MunicipalityDto municipalityDto = new MunicipalityDto();
+		municipalityDto.setId(municipalityEntity.getId());
+		municipalityDto.setName(municipalityDto.getName());
+		municipalityDto.setDepartment(
+				new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
+
+		workspaceDto.setMunicipality(municipalityDto);
+
 		// get the manager
 		try {
 			MicroserviceManagerDto managerDto = managerClient.findById(workspaceEntity.getManagerCode());
