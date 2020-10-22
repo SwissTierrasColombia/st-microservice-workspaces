@@ -656,6 +656,27 @@ public class ProviderBusiness {
 		return data;
 	}
 
+	public List<MicroserviceRequestDto> getRequestsByPackage(String packageLabel) throws BusinessException {
+
+		List<MicroserviceRequestDto> requestsDto = new ArrayList<MicroserviceRequestDto>();
+
+		try {
+
+			requestsDto = providerClient.getRequestsByPackage(packageLabel);
+
+			for (MicroserviceRequestDto requestDto : requestsDto) {
+				requestDto = this.completeInformationRequest(requestDto);
+			}
+
+		} catch (BusinessException e) {
+			log.error("Error consultando solicitudes por paquete: " + e.getMessage());
+		} catch (Exception e) {
+			log.error("Error consultando solicitudes por paquete: " + e.getMessage());
+		}
+
+		return requestsDto;
+	}
+
 	public MicroserviceRequestPaginatedDto getRequestsByManagerAndProvider(int page, Long managerCode, Long providerId)
 			throws BusinessException {
 

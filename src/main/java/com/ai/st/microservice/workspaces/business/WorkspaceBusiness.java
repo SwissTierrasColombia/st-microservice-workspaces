@@ -952,7 +952,13 @@ public class WorkspaceBusiness {
 		List<MicroserviceCreateRequestDto> groupRequests = new ArrayList<MicroserviceCreateRequestDto>();
 		List<Long> skipped = new ArrayList<Long>();
 
-		String packageLabel = RandomStringUtils.random(4, false, true).toLowerCase() + new Date().getTime();
+		String packageLabel = "";
+		int count;
+
+		do {
+			packageLabel = RandomStringUtils.random(6, false, true).toLowerCase();
+			count = providerBusiness.getRequestsByPackage(packageLabel).size();
+		} while (count > 0);
 
 		for (TypeSupplyRequestedDto supplyDto : supplies) {
 
