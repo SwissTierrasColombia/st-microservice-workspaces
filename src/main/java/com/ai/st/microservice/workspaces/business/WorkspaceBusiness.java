@@ -1734,15 +1734,18 @@ public class WorkspaceBusiness {
 	public void removeSupply(Long workspaceId, Long supplyId, Long managerCode) throws BusinessException {
 
 		MicroserviceSupplyDto supplyDto = null;
-		String pathFile = null;
+		List<String> pathsFile = new ArrayList<>();
 		try {
 
 			supplyDto = supplyClient.findSupplyById(supplyId);
 
-			MicroserviceSupplyAttachmentDto attachment = supplyDto.getAttachments().stream()
-					.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY))
-					.findAny().orElse(null);
-			pathFile = attachment.getData();
+			for (MicroserviceSupplyAttachmentDto attachment : supplyDto.getAttachments()) {
+				if (attachment.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY)
+						|| attachment.getAttachmentType().getId()
+								.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE)) {
+					pathsFile.add(attachment.getData());
+				}
+			}
 
 		} catch (Exception e) {
 			log.error("No se ha encontrado el insumo para eliminarlo: " + e.getMessage());
@@ -1774,7 +1777,11 @@ public class WorkspaceBusiness {
 		}
 
 		supplyBusiness.deleteSupply(supplyId);
-		fileBusiness.deleteFile(pathFile);
+
+		for (String pathFile : pathsFile) {
+			fileBusiness.deleteFile(pathFile);
+		}
+
 	}
 
 	public MicroserviceDeliveryDto createDelivery(Long workspaceId, Long managerCode, String observations,
