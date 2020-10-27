@@ -75,6 +75,9 @@ public interface OperatorFeignClient {
 			@RequestParam(name = "municipality", required = false) String municipalityCode,
 			@RequestParam(name = "active", required = false) Boolean active);
 
+	@GetMapping("/api/operators/v1/deliveries/managers/{managerId}")
+	public List<MicroserviceDeliveryDto> findDeliveriesByManager(@PathVariable Long managerId);
+
 	class Configuration {
 
 		@Bean
