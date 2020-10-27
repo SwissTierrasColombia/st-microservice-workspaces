@@ -729,6 +729,7 @@ public class ProviderBusiness {
 					data.setPackageLabel(packageRequest);
 					data.getRequests().add(requestDto);
 					packages.add(data);
+					labels.add(packageRequest);
 				} else {
 
 					MicroserviceRequestPackageDto packageFound = packages.stream()
