@@ -1564,20 +1564,29 @@ public class ProviderBusiness {
 
 		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
 
-		// validate provider
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
-		}
-		if (providerDto == null) {
-			throw new BusinessException("El proveedor de insumo no existe.");
-		}
+		if (providerId == null) {
 
-		try {
+			listPetitionsDto = providerClient.getPetitionsByManager(managerId);
+
+		} else {
+
+			// validate provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findById(providerId);
+			} catch (Exception e) {
+				log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+			}
+			if (providerDto == null) {
+				throw new BusinessException("El proveedor de insumo no existe.");
+			}
 
 			listPetitionsDto = providerClient.getPetitionsForManager(providerId, managerId);
+
+		}
+
+		try {
+
 			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
 				petitionDto = addAdditionalDataToPetition(petitionDto);
 			}

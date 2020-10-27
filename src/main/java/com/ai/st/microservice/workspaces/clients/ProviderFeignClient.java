@@ -201,6 +201,9 @@ public interface ProviderFeignClient {
 	public List<MicroservicePetitionDto> getPetitionsForManager(@PathVariable Long providerId,
 			@PathVariable Long managerId);
 
+	@GetMapping("/api/providers-supplies/v1/providers/petitions-manager/{managerId}")
+	public List<MicroservicePetitionDto> getPetitionsByManager(@PathVariable Long managerId);
+
 	@GetMapping("/api/providers-supplies/v1/providers/{providerId}/petitions")
 	public List<MicroservicePetitionDto> getPetitionsForProvider(@PathVariable Long providerId,
 			@RequestParam(name = "states", required = true) List<Long> states);
