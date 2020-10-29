@@ -1622,4 +1622,67 @@ public class WorkspaceV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
+	@RequestMapping(value = "/report-delivery/{deliveryId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Download report delivery")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Download report delivery"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> reportDownloadDeliveryManager(@PathVariable Long deliveryId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+			if (managerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+			}
+
+			if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+				throw new InputValidationException("El usuario no tiene permisos para crear peticiones.");
+			}
+
+			String pathFile = workspaceOperatorBusiness.generateReportDeliveryManager(managerDto.getId(), deliveryId);
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error OperatorV1Controller@reportDownloadDeliveryManager#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error OperatorV1Controller@reportDownloadDeliveryManager#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error OperatorV1Controller@reportDownloadDeliveryManager#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName()))
+				.header("filename", "reporte_entrega" + Files.getFileExtension(file.getName())).body(resource);
+	}
+
 }

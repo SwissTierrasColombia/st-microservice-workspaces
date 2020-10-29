@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDeliveryACDto;
+import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDeliveryManagerDto;
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDownloadSupplyDto;
 
 import feign.Feign;
@@ -31,6 +32,10 @@ public interface ReportFeignClient {
 	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/delivery-au", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceReportInformationDto createReportDeliverySuppliesAC(
 			@RequestBody MicroserviceRequestReportDeliveryACDto data);
+
+	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/delivery-manager", consumes = APPLICATION_JSON_VALUE)
+	public MicroserviceReportInformationDto createReportDeliveryManager(
+			@RequestBody MicroserviceRequestReportDeliveryManagerDto data);
 
 	class Configuration {
 
