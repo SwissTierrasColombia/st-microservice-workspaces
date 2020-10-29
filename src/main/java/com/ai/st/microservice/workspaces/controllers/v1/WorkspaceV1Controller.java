@@ -1682,7 +1682,7 @@ public class WorkspaceV1Controller {
 		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
 				.contentType(mediaType).contentLength(file.length())
 				.header("extension", Files.getFileExtension(file.getName()))
-				.header("filename", "reporte_entrega" + Files.getFileExtension(file.getName())).body(resource);
+				.header("filename", "reporte_entrega." + Files.getFileExtension(file.getName())).body(resource);
 	}
 
 }
