@@ -39,13 +39,11 @@ import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
@@ -1107,84 +1105,6 @@ public class ProviderV1Controller {
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
-	}
-
-	@RequestMapping(value = "", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Create provider")
-	@ApiResponses(value = {
-			@ApiResponse(code = 201, message = "Create provider", response = MicroserviceProviderDto.class),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<MicroserviceProviderDto> createProvider(
-			@RequestBody MicroserviceCreateProviderDto createProviderDto) {
-
-		HttpStatus httpStatus = null;
-		MicroserviceProviderDto responseProviderDto = null;
-
-		try {
-
-			// validation input data
-			if (createProviderDto.getName().isEmpty()) {
-				throw new InputValidationException("The provider name is required.");
-			}
-			if (createProviderDto.getTaxIdentificationNumber().isEmpty()) {
-				throw new InputValidationException("The tax identification number is required.");
-			}
-			if (createProviderDto.getProviderCategoryId() == null) {
-				throw new InputValidationException("The provider category is required.");
-			}
-
-			responseProviderDto = providerBusiness.addProvider(createProviderDto);
-
-			httpStatus = HttpStatus.CREATED;
-		} catch (InputValidationException e) {
-			log.error("Error ProviderV1Controller@createProvider#Validation ---> " + e.getMessage());
-			httpStatus = HttpStatus.BAD_REQUEST;
-		} catch (Exception e) {
-			log.error("Error ProviderV1Controller@createProvider#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
-
-		return new ResponseEntity<>(responseProviderDto, httpStatus);
-	}
-
-	@RequestMapping(value = "", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Update provider")
-	@ApiResponses(value = {
-			@ApiResponse(code = 201, message = "Update provider", response = MicroserviceProviderDto.class),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<MicroserviceProviderDto> updateProvider(
-			@RequestBody MicroserviceUpdateProviderDto updateProviderDto) {
-
-		HttpStatus httpStatus = null;
-		MicroserviceProviderDto responseProviderDto = null;
-
-		try {
-
-			// validation input data
-			if (updateProviderDto.getName().isEmpty()) {
-				throw new InputValidationException("The provider name is required.");
-			}
-			if (updateProviderDto.getTaxIdentificationNumber().isEmpty()) {
-				throw new InputValidationException("The tax identification number is required.");
-			}
-			if (updateProviderDto.getProviderCategoryId() == null) {
-				throw new InputValidationException("The provider category is required.");
-			}
-
-			responseProviderDto = providerBusiness.updateProvider(updateProviderDto);
-
-			httpStatus = HttpStatus.CREATED;
-		} catch (InputValidationException e) {
-			log.error("Error ProviderV1Controller@updateProvider#Validation ---> " + e.getMessage());
-			httpStatus = HttpStatus.BAD_REQUEST;
-		} catch (Exception e) {
-			log.error("Error ProviderV1Controller@updateProvider#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
-
-		return new ResponseEntity<>(responseProviderDto, httpStatus);
 	}
 
 	@RequestMapping(value = "/requests/municipality", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)

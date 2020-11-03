@@ -142,9 +142,9 @@ public class WorkspaceV1Controller {
 			}
 
 			// validation municipality
-			Long municipalityId = requestCreateWorkspace.getMunicipalityId();
-			if (municipalityId == null || municipalityId <= 0) {
-				throw new InputValidationException("El municipio es requerido.");
+			List<Long> municipalities = requestCreateWorkspace.getMunicipalities();
+			if (municipalities == null || municipalities.size() == 0) {
+				throw new InputValidationException("Se debe seleccionar mínimo un municipio.");
 			}
 
 			// validation observations
@@ -173,25 +173,10 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("El archivo de soporte es requerido.");
 			}
 
-			// validation number alphanumeric parcels
-			Long parcelsNumber = requestCreateWorkspace.getNumberAlphanumericParcels();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El número de predios alfanuméricos es inválido.");
-				}
-			}
-
-			// validation municipality area
-			Double municipalityArea = requestCreateWorkspace.getMunicipalityArea();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El área del municipio es inválida.");
-				}
-			}
-
-			responseDto = workspaceBusiness.createWorkspace(startDate, managerCode, municipalityId, observations,
-					parcelsNumber, municipalityArea, requestCreateWorkspace.getSupportFile());
+			responseDto = workspaceBusiness.createWorkspace(startDate, managerCode, municipalities, observations,
+					requestCreateWorkspace.getSupportFile());
 			httpStatus = HttpStatus.CREATED;
+
 		} catch (InputValidationException e) {
 			log.error("Error WorkspaceV1Controller@createWorkspace#Validation ---> " + e.getMessage());
 			httpStatus = HttpStatus.BAD_REQUEST;
@@ -351,6 +336,18 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("La fecha de finalización es requerida.");
 			}
 
+			// validation operator code
+			Long operatorCode = requestAssignOperator.getOperatorCode();
+			if (operatorCode == null || operatorCode <= 0) {
+				throw new InputValidationException("El operador es requerido.");
+			}
+
+			// validation support
+			MultipartFile supportFile = requestAssignOperator.getSupportFile();
+			if (supportFile.isEmpty()) {
+				throw new InputValidationException("El archivo de soporte es requerido.");
+			}
+
 			// validation number parcels expected
 			Long parcelsNumber = requestAssignOperator.getNumberParcelsExpected();
 			if (parcelsNumber != null) {
@@ -359,24 +356,12 @@ public class WorkspaceV1Controller {
 				}
 			}
 
-			// validation operator code
-			Long operatorCode = requestAssignOperator.getOperatorCode();
-			if (operatorCode == null || operatorCode <= 0) {
-				throw new InputValidationException("El operador es requerido.");
-			}
-
 			// validation municipality area
 			Double workArea = requestAssignOperator.getWorkArea();
 			if (workArea != null) {
 				if (workArea < 0) {
 					throw new InputValidationException("El área es inválida.");
 				}
-			}
-
-			// validation support
-			MultipartFile supportFile = requestAssignOperator.getSupportFile();
-			if (supportFile.isEmpty()) {
-				throw new InputValidationException("El archivo de soporte es requerido.");
 			}
 
 			responseDto = workspaceBusiness.assignOperator(workspaceId, startDate, endDate, operatorCode, parcelsNumber,
@@ -437,24 +422,7 @@ public class WorkspaceV1Controller {
 				throw new InputValidationException("La fecha de inicio es requerida.");
 			}
 
-			// validation number alphanumeric parcels
-			Long parcelsNumber = requestUpdateWorkspace.getNumberAlphanumericParcels();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El número de predios alfanuméricos es inválido.");
-				}
-			}
-
-			// validation municipality area
-			Double municipalityArea = requestUpdateWorkspace.getMunicipalityArea();
-			if (parcelsNumber != null) {
-				if (parcelsNumber < 0) {
-					throw new InputValidationException("El área del municipio es inválida.");
-				}
-			}
-
-			responseDto = workspaceBusiness.updateWorkspace(workspaceId, startDate, observations, parcelsNumber,
-					municipalityArea);
+			responseDto = workspaceBusiness.updateWorkspace(workspaceId, startDate, observations);
 			httpStatus = HttpStatus.OK;
 
 		} catch (InputValidationException e) {
@@ -1097,6 +1065,7 @@ public class WorkspaceV1Controller {
 		MediaType mediaType = null;
 		File file = null;
 		InputStreamResource resource = null;
+		MicroserviceSupplyDto supplyDto = null;
 
 		try {
 
@@ -1116,7 +1085,7 @@ public class WorkspaceV1Controller {
 			MicroserviceRoleDto roleOperator = userDtoSession.getRoles().stream()
 					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
 
-			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyId);
+			supplyDto = supplyBusiness.getSupplyById(supplyId);
 			if (!(supplyDto instanceof MicroserviceSupplyDto)) {
 				throw new BusinessException("No se ha encontrado el insumo.");
 			}
@@ -1236,9 +1205,14 @@ public class WorkspaceV1Controller {
 			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
-		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION,
+						"attachment;filename=" + supplyDto.getMunicipalityCode() + "_" + supplyDto.getName())
 				.contentType(mediaType).contentLength(file.length())
-				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+				.header("extension", Files.getFileExtension(file.getName()))
+				.header("filename", supplyDto.getMunicipalityCode() + "_" + supplyDto.getName()
+						+ Files.getFileExtension(file.getName()))
+				.body(resource);
 
 	}
 
@@ -1525,7 +1499,8 @@ public class WorkspaceV1Controller {
 
 		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
 				.contentType(mediaType).contentLength(file.length())
-				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+				.header("extension", Files.getFileExtension(file.getName()))
+				.header("filename", file.getName() + Files.getFileExtension(file.getName())).body(resource);
 
 	}
 
@@ -1580,6 +1555,134 @@ public class WorkspaceV1Controller {
 		}
 
 		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/location", method = RequestMethod.GET)
+	@ApiOperation(value = "Get workspaces by location")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get deliveries closed", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> getWorkspacesByLocation(@RequestHeader("authorization") String headerAuthorization,
+			@RequestParam(required = true, name = "department") Long departmentId,
+			@RequestParam(required = false, name = "municipality") Long municipalityId) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
+
+			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
+					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+
+			if (roleAdministrator != null) {
+
+				responseDto = workspaceBusiness.getWorskpacesByLocation(departmentId, municipalityId, null);
+
+			} else if (roleManager != null) {
+
+				// get manager
+				MicroserviceManagerDto managerDto = null;
+				try {
+					managerDto = managerClient.findByUserCode(userDtoSession.getId());
+				} catch (FeignException e) {
+					throw new DisconnectedMicroserviceException(
+							"No se ha podido establecer conexión con el microservicio de gestores.");
+				}
+
+				responseDto = workspaceBusiness.getWorskpacesByLocation(departmentId, municipalityId,
+						managerDto.getId());
+			}
+
+			httpStatus = HttpStatus.OK;
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error WorkspaceV1Controller@getWorkspacesByLocation#Microservice ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@getWorkspacesByLocation#Business ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@getWorkspacesByLocation#General ---> " + e.getMessage());
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "/report-delivery/{deliveryId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Download report delivery")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Download report delivery"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> reportDownloadDeliveryManager(@PathVariable Long deliveryId,
+			@RequestHeader("authorization") String headerAuthorization) {
+
+		MediaType mediaType = null;
+		File file = null;
+		InputStreamResource resource = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+			if (managerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+			}
+
+			if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+				throw new InputValidationException("El usuario no tiene permisos para crear peticiones.");
+			}
+
+			String pathFile = workspaceOperatorBusiness.generateReportDeliveryManager(managerDto.getId(), deliveryId);
+
+			Path path = Paths.get(pathFile);
+			String fileName = path.getFileName().toString();
+
+			String mineType = servletContext.getMimeType(fileName);
+
+			try {
+				mediaType = MediaType.parseMediaType(mineType);
+			} catch (Exception e) {
+				mediaType = MediaType.APPLICATION_OCTET_STREAM;
+			}
+
+			file = new File(pathFile);
+			resource = new InputStreamResource(new FileInputStream(file));
+
+		} catch (DisconnectedMicroserviceException e) {
+			log.error("Error OperatorV1Controller@reportDownloadDeliveryManager#Microservice ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (BusinessException e) {
+			log.error("Error OperatorV1Controller@reportDownloadDeliveryManager#Business ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+		} catch (Exception e) {
+			log.error("Error OperatorV1Controller@reportDownloadDeliveryManager#General ---> " + e.getMessage());
+			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+				.contentType(mediaType).contentLength(file.length())
+				.header("extension", Files.getFileExtension(file.getName()))
+				.header("filename", "reporte_entrega." + Files.getFileExtension(file.getName())).body(resource);
 	}
 
 }

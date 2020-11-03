@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -114,14 +115,14 @@ public class PetitionV1Controller {
 		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
-	@RequestMapping(value = "/manager/{providerId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value = "/manager", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Get petitions for manager")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Petitions getted", response = MicroservicePetitionDto.class, responseContainer = "List"),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
 	@ResponseBody
 	public ResponseEntity<Object> getPetitionsForManager(@RequestHeader("authorization") String headerAuthorization,
-			@PathVariable Long providerId) {
+			@RequestParam(name = "provider", required = false) Long providerId) {
 
 		HttpStatus httpStatus = null;
 		Object responseDto = null;
