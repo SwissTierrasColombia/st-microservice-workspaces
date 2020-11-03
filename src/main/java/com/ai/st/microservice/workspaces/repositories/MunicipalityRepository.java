@@ -18,4 +18,29 @@ public interface MunicipalityRepository extends CrudRepository<MunicipalityEntit
 			@Param("managerCode") Long managerCode);
 
 	MunicipalityEntity findByCode(String code);
+
+	@Query("SELECT m FROM MunicipalityEntity m, WorkspaceEntity w  WHERE m.id = w.municipality.id AND w.managerCode = :managerCode")
+	List<MunicipalityEntity> getMunicipalitiesByManagerCode(@Param("managerCode") Long managerCode);
+
+	@Query(nativeQuery = true, value = "select m.* from workspaces.municipalities m where m.id  not in (select "
+			+ "m2.id\n" + "from\n" + "workspaces.municipalities m2 ,\n" + "workspaces.workspaces w \n"
+			+ "where w.municipality_id = m2.id\n" + "and w.manager_code = :managerCode)")
+	List<MunicipalityEntity> getMunicipalitiesNotIntManagerCode(@Param("managerCode") Long managerCode);
+	
+	@Query(nativeQuery = true, value = "select\n" + 
+			"	m.*\n" + 
+			"from\n" + 
+			"	workspaces.municipalities m, workspaces.departments d\n" + 
+			"where\n" + 
+			"	d.id  = m.department_id \n" + 
+			"	and d.id = :departmentId \n" + 
+			"	and m.id not in (\n" + 
+			"	select\n" + 
+			"		m2.id\n" + 
+			"	from\n" + 
+			"		workspaces.municipalities m2 , workspaces.workspaces w\n" + 
+			"	where\n" + 
+			"		w.municipality_id = m2.id)")
+	List<MunicipalityEntity> getMunicipalitiesNotWorkspaceInDepartment(@Param("departmentId") Long departmentId);
+
 }

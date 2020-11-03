@@ -26,7 +26,6 @@ import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
@@ -43,7 +42,6 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequest
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateProviderDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
@@ -658,6 +656,27 @@ public class ProviderBusiness {
 		return data;
 	}
 
+	public List<MicroserviceRequestDto> getRequestsByPackage(String packageLabel) throws BusinessException {
+
+		List<MicroserviceRequestDto> requestsDto = new ArrayList<MicroserviceRequestDto>();
+
+		try {
+
+			requestsDto = providerClient.getRequestsByPackage(packageLabel);
+
+			for (MicroserviceRequestDto requestDto : requestsDto) {
+				requestDto = this.completeInformationRequest(requestDto);
+			}
+
+		} catch (BusinessException e) {
+			log.error("Error consultando solicitudes por paquete: " + e.getMessage());
+		} catch (Exception e) {
+			log.error("Error consultando solicitudes por paquete: " + e.getMessage());
+		}
+
+		return requestsDto;
+	}
+
 	public MicroserviceRequestPaginatedDto getRequestsByManagerAndProvider(int page, Long managerCode, Long providerId)
 			throws BusinessException {
 
@@ -710,6 +729,7 @@ public class ProviderBusiness {
 					data.setPackageLabel(packageRequest);
 					data.getRequests().add(requestDto);
 					packages.add(data);
+					labels.add(packageRequest);
 				} else {
 
 					MicroserviceRequestPackageDto packageFound = packages.stream()
@@ -976,26 +996,6 @@ public class ProviderBusiness {
 			log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
 			throw new BusinessException("No se ha podido eliminar el tipo de insumo del proveedor");
 		}
-	}
-
-	public MicroserviceProviderDto addProvider(MicroserviceCreateProviderDto createProviderDto) {
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.addProvider(createProviderDto);
-		} catch (Exception e) {
-			log.error("No se ha podido agregar el gestor: " + e.getMessage());
-		}
-		return providerDto;
-	}
-
-	public MicroserviceProviderDto updateProvider(MicroserviceUpdateProviderDto updateProviderDto) {
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.updateProvider(updateProviderDto);
-		} catch (Exception e) {
-			log.error("No se ha podido agregar el gestor: " + e.getMessage());
-		}
-		return providerDto;
 	}
 
 	public MicroserviceProviderDto getProviderByUserAdministrator(Long userCode) {
@@ -1564,20 +1564,29 @@ public class ProviderBusiness {
 
 		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
 
-		// validate provider
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
-		}
-		if (providerDto == null) {
-			throw new BusinessException("El proveedor de insumo no existe.");
-		}
+		if (providerId == null) {
 
-		try {
+			listPetitionsDto = providerClient.getPetitionsByManager(managerId);
+
+		} else {
+
+			// validate provider
+			MicroserviceProviderDto providerDto = null;
+			try {
+				providerDto = providerClient.findById(providerId);
+			} catch (Exception e) {
+				log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+			}
+			if (providerDto == null) {
+				throw new BusinessException("El proveedor de insumo no existe.");
+			}
 
 			listPetitionsDto = providerClient.getPetitionsForManager(providerId, managerId);
+
+		}
+
+		try {
+
 			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
 				petitionDto = addAdditionalDataToPetition(petitionDto);
 			}

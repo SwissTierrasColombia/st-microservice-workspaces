@@ -342,4 +342,92 @@ public class WorkspaceOperatorBusiness {
 		return report.getUrlReport();
 	}
 
+	public String generateReportDeliveryManager(Long managerId, Long deliveryId) throws BusinessException {
+
+		MicroserviceDeliveryDto deliveryDto = null;
+		MicroserviceOperatorDto operatorDto = null;
+
+		try {
+			deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
+		} catch (Exception e) {
+			log.error("Error consultando entrega por id: " + e.getMessage());
+		}
+
+		try {
+			operatorDto = operatorBusiness.getOperatorById(deliveryDto.getOperator().getId());
+		} catch (Exception e) {
+			log.error("Error consultando operador por id: " + e.getMessage());
+		}
+
+		if (operatorDto == null) {
+			throw new BusinessException("No se ha encontrado el operador.");
+		}
+
+		if (deliveryDto == null) {
+			throw new BusinessException("No se ha encontrado la entrega.");
+		}
+
+		if (!deliveryDto.getManagerCode().equals(managerId)) {
+			throw new BusinessException("La entrega no pertenece al gestor.");
+		}
+
+		MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
+		if (!(municipalityDto instanceof MunicipalityDto)) {
+			throw new BusinessException("No se ha encontrado el municipio.");
+		}
+
+		MicroserviceManagerDto managerDto = managerBusiness.getManagerById(deliveryDto.getManagerCode());
+		if (!(managerDto instanceof MicroserviceManagerDto)) {
+			throw new BusinessException("No se ha encontrado el gestor.");
+		}
+
+		String format = "yyyy-MM-dd hh:mm:ss";
+
+		// configuration params
+		String namespace = "/" + deliveryDto.getMunicipalityCode() + "/reportes/entregas/" + deliveryDto.getId() + "/";
+		String dateCreation = DateTool.formatDate(new Date(), format);
+		String dateDelivery = DateTool.formatDate(deliveryDto.getCreatedAt(), format);
+		String departmentName = municipalityDto.getDepartment().getName();
+		String managerName = managerDto.getName();
+		String municipalityCode = municipalityDto.getCode();
+		String municipalityName = municipalityDto.getName();
+		String observations = deliveryDto.getObservations();
+		String operatorName = operatorDto.getName();
+
+		List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<MicroserviceDownloadedSupplyDto>();
+		for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : deliveryDto.getSupplies()) {
+			String supplyName = "";
+			String providerName = "";
+			MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
+			if (supplyDto != null) {
+
+				if (supplyDto.getTypeSupply() != null) {
+
+					supplyName = supplyDto.getTypeSupply().getName();
+					providerName = supplyDto.getTypeSupply().getProvider().getName();
+
+				} else {
+
+					MicroserviceSupplyOwnerDto owner = supplyDto.getOwners().stream()
+							.filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny()
+							.orElse(null);
+					if (owner != null) {
+						supplyName = supplyDto.getName();
+						providerName = "Autoridad Catastral";
+					}
+
+				}
+
+			}
+
+			supplies.add(new MicroserviceDownloadedSupplyDto(supplyName, null, null, providerName));
+		}
+
+		MicroserviceReportInformationDto report = reportBusiness.generateReportDeliveryManager(namespace, dateCreation,
+				dateDelivery, deliveryId.toString(), departmentName, managerName, municipalityCode, municipalityName,
+				observations, operatorName, supplies);
+
+		return report.getUrlReport();
+	}
+
 }

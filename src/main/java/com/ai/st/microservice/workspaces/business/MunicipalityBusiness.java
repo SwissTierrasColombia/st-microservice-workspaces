@@ -83,7 +83,7 @@ public class MunicipalityBusiness {
 
 		return municipalityDto;
 	}
-	
+
 	public MunicipalityDto getMunicipalityById(Long id) {
 
 		MunicipalityDto municipalityDto = null;
@@ -100,6 +100,45 @@ public class MunicipalityBusiness {
 					departmentEntity.getCode()));
 
 		}
+
+		return municipalityDto;
+	}
+
+	public List<MunicipalityDto> getMunicipalitiesByManager(Long managerCode) throws BusinessException {
+
+		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
+
+		List<MunicipalityEntity> municipalitiesEntity = municipalityService.getMunicipalitiesByManagerCode(managerCode);
+		for (MunicipalityEntity mEntity : municipalitiesEntity) {
+			listMunicipalities.add(entityParseDto(mEntity));
+		}
+
+		return listMunicipalities;
+	}
+
+	public List<MunicipalityDto> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId) throws BusinessException {
+
+		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
+
+		List<MunicipalityEntity> municipalitiesEntity = municipalityService
+				.getMunicipalitiesNotWorkspaceByDepartment(departmentId);
+		for (MunicipalityEntity mEntity : municipalitiesEntity) {
+			listMunicipalities.add(entityParseDto(mEntity));
+		}
+
+		return listMunicipalities;
+	}
+
+	public MunicipalityDto entityParseDto(MunicipalityEntity municipalityEntity) {
+
+		MunicipalityDto municipalityDto = new MunicipalityDto();
+		municipalityDto.setCode(municipalityEntity.getCode());
+		municipalityDto.setId(municipalityEntity.getId());
+		municipalityDto.setName(municipalityEntity.getName());
+
+		DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+		municipalityDto.setDepartment(
+				new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
 
 		return municipalityDto;
 	}

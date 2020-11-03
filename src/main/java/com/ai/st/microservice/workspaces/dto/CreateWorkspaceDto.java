@@ -1,6 +1,8 @@
 package com.ai.st.microservice.workspaces.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,20 +23,14 @@ public class CreateWorkspaceDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Observations")
 	private String observations;
 
-	@ApiModelProperty(required = false, notes = "Number alphanumeric parcels")
-	private Long numberAlphanumericParcels;
-
-	@ApiModelProperty(required = false, notes = "Municipality area")
-	private Double municipalityArea;
-
-	@ApiModelProperty(required = true, notes = "Municipality ID")
-	private Long municipalityId;
+	@ApiModelProperty(required = true, notes = "Municipalities")
+	private List<Long> municipalities;
 
 	@ApiModelProperty(required = true, notes = "Support file")
 	private MultipartFile supportFile;
 
 	public CreateWorkspaceDto() {
-
+		this.municipalities = new ArrayList<Long>();
 	}
 
 	public String getStartDate() {
@@ -61,14 +57,6 @@ public class CreateWorkspaceDto implements Serializable {
 		this.observations = observations;
 	}
 
-	public Long getMunicipalityId() {
-		return municipalityId;
-	}
-
-	public void setMunicipalityId(Long municipalityId) {
-		this.municipalityId = municipalityId;
-	}
-
 	public MultipartFile getSupportFile() {
 		return supportFile;
 	}
@@ -77,20 +65,12 @@ public class CreateWorkspaceDto implements Serializable {
 		this.supportFile = supportFile;
 	}
 
-	public Long getNumberAlphanumericParcels() {
-		return numberAlphanumericParcels;
+	public List<Long> getMunicipalities() {
+		return municipalities;
 	}
 
-	public void setNumberAlphanumericParcels(Long numberAlphanumericParcels) {
-		this.numberAlphanumericParcels = numberAlphanumericParcels;
-	}
-
-	public Double getMunicipalityArea() {
-		return municipalityArea;
-	}
-
-	public void setMunicipalityArea(Double municipalityArea) {
-		this.municipalityArea = municipalityArea;
+	public void setMunicipalities(List<Long> municipalities) {
+		this.municipalities = municipalities;
 	}
 
 }

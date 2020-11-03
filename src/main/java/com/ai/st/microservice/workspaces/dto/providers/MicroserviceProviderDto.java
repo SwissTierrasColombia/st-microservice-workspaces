@@ -6,6 +6,7 @@ public class MicroserviceProviderDto {
 
 	private Long id;
 	private String name;
+	private String alias;
 	private String taxIdentificationNumber;
 	private Date createdAt;
 	private MicroserviceProviderCategoryDto providerCategory;
@@ -52,6 +53,14 @@ public class MicroserviceProviderDto {
 
 	public void setProviderCategory(MicroserviceProviderCategoryDto providerCategory) {
 		this.providerCategory = providerCategory;
+	}
+
+	public String getAlias() {
+		return alias;
+	}
+
+	public void setAlias(String alias) {
+		this.alias = alias;
 	}
 
 }

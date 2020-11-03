@@ -5,7 +5,7 @@ import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(value = "UpdateWorkspaceDto", description = "UpdateWorkspaceDto")
+@ApiModel(value = "UpdateWorkspaceDto")
 public class UpdateWorkpaceDto implements Serializable {
 
 	private static final long serialVersionUID = 4887150293529893875L;
@@ -15,12 +15,6 @@ public class UpdateWorkpaceDto implements Serializable {
 
 	@ApiModelProperty(required = true, notes = "Observations")
 	private String observations;
-
-	@ApiModelProperty(required = false, notes = "Number alphanumeric parcels")
-	private Long numberAlphanumericParcels;
-
-	@ApiModelProperty(required = false, notes = "Municipality area")
-	private Double municipalityArea;
 
 	public UpdateWorkpaceDto() {
 
@@ -40,22 +34,6 @@ public class UpdateWorkpaceDto implements Serializable {
 
 	public void setObservations(String observations) {
 		this.observations = observations;
-	}
-
-	public Long getNumberAlphanumericParcels() {
-		return numberAlphanumericParcels;
-	}
-
-	public void setNumberAlphanumericParcels(Long numberAlphanumericParcels) {
-		this.numberAlphanumericParcels = numberAlphanumericParcels;
-	}
-
-	public Double getMunicipalityArea() {
-		return municipalityArea;
-	}
-
-	public void setMunicipalityArea(Double municipalityArea) {
-		this.municipalityArea = municipalityArea;
 	}
 
 }

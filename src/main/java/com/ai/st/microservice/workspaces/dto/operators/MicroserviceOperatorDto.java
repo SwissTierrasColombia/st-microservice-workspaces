@@ -12,6 +12,7 @@ public class MicroserviceOperatorDto implements Serializable {
 	private String taxIdentificationNumber;
 	private Date createdAt;
 	private Boolean isPublic;
+	private String alias;
 
 	public MicroserviceOperatorDto() {
 
@@ -55,6 +56,14 @@ public class MicroserviceOperatorDto implements Serializable {
 
 	public void setIsPublic(Boolean isPublic) {
 		this.isPublic = isPublic;
+	}
+
+	public String getAlias() {
+		return alias;
+	}
+
+	public void setAlias(String alias) {
+		this.alias = alias;
 	}
 
 }

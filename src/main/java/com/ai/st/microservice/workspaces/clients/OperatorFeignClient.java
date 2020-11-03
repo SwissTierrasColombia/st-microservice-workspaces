@@ -19,13 +19,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceAddUserToOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateOperatorDto;
 
 import feign.Feign;
 import feign.codec.Encoder;
@@ -68,18 +66,6 @@ public interface OperatorFeignClient {
 	@GetMapping("/api/operators/v1/operators/{operatorId}/users")
 	public List<MicroserviceOperatorUserDto> getUsersByOperator(@PathVariable Long operatorId);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/operators/v1/operators", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceOperatorDto addOperator(MicroserviceCreateOperatorDto operator);
-
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/operators/{id}/enable", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceOperatorDto activateOperator(@PathVariable Long id);
-
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/operators/{id}/disable", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceOperatorDto deactivateOperator(@PathVariable Long id);
-
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/operators", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceOperatorDto updateOperator(MicroserviceUpdateOperatorDto operator);
-
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/deliveries/{deliveryId}", consumes = APPLICATION_JSON_VALUE)
 	public MicroserviceDeliveryDto updateDelivery(@PathVariable Long deliveryId,
 			@RequestBody MicroserviceUpdateDeliveryDto data);
@@ -88,6 +74,9 @@ public interface OperatorFeignClient {
 	public List<MicroserviceDeliveryDto> findDeliveriesByOperator(@PathVariable Long operatorId,
 			@RequestParam(name = "municipality", required = false) String municipalityCode,
 			@RequestParam(name = "active", required = false) Boolean active);
+
+	@GetMapping("/api/operators/v1/deliveries/managers/{managerId}")
+	public List<MicroserviceDeliveryDto> findDeliveriesByManager(@PathVariable Long managerId);
 
 	class Configuration {
 
