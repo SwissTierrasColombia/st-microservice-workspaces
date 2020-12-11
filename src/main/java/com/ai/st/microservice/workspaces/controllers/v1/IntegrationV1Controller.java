@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -120,6 +121,52 @@ public class IntegrationV1Controller {
 			}
 
 			responseDto = integrationBusiness.getPossiblesIntegrations(managerDto);
+			httpStatus = HttpStatus.OK;
+
+		} catch (BusinessException e) {
+			log.error("Error IntegrationV1Controller@getIntegrationsPending#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error IntegrationV1Controller@getIntegrationsPending#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
+	@RequestMapping(value = "{integrationId}/configure-view", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+	@ApiOperation(value = "Get integrations")
+	@ApiResponses(value = {
+			@ApiResponse(code = 200, message = "Get integrations", response = PossibleIntegrationDto.class, responseContainer = "List"),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<Object> configureViewIntegration(@RequestHeader("authorization") String headerAuthorization,
+			@PathVariable Long integrationId) {
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			// user session
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+			}
+
+			// get manager
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+			if (managerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+			}
+
+			if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+				throw new InputValidationException("El usuario no tiene permisos para configurar las integraciones.");
+			}
+
+			integrationBusiness.configureViewIntegration(integrationId, managerDto.getId());
+			responseDto = new BasicResponseDto("Se ha configurado ", 7);
 			httpStatus = HttpStatus.OK;
 
 		} catch (BusinessException e) {

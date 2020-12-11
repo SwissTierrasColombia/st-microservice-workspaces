@@ -184,4 +184,31 @@ public class DatabaseIntegrationBusiness {
 
 	}
 
+	public void createViewIntegration(String host, String port, String database, String schema, String nameView)
+			throws BusinessException {
+
+		try {
+
+			String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+			Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+			PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + nameView
+					+ " AS\n"
+					+ "  select id, numero_predial, coalesce(c.tipo_emparejamiento,0) as emparejamiento , geometria  from\n"
+					+ "(select * from\n" + "       (select p.t_id as id, p.numero_predial, t.geometria\n"
+					+ "      from  " + schema + ".gc_prediocatastro as p\n" + "inner join " + schema
+					+ ".gc_terreno as t\n" + "   on t.gc_predio=p.t_id) as a\n" + "  left join\n"
+					+ "  (select l.t_id as id2, i.tipo_emparejamiento\n" + "      from " + schema
+					+ ".ini_predioinsumos as i\n" + "         inner join " + schema + ".gc_prediocatastro as l\n"
+					+ "   on l.t_id=i.gc_predio_catastro) as b\n" + " on a.id=b.id2\n" + ") as c;");
+			stmt1.execute();
+
+		} catch (Exception e) {
+			log.error("Error creando vista para el proceso de integración: " + e.getMessage());
+			throw new BusinessException("No se ha podido configurar la integración.");
+		}
+
+	}
+
 }

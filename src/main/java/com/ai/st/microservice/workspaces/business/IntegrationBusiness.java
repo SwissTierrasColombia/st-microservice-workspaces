@@ -1,12 +1,16 @@
 package com.ai.st.microservice.workspaces.business;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.workspaces.clients.GeovisorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
@@ -15,6 +19,8 @@ import com.ai.st.microservice.workspaces.dto.IntegrationStatDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStateDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.PossibleIntegrationDto;
+import com.ai.st.microservice.workspaces.dto.geovisor.MicroserviceDataMapDto;
+import com.ai.st.microservice.workspaces.dto.geovisor.MicroserviceSetupMapDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
@@ -39,6 +45,9 @@ public class IntegrationBusiness {
 	private ProviderFeignClient providerClient;
 
 	@Autowired
+	private GeovisorFeignClient geovisorClient;
+
+	@Autowired
 	private IIntegrationService integrationService;
 
 	@Autowired
@@ -55,6 +64,14 @@ public class IntegrationBusiness {
 
 	@Autowired
 	private MunicipalityBusiness municipalityBusiness;
+
+	@Autowired
+	private DatabaseIntegrationBusiness databaseBusiness;
+
+	@Autowired
+	private CrytpoBusiness cryptoBusiness;
+
+	private final Logger log = LoggerFactory.getLogger(IntegrationBusiness.class);
 
 	public IntegrationDto createIntegration(String hostname, String port, String database, String schema,
 			String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
@@ -240,6 +257,7 @@ public class IntegrationBusiness {
 		integrationDto.setSupplyAntId(integrationEntity.getSupplyAntId());
 		integrationDto.setSupplyCadastreId(integrationEntity.getSupplyCadastreId());
 		integrationDto.setSupplySnrId(integrationEntity.getSupplySnrId());
+		integrationDto.setUrlMap(integrationEntity.getUrlMap());
 
 		IntegrationStateEntity integrationStateEntity = integrationEntity.getState();
 		integrationDto.setIntegrationState(new IntegrationStateDto(integrationStateEntity.getId(),
@@ -338,7 +356,8 @@ public class IntegrationBusiness {
 
 			@SuppressWarnings("unchecked")
 			List<MicroserviceSupplyDto> suppliesDto = (List<MicroserviceSupplyDto>) supplyBusiness
-					.getSuppliesByMunicipalityManager(municipalityEntity.getId(), managerDto.getId(), null, null, null, true);
+					.getSuppliesByMunicipalityManager(municipalityEntity.getId(), managerDto.getId(), null, null, null,
+							true);
 
 			MicroserviceSupplyDto supplyCadastralDto = null;
 			try {
@@ -382,6 +401,74 @@ public class IntegrationBusiness {
 		}
 
 		return listIntegrationsDto;
+	}
+
+	public IntegrationDto updateURLMap(Long integrationId, String url) throws BusinessException {
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (!(integrationEntity instanceof IntegrationEntity)) {
+			throw new BusinessException("No se ha encontrado la integración");
+		}
+
+		integrationEntity.setUrlMap(url);
+
+		integrationEntity = integrationService.updateIntegration(integrationEntity);
+
+		return this.transformEntityToDto(integrationEntity);
+	}
+
+	public void configureViewIntegration(Long integrationId, Long managerId) throws BusinessException {
+
+		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		if (integrationEntity == null) {
+			throw new BusinessException("La integración no existe");
+		}
+
+		if (!integrationEntity.getState().getId().equals(IntegrationStateBusiness.STATE_GENERATED_PRODUCT)
+				|| integrationEntity.getUrlMap() != null) {
+			throw new BusinessException(
+					"No se puede configurar el geovisor porque la integración esta en un estado inválido.");
+		}
+
+		if (!integrationEntity.getWorkspace().getManagerCode().equals(managerId)) {
+			throw new BusinessException("La integración no pertenece al gestor");
+		}
+
+		try {
+
+			String host = cryptoBusiness.decrypt(integrationEntity.getHostname());
+			String port = cryptoBusiness.decrypt(integrationEntity.getPort());
+			String database = cryptoBusiness.decrypt(integrationEntity.getDatabase());
+			String schema = cryptoBusiness.decrypt(integrationEntity.getSchema());
+			String username = cryptoBusiness.decrypt(integrationEntity.getUsername());
+			String password = cryptoBusiness.decrypt(integrationEntity.getPassword());
+			String nameView = "integration_cat_reg";
+
+			databaseBusiness.createViewIntegration(host, port, database, schema, nameView);
+
+			MicroserviceSetupMapDto data = new MicroserviceSetupMapDto();
+			data.setName_conn(nameView);
+			data.setDbname(database);
+			data.setHost(host);
+			data.setPassword(password);
+			data.setPort(Integer.parseInt(port));
+			data.setSchema(schema);
+			data.setUser(username);
+			data.setLayers(new ArrayList<>(Arrays.asList(nameView)));
+
+			MicroserviceDataMapDto dataResponse = geovisorClient.setupMap(data);
+
+			log.info("URL: " + dataResponse.getData());
+
+			String url = dataResponse.getData();
+
+			updateURLMap(integrationEntity.getId(), url);
+
+		} catch (Exception e) {
+			throw new BusinessException(
+					"No se ha podido realizar la configuración de la integración para su visualización.");
+		}
+
 	}
 
 }

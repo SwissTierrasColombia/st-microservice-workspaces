@@ -72,6 +72,9 @@ public class IntegrationDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Municipality")
 	private MunicipalityDto municipalityDto;
 
+	@ApiModelProperty(required = true, notes = "URL Map")
+	private String urlMap;
+
 	public IntegrationDto() {
 		this.stats = new ArrayList<>();
 		this.histories = new ArrayList<>();
@@ -227,6 +230,14 @@ public class IntegrationDto implements Serializable {
 
 	public void setMunicipalityDto(MunicipalityDto municipalityDto) {
 		this.municipalityDto = municipalityDto;
+	}
+
+	public String getUrlMap() {
+		return urlMap;
+	}
+
+	public void setUrlMap(String urlMap) {
+		this.urlMap = urlMap;
 	}
 
 }

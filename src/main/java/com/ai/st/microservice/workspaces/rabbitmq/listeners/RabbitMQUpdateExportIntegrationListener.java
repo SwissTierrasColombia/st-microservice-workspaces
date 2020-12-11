@@ -105,6 +105,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 							workspaceEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
 							SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio");
 
+					/*
 					try {
 						// delete database
 						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.getDatabase()),
@@ -112,6 +113,9 @@ public class RabbitMQUpdateExportIntegrationListener {
 					} catch (Exception e) {
 						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
 					}
+					*/
+					
+					integrationBusiness.configureViewIntegration(integrationEntity.getId(), workspaceEntity.getManagerCode());
 
 					// send notification
 
