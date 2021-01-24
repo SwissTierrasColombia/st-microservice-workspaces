@@ -176,6 +176,9 @@ public class WorkspaceBusiness {
 	@Autowired
 	private UserBusiness userBusiness;
 
+	@Autowired
+	private SupportBusiness supportBusiness;
+
 	public List<WorkspaceDto> createWorkspace(Date startDate, Long managerCode, List<Long> municipalities,
 			String observations, MultipartFile supportFile) throws BusinessException {
 
@@ -2008,6 +2011,57 @@ public class WorkspaceBusiness {
 		workspaceDto.setOperators(operatorsDto);
 
 		return workspaceDto;
+	}
+
+	public void unassignManagerFromMunicipality(Long municipalityId, Long managerCode) throws BusinessException {
+
+		// check if the municipality exists
+		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+		if (municipalityEntity == null) {
+			throw new BusinessException("No se ha encontrado el municipio");
+		}
+
+		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+		if (workspaceEntity == null) {
+			throw new BusinessException("El municipio no tiene asignado un gestor aún.");
+		}
+
+		if (!workspaceEntity.getManagerCode().equals(managerCode)) {
+			throw new BusinessException("El gestor no tiene asignado el municipio.");
+		}
+
+		List<MicroserviceRequestDto> requestsDto = providerBusiness.getRequestsByEmmitersManager(managerCode);
+		for (MicroserviceRequestDto requestDto : requestsDto) {
+			if (requestDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
+				if (requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
+					throw new BusinessException(
+							"No se puede desasignar el gestor del municipio porque ya existe un proceso de solicitud en curso.");
+				}
+			}
+		}
+
+		// delete integrations
+		List<IntegrationDto> integrationsEntity = integrationBusiness
+				.getIntegrationsByWorkspace(workspaceEntity.getId(), null);
+		for (IntegrationDto integrationEntity : integrationsEntity) {
+			integrationBusiness.deleteIntegration(integrationEntity.getId());
+		}
+
+		// delete workspaces operators
+		List<WorkspaceOperatorEntity> operators = workspaceEntity.getOperators();
+		for (WorkspaceOperatorEntity operator : operators) {
+			workspaceOperatorService.deleteWorkspaceOperatorById(operator.getId());
+		}
+
+		// delete support
+		List<SupportEntity> supports = workspaceEntity.getSupports();
+		for (SupportEntity supporEntity : supports) {
+			supportBusiness.deleteSupportById(supporEntity.getId());
+			fileBusiness.deleteFile(supporEntity.getUrlDocumentaryRepository());
+		}
+
+		// delete workspace
+		workspaceService.deleteWorkspaceById(workspaceEntity.getId());
 	}
 
 }

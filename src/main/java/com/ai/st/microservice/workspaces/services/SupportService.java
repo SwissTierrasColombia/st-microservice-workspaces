@@ -10,7 +10,7 @@ import com.ai.st.microservice.workspaces.repositories.SupportRepository;
 
 @Service
 public class SupportService implements ISupportService {
-	
+
 	@Autowired
 	private SupportRepository supportRepository;
 
@@ -18,6 +18,11 @@ public class SupportService implements ISupportService {
 	@Transactional
 	public SupportEntity createSupport(SupportEntity entity) {
 		return supportRepository.save(entity);
+	}
+
+	@Override
+	public void deleteSupportById(Long supportId) {
+		supportRepository.deleteById(supportId);
 	}
 
 }

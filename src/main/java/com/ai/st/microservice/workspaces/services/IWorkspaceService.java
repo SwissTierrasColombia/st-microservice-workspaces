@@ -22,5 +22,7 @@ public interface IWorkspaceService {
 	public List<WorkspaceEntity> getWorkspacesByManagerAndIsActive(Long managerCode, Boolean isActive);
 	
 	public List<WorkspaceEntity> getWorkspacesByDepartment(Long departmentId);
+	
+	public void deleteWorkspaceById(Long workspaceId);
 
 }

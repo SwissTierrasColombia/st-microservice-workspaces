@@ -1685,4 +1685,34 @@ public class WorkspaceV1Controller {
 				.header("filename", "reporte_entrega." + Files.getFileExtension(file.getName())).body(resource);
 	}
 
+	@RequestMapping(value = "/unassign/{municipalityId}/managers/{managerCode}", method = RequestMethod.DELETE)
+	@ApiOperation(value = "Unassign manager from municipality")
+	@ApiResponses(value = { @ApiResponse(code = 204, message = "Unassign manager", response = BasicResponseDto.class),
+			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
+	@ResponseBody
+	public ResponseEntity<?> unassignManagerFromMunicipality(@PathVariable Long municipalityId,
+			@PathVariable Long managerCode) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			workspaceBusiness.unassignManagerFromMunicipality(municipalityId, managerCode);
+			responseDto = new BasicResponseDto("Se ha desasignado el gestor del municipio", 7);
+			httpStatus = HttpStatus.NO_CONTENT;
+
+		} catch (BusinessException e) {
+			log.error("Error WorkspaceV1Controller@unassignManagerFromMunicipality#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error WorkspaceV1Controller@unassignManagerFromMunicipality#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 3);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
+	}
+
 }

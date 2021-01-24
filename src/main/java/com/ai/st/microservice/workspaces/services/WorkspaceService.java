@@ -59,4 +59,9 @@ public class WorkspaceService implements IWorkspaceService {
 		return workspaceRepository.getWorkspacesByDepartment(departmentId);
 	}
 
+	@Override
+	public void deleteWorkspaceById(Long workspaceId) {
+		workspaceRepository.deleteById(workspaceId);
+	}
+
 }
