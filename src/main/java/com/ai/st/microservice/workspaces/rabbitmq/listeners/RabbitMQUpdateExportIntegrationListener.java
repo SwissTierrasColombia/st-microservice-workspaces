@@ -101,28 +101,61 @@ public class RabbitMQUpdateExportIntegrationListener {
 
 					// load supply to municipality
 					String observations = "Archivo XTF generado para el modelo de insumos";
+
+					/**
+					 * TODO: Refactoring pending ...
+					 * 
+					 * Before:
+					 * 
+					 * supplyBusiness.createSupply(municipalityCode, observations, null,
+					 * attachments, null, null, null, workspaceEntity.getManagerCode(), null,
+					 * resultExportDto.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos
+					 * en modelo de insumos para el Municipio");
+					 * 
+					 * 
+					 */
+
 					supplyBusiness.createSupply(municipalityCode, observations, null, attachments, null, null, null,
-							workspaceEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
-							SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio");
+							null, null, resultExportDto.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE,
+							"Datos en modelo de insumos para el Municipio");
 
 					/*
-					try {
-						// delete database
-						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.getDatabase()),
-								cryptoBusiness.decrypt(integrationEntity.getUsername()));
-					} catch (Exception e) {
-						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
-					}
-					*/
-					
-					integrationBusiness.configureViewIntegration(integrationEntity.getId(), workspaceEntity.getManagerCode());
+					 * try { // delete database
+					 * databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.
+					 * getDatabase()), cryptoBusiness.decrypt(integrationEntity.getUsername())); }
+					 * catch (Exception e) { log.error("No se ha podido borrar la base de datos: " +
+					 * e.getMessage()); }
+					 */
+
+					/**
+					 * TODO: Refactoring pending ...
+					 * 
+					 * Before:
+					 * 
+					 * integrationBusiness.configureViewIntegration(integrationEntity.getId(),
+					 * workspaceEntity.getManagerCode());
+					 * 
+					 * 
+					 */
+					integrationBusiness.configureViewIntegration(integrationEntity.getId(), null);
 
 					// send notification
 
 					try {
 
-						List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
-								workspaceEntity.getManagerCode(),
+						/**
+						 * TODO: Refactoring pending ...
+						 * 
+						 * Before:
+						 * 
+						 * List<MicroserviceManagerUserDto> directors =
+						 * managerBusiness.getUserByManager( workspaceEntity.getManagerCode(), new
+						 * ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+						 * 
+						 * 
+						 */
+
+						List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(null,
 								new ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
 
 						for (MicroserviceManagerUserDto directorDto : directors) {

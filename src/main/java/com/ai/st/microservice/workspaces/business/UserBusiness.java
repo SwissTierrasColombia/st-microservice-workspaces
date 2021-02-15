@@ -6,45 +6,51 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 
 @Component
 public class UserBusiness {
 
-	private final Logger log = LoggerFactory.getLogger(UserBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(UserBusiness.class);
 
-	@Autowired
-	private UserFeignClient userClient;
+    @Autowired
+    private UserFeignClient userClient;
 
-	public MicroserviceUserDto getUserById(Long userId) {
+    public MicroserviceUserDto getUserById(Long userId) {
+        MicroserviceUserDto userDto = null;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.info("Error consultando el usuario: " + e.getMessage());
+        }
+        return userDto;
+    }
 
-		MicroserviceUserDto userDto = null;
+    public MicroserviceUserDto getUserByToken(String headerAuthorization) {
+        MicroserviceUserDto userDto = null;
+        try {
+            String token = headerAuthorization.replace("Bearer ", "").trim();
+            userDto = userClient.findByToken(token);
+        } catch (Exception e) {
+                log.info("Error consultando el usuario: " + e.getMessage());
+        }
+        return userDto;
+    }
 
-		try {
+    public boolean isManager(MicroserviceUserDto userDto) {
+        MicroserviceRoleDto roleManager = userDto.getRoles().stream()
+                .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-			userDto = userClient.findById(userId);
+        return (roleManager != null) ? true : false;
+    }
 
-		} catch (Exception e) {
-			log.info("Error consultando el usuario: " + e.getMessage());
-		}
+    public boolean isAdministrator(MicroserviceUserDto userDto) {
 
-		return userDto;
-	}
+        MicroserviceRoleDto roleAdministrator = userDto.getRoles().stream()
+                .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
-	public MicroserviceUserDto getUserByToken(String headerAuthorization) {
-
-		MicroserviceUserDto userDto = null;
-
-		try {
-
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			userDto = userClient.findByToken(token);
-
-		} catch (Exception e) {
-			log.info("Error consultando el usuario: " + e.getMessage());
-		}
-
-		return userDto;
-	}
+        return (roleAdministrator != null) ? true : false;
+    }
 
 }

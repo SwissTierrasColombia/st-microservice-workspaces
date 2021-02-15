@@ -339,8 +339,19 @@ public class TaskBusiness {
 							MicroserviceSupplyDto supplyCadastreDto = supplyClient
 									.findSupplyById(integrationEntity.getSupplyCadastreId());
 
+							/**
+							 * TODO: Refactoring pending ...
+							 * 
+							 * Before:
+							 * 
+							 * String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace("
+							 * ", "_") + "/insumos/gestores/" + workspaceEntity.getManagerCode();
+							 * 
+							 * 
+							 */
+
 							String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace(" ", "_")
-									+ "/insumos/gestores/" + workspaceEntity.getManagerCode();
+									+ "/insumos/gestores/";
 
 							iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, databaseIntegrationPassword,
 									portDecrypt, schemaDecrypt, databaseIntegrationUsername, integrationId, true,

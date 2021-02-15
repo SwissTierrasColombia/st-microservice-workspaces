@@ -69,9 +69,12 @@ public class IntegrationEntity {
 
 	@Column(name = "supply_ant_id", nullable = true)
 	private Long supplyAntId;
-	
+
 	@Column(name = "url_map", nullable = true)
 	private String urlMap;
+
+	@Column(name = "manager_code", nullable = false)
+	private Long managerCode;
 
 	@OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
 	private List<IntegrationStatEntity> stats = new ArrayList<IntegrationStatEntity>();
@@ -217,6 +220,14 @@ public class IntegrationEntity {
 
 	public void setUrlMap(String urlMap) {
 		this.urlMap = urlMap;
+	}
+
+	public Long getManagerCode() {
+		return managerCode;
+	}
+
+	public void setManagerCode(Long managerCode) {
+		this.managerCode = managerCode;
 	}
 
 }

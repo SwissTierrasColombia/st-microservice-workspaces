@@ -125,7 +125,18 @@ public class CadastralAuthorityBusiness {
 			throw new BusinessException("El municipio aún no tiene asignado un gestor");
 		}
 
-		MicroserviceManagerDto managerDto = managerBusiness.getManagerById(workspaceEntity.getManagerCode());
+		/**
+		 * TODO: Refactoring pending ...
+		 * 
+		 * Before:
+		 * 
+		 * MicroserviceManagerDto managerDto =
+		 * managerBusiness.getManagerById(workspaceEntity.getManagerCode());
+		 * 
+		 * 
+		 */
+
+		MicroserviceManagerDto managerDto = managerBusiness.getManagerById(null);
 		if (!(managerDto instanceof MicroserviceManagerDto)) {
 			throw new BusinessException("No se ha encontrado el gestor.");
 		}

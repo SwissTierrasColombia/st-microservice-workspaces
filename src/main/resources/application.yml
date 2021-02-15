@@ -7,9 +7,10 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQL10Dialect
     hibernate.ddl-auto: create
-    properties:
+    properties: 
       hibernate:
         enable_lazy_load_no_trans: true
+     
   main:
     allow-bean-definition-overriding: true
     
@@ -30,3 +31,4 @@ feign:
       default:
         connectTimeout: 160000000
         readTimeout: 160000000
+        

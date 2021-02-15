@@ -27,6 +27,9 @@ public class IntegrationDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Integration state")
 	private IntegrationStateDto integrationState;
 
+	@ApiModelProperty(required = true, notes = "Manager code")
+	private Long managerCode;
+
 	@ApiModelProperty(required = true, notes = "Hostname (crypto)")
 	private String hostname;
 
@@ -238,6 +241,14 @@ public class IntegrationDto implements Serializable {
 
 	public void setUrlMap(String urlMap) {
 		this.urlMap = urlMap;
+	}
+
+	public Long getManagerCode() {
+		return managerCode;
+	}
+
+	public void setManagerCode(Long managerCode) {
+		this.managerCode = managerCode;
 	}
 
 }

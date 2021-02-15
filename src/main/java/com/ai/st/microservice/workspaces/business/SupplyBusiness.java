@@ -91,7 +91,19 @@ public class SupplyBusiness {
 		if (managerCode != null) {
 			WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
 			if (workspaceActive instanceof WorkspaceEntity) {
-				if (!managerCode.equals(workspaceActive.getManagerCode())) {
+
+				/**
+				 * TODO: Refactoring pending ...
+				 * 
+				 * Before:
+				 * 
+				 * if (!managerCode.equals(workspaceActive.getManagerCode())) { throw new
+				 * BusinessException("No tiene acceso al municipio."); }
+				 * 
+				 * 
+				 */
+
+				if (!managerCode.equals(null)) {
 					throw new BusinessException("No tiene acceso al municipio.");
 				}
 			}

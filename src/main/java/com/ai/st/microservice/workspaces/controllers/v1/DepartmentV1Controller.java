@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.business.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,20 +17,15 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ai.st.microservice.workspaces.business.DepartmentBusiness;
-import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
-import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 
-import feign.FeignException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -54,6 +50,12 @@ public class DepartmentV1Controller {
 	@Autowired
 	private MunicipalityBusiness municipalityBusiness;
 
+	@Autowired
+	private UserBusiness userBusiness;
+
+	@Autowired
+	private ManagerBusiness managerBusiness;
+
 	@RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Get departments")
 	@ApiResponses(value = {
@@ -64,40 +66,26 @@ public class DepartmentV1Controller {
 			@RequestHeader("authorization") String headerAuthorization) {
 
 		HttpStatus httpStatus = null;
-		List<DepartmentDto> listDeparments = new ArrayList<DepartmentDto>();
+		List<DepartmentDto> listDepartments = new ArrayList<DepartmentDto>();
 
 		try {
 
-			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
 			}
 
-			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-
-			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-			if (roleAdministrator instanceof MicroserviceRoleDto) {
-				listDeparments = departmentBusiness.getDepartments();
-			} else if (roleManager instanceof MicroserviceRoleDto) {
+			if (userBusiness.isAdministrator(userDtoSession)) {
+				listDepartments = departmentBusiness.getDepartments();
+			} else if (userBusiness.isManager(userDtoSession)) {
 
 				// get manager
-				MicroserviceManagerDto managerDto = null;
-				try {
-					managerDto = managerClient.findByUserCode(userDtoSession.getId());
-				} catch (FeignException e) {
-					throw new DisconnectedMicroserviceException(
-							"No se ha podido establecer conexión con el microservicio de gestores.");
+				MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+				if (managerDto == null) {
+					throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
 				}
 
-				listDeparments = departmentBusiness.getDepartmentsByManagerCode(managerDto.getId());
+				listDepartments = departmentBusiness.getDepartmentsByManagerCode(managerDto.getId());
 			}
 
 			httpStatus = HttpStatus.OK;
@@ -105,16 +93,16 @@ public class DepartmentV1Controller {
 			log.error("Error DepartmentV1Controller@getMunicipalitiesById#Microservice ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		} catch (BusinessException e) {
-			listDeparments = null;
+			listDepartments = null;
 			log.error("Error DepartmentV1Controller@getDepartments#Business ---> " + e.getMessage());
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
 		} catch (Exception e) {
-			listDeparments = null;
+			listDepartments = null;
 			log.error("Error DepartmentV1Controller@getDepartments#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 
-		return new ResponseEntity<>(listDeparments, httpStatus);
+		return new ResponseEntity<>(listDepartments, httpStatus);
 	}
 
 	@RequestMapping(value = "/{departmentId}/municipalities", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -132,32 +120,19 @@ public class DepartmentV1Controller {
 		try {
 
 			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
 			}
 
-			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-
-			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-			if (roleAdministrator instanceof MicroserviceRoleDto) {
+			if (userBusiness.isAdministrator(userDtoSession)) {
 				listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
-			} else if (roleManager instanceof MicroserviceRoleDto) {
+			} else if (userBusiness.isManager(userDtoSession)) {
 
 				// get manager
-				MicroserviceManagerDto managerDto = null;
-				try {
-					managerDto = managerClient.findByUserCode(userDtoSession.getId());
-				} catch (FeignException e) {
-					throw new DisconnectedMicroserviceException(
-							"No se ha podido establecer conexión con el microservicio de gestores.");
+				MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+				if (managerDto == null) {
+					throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
 				}
 
 				listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentIdAndManager(departmentId,

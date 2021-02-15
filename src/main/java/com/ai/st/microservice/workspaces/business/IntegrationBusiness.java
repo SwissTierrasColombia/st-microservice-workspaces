@@ -29,6 +29,7 @@ import com.ai.st.microservice.workspaces.entities.IntegrationStatEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
 import com.ai.st.microservice.workspaces.services.IIntegrationStatService;
@@ -193,9 +194,13 @@ public class IntegrationBusiness {
 			WorkspaceEntity workspaceActive = workspaceService
 					.getWorkspaceActiveByMunicipality(workspaceEntity.getMunicipality());
 			if (workspaceActive instanceof WorkspaceEntity) {
-				if (!managerCode.equals(workspaceActive.getManagerCode())) {
+
+				WorkspaceManagerEntity workspaceManagerFound = workspaceActive.getManagers().stream()
+						.filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+				if (workspaceManagerFound == null) {
 					throw new BusinessException("No tiene acceso al municipio.");
 				}
+
 			}
 		}
 
@@ -258,6 +263,7 @@ public class IntegrationBusiness {
 		integrationDto.setSupplyCadastreId(integrationEntity.getSupplyCadastreId());
 		integrationDto.setSupplySnrId(integrationEntity.getSupplySnrId());
 		integrationDto.setUrlMap(integrationEntity.getUrlMap());
+		integrationDto.setManagerCode(integrationEntity.getManagerCode());
 
 		IntegrationStateEntity integrationStateEntity = integrationEntity.getState();
 		integrationDto.setIntegrationState(new IntegrationStateDto(integrationStateEntity.getId(),
@@ -347,58 +353,54 @@ public class IntegrationBusiness {
 
 		List<PossibleIntegrationDto> listIntegrationsDto = new ArrayList<>();
 
-		List<WorkspaceEntity> workspacesEntity = workspaceService.getWorkspacesByManagerAndIsActive(managerDto.getId(),
-				true);
-
-		for (WorkspaceEntity workspaceEntity : workspacesEntity) {
-
-			MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
-
-			@SuppressWarnings("unchecked")
-			List<MicroserviceSupplyDto> suppliesDto = (List<MicroserviceSupplyDto>) supplyBusiness
-					.getSuppliesByMunicipalityManager(municipalityEntity.getId(), managerDto.getId(), null, null, null,
-							true);
-
-			MicroserviceSupplyDto supplyCadastralDto = null;
-			try {
-				supplyCadastralDto = suppliesDto.stream()
-						.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 1))
-						.findAny().orElse(null);
-			} catch (Exception e) {
-
-			}
-
-			if (supplyCadastralDto != null) {
-
-				MicroserviceSupplyDto supplyRegistralDto = null;
-				try {
-					supplyRegistralDto = suppliesDto.stream()
-							.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 2))
-							.findAny().orElse(null);
-				} catch (Exception e) {
-
-				}
-
-				MicroserviceSupplyDto supplyAntDto = null;
-				try {
-					supplyAntDto = suppliesDto.stream()
-							.filter(s -> s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long) 3))
-							.findAny().orElse(null);
-				} catch (Exception e) {
-
-				}
-
-				if (supplyRegistralDto != null || supplyAntDto != null) {
-
-					MunicipalityDto municipalityDto = municipalityBusiness
-							.getMunicipalityByCode(municipalityEntity.getCode());
-
-					listIntegrationsDto.add(new PossibleIntegrationDto(municipalityDto));
-				}
-
-			}
-
-		}
+		/*
+		 * List<WorkspaceEntity> workspacesEntity =
+		 * workspaceService.getWorkspacesByManagerAndIsActive(managerDto.getId(), true);
+		 * 
+		 * for (WorkspaceEntity workspaceEntity : workspacesEntity) {
+		 * 
+		 * MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+		 * 
+		 * @SuppressWarnings("unchecked") List<MicroserviceSupplyDto> suppliesDto =
+		 * (List<MicroserviceSupplyDto>) supplyBusiness
+		 * .getSuppliesByMunicipalityManager(municipalityEntity.getId(),
+		 * managerDto.getId(), null, null, null, true);
+		 * 
+		 * MicroserviceSupplyDto supplyCadastralDto = null; try { supplyCadastralDto =
+		 * suppliesDto.stream() .filter(s ->
+		 * s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long)
+		 * 1)) .findAny().orElse(null); } catch (Exception e) {
+		 * 
+		 * }
+		 * 
+		 * if (supplyCadastralDto != null) {
+		 * 
+		 * MicroserviceSupplyDto supplyRegistralDto = null; try { supplyRegistralDto =
+		 * suppliesDto.stream() .filter(s ->
+		 * s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long)
+		 * 2)) .findAny().orElse(null); } catch (Exception e) {
+		 * 
+		 * }
+		 * 
+		 * MicroserviceSupplyDto supplyAntDto = null; try { supplyAntDto =
+		 * suppliesDto.stream() .filter(s ->
+		 * s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long)
+		 * 3)) .findAny().orElse(null); } catch (Exception e) {
+		 * 
+		 * }
+		 * 
+		 * if (supplyRegistralDto != null || supplyAntDto != null) {
+		 * 
+		 * MunicipalityDto municipalityDto = municipalityBusiness
+		 * .getMunicipalityByCode(municipalityEntity.getCode());
+		 * 
+		 * listIntegrationsDto.add(new PossibleIntegrationDto(municipalityDto)); }
+		 * 
+		 * }
+		 * 
+		 * }
+		 * 
+		 */
 
 		return listIntegrationsDto;
 	}
@@ -430,7 +432,18 @@ public class IntegrationBusiness {
 					"No se puede configurar el geovisor porque la integración esta en un estado inválido.");
 		}
 
-		if (!integrationEntity.getWorkspace().getManagerCode().equals(managerId)) {
+		/**
+		 * TODO: Refactoring pending ...
+		 * 
+		 * Before:
+		 * 
+		 * if (!integrationEntity.getWorkspace().getManagerCode().equals(managerId)) {
+		 * throw new BusinessException("La integración no pertenece al gestor"); }
+		 * 
+		 * 
+		 */
+
+		if (!managerId.equals(null)) {
 			throw new BusinessException("La integración no pertenece al gestor");
 		}
 

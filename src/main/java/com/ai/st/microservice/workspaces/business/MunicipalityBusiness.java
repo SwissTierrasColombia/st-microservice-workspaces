@@ -129,6 +129,20 @@ public class MunicipalityBusiness {
 		return listMunicipalities;
 	}
 
+	public List<MunicipalityDto> getMunicipalitiesWhereManagerDoesNotBelong(Long managerCode, Long departmentId)
+			throws BusinessException {
+
+		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
+
+		List<MunicipalityEntity> municipalitiesEntity = municipalityService
+				.getMunicipalitiesWhereManagerDoesNotBelongIn(managerCode, departmentId);
+		for (MunicipalityEntity mEntity : municipalitiesEntity) {
+			listMunicipalities.add(entityParseDto(mEntity));
+		}
+
+		return listMunicipalities;
+	}
+
 	public MunicipalityDto entityParseDto(MunicipalityEntity municipalityEntity) {
 
 		MunicipalityDto municipalityDto = new MunicipalityDto();

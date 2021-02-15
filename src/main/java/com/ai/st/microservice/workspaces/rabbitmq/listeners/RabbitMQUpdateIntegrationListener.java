@@ -78,8 +78,19 @@ public class RabbitMQUpdateIntegrationListener {
 				WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
 				MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-				List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
-						workspaceEntity.getManagerCode(),
+				/**
+				 * TODO: Refactoring pending ...
+				 * 
+				 * Before:
+				 * 
+				 * List<MicroserviceManagerUserDto> directors =
+				 * managerBusiness.getUserByManager( workspaceEntity.getManagerCode(), new
+				 * ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+				 * 
+				 * 
+				 */
+
+				List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(null,
 						new ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
 
 				for (MicroserviceManagerUserDto directorDto : directors) {

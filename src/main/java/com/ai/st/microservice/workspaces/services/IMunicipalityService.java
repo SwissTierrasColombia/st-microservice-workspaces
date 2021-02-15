@@ -22,4 +22,6 @@ public interface IMunicipalityService {
 
 	public List<MunicipalityEntity> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId);
 
+	public List<MunicipalityEntity> getMunicipalitiesWhereManagerDoesNotBelongIn(Long managerCode, Long departmentId);
+
 }

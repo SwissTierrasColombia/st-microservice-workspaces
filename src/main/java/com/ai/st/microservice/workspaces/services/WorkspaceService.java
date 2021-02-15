@@ -51,7 +51,15 @@ public class WorkspaceService implements IWorkspaceService {
 
 	@Override
 	public List<WorkspaceEntity> getWorkspacesByManagerAndIsActive(Long managerCode, Boolean isActive) {
-		return workspaceRepository.findByManagerCodeAndIsActive(managerCode, isActive);
+		/**
+		 * Refactoring ...
+		 * 
+		 * Before:
+		 * 
+		 * return workspaceRepository.findByManagerCodeAndIsActive(managerCode,
+		 * isActive);
+		 */
+		return null;
 	}
 
 	@Override
