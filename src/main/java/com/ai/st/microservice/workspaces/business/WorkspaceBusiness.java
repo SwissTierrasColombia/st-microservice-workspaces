@@ -672,22 +672,16 @@ public class WorkspaceBusiness {
 
         // validate access
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+
+
         if (workspaceEntity instanceof WorkspaceEntity) {
 
-            /**
-             * TODO: Refactoring pending ...
-             *
-             * Before:
-             *
-             * if (!managerCode.equals(workspaceEntity.getManagerCode())) { throw new
-             * BusinessException("El usuario no tiene acceso al espacio de trabajo."); }
-             *
-             *
-             */
-
-            if (!managerCode.equals(null)) {
+            WorkspaceManagerEntity workspaceManagerEntity =
+                    workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+            if (workspaceManagerEntity == null) {
                 throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
             }
+
         } else {
             throw new BusinessException("El municipio no tiene un espacio de trabajo activo.");
         }

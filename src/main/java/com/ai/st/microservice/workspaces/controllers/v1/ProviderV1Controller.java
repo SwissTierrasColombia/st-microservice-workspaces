@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.business.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,10 +23,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.business.RoleBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
@@ -78,6 +75,9 @@ public class ProviderV1Controller {
 
 	@Autowired
 	private UserBusiness userBusiness;
+
+	@Autowired
+	private ManagerBusiness managerBusiness;
 
 	@RequestMapping(value = "/municipalities/{municipalityId}/requests", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	@ApiOperation(value = "Create request")
@@ -1123,22 +1123,15 @@ public class ProviderV1Controller {
 		try {
 
 			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
 			}
 
 			// get manager
-			MicroserviceManagerDto managerDto = null;
-			try {
-				managerDto = managerClient.findByUserCode(userDtoSession.getId());
-			} catch (Exception e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de gestores.");
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+			if (managerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
 			}
 
 			responseDto = providerBusiness.getRequestsByManagerAndMunicipality(page, managerDto.getId(),
@@ -1164,7 +1157,7 @@ public class ProviderV1Controller {
 	}
 
 	@RequestMapping(value = "/requests/provider", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get requests by municipality")
+	@ApiOperation(value = "Get requests by provider")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
@@ -1179,22 +1172,15 @@ public class ProviderV1Controller {
 		try {
 
 			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
 			}
 
 			// get manager
-			MicroserviceManagerDto managerDto = null;
-			try {
-				managerDto = managerClient.findByUserCode(userDtoSession.getId());
-			} catch (Exception e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de gestores.");
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+			if (managerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
 			}
 
 			responseDto = providerBusiness.getRequestsByManagerAndProvider(page, managerDto.getId(), providerId);
@@ -1218,7 +1204,7 @@ public class ProviderV1Controller {
 	}
 
 	@RequestMapping(value = "/requests/package", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get requests by municipality")
+	@ApiOperation(value = "Get requests by package")
 	@ApiResponses(value = {
 			@ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
 			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
@@ -1232,22 +1218,15 @@ public class ProviderV1Controller {
 		try {
 
 			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
+			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+			if (userDtoSession == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
 			}
 
 			// get manager
-			MicroserviceManagerDto managerDto = null;
-			try {
-				managerDto = managerClient.findByUserCode(userDtoSession.getId());
-			} catch (Exception e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de gestores.");
+			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+			if (managerDto == null) {
+				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
 			}
 
 			responseDto = providerBusiness.getRequestsByManagerAndPackage(managerDto.getId(), packageLabel);
