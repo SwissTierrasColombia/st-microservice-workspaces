@@ -15,57 +15,62 @@ import com.ai.st.microservice.workspaces.repositories.IntegrationRepository;
 @Service
 public class IntegrationService implements IIntegrationService {
 
-	@Autowired
-	private IntegrationRepository integrationRepository;
+    @Autowired
+    private IntegrationRepository integrationRepository;
 
-	@Override
-	@Transactional
-	public IntegrationEntity createIntegration(IntegrationEntity integrationEntity) {
-		return integrationRepository.save(integrationEntity);
-	}
+    @Override
+    @Transactional
+    public IntegrationEntity createIntegration(IntegrationEntity integrationEntity) {
+        return integrationRepository.save(integrationEntity);
+    }
 
-	@Override
-	public IntegrationEntity getIntegrationByWorkspaceAndState(WorkspaceEntity workspace,
-			IntegrationStateEntity state) {
-		return integrationRepository.findByWorkspaceAndState(workspace, state);
-	}
+    @Override
+    public IntegrationEntity getIntegrationByWorkspaceAndState(WorkspaceEntity workspace,
+                                                               IntegrationStateEntity state) {
+        return integrationRepository.findByWorkspaceAndState(workspace, state);
+    }
 
-	@Override
-	public List<IntegrationEntity> getIntegrationByWorkspaceAndStates(Long workspaceId, List<Long> states) {
-		return integrationRepository.findIntegrationsByWorkspaceAndStates(workspaceId, states);
-	}
+    @Override
+    public List<IntegrationEntity> getIntegrationByWorkspaceAndStates(Long workspaceId, List<Long> states) {
+        return integrationRepository.findIntegrationsByWorkspaceAndStates(workspaceId, states);
+    }
 
-	@Override
-	public IntegrationEntity getIntegrationById(Long id) {
-		return integrationRepository.findById(id).orElse(null);
-	}
+    @Override
+    public IntegrationEntity getIntegrationById(Long id) {
+        return integrationRepository.findById(id).orElse(null);
+    }
 
-	@Override
-	@Transactional
-	public IntegrationEntity updateIntegration(IntegrationEntity integrationEntity) {
-		return integrationRepository.save(integrationEntity);
-	}
+    @Override
+    @Transactional
+    public IntegrationEntity updateIntegration(IntegrationEntity integrationEntity) {
+        return integrationRepository.save(integrationEntity);
+    }
 
-	@Override
-	public List<IntegrationEntity> getIntegrationByWorkspace(WorkspaceEntity workspaceEntity) {
-		return integrationRepository.findByWorkspace(workspaceEntity);
-	}
+    @Override
+    public List<IntegrationEntity> getIntegrationByWorkspace(WorkspaceEntity workspaceEntity, Long managerCode) {
+        return integrationRepository.findByWorkspaceAndManagerCode(workspaceEntity, managerCode);
+    }
 
-	@Override
-	public IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
-			IntegrationStateEntity state) {
-		return integrationRepository.findBySupplyCadastreIdAndSupplySnrIdAndState(cadastreId, snrId, state);
-	}
+    @Override
+    public IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
+                                                                    IntegrationStateEntity state, Long managerCode) {
+        return integrationRepository.findBySupplyCadastreIdAndSupplySnrIdAndStateAndManagerCode(cadastreId, snrId, state, managerCode);
+    }
 
-	@Override
-	@Transactional
-	public void deleteIntegration(Long id) {
-		integrationRepository.deleteById(id);
-	}
+    @Override
+    @Transactional
+    public void deleteIntegration(Long id) {
+        integrationRepository.deleteById(id);
+    }
 
-	@Override
-	public List<IntegrationEntity> getIntegrationsByWorkspaces(List<WorkspaceEntity> workspaces) {
-		return integrationRepository.findByWorkspaceIn(workspaces);
-	}
+    @Override
+    public List<IntegrationEntity> getIntegrationsByWorkspaces(List<WorkspaceEntity> workspaces, Long managerCode) {
+        return integrationRepository.findByWorkspaceInAndManagerCode(workspaces, managerCode);
+    }
+
+    @Override
+    public List<IntegrationEntity> getPendingIntegrations(Long workspaceId, List<Long> states, Long managerCode) {
+        return integrationRepository.findIntegrationsPendings(workspaceId, states, managerCode);
+    }
 
 }

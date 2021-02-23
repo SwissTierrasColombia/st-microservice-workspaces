@@ -16,145 +16,145 @@ import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 @Component
 public class MunicipalityBusiness {
 
-	@Autowired
-	private IMunicipalityService municipalityService;
+    @Autowired
+    private IMunicipalityService municipalityService;
 
-	public List<MunicipalityDto> getMunicipalitiesByDepartmentId(Long departmentId) throws BusinessException {
+    public List<MunicipalityDto> getMunicipalitiesByDepartmentId(Long departmentId) throws BusinessException {
 
-		List<MunicipalityDto> listMunicipalitiesDto = new ArrayList<MunicipalityDto>();
+        List<MunicipalityDto> listMunicipalitiesDto = new ArrayList<>();
 
-		List<MunicipalityEntity> listMunicipalitiesEntity = municipalityService
-				.getMunicipalitiesByDepartmentId(departmentId);
+        List<MunicipalityEntity> listMunicipalitiesEntity = municipalityService
+                .getMunicipalitiesByDepartmentId(departmentId);
 
-		for (MunicipalityEntity municipalityEntity : listMunicipalitiesEntity) {
+        for (MunicipalityEntity municipalityEntity : listMunicipalitiesEntity) {
 
-			MunicipalityDto municipalityDto = new MunicipalityDto();
-			municipalityDto.setId(municipalityEntity.getId());
-			municipalityDto.setName(municipalityEntity.getName());
-			municipalityDto.setCode(municipalityEntity.getCode());
-			municipalityDto.setDepartment(new DepartmentDto(municipalityEntity.getDepartment().getId(),
-					municipalityEntity.getDepartment().getName(), municipalityEntity.getDepartment().getCode()));
+            MunicipalityDto municipalityDto = new MunicipalityDto();
+            municipalityDto.setId(municipalityEntity.getId());
+            municipalityDto.setName(municipalityEntity.getName());
+            municipalityDto.setCode(municipalityEntity.getCode());
+            municipalityDto.setDepartment(new DepartmentDto(municipalityEntity.getDepartment().getId(),
+                    municipalityEntity.getDepartment().getName(), municipalityEntity.getDepartment().getCode()));
 
-			listMunicipalitiesDto.add(municipalityDto);
-		}
+            listMunicipalitiesDto.add(municipalityDto);
+        }
 
-		return listMunicipalitiesDto;
-	}
+        return listMunicipalitiesDto;
+    }
 
-	public List<MunicipalityDto> getMunicipalitiesByDepartmentIdAndManager(Long departmentId, Long managerCode)
-			throws BusinessException {
+    public List<MunicipalityDto> getMunicipalitiesByDepartmentIdAndManager(Long departmentId, Long managerCode)
+            throws BusinessException {
 
-		List<MunicipalityDto> listMunicipalitiesDto = new ArrayList<MunicipalityDto>();
+        List<MunicipalityDto> listMunicipalitiesDto = new ArrayList<>();
 
-		List<MunicipalityEntity> listMunicipalitiesEntity = municipalityService
-				.getMunicipalitiesByDepartmentIdAndManagerCode(departmentId, managerCode);
+        List<MunicipalityEntity> listMunicipalitiesEntity = municipalityService
+                .getMunicipalitiesByDepartmentIdAndManagerCode(departmentId, managerCode);
 
-		for (MunicipalityEntity municipalityEntity : listMunicipalitiesEntity) {
+        for (MunicipalityEntity municipalityEntity : listMunicipalitiesEntity) {
 
-			MunicipalityDto municipalityDto = new MunicipalityDto();
-			municipalityDto.setId(municipalityEntity.getId());
-			municipalityDto.setName(municipalityEntity.getName());
-			municipalityDto.setCode(municipalityEntity.getCode());
-			municipalityDto.setDepartment(new DepartmentDto(municipalityEntity.getDepartment().getId(),
-					municipalityEntity.getDepartment().getName(), municipalityEntity.getDepartment().getCode()));
+            MunicipalityDto municipalityDto = new MunicipalityDto();
+            municipalityDto.setId(municipalityEntity.getId());
+            municipalityDto.setName(municipalityEntity.getName());
+            municipalityDto.setCode(municipalityEntity.getCode());
+            municipalityDto.setDepartment(new DepartmentDto(municipalityEntity.getDepartment().getId(),
+                    municipalityEntity.getDepartment().getName(), municipalityEntity.getDepartment().getCode()));
 
-			listMunicipalitiesDto.add(municipalityDto);
-		}
+            listMunicipalitiesDto.add(municipalityDto);
+        }
 
-		return listMunicipalitiesDto;
-	}
+        return listMunicipalitiesDto;
+    }
 
-	public MunicipalityDto getMunicipalityByCode(String code) {
+    public MunicipalityDto getMunicipalityByCode(String code) {
 
-		MunicipalityDto municipalityDto = null;
+        MunicipalityDto municipalityDto = null;
 
-		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityByCode(code);
-		if (municipalityEntity instanceof MunicipalityEntity) {
-			municipalityDto = new MunicipalityDto();
-			municipalityDto.setCode(municipalityEntity.getCode());
-			municipalityDto.setId(municipalityEntity.getId());
-			municipalityDto.setName(municipalityEntity.getName());
+        MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityByCode(code);
+        if (municipalityEntity != null) {
+            municipalityDto = new MunicipalityDto();
+            municipalityDto.setCode(municipalityEntity.getCode());
+            municipalityDto.setId(municipalityEntity.getId());
+            municipalityDto.setName(municipalityEntity.getName());
 
-			DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
-			municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
-					departmentEntity.getCode()));
+            DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+            municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+                    departmentEntity.getCode()));
 
-		}
+        }
 
-		return municipalityDto;
-	}
+        return municipalityDto;
+    }
 
-	public MunicipalityDto getMunicipalityById(Long id) {
+    public MunicipalityDto getMunicipalityById(Long id) {
 
-		MunicipalityDto municipalityDto = null;
+        MunicipalityDto municipalityDto = null;
 
-		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(id);
-		if (municipalityEntity instanceof MunicipalityEntity) {
-			municipalityDto = new MunicipalityDto();
-			municipalityDto.setCode(municipalityEntity.getCode());
-			municipalityDto.setId(municipalityEntity.getId());
-			municipalityDto.setName(municipalityEntity.getName());
+        MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(id);
+        if (municipalityEntity != null) {
+            municipalityDto = new MunicipalityDto();
+            municipalityDto.setCode(municipalityEntity.getCode());
+            municipalityDto.setId(municipalityEntity.getId());
+            municipalityDto.setName(municipalityEntity.getName());
 
-			DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
-			municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
-					departmentEntity.getCode()));
+            DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+            municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+                    departmentEntity.getCode()));
 
-		}
+        }
 
-		return municipalityDto;
-	}
+        return municipalityDto;
+    }
 
-	public List<MunicipalityDto> getMunicipalitiesByManager(Long managerCode) throws BusinessException {
+    public List<MunicipalityDto> getMunicipalitiesByManager(Long managerCode) throws BusinessException {
 
-		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
+        List<MunicipalityDto> listMunicipalities = new ArrayList<>();
 
-		List<MunicipalityEntity> municipalitiesEntity = municipalityService.getMunicipalitiesByManagerCode(managerCode);
-		for (MunicipalityEntity mEntity : municipalitiesEntity) {
-			listMunicipalities.add(entityParseDto(mEntity));
-		}
+        List<MunicipalityEntity> municipalitiesEntity = municipalityService.getMunicipalitiesByManagerCode(managerCode);
+        for (MunicipalityEntity mEntity : municipalitiesEntity) {
+            listMunicipalities.add(entityParseDto(mEntity));
+        }
 
-		return listMunicipalities;
-	}
+        return listMunicipalities;
+    }
 
-	public List<MunicipalityDto> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId) throws BusinessException {
+    public List<MunicipalityDto> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId) throws BusinessException {
 
-		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
+        List<MunicipalityDto> listMunicipalities = new ArrayList<>();
 
-		List<MunicipalityEntity> municipalitiesEntity = municipalityService
-				.getMunicipalitiesNotWorkspaceByDepartment(departmentId);
-		for (MunicipalityEntity mEntity : municipalitiesEntity) {
-			listMunicipalities.add(entityParseDto(mEntity));
-		}
+        List<MunicipalityEntity> municipalitiesEntity = municipalityService
+                .getMunicipalitiesNotWorkspaceByDepartment(departmentId);
+        for (MunicipalityEntity mEntity : municipalitiesEntity) {
+            listMunicipalities.add(entityParseDto(mEntity));
+        }
 
-		return listMunicipalities;
-	}
+        return listMunicipalities;
+    }
 
-	public List<MunicipalityDto> getMunicipalitiesWhereManagerDoesNotBelong(Long managerCode, Long departmentId)
-			throws BusinessException {
+    public List<MunicipalityDto> getMunicipalitiesWhereManagerDoesNotBelong(Long managerCode, Long departmentId)
+            throws BusinessException {
 
-		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
+        List<MunicipalityDto> listMunicipalities = new ArrayList<>();
 
-		List<MunicipalityEntity> municipalitiesEntity = municipalityService
-				.getMunicipalitiesWhereManagerDoesNotBelongIn(managerCode, departmentId);
-		for (MunicipalityEntity mEntity : municipalitiesEntity) {
-			listMunicipalities.add(entityParseDto(mEntity));
-		}
+        List<MunicipalityEntity> municipalitiesEntity = municipalityService
+                .getMunicipalitiesWhereManagerDoesNotBelongIn(managerCode, departmentId);
+        for (MunicipalityEntity mEntity : municipalitiesEntity) {
+            listMunicipalities.add(entityParseDto(mEntity));
+        }
 
-		return listMunicipalities;
-	}
+        return listMunicipalities;
+    }
 
-	public MunicipalityDto entityParseDto(MunicipalityEntity municipalityEntity) {
+    public MunicipalityDto entityParseDto(MunicipalityEntity municipalityEntity) {
 
-		MunicipalityDto municipalityDto = new MunicipalityDto();
-		municipalityDto.setCode(municipalityEntity.getCode());
-		municipalityDto.setId(municipalityEntity.getId());
-		municipalityDto.setName(municipalityEntity.getName());
+        MunicipalityDto municipalityDto = new MunicipalityDto();
+        municipalityDto.setCode(municipalityEntity.getCode());
+        municipalityDto.setId(municipalityEntity.getId());
+        municipalityDto.setName(municipalityEntity.getName());
 
-		DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
-		municipalityDto.setDepartment(
-				new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
+        DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+        municipalityDto.setDepartment(
+                new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
 
-		return municipalityDto;
-	}
+        return municipalityDto;
+    }
 
 }

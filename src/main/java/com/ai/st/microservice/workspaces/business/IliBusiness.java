@@ -133,7 +133,7 @@ public class IliBusiness {
 		String sqlCountMatch = "SELECT count(*) FROM " + databaseSchema + ".ini_predio_insumos;";
 		long countMatch = connection.count(sqlCountMatch);
 
-		double percentage = 0.0;
+		double percentage;
 
 		if (countSNR >= countGC) {
 			percentage = (double) (countMatch * 100) / countSNR;

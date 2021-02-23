@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.business;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,986 +40,973 @@ import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 @Component
 public class AdministrationBusiness {
 
-	private final Logger log = LoggerFactory.getLogger(AdministrationBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(AdministrationBusiness.class);
 
-	@Autowired
-	private UserFeignClient userClient;
+    @Autowired
+    private UserFeignClient userClient;
 
-	@Autowired
-	private ProviderFeignClient providerClient;
+    @Autowired
+    private ProviderFeignClient providerClient;
 
-	@Autowired
-	private ManagerFeignClient managerClient;
+    @Autowired
+    private ManagerFeignClient managerClient;
 
-	@Autowired
-	private OperatorFeignClient operatorClient;
+    @Autowired
+    private OperatorFeignClient operatorClient;
 
-	@Autowired
-	private NotificationBusiness notificationBusiness;
+    @Autowired
+    private NotificationBusiness notificationBusiness;
 
-	@Autowired
-	private ProviderBusiness providerBusiness;
+    @Autowired
+    private ProviderBusiness providerBusiness;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	@Autowired
-	private OperatorBusiness operatorBusiness;
+    @Autowired
+    private OperatorBusiness operatorBusiness;
 
-	public MicroserviceUserDto createUserFromAdministrator(String firstName, String lastName, String email,
-			String username, String password, CreateUserRoleProviderDto roleProvider,
-			CreateUserRoleAdministratorDto roleAdmin, CreateUserRoleManagerDto roleManager,
-			CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+    public MicroserviceUserDto createUserFromAdministrator(String firstName, String lastName, String email,
+                                                           String username, String password, CreateUserRoleProviderDto roleProvider,
+                                                           CreateUserRoleAdministratorDto roleAdmin, CreateUserRoleManagerDto roleManager,
+                                                           CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
-		if (roleManager != null) {
+        if (roleManager != null) {
 
-			if (roleManager.getProfiles().size() == 0) {
-				throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
-			}
+            if (roleManager.getProfiles().size() == 0) {
+                throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
+            }
 
-			List<Long> listRolesWrong = roleManager.getProfiles().stream()
-					.filter(p -> !p.equals(RoleBusiness.SUB_ROLE_DIRECTOR)).collect(Collectors.toList());
+            List<Long> listRolesWrong = roleManager.getProfiles().stream()
+                    .filter(p -> !p.equals(RoleBusiness.SUB_ROLE_DIRECTOR)).collect(Collectors.toList());
 
-			if (listRolesWrong.size() > 0) {
-				throw new BusinessException("No se puede asignar al usuario un perfil diferente al de Director.");
-			}
+            if (listRolesWrong.size() > 0) {
+                throw new BusinessException("No se puede asignar al usuario un perfil diferente al de Director.");
+            }
 
-		}
+        }
 
-		if (roleProvider != null) {
+        if (roleProvider != null) {
+            roleProvider.setProfiles(new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)));
+        }
 
-			roleProvider.setProfiles(new ArrayList<>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)));
+        if (roleOperator != null) {
 
-		}
+            if (!roleOperator.getRoleId().equals(RoleBusiness.ROLE_OPERATOR)) {
+                throw new BusinessException("El rol no corresponde con un operador.");
+            }
 
-		if (roleOperator != null) {
+        }
 
-			if (!roleOperator.getRoleId().equals(RoleBusiness.ROLE_OPERATOR)) {
-				throw new BusinessException("El rol no corresponde con un operador.");
-			}
+        return this.createUser(firstName, lastName, email, username, password, roleProvider, roleAdmin, roleManager,
+                roleOperator);
+    }
 
-		}
+    public MicroserviceUserDto createUserFromManager(String firstName, String lastName, String email, String username,
+                                                     String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
 
-		return this.createUser(firstName, lastName, email, username, password, roleProvider, roleAdmin, roleManager,
-				roleOperator);
-	}
+        if (roleManager.getProfiles().size() == 0) {
+            throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
+        }
 
-	public MicroserviceUserDto createUserFromManager(String firstName, String lastName, String email, String username,
-			String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
+        List<Long> listRolesWrong = roleManager.getProfiles().stream()
+                .filter(p -> p.equals(RoleBusiness.SUB_ROLE_DIRECTOR)).collect(Collectors.toList());
 
-		if (roleManager.getProfiles().size() == 0) {
-			throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
-		}
+        if (listRolesWrong.size() > 0) {
+            throw new BusinessException("No se puede asignar al usuario un perfil Director.");
+        }
 
-		List<Long> listRolesWrong = roleManager.getProfiles().stream()
-				.filter(p -> p.equals(RoleBusiness.SUB_ROLE_DIRECTOR)).collect(Collectors.toList());
+        return this.createUser(firstName, lastName, email, username, password, null, null, roleManager, null);
+    }
 
-		if (listRolesWrong.size() > 0) {
-			throw new BusinessException("No se puede asignar al usuario un perfil Director.");
-		}
+    public MicroserviceUserDto createUserFromProvider(String firstName, String lastName, String email, String username,
+                                                      String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
 
-		return this.createUser(firstName, lastName, email, username, password, null, null, roleManager, null);
-	}
+        if (roleProvider.getProfiles().size() == 0) {
+            throw new BusinessException("Se debe especificar al menos un perfil para el usuario.");
+        }
 
-	public MicroserviceUserDto createUserFromProvider(String firstName, String lastName, String email, String username,
-			String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
+        if (!roleProvider.getIsTechnical()) {
+            Long profileDirector = roleProvider.getProfiles().stream()
+                    .filter(profileId -> profileId.equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+                    .orElse(null);
+            if (profileDirector != null) {
+                throw new BusinessException("No se pueden crear usuarios administradores.");
+            }
+        }
 
-		if (roleProvider.getProfiles().size() == 0) {
-			throw new BusinessException("Se debe especificar al menos un perfil para el usuario.");
-		}
+        return this.createUser(firstName, lastName, email, username, password, roleProvider, null, null, null);
+    }
 
-		if (!roleProvider.getIsTechnical()) {
-			Long profileDirector = roleProvider.getProfiles().stream()
-					.filter(profileId -> profileId.equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
-					.orElse(null);
-			if (profileDirector != null) {
-				throw new BusinessException("No se pueden crear usuarios administradores.");
-			}
-		}
+    public MicroserviceUserDto createUser(String firstName, String lastName, String email, String username,
+                                          String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+                                          CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
-		return this.createUser(firstName, lastName, email, username, password, roleProvider, null, null, null);
-	}
+        MicroserviceUserDto userResponseDto;
 
-	public MicroserviceUserDto createUser(String firstName, String lastName, String email, String username,
-			String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
-			CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+        MicroserviceCreateUserDto createUserDto = new MicroserviceCreateUserDto();
+        createUserDto.setEmail(email);
+        createUserDto.setFirstName(firstName);
+        createUserDto.setLastName(lastName);
+        createUserDto.setPassword(password);
+        createUserDto.setUsername(username);
 
-		MicroserviceUserDto userResponseDto = null;
+        List<Long> roles = new ArrayList<>();
 
-		MicroserviceCreateUserDto createUserDto = new MicroserviceCreateUserDto();
-		createUserDto.setEmail(email);
-		createUserDto.setFirstName(firstName);
-		createUserDto.setLastName(lastName);
-		createUserDto.setPassword(password);
-		createUserDto.setUsername(username);
+        String entityName = "";
 
-		List<Long> roles = new ArrayList<Long>();
+        if (roleProvider != null) {
 
-		String entityName = "";
+            if (roleProvider.getProfiles().size() == 0) {
+                throw new BusinessException("Para asignar el rol de proveedor se debe especificar al menos un perfil.");
+            }
 
-		if (roleProvider != null) {
+            if (roleProvider.getRoleId() != null && roleProvider.getRoleId() > 0) {
+                roles.add(roleProvider.getRoleId());
+            }
 
-			if (roleProvider.getProfiles().size() == 0) {
-				throw new BusinessException("Para asignar el rol de proveedor se debe especificar al menos un perfil.");
-			}
+            MicroserviceProviderDto providerDto = providerBusiness.getProviderById(roleProvider.getProviderId());
+            entityName = (providerDto != null) ? providerDto.getName() : "";
+        }
 
-			if (roleProvider.getRoleId() != null && roleProvider.getRoleId() > 0) {
-				roles.add(roleProvider.getRoleId());
-			}
+        if (roleAdmin != null) {
+            roles.add(roleAdmin.getRoleId());
+            entityName = "ADMINISTRADOR";
+        }
 
-			MicroserviceProviderDto providerDto = providerBusiness.getProviderById(roleProvider.getProviderId());
-			entityName = (providerDto != null) ? providerDto.getName() : "";
-		}
+        if (roleManager != null) {
 
-		if (roleAdmin != null) {
-			roles.add(roleAdmin.getRoleId());
-			entityName = "ADMINISTRADOR";
-		}
+            if (roleManager.getProfiles().size() == 0) {
+                throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
+            }
 
-		if (roleManager != null) {
+            if (roleManager.getRoleId() != null && roleManager.getRoleId() > 0) {
+                roles.add(roleManager.getRoleId());
+            }
 
-			if (roleManager.getProfiles().size() == 0) {
-				throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
-			}
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerById(roleManager.getManagerId());
+            entityName = (managerDto != null) ? managerDto.getName() : "";
+        }
 
-			if (roleManager.getRoleId() != null && roleManager.getRoleId() > 0) {
-				roles.add(roleManager.getRoleId());
-			}
+        if (roleOperator != null) {
 
-			MicroserviceManagerDto managerDto = managerBusiness.getManagerById(roleManager.getManagerId());
-			entityName = (managerDto != null) ? managerDto.getName() : "";
-		}
+            if (roleOperator.getRoleId() != null && roleOperator.getRoleId() > 0) {
+                roles.add(roleOperator.getRoleId());
+            }
 
-		if (roleOperator != null) {
+            MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorById(roleOperator.getOperatorId());
+            entityName = (operatorDto != null) ? operatorDto.getName() : "";
+        }
 
-			if (roleOperator.getRoleId() != null && roleOperator.getRoleId() > 0) {
-				roles.add(roleOperator.getRoleId());
-			}
+        createUserDto.setRoles(roles);
 
-			MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorById(roleOperator.getOperatorId());
-			entityName = (operatorDto != null) ? operatorDto.getName() : "";
-		}
+        if (roles.size() > 0) {
 
-		createUserDto.setRoles(roles);
+            try {
+                userResponseDto = userClient.createUser(createUserDto);
 
-		if (roles.size() > 0) {
+                if (roleProvider != null) {
 
-			try {
-				userResponseDto = userClient.createUser(createUserDto);
+                    if (roleProvider.getIsTechnical()) {
 
-				if (roleProvider != null) {
+                        try {
+                            for (Long profileId : roleProvider.getProfiles()) {
+                                MicroserviceAddUserToProviderDto addUser = new MicroserviceAddUserToProviderDto();
+                                addUser.setUserCode(userResponseDto.getId());
+                                addUser.setProfileId(profileId);
+                                addUser.setProviderId(roleProvider.getProviderId());
 
-					if (roleProvider.getIsTechnical()) {
+                                providerClient.addUserToProvide(addUser);
+                            }
+                        } catch (Exception e) {
+                            log.error("Error asignando perfil proveedor al usuario: " + e.getMessage());
+                        }
 
-						try {
-							for (Long profileId : roleProvider.getProfiles()) {
-								MicroserviceAddUserToProviderDto addUser = new MicroserviceAddUserToProviderDto();
-								addUser.setUserCode(userResponseDto.getId());
-								addUser.setProfileId(profileId);
-								addUser.setProviderId(roleProvider.getProviderId());
+                    } else {
 
-								providerClient.addUserToProvide(addUser);
-							}
-						} catch (Exception e) {
-							log.error("Error asignando perfil proveedor al usuario: " + e.getMessage());
-						}
+                        try {
+                            for (Long profileId : roleProvider.getProfiles()) {
+                                MicroserviceAddAdministratorToProviderDto addUser = new MicroserviceAddAdministratorToProviderDto();
+                                addUser.setUserCode(userResponseDto.getId());
+                                addUser.setRoleId(profileId);
+                                addUser.setProviderId(roleProvider.getProviderId());
 
-					} else {
+                                providerClient.addAdministratorToProvide(addUser);
+                            }
+                        } catch (Exception e) {
+                            log.error("Error asignando role proveedor al usuario: " + e.getMessage());
+                        }
 
-						try {
-							for (Long profileId : roleProvider.getProfiles()) {
-								MicroserviceAddAdministratorToProviderDto addUser = new MicroserviceAddAdministratorToProviderDto();
-								addUser.setUserCode(userResponseDto.getId());
-								addUser.setRoleId(profileId);
-								addUser.setProviderId(roleProvider.getProviderId());
+                    }
 
-								providerClient.addAdministratorToProvide(addUser);
-							}
-						} catch (Exception e) {
-							log.error("Error asignando role proveedor al usuario: " + e.getMessage());
-						}
+                }
 
-					}
+                if (roleManager != null) {
+                    try {
 
-				}
+                        for (Long profileId : roleManager.getProfiles()) {
 
-				if (roleManager != null) {
-					try {
+                            MicroserviceAddUserToManagerDto addUser = new MicroserviceAddUserToManagerDto();
+                            addUser.setUserCode(userResponseDto.getId());
+                            addUser.setProfileId(profileId);
+                            addUser.setManagerId(roleManager.getManagerId());
 
-						for (Long profileId : roleManager.getProfiles()) {
+                            managerClient.addUserToManager(addUser);
+                        }
 
-							MicroserviceAddUserToManagerDto addUser = new MicroserviceAddUserToManagerDto();
-							addUser.setUserCode(userResponseDto.getId());
-							addUser.setProfileId(profileId);
-							addUser.setManagerId(roleManager.getManagerId());
+                    } catch (Exception e) {
+                        log.error("Error adding profile to manager: " + e.getMessage());
+                    }
+                }
 
-							managerClient.addUserToManager(addUser);
-						}
+                if (roleOperator != null) {
+                    operatorBusiness.addUserToOperator(roleOperator.getOperatorId(), userResponseDto.getId());
+                }
 
-					} catch (Exception e) {
-						log.error("Error adding profile to manager: " + e.getMessage());
-					}
-				}
+            } catch (BusinessException e) {
+                throw new BusinessException(e.getMessage());
+            }
 
-				if (roleOperator != null) {
-					operatorBusiness.addUserToOperator(roleOperator.getOperatorId(), userResponseDto.getId());
-				}
+        } else {
+            throw new BusinessException("El usuario necesita tener al menos un rol.");
+        }
 
-			} catch (BusinessException e) {
-				throw new BusinessException(e.getMessage());
-			}
+        // send notification
+        try {
+            notificationBusiness.sendNotificationCreationUser(email, password, entityName, username,
+                    userResponseDto.getId());
+        } catch (Exception e) {
+            log.error(String.format("Error enviando notificación de la creación del usuario: %s", e.getMessage()));
+        }
 
-		} else {
-			throw new BusinessException("El usuario necesita tener al menos un rol.");
-		}
+        return userResponseDto;
+    }
 
-		// send notification
-		try {
-			notificationBusiness.sendNotificationCreationUser(email, password, entityName, username,
-					userResponseDto.getId());
-		} catch (Exception e) {
+    public MicroserviceUserDto changeUserPassword(Long userId, String password) throws BusinessException {
 
-		}
+        MicroserviceUserDto userDto;
 
-		return userResponseDto;
-	}
+        try {
 
-	public MicroserviceUserDto changeUserPassword(Long userId, String password) throws BusinessException {
+            MicroserviceChangePasswordDto requestChangePassword = new MicroserviceChangePasswordDto();
+            requestChangePassword.setPassword(password);
 
-		MicroserviceUserDto userDto = null;
+            userDto = userClient.changeUserPassword(userId, requestChangePassword);
 
-		try {
+        } catch (BusinessException e) {
+            throw new BusinessException(e.getMessage());
+        }
 
-			MicroserviceChangePasswordDto requestChangePassword = new MicroserviceChangePasswordDto();
-			requestChangePassword.setPassword(password);
+        return userDto;
+    }
 
-			userDto = userClient.changeUserPassword(userId, requestChangePassword);
+    public MicroserviceUserDto updateUserFromSuperAdmin(Long userId, String firstName, String lastName)
+            throws BusinessException {
 
-		} catch (BusinessException e) {
-			throw new BusinessException(e.getMessage());
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return userDto;
-	}
+        MicroserviceRoleDto roleDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
-	public MicroserviceUserDto updateUserFromSuperAdmin(Long userId, String firstName, String lastName)
-			throws BusinessException {
+        if (!(roleDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
+        }
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+        return this.updateUser(userId, firstName, lastName);
+    }
 
-		MicroserviceRoleDto roleDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
+    public MicroserviceUserDto updateUserFromAdministrator(Long userId, String firstName, String lastName)
+            throws BusinessException {
 
-		if (!(roleDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return this.updateUser(userId, firstName, lastName);
-	}
+        MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-	public MicroserviceUserDto updateUserFromAdministrator(Long userId, String firstName, String lastName)
-			throws BusinessException {
+        MicroserviceRoleDto roleOperatorDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+        MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-		MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+        if (!(roleManagerDto instanceof MicroserviceRoleDto) && !(roleOperatorDto instanceof MicroserviceRoleDto)
+                && !(roleProviderDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
+        }
 
-		MicroserviceRoleDto roleOperatorDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
+        if (roleManagerDto != null) {
 
-		MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+            List<MicroserviceManagerProfileDto> profiles = new ArrayList<>();
 
-		if (!(roleManagerDto instanceof MicroserviceRoleDto) && !(roleOperatorDto instanceof MicroserviceRoleDto)
-				&& !(roleProviderDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
-		}
+            try {
+                profiles = managerClient.findProfilesByUser(userId);
+            } catch (Exception e) {
+                log.error("Error consultando los perfiles de un usuario gestor: " + e.getMessage());
+            }
 
-		if (roleManagerDto instanceof MicroserviceRoleDto) {
+            MicroserviceManagerProfileDto profileDto = profiles.stream()
+                    .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
 
-			List<MicroserviceManagerProfileDto> profiles = new ArrayList<>();
+            if (!(profileDto instanceof MicroserviceManagerProfileDto)) {
+                throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
+            }
 
-			try {
-				profiles = managerClient.findProfilesByUser(userId);
-			} catch (Exception e) {
-				log.error("Error consultando los perfiles de un usuario gestor: " + e.getMessage());
-			}
+        }
 
-			MicroserviceManagerProfileDto profileDto = profiles.stream()
-					.filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
+        if (roleProviderDto instanceof MicroserviceRoleDto) {
 
-			if (!(profileDto instanceof MicroserviceManagerProfileDto)) {
-				throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
-			}
+            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = new ArrayList<>();
 
-		}
+            try {
+                roles = providerClient.findRolesByUser(userId);
+            } catch (Exception e) {
+                log.error("Error consultando los roles de un usuario proveedor: " + e.getMessage());
+            }
 
-		if (roleProviderDto instanceof MicroserviceRoleDto) {
+            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDto = roles.stream()
+                    .filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
 
-			List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = new ArrayList<>();
+            if (roleDto == null) {
+                throw new BusinessException(
+                        "No se puede editar usuarios proveedores que no cuentan con el rol Director");
+            }
 
-			try {
-				roles = providerClient.findRolesByUser(userId);
-			} catch (Exception e) {
-				log.error("Error consultando los roles de un usuario proveedor: " + e.getMessage());
-			}
+        }
 
-			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDto = roles.stream()
-					.filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
+        return this.updateUser(userId, firstName, lastName);
+    }
 
-			if (roleDto == null) {
-				throw new BusinessException(
-						"No se puede editar usuarios proveedores que no cuentan con el rol Director");
-			}
+    public MicroserviceUserDto updateUserFromManager(Long userId, String firstName, String lastName, Long managerCode)
+            throws BusinessException {
 
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return this.updateUser(userId, firstName, lastName);
-	}
+        MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-	public MicroserviceUserDto updateUserFromManager(Long userId, String firstName, String lastName, Long managerCode)
-			throws BusinessException {
+        if (!(roleManagerDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No se puede editar usuarios que no son gestores");
+        }
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+        MicroserviceManagerDto managerDto;
+        try {
 
-		MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+            managerDto = managerClient.findByUserCode(userId);
 
-		if (!(roleManagerDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No se puede editar usuarios que no son gestores");
-		}
+        } catch (Exception e) {
+            log.error("Error consultando gestor: " + e.getMessage());
+            throw new BusinessException("No se ha podido modificar el usuario.");
+        }
 
-		MicroserviceManagerDto managerDto = null;
-		try {
+        if (!managerDto.getId().equals(managerCode)) {
+            throw new BusinessException("El usuario que se desea editar no pertenece al gestor.");
+        }
 
-			managerDto = managerClient.findByUserCode(userId);
+        return this.updateUser(userId, firstName, lastName);
+    }
 
-		} catch (Exception e) {
-			log.error("Error consultando gestor: " + e.getMessage());
-			throw new BusinessException("No se ha podido modificar el usuario.");
-		}
+    public MicroserviceUserDto updateUserFromProvider(Long userId, String firstName, String lastName, Long providerCode)
+            throws BusinessException {
 
-		if (!managerDto.getId().equals(managerCode)) {
-			throw new BusinessException("El usuario que se desea editar no pertenece al gestor.");
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return this.updateUser(userId, firstName, lastName);
-	}
+        MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-	public MicroserviceUserDto updateUserFromProvider(Long userId, String firstName, String lastName, Long providerCode)
-			throws BusinessException {
+        if (!(roleProviderDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No se puede editar usuarios que no son proveedores");
+        }
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+        MicroserviceProviderDto providerDtoByUser = null;
+        try {
 
-		MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+            providerDtoByUser = providerClient.findByUserCode(userId);
 
-		if (!(roleProviderDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No se puede editar usuarios que no son proveedores");
-		}
+        } catch (Exception e) {
+            log.error("Error consultando proveedor por usuario: " + e.getMessage());
+        }
 
-		MicroserviceProviderDto providerDtoByUser = null;
-		try {
+        MicroserviceProviderDto providerDtoByAdmin = null;
+        try {
 
-			providerDtoByUser = providerClient.findByUserCode(userId);
+            providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
 
-		} catch (Exception e) {
-			log.error("Error consultando proveedor por usuario: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error consultando proveedor por administrador: " + e.getMessage());
+        }
 
-		MicroserviceProviderDto providerDtoByAdmin = null;
-		try {
+        if (providerDtoByAdmin == null && providerDtoByUser == null) {
+            throw new BusinessException("No se ha encontrado el usuario.");
+        }
 
-			providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
+        MicroserviceProviderDto providerDto = (providerDtoByAdmin != null) ? providerDtoByAdmin : providerDtoByUser;
 
-		} catch (Exception e) {
-			log.error("Error consultando proveedor por administrador: " + e.getMessage());
-		}
+        if (!providerDto.getId().equals(providerCode)) {
+            throw new BusinessException("El usuario que se desea editar no pertenece al proveedor.");
+        }
 
-		if (providerDtoByAdmin == null && providerDtoByUser == null) {
-			throw new BusinessException("No se ha encontrado el usuario.");
-		}
+        return this.updateUser(userId, firstName, lastName);
+    }
 
-		MicroserviceProviderDto providerDto = (providerDtoByAdmin != null) ? providerDtoByAdmin : providerDtoByUser;
+    public MicroserviceUserDto updateUser(Long userId, String firstName, String lastName) throws BusinessException {
 
-		if (!providerDto.getId().equals(providerCode)) {
-			throw new BusinessException("El usuario que se desea editar no pertenece al proveedor.");
-		}
+        MicroserviceUserDto userDto;
 
-		return this.updateUser(userId, firstName, lastName);
-	}
+        try {
 
-	public MicroserviceUserDto updateUser(Long userId, String firstName, String lastName) throws BusinessException {
+            MicroserviceUpdateUserDto updateUser = new MicroserviceUpdateUserDto();
+            updateUser.setFirstName(firstName);
+            updateUser.setLastName(lastName);
 
-		MicroserviceUserDto userDto = null;
+            userDto = userClient.updateUser(userId, updateUser);
 
-		try {
+        } catch (BusinessException e) {
+            throw new BusinessException(e.getMessage());
+        }
 
-			MicroserviceUpdateUserDto updateUser = new MicroserviceUpdateUserDto();
-			updateUser.setFirstName(firstName);
-			updateUser.setLastName(lastName);
+        return userDto;
+    }
 
-			userDto = userClient.updateUser(userId, updateUser);
+    public MicroserviceUserDto changeStatusUserFromSuperAdmin(Long userId, Boolean status) throws BusinessException {
 
-		} catch (BusinessException e) {
-			throw new BusinessException(e.getMessage());
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return userDto;
-	}
+        MicroserviceRoleDto roleDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
+        if (!(roleDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
+        }
 
-	public MicroserviceUserDto changeStatusUserFromSuperAdmin(Long userId, Boolean status) throws BusinessException {
+        return this.changeStatusUser(userId, status);
+    }
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+    public MicroserviceUserDto changeStatusUserFromAdministrator(Long userId, Boolean status) throws BusinessException {
 
-		MicroserviceRoleDto roleDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-		if (!(roleDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return this.changeStatusUser(userId, status);
-	}
+        MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-	public MicroserviceUserDto changeStatusUserFromAdministrator(Long userId, Boolean status) throws BusinessException {
+        MicroserviceRoleDto roleOperatorDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+        MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-		MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+        if (!(roleManagerDto instanceof MicroserviceRoleDto) && !(roleOperatorDto instanceof MicroserviceRoleDto)
+                && !(roleProviderDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
+        }
 
-		MicroserviceRoleDto roleOperatorDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
+        if (roleManagerDto != null) {
 
-		MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+            List<MicroserviceManagerProfileDto> profiles = new ArrayList<>();
 
-		if (!(roleManagerDto instanceof MicroserviceRoleDto) && !(roleOperatorDto instanceof MicroserviceRoleDto)
-				&& !(roleProviderDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
-		}
+            try {
+                profiles = managerClient.findProfilesByUser(userId);
+            } catch (Exception e) {
+                log.error("Error consultando los perfiles de un usuario gestor: " + e.getMessage());
+            }
 
-		if (roleManagerDto instanceof MicroserviceRoleDto) {
+            MicroserviceManagerProfileDto profileDto = profiles.stream()
+                    .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
 
-			List<MicroserviceManagerProfileDto> profiles = new ArrayList<>();
+            if (!(profileDto instanceof MicroserviceManagerProfileDto)) {
+                throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
+            }
 
-			try {
-				profiles = managerClient.findProfilesByUser(userId);
-			} catch (Exception e) {
-				log.error("Error consultando los perfiles de un usuario gestor: " + e.getMessage());
-			}
+        }
 
-			MicroserviceManagerProfileDto profileDto = profiles.stream()
-					.filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
+        if (roleProviderDto instanceof MicroserviceRoleDto) {
 
-			if (!(profileDto instanceof MicroserviceManagerProfileDto)) {
-				throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
-			}
+            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = new ArrayList<>();
 
-		}
+            try {
+                roles = providerClient.findRolesByUser(userId);
+            } catch (Exception e) {
+                log.error("Error consultando los roles de un usuario proveedor: " + e.getMessage());
+            }
 
-		if (roleProviderDto instanceof MicroserviceRoleDto) {
+            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDto = roles.stream()
+                    .filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
 
-			List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = new ArrayList<>();
+            if (roleDto == null) {
+                throw new BusinessException(
+                        "No se puede editar usuarios proveedores que no cuentan con el rol Director");
+            }
 
-			try {
-				roles = providerClient.findRolesByUser(userId);
-			} catch (Exception e) {
-				log.error("Error consultando los roles de un usuario proveedor: " + e.getMessage());
-			}
+        }
 
-			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDto = roles.stream()
-					.filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
+        return this.changeStatusUser(userId, status);
+    }
 
-			if (roleDto == null) {
-				throw new BusinessException(
-						"No se puede editar usuarios proveedores que no cuentan con el rol Director");
-			}
+    public MicroserviceUserDto changeStatusUserFromManager(Long userId, Boolean status, Long managerCode)
+            throws BusinessException {
 
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return this.changeStatusUser(userId, status);
-	}
+        MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-	public MicroserviceUserDto changeStatusUserFromManager(Long userId, Boolean status, Long managerCode)
-			throws BusinessException {
+        if (!(roleManagerDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No se puede editar usuarios que no son gestores");
+        }
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+        MicroserviceManagerDto managerDto;
+        try {
 
-		MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+            managerDto = managerClient.findByUserCode(userId);
 
-		if (!(roleManagerDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No se puede editar usuarios que no son gestores");
-		}
+        } catch (Exception e) {
+            log.error("Error consultando gestor: " + e.getMessage());
+            throw new BusinessException("No se ha podido modificar el usuario.");
+        }
 
-		MicroserviceManagerDto managerDto = null;
-		try {
+        if (!managerDto.getId().equals(managerCode)) {
+            throw new BusinessException("El usuario que se desea editar no pertenece al gestor.");
+        }
 
-			managerDto = managerClient.findByUserCode(userId);
+        return this.changeStatusUser(userId, status);
+    }
 
-		} catch (Exception e) {
-			log.error("Error consultando gestor: " + e.getMessage());
-			throw new BusinessException("No se ha podido modificar el usuario.");
-		}
+    public MicroserviceUserDto changeStatusUserFromProvider(Long userId, Boolean status, Long providerCode)
+            throws BusinessException {
 
-		if (!managerDto.getId().equals(managerCode)) {
-			throw new BusinessException("El usuario que se desea editar no pertenece al gestor.");
-		}
+        MicroserviceUserDto userDto;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el usuario");
+        }
 
-		return this.changeStatusUser(userId, status);
-	}
+        MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
+                .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-	public MicroserviceUserDto changeStatusUserFromProvider(Long userId, Boolean status, Long providerCode)
-			throws BusinessException {
+        if (!(roleProviderDto instanceof MicroserviceRoleDto)) {
+            throw new BusinessException("No se puede editar usuarios que no son proveedores");
+        }
 
-		MicroserviceUserDto userDto = null;
-		try {
-			userDto = userClient.findById(userId);
-		} catch (Exception e) {
-			log.error("Error consultando el usuario para la edición: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el usuario");
-		}
+        MicroserviceProviderDto providerDtoByUser = null;
+        try {
 
-		MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
-				.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+            providerDtoByUser = providerClient.findByUserCode(userId);
 
-		if (!(roleProviderDto instanceof MicroserviceRoleDto)) {
-			throw new BusinessException("No se puede editar usuarios que no son proveedores");
-		}
+        } catch (Exception e) {
+            log.error("Error consultando proveedor por usuario: " + e.getMessage());
+        }
 
-		MicroserviceProviderDto providerDtoByUser = null;
-		try {
+        MicroserviceProviderDto providerDtoByAdmin = null;
+        try {
 
-			providerDtoByUser = providerClient.findByUserCode(userId);
+            providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
 
-		} catch (Exception e) {
-			log.error("Error consultando proveedor por usuario: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error consultando proveedor por administrador: " + e.getMessage());
+        }
 
-		MicroserviceProviderDto providerDtoByAdmin = null;
-		try {
+        if (providerDtoByAdmin == null && providerDtoByUser == null) {
+            throw new BusinessException("No se ha encontrado el usuario.");
+        }
 
-			providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
+        MicroserviceProviderDto providerDto = (providerDtoByAdmin != null) ? providerDtoByAdmin : providerDtoByUser;
 
-		} catch (Exception e) {
-			log.error("Error consultando proveedor por administrador: " + e.getMessage());
-		}
+        if (!providerDto.getId().equals(providerCode)) {
+            throw new BusinessException("El usuario que se desea editar no pertenece al proveedor.");
+        }
 
-		if (providerDtoByAdmin == null && providerDtoByUser == null) {
-			throw new BusinessException("No se ha encontrado el usuario.");
-		}
+        return this.changeStatusUser(userId, status);
+    }
 
-		MicroserviceProviderDto providerDto = (providerDtoByAdmin != null) ? providerDtoByAdmin : providerDtoByUser;
+    public MicroserviceUserDto changeStatusUser(Long userId, Boolean status) throws BusinessException {
 
-		if (!providerDto.getId().equals(providerCode)) {
-			throw new BusinessException("El usuario que se desea editar no pertenece al proveedor.");
-		}
+        MicroserviceUserDto userDto;
 
-		return this.changeStatusUser(userId, status);
-	}
+        try {
 
-	public MicroserviceUserDto changeStatusUser(Long userId, Boolean status) throws BusinessException {
+            if (status) {
+                userDto = userClient.enableUser(userId);
+            } else {
+                userDto = userClient.disableUser(userId);
+            }
 
-		MicroserviceUserDto userDto = null;
+            MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
+                    .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-		try {
+            MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
+                    .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-			if (status == true) {
-				userDto = userClient.enableUser(userId);
-			} else {
-				userDto = userClient.disableUser(userId);
-			}
+            if (roleManagerDto instanceof MicroserviceRoleDto) {
+                List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
+                userDto.setProfilesManager(profiles);
+            } else if (roleProviderDto instanceof MicroserviceRoleDto) {
 
-			MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
-					.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+                List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = providerClient
+                        .findRolesByUser(userDto.getId());
+                userDto.setRolesProvider(roles);
 
-			MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
-					.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+                List<MicroserviceProviderProfileDto> profiles = providerClient.findProfilesByUser(userDto.getId());
+                userDto.setProfilesProvider(profiles);
 
-			if (roleManagerDto instanceof MicroserviceRoleDto) {
-				List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
-				userDto.setProfilesManager(profiles);
-			} else if (roleProviderDto instanceof MicroserviceRoleDto) {
+            }
 
-				List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = providerClient
-						.findRolesByUser(userDto.getId());
-				userDto.setRolesProvider(roles);
+        } catch (BusinessException e) {
+            throw new BusinessException(e.getMessage());
+        }
 
-				List<MicroserviceProviderProfileDto> profiles = providerClient.findProfilesByUser(userDto.getId());
-				userDto.setProfilesProvider(profiles);
+        return userDto;
+    }
 
-			}
+    public List<MicroserviceUserDto> getUsersFromSuperAdmin() throws BusinessException {
 
-		} catch (BusinessException e) {
-			throw new BusinessException(e.getMessage());
-		}
+        List<Long> roles = new ArrayList<>(Collections.singletonList(RoleBusiness.ROLE_ADMINISTRATOR));
 
-		return userDto;
-	}
+        return this.getUsers(roles);
+    }
 
-	public List<MicroserviceUserDto> getUsersFromSuperAdmin() throws BusinessException {
+    public List<MicroserviceUserDto> getUsersFromAdministrator() throws BusinessException {
 
-		List<Long> roles = new ArrayList<>(Arrays.asList(RoleBusiness.ROLE_ADMINISTRATOR));
+        List<Long> roles = new ArrayList<>(Arrays.asList(RoleBusiness.ROLE_MANAGER, RoleBusiness.ROLE_SUPPLY_SUPPLIER,
+                RoleBusiness.ROLE_OPERATOR));
 
-		return this.getUsers(roles);
-	}
+        List<MicroserviceUserDto> users = this.getUsers(roles);
 
-	public List<MicroserviceUserDto> getUsersFromAdministrator() throws BusinessException {
+        List<MicroserviceUserDto> listUsersResponse = new ArrayList<>();
 
-		List<Long> roles = new ArrayList<>(Arrays.asList(RoleBusiness.ROLE_MANAGER, RoleBusiness.ROLE_SUPPLY_SUPPLIER,
-				RoleBusiness.ROLE_OPERATOR));
+        for (MicroserviceUserDto userDto : users) {
 
-		List<MicroserviceUserDto> users = this.getUsers(roles);
+            MicroserviceRoleDto roleManager = userDto.getRoles().stream()
+                    .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-		List<MicroserviceUserDto> listUsersResponse = new ArrayList<>();
+            MicroserviceRoleDto roleProvider = userDto.getRoles().stream()
+                    .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-		for (MicroserviceUserDto userDto : users) {
+            if (roleManager instanceof MicroserviceRoleDto) {
 
-			MicroserviceRoleDto roleManager = userDto.getRoles().stream()
-					.filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+                List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
 
-			MicroserviceRoleDto roleProvider = userDto.getRoles().stream()
-					.filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
+                MicroserviceManagerDto managerDto = managerClient.findByUserCode(userDto.getId());
 
-			if (roleManager instanceof MicroserviceRoleDto) {
+                userDto.setProfilesManager(profiles);
+                userDto.setEntity(managerDto);
+                listUsersResponse.add(userDto);
 
-				List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
+            } else if (roleProvider instanceof MicroserviceRoleDto) {
 
-				MicroserviceManagerDto managerDto = managerClient.findByUserCode(userDto.getId());
+                try {
+                    List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> profiles = providerClient
+                            .findRolesByUser(userDto.getId());
+                    userDto.setRolesProvider(profiles);
 
-				userDto.setProfilesManager(profiles);
-				userDto.setEntity(managerDto);
-				listUsersResponse.add(userDto);
+                    MicroserviceProviderDto providerDto = providerClient.findProviderByAdministrator(userDto.getId());
+                    userDto.setEntity(providerDto);
+                } catch (Exception e) {
+                    log.error("Error consultando el proveedor de insumo por el código de usuario administrador: " + e.getMessage());
+                }
 
-			} else if (roleProvider instanceof MicroserviceRoleDto) {
+                try {
+                    List<MicroserviceProviderProfileDto> profiles = providerClient.findProfilesByUser(userDto.getId());
+                    userDto.setProfilesProvider(profiles);
 
-				try {
-					List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> profiles = providerClient
-							.findRolesByUser(userDto.getId());
-					userDto.setRolesProvider(profiles);
+                    MicroserviceProviderDto providerDto = providerClient.findByUserCode(userDto.getId());
+                    userDto.setEntity(providerDto);
 
-					MicroserviceProviderDto providerDto = providerClient.findProviderByAdministrator(userDto.getId());
-					userDto.setEntity(providerDto);
-				} catch (Exception e) {
+                } catch (Exception e) {
+                    log.error("Error consultando el proveedor de insumo por el código de usuario: " + e.getMessage());
+                }
 
-				}
+                listUsersResponse.add(userDto);
 
-				try {
-					List<MicroserviceProviderProfileDto> profiles = providerClient.findProfilesByUser(userDto.getId());
-					userDto.setProfilesProvider(profiles);
+            } else {
 
-					MicroserviceProviderDto providerDto = providerClient.findByUserCode(userDto.getId());
-					userDto.setEntity(providerDto);
+                MicroserviceOperatorDto operatorDto = operatorClient.findByUserCode(userDto.getId());
+                userDto.setEntity(operatorDto);
 
-				} catch (Exception e) {
+                listUsersResponse.add(userDto);
+            }
 
-				}
+        }
 
-				listUsersResponse.add(userDto);
+        return listUsersResponse;
+    }
 
-			} else {
+    public List<MicroserviceUserDto> getUsersFromManager(Long managerCode) throws BusinessException {
 
-				MicroserviceOperatorDto operatorDto = operatorClient.findByUserCode(userDto.getId());
-				userDto.setEntity(operatorDto);
+        List<MicroserviceManagerUserDto> usersManagerDto = new ArrayList<>();
 
-				listUsersResponse.add(userDto);
-			}
+        try {
+            usersManagerDto = managerClient.findUsersByManager(managerCode, null);
+        } catch (Exception e) {
+            log.error("Error consultando usuarios de un gestor: " + e.getMessage());
+        }
 
-		}
+        List<MicroserviceUserDto> users = new ArrayList<>();
 
-		return listUsersResponse;
-	}
+        for (MicroserviceManagerUserDto userManagerDto : usersManagerDto) {
+            try {
+                MicroserviceUserDto userDto = userClient.findById(userManagerDto.getUserCode());
+                userDto.setProfilesManager(userManagerDto.getProfiles());
+                users.add(userDto);
+            } catch (Exception e) {
+                log.error("Error consultando usuario: " + e.getMessage());
+            }
+        }
 
-	public List<MicroserviceUserDto> getUsersFromManager(Long managerCode) throws BusinessException {
+        return users;
+    }
 
-		List<MicroserviceManagerUserDto> usersManagerDto = new ArrayList<>();
+    public List<MicroserviceUserDto> getUsersFromProvider(Long providerCode) throws BusinessException {
 
-		try {
-			usersManagerDto = managerClient.findUsersByManager(managerCode, null);
-		} catch (Exception e) {
-			log.error("Error consultando usuarios de un gestor: " + e.getMessage());
-		}
+        List<MicroserviceProviderUserDto> usersProviderDto = new ArrayList<>();
 
-		List<MicroserviceUserDto> users = new ArrayList<>();
+        try {
+            usersProviderDto = providerClient.findUsersByProviderId(providerCode);
+        } catch (Exception e) {
+            log.error("Error consultando usuarios de un proveedor: " + e.getMessage());
+        }
 
-		for (MicroserviceManagerUserDto userManagerDto : usersManagerDto) {
-			try {
-				MicroserviceUserDto userDto = userClient.findById(userManagerDto.getUserCode());
-				userDto.setProfilesManager(userManagerDto.getProfiles());
-				users.add(userDto);
-			} catch (Exception e) {
-				log.error("Error consultando usuario: " + e.getMessage());
-			}
-		}
+        List<MicroserviceUserDto> users = new ArrayList<>();
 
-		return users;
-	}
+        for (MicroserviceProviderUserDto userProviderDto : usersProviderDto) {
+            try {
+                MicroserviceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
+                userDto.setProfilesProvider(userProviderDto.getProfiles());
+                users.add(userDto);
+            } catch (Exception e) {
+                log.error("Error consultando usuario: " + e.getMessage());
+            }
+        }
 
-	public List<MicroserviceUserDto> getUsersFromProvider(Long providerCode) throws BusinessException {
+        List<MicroserviceProviderAdministratorDto> adminsProviderDto = new ArrayList<>();
 
-		List<MicroserviceProviderUserDto> usersProviderDto = new ArrayList<>();
+        try {
+            adminsProviderDto = providerClient.findAdministratorsByProviderId(providerCode);
+        } catch (Exception e) {
+            log.error("Error consultando usuarios (administradores) de un proveedor: " + e.getMessage());
+        }
 
-		try {
-			usersProviderDto = providerClient.findUsersByProviderId(providerCode);
-		} catch (Exception e) {
-			log.error("Error consultando usuarios de un proveedor: " + e.getMessage());
-		}
+        for (MicroserviceProviderAdministratorDto userProviderDto : adminsProviderDto) {
 
-		List<MicroserviceUserDto> users = new ArrayList<>();
+            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = userProviderDto
+                    .getRoles().stream().filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER))
+                    .findAny().orElse(null);
+            if (roleDirector == null) {
+                try {
+                    MicroserviceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
+                    userDto.setRolesProvider(userProviderDto.getRoles());
+                    users.add(userDto);
+                } catch (Exception e) {
+                    log.error("Error consultando usuario: " + e.getMessage());
+                }
+            }
 
-		for (MicroserviceProviderUserDto userProviderDto : usersProviderDto) {
-			try {
-				MicroserviceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
-				userDto.setProfilesProvider(userProviderDto.getProfiles());
-				users.add(userDto);
-			} catch (Exception e) {
-				log.error("Error consultando usuario: " + e.getMessage());
-			}
-		}
+        }
 
-		List<MicroserviceProviderAdministratorDto> adminsProviderDto = new ArrayList<>();
+        return users;
+    }
 
-		try {
-			adminsProviderDto = providerClient.findAdministratorsByProviderId(providerCode);
-		} catch (Exception e) {
-			log.error("Error consultando usuarios (administradores) de un proveedor: " + e.getMessage());
-		}
+    public List<MicroserviceUserDto> getUsers(List<Long> roles) throws BusinessException {
+        List<MicroserviceUserDto> users;
+        try {
+            users = userClient.findUsersByRoles(roles);
+        } catch (Exception e) {
+            throw new BusinessException("Error consultando los usuarios: " + e.getMessage());
+        }
+        return users;
+    }
 
-		for (MicroserviceProviderAdministratorDto userProviderDto : adminsProviderDto) {
+    public MicroserviceUserDto addProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
+            throws BusinessException {
 
-			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = userProviderDto
-					.getRoles().stream().filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER))
-					.findAny().orElse(null);
-			if (roleDirector == null) {
-				try {
-					MicroserviceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
-					userDto.setRolesProvider(userProviderDto.getRoles());
-					users.add(userDto);
-				} catch (Exception e) {
-					log.error("Error consultando usuario: " + e.getMessage());
-				}
-			}
+        MicroserviceUserDto userDto;
 
-		}
+        MicroserviceManagerDto managerDto;
+        try {
+            managerDto = managerClient.findByUserCode(userId);
+        } catch (Exception e) {
+            log.error("Error consultando gestor por usuario: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el gestor");
+        }
 
-		return users;
-	}
+        if (!managerDto.getId().equals(managerCode)) {
+            throw new BusinessException("El usuario no pertenece al gestor.");
+        }
 
-	public List<MicroserviceUserDto> getUsers(List<Long> roles) throws BusinessException {
+        try {
 
-		List<MicroserviceUserDto> users = new ArrayList<>();
+            MicroserviceAddUserToManagerDto addUser = new MicroserviceAddUserToManagerDto();
+            addUser.setUserCode(userId);
+            addUser.setProfileId(profileId);
+            addUser.setManagerId(managerCode);
 
-		try {
+            MicroserviceManagerUserDto managerUser = managerClient.addUserToManager(addUser);
 
-			users = userClient.findUsersByRoles(roles);
+            userDto = userClient.findById(userId);
+            userDto.setProfilesManager(managerUser.getProfiles());
 
-		} catch (Exception e) {
-			throw new BusinessException("Error consultando los usuarios: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error agregando perfil a un usuario gestor: " + e.getMessage());
+            throw new BusinessException("No se ha podido agregar el perfil al usuario.");
+        }
 
-		return users;
-	}
+        return userDto;
+    }
 
-	public MicroserviceUserDto addProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
-			throws BusinessException {
+    public MicroserviceUserDto addProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
+            throws BusinessException {
 
-		MicroserviceUserDto userDto = null;
+        MicroserviceUserDto userDto;
+        MicroserviceProviderDto providerDto;
 
-		MicroserviceManagerDto managerDto = null;
-		try {
-			managerDto = managerClient.findByUserCode(userId);
-		} catch (Exception e) {
-			log.error("Error consultando gestor por usuario: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el gestor");
-		}
+        try {
+            providerDto = providerClient.findByUserCode(userId);
+        } catch (Exception e) {
+            log.error("Error consultando proveedor por usuario: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el proveedor");
+        }
 
-		if (!managerDto.getId().equals(managerCode)) {
-			throw new BusinessException("El usuario no pertenece al gestor.");
-		}
+        if (!providerDto.getId().equals(providerCode)) {
+            throw new BusinessException("El usuario no pertenece al proveedor.");
+        }
 
-		try {
+        try {
 
-			MicroserviceAddUserToManagerDto addUser = new MicroserviceAddUserToManagerDto();
-			addUser.setUserCode(userId);
-			addUser.setProfileId(profileId);
-			addUser.setManagerId(managerCode);
+            MicroserviceAddUserToProviderDto addUser = new MicroserviceAddUserToProviderDto();
+            addUser.setUserCode(userId);
+            addUser.setProfileId(profileId);
+            addUser.setProviderId(providerCode);
 
-			MicroserviceManagerUserDto managerUser = managerClient.addUserToManager(addUser);
+            List<MicroserviceProviderUserDto> usersProvider = providerClient.addUserToProvide(addUser);
 
-			userDto = userClient.findById(userId);
-			userDto.setProfilesManager(managerUser.getProfiles());
+            userDto = userClient.findById(userId);
 
-		} catch (Exception e) {
-			log.error("Error agregando perfil a un usuario gestor: " + e.getMessage());
-			throw new BusinessException("No se ha podido agregar el perfil al usuario.");
-		}
+            usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
+                    .findAny().ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
 
-		return userDto;
-	}
+        } catch (Exception e) {
+            log.error("Error agregando perfil a un usuario proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido agregar el perfil al usuario.");
+        }
 
-	public MicroserviceUserDto addProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
-			throws BusinessException {
+        return userDto;
+    }
 
-		MicroserviceUserDto userDto = null;
+    public MicroserviceUserDto removeProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
+            throws BusinessException {
 
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findByUserCode(userId);
-		} catch (Exception e) {
-			log.error("Error consultando proveedor por usuario: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el proveedor");
-		}
+        MicroserviceUserDto userDto;
+        MicroserviceManagerDto managerDto;
 
-		if (!providerDto.getId().equals(providerCode)) {
-			throw new BusinessException("El usuario no pertenece al proveedor.");
-		}
+        try {
+            managerDto = managerClient.findByUserCode(userId);
+        } catch (Exception e) {
+            log.error("Error consultando gestor por usuario: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el gestor");
+        }
 
-		try {
+        if (!managerDto.getId().equals(managerCode)) {
+            throw new BusinessException("El usuario no pertenece al gestor.");
+        }
 
-			MicroserviceAddUserToProviderDto addUser = new MicroserviceAddUserToProviderDto();
-			addUser.setUserCode(userId);
-			addUser.setProfileId(profileId);
-			addUser.setProviderId(providerCode);
+        try {
 
-			List<MicroserviceProviderUserDto> usersProvider = providerClient.addUserToProvide(addUser);
+            MicroserviceAddUserToManagerDto removeUser = new MicroserviceAddUserToManagerDto();
+            removeUser.setUserCode(userId);
+            removeUser.setProfileId(profileId);
+            removeUser.setManagerId(managerCode);
 
-			userDto = userClient.findById(userId);
+            MicroserviceManagerUserDto managerUser = managerClient.removeUserToManager(removeUser);
 
-			MicroserviceProviderUserDto userFound = usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
-					.findAny().orElse(null);
-			if (userFound != null) {
-				userDto.setProfilesProvider(userFound.getProfiles());
-			}
+            userDto = userClient.findById(userId);
+            userDto.setProfilesManager(managerUser.getProfiles());
 
-		} catch (Exception e) {
-			log.error("Error agregando perfil a un usuario proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido agregar el perfil al usuario.");
-		}
+        } catch (BusinessException e) {
+            log.error("Error quitando perfil a un usuario gestor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        }
 
-		return userDto;
-	}
+        return userDto;
+    }
 
-	public MicroserviceUserDto removeProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
-			throws BusinessException {
+    public MicroserviceUserDto removeProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
+            throws BusinessException {
 
-		MicroserviceUserDto userDto = null;
+        MicroserviceUserDto userDto;
+        MicroserviceProviderDto providerDto;
 
-		MicroserviceManagerDto managerDto = null;
-		try {
-			managerDto = managerClient.findByUserCode(userId);
-		} catch (Exception e) {
-			log.error("Error consultando gestor por usuario: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el gestor");
-		}
+        try {
+            providerDto = providerClient.findByUserCode(userId);
+        } catch (Exception e) {
+            log.error("Error consultando proveedor por usuario: " + e.getMessage());
+            throw new BusinessException("No se ha encontrado el proveedor");
+        }
 
-		if (!managerDto.getId().equals(managerCode)) {
-			throw new BusinessException("El usuario no pertenece al gestor.");
-		}
+        if (!providerDto.getId().equals(providerCode)) {
+            throw new BusinessException("El usuario no pertenece al proveedor.");
+        }
 
-		try {
+        try {
 
-			MicroserviceAddUserToManagerDto removeUser = new MicroserviceAddUserToManagerDto();
-			removeUser.setUserCode(userId);
-			removeUser.setProfileId(profileId);
-			removeUser.setManagerId(managerCode);
+            MicroserviceAddUserToProviderDto removeUser = new MicroserviceAddUserToProviderDto();
+            removeUser.setUserCode(userId);
+            removeUser.setProfileId(profileId);
+            removeUser.setProviderId(providerCode);
 
-			MicroserviceManagerUserDto managerUser = managerClient.removeUserToManager(removeUser);
+            List<MicroserviceProviderUserDto> usersProvider = providerClient.removeUserToProvider(removeUser);
 
-			userDto = userClient.findById(userId);
-			userDto.setProfilesManager(managerUser.getProfiles());
+            userDto = userClient.findById(userId);
 
-		} catch (BusinessException e) {
-			log.error("Error quitando perfil a un usuario gestor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		}
+            usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
+                    .findAny().ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
 
-		return userDto;
-	}
+        } catch (BusinessException e) {
+            log.error("Error quitando el perfil a un usuario proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        }
 
-	public MicroserviceUserDto removeProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
-			throws BusinessException {
-
-		MicroserviceUserDto userDto = null;
-
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findByUserCode(userId);
-		} catch (Exception e) {
-			log.error("Error consultando proveedor por usuario: " + e.getMessage());
-			throw new BusinessException("No se ha encontrado el proveedor");
-		}
-
-		if (!providerDto.getId().equals(providerCode)) {
-			throw new BusinessException("El usuario no pertenece al proveedor.");
-		}
-
-		try {
-
-			MicroserviceAddUserToProviderDto removeUser = new MicroserviceAddUserToProviderDto();
-			removeUser.setUserCode(userId);
-			removeUser.setProfileId(profileId);
-			removeUser.setProviderId(providerCode);
-
-			List<MicroserviceProviderUserDto> usersProvider = providerClient.removeUserToProvider(removeUser);
-
-			userDto = userClient.findById(userId);
-
-			MicroserviceProviderUserDto userFound = usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
-					.findAny().orElse(null);
-			if (userFound != null) {
-				userDto.setProfilesProvider(userFound.getProfiles());
-			}
-
-		} catch (BusinessException e) {
-			log.error("Error quitando perfil a un usuario proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		}
-
-		return userDto;
-	}
+        return userDto;
+    }
 
 }

@@ -11,23 +11,26 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 
 public interface WorkspaceRepository extends CrudRepository<WorkspaceEntity, Long> {
 
-	Long countByMunicipality(MunicipalityEntity municipalityEntity);
+    Long countByMunicipality(MunicipalityEntity municipalityEntity);
 
-	List<WorkspaceEntity> findByMunicipality(MunicipalityEntity municipality);
+    List<WorkspaceEntity> findByMunicipality(MunicipalityEntity municipality);
 
-	WorkspaceEntity findByIsActiveAndMunicipality(Boolean isActive, MunicipalityEntity municipality);
+    WorkspaceEntity findByIsActiveAndMunicipality(Boolean isActive, MunicipalityEntity municipality);
 
-	/**
-	 * TODO: Refactoring ...
-	 * 
-	 * disabled temporally
-	 * 
-	 */
-	//List<WorkspaceEntity> findByManagerCodeAndIsActive(Long managerCode, Boolean isActive);
+    @Query(nativeQuery = true, value = "select \n" +
+            "w.*\n" +
+            "from \n" +
+            "workspaces.workspaces w ,\n" +
+            "workspaces.workspace_managers wm\n" +
+            "where\n" +
+            "w.is_active = true\n" +
+            "and wm.workspace_id  = w.id \n" +
+            "and wm.manager_code = :managerCode")
+    List<WorkspaceEntity> findByManagerCode(@Param("managerCode") Long departmentId);
 
-	@Query(nativeQuery = true, value = "select\n" + "	w.*\n" + "from\n" + "	workspaces.workspaces w,\n"
-			+ "	workspaces.municipalities m,\n" + "	workspaces.departments d\n" + "where\n"
-			+ "	w.municipality_id = m.id\n" + "	and d.id = m.department_id\n" + "	and d.id = :departmentId")
-	List<WorkspaceEntity> getWorkspacesByDepartment(@Param("departmentId") Long departmentId);
+    @Query(nativeQuery = true, value = "select\n" + "	w.*\n" + "from\n" + "	workspaces.workspaces w,\n"
+            + "	workspaces.municipalities m,\n" + "	workspaces.departments d\n" + "where\n"
+            + "	w.municipality_id = m.id\n" + "	and d.id = m.department_id\n" + "	and d.id = :departmentId")
+    List<WorkspaceEntity> getWorkspacesByDepartment(@Param("departmentId") Long departmentId);
 
 }

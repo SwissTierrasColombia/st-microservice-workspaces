@@ -7,22 +7,22 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 
 public interface IWorkspaceService {
 
-	public WorkspaceEntity createWorkspace(WorkspaceEntity workspaceEntity);
+    WorkspaceEntity createWorkspace(WorkspaceEntity workspaceEntity);
 
-	public Long getCountByMunicipality(MunicipalityEntity municipalityEntity);
+    Long getCountByMunicipality(MunicipalityEntity municipalityEntity);
 
-	public List<WorkspaceEntity> getWorkspacesByMunicipality(MunicipalityEntity municipalityEntity);
+    List<WorkspaceEntity> getWorkspacesByMunicipality(MunicipalityEntity municipalityEntity);
 
-	public WorkspaceEntity getWorkspaceActiveByMunicipality(MunicipalityEntity municipalityEntity);
+    WorkspaceEntity getWorkspaceActiveByMunicipality(MunicipalityEntity municipalityEntity);
 
-	public WorkspaceEntity getWorkspaceById(Long id);
+    WorkspaceEntity getWorkspaceById(Long id);
 
-	public WorkspaceEntity updateWorkspace(WorkspaceEntity workspaceEntity);
+    WorkspaceEntity updateWorkspace(WorkspaceEntity workspaceEntity);
 
-	public List<WorkspaceEntity> getWorkspacesByManagerAndIsActive(Long managerCode, Boolean isActive);
-	
-	public List<WorkspaceEntity> getWorkspacesByDepartment(Long departmentId);
-	
-	public void deleteWorkspaceById(Long workspaceId);
+    List<WorkspaceEntity> getWorkspacesByManager(Long managerCode);
+
+    List<WorkspaceEntity> getWorkspacesByDepartment(Long departmentId);
+
+    void deleteWorkspaceById(Long workspaceId);
 
 }

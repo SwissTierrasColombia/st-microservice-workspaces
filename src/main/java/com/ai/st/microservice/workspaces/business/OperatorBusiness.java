@@ -33,389 +33,397 @@ import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 @Component
 public class OperatorBusiness {
 
-	private final Logger log = LoggerFactory.getLogger(OperatorBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(OperatorBusiness.class);
 
-	@Autowired
-	private OperatorFeignClient operatorClient;
+    @Autowired
+    private OperatorFeignClient operatorClient;
 
-	@Autowired
-	private ManagerFeignClient managerClient;
+    @Autowired
+    private ManagerFeignClient managerClient;
 
-	@Autowired
-	private SupplyBusiness supplyBusiness;
+    @Autowired
+    private SupplyBusiness supplyBusiness;
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private IMunicipalityService municipalityService;
+    @Autowired
+    private IMunicipalityService municipalityService;
 
-	public MicroserviceDeliveryDto createDelivery(Long operatorId, Long managerCode, String municipalityCode,
-			String observations, List<MicroserviceCreateDeliverySupplyDto> supplies)
-			throws DisconnectedMicroserviceException {
+    public MicroserviceDeliveryDto createDelivery(Long operatorId, Long managerCode, String municipalityCode,
+                                                  String observations, List<MicroserviceCreateDeliverySupplyDto> supplies)
+            throws DisconnectedMicroserviceException {
 
-		MicroserviceDeliveryDto deliveryDto = null;
+        MicroserviceDeliveryDto deliveryDto;
 
-		try {
+        try {
 
-			MicroserviceCreateDeliveryDto createDeliveryDto = new MicroserviceCreateDeliveryDto();
-			createDeliveryDto.setManagerCode(managerCode);
-			createDeliveryDto.setMunicipalityCode(municipalityCode);
-			createDeliveryDto.setObservations(observations);
-			createDeliveryDto.setSupplies(supplies);
+            MicroserviceCreateDeliveryDto createDeliveryDto = new MicroserviceCreateDeliveryDto();
+            createDeliveryDto.setManagerCode(managerCode);
+            createDeliveryDto.setMunicipalityCode(municipalityCode);
+            createDeliveryDto.setObservations(observations);
+            createDeliveryDto.setSupplies(supplies);
 
-			deliveryDto = operatorClient.createDelivery(operatorId, createDeliveryDto);
+            deliveryDto = operatorClient.createDelivery(operatorId, createDeliveryDto);
 
-		} catch (Exception e) {
-			log.error("Error creando la entrega: " + e.getMessage());
-			throw new DisconnectedMicroserviceException("No se ha podido crear la entrega.");
-		}
+        } catch (Exception e) {
+            log.error("Error creando la entrega: " + e.getMessage());
+            throw new DisconnectedMicroserviceException("No se ha podido crear la entrega.");
+        }
 
-		return deliveryDto;
-	}
+        return deliveryDto;
+    }
 
-	public List<MicroserviceDeliveryDto> getDeliveriesByOperator(Long operatorId, String municipalityCode)
-			throws BusinessException {
+    public List<MicroserviceDeliveryDto> getDeliveriesByOperator(Long operatorId, String municipalityCode) {
 
-		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
+        List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
 
-		try {
-			deliveries = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode);
-		} catch (Exception e) {
-			log.error("Error consultando las entregas: " + e.getMessage());
-		}
+        try {
+            deliveries = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode);
+        } catch (Exception e) {
+            log.error("Error consultando las entregas: " + e.getMessage());
+        }
 
-		return deliveries;
-	}
+        return deliveries;
+    }
 
-	public List<MicroserviceDeliveryDto> getDeliveriesActivesByOperator(Long operatorId) throws BusinessException {
+    public List<MicroserviceDeliveryDto> getDeliveriesActivesByOperator(Long operatorId) throws BusinessException {
 
-		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
+        List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
 
-		try {
-			deliveries = operatorClient.findDeliveriesActivesByOperator(operatorId, true);
+        try {
+            deliveries = operatorClient.findDeliveriesActivesByOperator(operatorId, true);
 
-			for (MicroserviceDeliveryDto deliveryDto : deliveries) {
+            for (MicroserviceDeliveryDto deliveryDto : deliveries) {
 
-				try {
-					MicroserviceManagerDto managerDto = managerClient.findById(deliveryDto.getManagerCode());
-					deliveryDto.setManager(managerDto);
-				} catch (Exception e) {
-					log.error("Error consultando gestor: " + e.getMessage());
-				}
+                try {
+                    MicroserviceManagerDto managerDto = managerClient.findById(deliveryDto.getManagerCode());
+                    deliveryDto.setManager(managerDto);
+                } catch (Exception e) {
+                    log.error("Error consultando gestor: " + e.getMessage());
+                }
 
-				try {
-					MunicipalityEntity municipalityEntity = municipalityService
-							.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
+                try {
+                    MunicipalityEntity municipalityEntity = municipalityService
+                            .getMunicipalityByCode(deliveryDto.getMunicipalityCode());
 
-					MunicipalityDto municipalityDto = new MunicipalityDto();
-					municipalityDto.setCode(municipalityEntity.getCode());
-					municipalityDto.setId(municipalityEntity.getId());
-					municipalityDto.setName(municipalityEntity.getName());
-					deliveryDto.setMunicipality(municipalityDto);
-				} catch (Exception e) {
+                    MunicipalityDto municipalityDto = new MunicipalityDto();
+                    municipalityDto.setCode(municipalityEntity.getCode());
+                    municipalityDto.setId(municipalityEntity.getId());
+                    municipalityDto.setName(municipalityEntity.getName());
+                    deliveryDto.setMunicipality(municipalityDto);
+                } catch (Exception e) {
+                    log.error("Error consultando municipio: " + e.getMessage());
+                }
 
-				}
+                List<MicroserviceSupplyDeliveryDto> supplyDeliveriesDto = deliveryDto.getSupplies();
 
-				List<MicroserviceSupplyDeliveryDto> supplyDeliveriesDto = deliveryDto.getSupplies();
+                for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
 
-				for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
+                    try {
 
-					try {
+                        MicroserviceSupplyDto supplyDto = supplyBusiness
+                                .getSupplyById(supplyDeliveryDto.getSupplyCode());
+                        supplyDeliveryDto.setSupply(supplyDto);
 
-						MicroserviceSupplyDto supplyDto = supplyBusiness
-								.getSupplyById(supplyDeliveryDto.getSupplyCode());
-						supplyDeliveryDto.setSupply(supplyDto);
+                    } catch (Exception e) {
+                        log.error("Error consultando insumo: " + e.getMessage());
+                    }
 
-					} catch (Exception e) {
-						log.error("Error consultando insumo: " + e.getMessage());
-					}
+                    if (supplyDeliveryDto.getDownloadedBy() != null) {
+                        try {
+                            MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+                            supplyDeliveryDto.setUserDownloaded(userDto);
+                        } catch (Exception e) {
+                            log.error("Error consultando usuario: " + e.getMessage());
+                        }
+                    }
 
-					if (supplyDeliveryDto.getDownloadedBy() != null) {
-						try {
-							MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
-							supplyDeliveryDto.setUserDownloaded(userDto);
-						} catch (Exception e) {
-							log.error("Error consultando usuario: " + e.getMessage());
-						}
-					}
+                }
 
-				}
+            }
 
-			}
+        } catch (Exception e) {
+            log.error("Error consultando las entregas activas: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error consultando las entregas activas: " + e.getMessage());
-		}
+        return deliveries;
+    }
 
-		return deliveries;
-	}
+    public MicroserviceDeliveryDto updateSupplyDeliveredDownloaded(Long deliveryId, Long supplyId, Long userCode) {
 
-	public MicroserviceDeliveryDto updateSupplyDeliveredDownloaded(Long deliveryId, Long supplyId, Long userCode)
-			throws DisconnectedMicroserviceException {
+        MicroserviceDeliveryDto deliveryDto = null;
 
-		MicroserviceDeliveryDto deliveryDto = null;
+        try {
 
-		try {
+            MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
+            supplyDelivered.setDownloaded(true);
+            supplyDelivered.setDownloadedBy(userCode);
 
-			MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
-			supplyDelivered.setDownloaded(true);
-			supplyDelivered.setDownloadedBy(userCode);
+            deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
 
-			deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
+        } catch (Exception e) {
+            log.error("Error actualizando la fecha de descarga del insumo: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error actualizando la fecha de descarga del insumo: " + e.getMessage());
-		}
+        return deliveryDto;
+    }
 
-		return deliveryDto;
-	}
+    public MicroserviceDeliveryDto disableDelivery(Long deliveryId) {
 
-	public MicroserviceDeliveryDto disableDelivery(Long deliveryId) throws DisconnectedMicroserviceException {
+        MicroserviceDeliveryDto deliveryDto = null;
 
-		MicroserviceDeliveryDto deliveryDto = null;
+        try {
 
-		try {
+            deliveryDto = operatorClient.disableDelivery(deliveryId);
 
-			deliveryDto = operatorClient.disableDelivery(deliveryId);
+        } catch (Exception e) {
+            log.error("Error desactivando la entrega: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error desactivando la entrega: " + e.getMessage());
-		}
+        return deliveryDto;
+    }
 
-		return deliveryDto;
-	}
+    public MicroserviceDeliveryDto getDeliveryId(Long deliveryId) {
 
-	public MicroserviceDeliveryDto getDeliveryId(Long deliveryId) throws DisconnectedMicroserviceException {
+        MicroserviceDeliveryDto deliveryDto = null;
 
-		MicroserviceDeliveryDto deliveryDto = null;
+        try {
 
-		try {
+            deliveryDto = operatorClient.findDeliveryById(deliveryId);
 
-			deliveryDto = operatorClient.findDeliveryById(deliveryId);
+        } catch (Exception e) {
+            log.error("Error consultando entrega: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error consultando entrega: " + e.getMessage());
-		}
+        return deliveryDto;
+    }
 
-		return deliveryDto;
-	}
+    public MicroserviceOperatorDto getOperatorById(Long operatorId) {
 
-	public MicroserviceOperatorDto getOperatorById(Long operatorId) {
+        MicroserviceOperatorDto operatorDto = null;
 
-		MicroserviceOperatorDto operatorDto = null;
+        try {
 
-		try {
+            operatorDto = operatorClient.findById(operatorId);
 
-			operatorDto = operatorClient.findById(operatorId);
+        } catch (Exception e) {
+            log.error("Error consultando operador: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error consultando operador: " + e.getMessage());
-		}
+        return operatorDto;
+    }
 
-		return operatorDto;
-	}
+    public MicroserviceOperatorDto addUserToOperator(Long operatorId, Long userCode) {
 
-	public MicroserviceOperatorDto addUserToOperator(Long operatorId, Long userCode) {
+        MicroserviceOperatorDto operatorDto = null;
 
-		MicroserviceOperatorDto operatorDto = null;
+        try {
 
-		try {
+            MicroserviceAddUserToOperatorDto requestAddUser = new MicroserviceAddUserToOperatorDto();
+            requestAddUser.setOperatorId(operatorId);
+            requestAddUser.setUserCode(userCode);
 
-			MicroserviceAddUserToOperatorDto requestAddUser = new MicroserviceAddUserToOperatorDto();
-			requestAddUser.setOperatorId(operatorId);
-			requestAddUser.setUserCode(userCode);
+            operatorDto = operatorClient.addUserToOperator(requestAddUser);
 
-			operatorDto = operatorClient.addUserToOperator(requestAddUser);
+        } catch (Exception e) {
+            log.error("Error agregando usuario al operador: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error agregando usuario al operador: " + e.getMessage());
-		}
+        return operatorDto;
+    }
 
-		return operatorDto;
-	}
+    public List<MicroserviceOperatorUserDto> getUsersByOperator(Long operatorId) {
 
-	public List<MicroserviceOperatorUserDto> getUsersByOperator(Long operatorId) {
+        List<MicroserviceOperatorUserDto> users = new ArrayList<>();
 
-		List<MicroserviceOperatorUserDto> users = new ArrayList<>();
+        try {
 
-		try {
+            users = operatorClient.getUsersByOperator(operatorId);
 
-			users = operatorClient.getUsersByOperator(operatorId);
+        } catch (Exception e) {
+            log.error("Error consultando usuarios por operador: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error consultando usuarios por operador: " + e.getMessage());
-		}
+        return users;
+    }
 
-		return users;
-	}
+    public MicroserviceDeliveryDto updateSupplyDeliveredReportURL(Long deliveryId, Long supplyId, String reportUrl) {
 
-	public MicroserviceDeliveryDto updateSupplyDeliveredReportURL(Long deliveryId, Long supplyId, String reportUrl) {
+        MicroserviceDeliveryDto deliveryDto = null;
 
-		MicroserviceDeliveryDto deliveryDto = null;
+        try {
 
-		try {
+            MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
+            supplyDelivered.setReportUrl(reportUrl);
 
-			MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
-			supplyDelivered.setReportUrl(reportUrl);
+            deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
 
-			deliveryDto = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
+        } catch (Exception e) {
+            log.error("Error actualizando la url del reporte de descarga del insumo: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error actualizando la url del reporte de descarga del insumo: " + e.getMessage());
-		}
+        return deliveryDto;
+    }
 
-		return deliveryDto;
-	}
+    public MicroserviceDeliveryDto updateReportDelivery(Long deliveryId, String reportUrl) {
 
-	public MicroserviceDeliveryDto updateReportDelivery(Long deliveryId, String reportUrl) {
+        MicroserviceDeliveryDto deliveryDto = null;
 
-		MicroserviceDeliveryDto deliveryDto = null;
+        try {
 
-		try {
+            MicroserviceUpdateDeliveryDto data = new MicroserviceUpdateDeliveryDto();
+            data.setReportUrl(reportUrl);
 
-			MicroserviceUpdateDeliveryDto data = new MicroserviceUpdateDeliveryDto();
-			data.setReportUrl(reportUrl);
+            deliveryDto = operatorClient.updateDelivery(deliveryId, data);
 
-			deliveryDto = operatorClient.updateDelivery(deliveryId, data);
+        } catch (Exception e) {
+            log.error("Error actualizando el reporte de descarga de la entrega: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error actualizando el reporte de descarga de la entrega: " + e.getMessage());
-		}
+        return deliveryDto;
+    }
 
-		return deliveryDto;
-	}
+    public List<MicroserviceDeliveryDto> getDeliveriesClosedByOperator(Long operatorId, Long municipalityId)
+            throws BusinessException {
 
-	public List<MicroserviceDeliveryDto> getDeliveriesClosedByOperator(Long operatorId, Long municipalityId)
-			throws BusinessException {
+        List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
 
-		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
+        try {
 
-		try {
+            String municipalityCode = null;
 
-			String municipalityCode = null;
+            if (municipalityId != null) {
 
-			if (municipalityId != null) {
+                MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+                if (municipalityEntity == null) {
+                    throw new BusinessException("No se ha encontrado el municipio");
+                }
 
-				MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
-				if (!(municipalityEntity instanceof MunicipalityEntity)) {
-					throw new BusinessException("No se ha encontrado el municipio");
-				}
+                municipalityCode = municipalityEntity.getCode();
 
-				municipalityCode = municipalityEntity.getCode();
+            }
 
-			}
+            deliveries = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode, false);
 
-			deliveries = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode, false);
+            for (MicroserviceDeliveryDto deliveryDto : deliveries) {
 
-			for (MicroserviceDeliveryDto deliveryDto : deliveries) {
+                deliveryDto = addInformationDelivery(deliveryDto);
 
-				deliveryDto = addInformationDelivery(deliveryDto);
+            }
 
-			}
+        } catch (Exception e) {
+            log.error("Error consultando las entregas cerradas: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error consultando las entregas cerradas: " + e.getMessage());
-		}
+        return deliveries;
+    }
 
-		return deliveries;
-	}
+    public List<MicroserviceDeliveryDto> getDeliveriesByManager(Long managerId) throws BusinessException {
 
-	public List<MicroserviceDeliveryDto> getDeliveriesByManager(Long managerId) throws BusinessException {
+        List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
 
-		List<MicroserviceDeliveryDto> deliveries = new ArrayList<>();
+        try {
 
-		try {
+            deliveries = operatorClient.findDeliveriesByManager(managerId);
 
-			deliveries = operatorClient.findDeliveriesByManager(managerId);
+            for (MicroserviceDeliveryDto deliveryDto : deliveries) {
 
-			for (MicroserviceDeliveryDto deliveryDto : deliveries) {
+                deliveryDto = addInformationDelivery(deliveryDto);
 
-				deliveryDto = addInformationDelivery(deliveryDto);
+            }
 
-			}
+        } catch (Exception e) {
+            log.error("Error consultando las entregas: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("Error consultando las entregas: " + e.getMessage());
-		}
+        return deliveries;
 
-		return deliveries;
+    }
 
-	}
+    public MicroserviceDeliveryDto getDeliveryIdAndManager(Long deliveryId, Long managerCode) throws BusinessException {
 
-	public MicroserviceDeliveryDto getDeliveryIdAndManager(Long deliveryId, Long managerCode) throws BusinessException {
+        MicroserviceDeliveryDto deliveryDto = null;
 
-		MicroserviceDeliveryDto deliveryDto = null;
+        try {
+            deliveryDto = operatorClient.findDeliveryById(deliveryId);
+        } catch (Exception e) {
+            log.error("Error consultando entrega: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar la entrega");
+        }
 
-		try {
-			deliveryDto = operatorClient.findDeliveryById(deliveryId);
-		} catch (Exception e) {
-			log.error("Error consultando entrega: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar la entrega");
-		}
+        if (!deliveryDto.getManagerCode().equals(managerCode)) {
+            throw new BusinessException("La entrega no pertenece al gestor.");
+        }
 
-		if (!deliveryDto.getManagerCode().equals(managerCode)) {
-			throw new BusinessException("La entrega no pertenece al gestor.");
-		}
+        deliveryDto = addInformationDelivery(deliveryDto);
 
-		deliveryDto = addInformationDelivery(deliveryDto);
+        return deliveryDto;
+    }
 
-		return deliveryDto;
-	}
+    private MicroserviceDeliveryDto addInformationDelivery(MicroserviceDeliveryDto deliveryDto) {
 
-	private MicroserviceDeliveryDto addInformationDelivery(MicroserviceDeliveryDto deliveryDto) {
+        try {
+            MicroserviceManagerDto managerDto = managerClient.findById(deliveryDto.getManagerCode());
+            deliveryDto.setManager(managerDto);
+        } catch (Exception e) {
+            log.error("Error consultando gestor: " + e.getMessage());
+        }
 
-		try {
-			MicroserviceManagerDto managerDto = managerClient.findById(deliveryDto.getManagerCode());
-			deliveryDto.setManager(managerDto);
-		} catch (Exception e) {
-			log.error("Error consultando gestor: " + e.getMessage());
-		}
+        try {
+            MunicipalityEntity municipalityEntity = municipalityService
+                    .getMunicipalityByCode(deliveryDto.getMunicipalityCode());
 
-		try {
-			MunicipalityEntity municipalityEntity = municipalityService
-					.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
+            DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+            DepartmentDto departmentDto = new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+                    departmentEntity.getCode());
 
-			DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
-			DepartmentDto departmentDto = new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
-					departmentEntity.getCode());
+            MunicipalityDto municipalityDto = new MunicipalityDto();
+            municipalityDto.setCode(municipalityEntity.getCode());
+            municipalityDto.setId(municipalityEntity.getId());
+            municipalityDto.setName(municipalityEntity.getName());
+            municipalityDto.setDepartment(departmentDto);
 
-			MunicipalityDto municipalityDto = new MunicipalityDto();
-			municipalityDto.setCode(municipalityEntity.getCode());
-			municipalityDto.setId(municipalityEntity.getId());
-			municipalityDto.setName(municipalityEntity.getName());
-			municipalityDto.setDepartment(departmentDto);
+            deliveryDto.setMunicipality(municipalityDto);
+        } catch (Exception e) {
+            log.error("Error consultando municipio: " + e.getMessage());
+        }
 
-			deliveryDto.setMunicipality(municipalityDto);
-		} catch (Exception e) {
+        List<MicroserviceSupplyDeliveryDto> supplyDeliveriesDto = deliveryDto.getSupplies();
 
-		}
+        for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
 
-		List<MicroserviceSupplyDeliveryDto> supplyDeliveriesDto = deliveryDto.getSupplies();
+            try {
 
-		for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
+                MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
+                supplyDeliveryDto.setSupply(supplyDto);
 
-			try {
+            } catch (Exception e) {
+                log.error("Error consultando insumo: " + e.getMessage());
+            }
 
-				MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
-				supplyDeliveryDto.setSupply(supplyDto);
+            if (supplyDeliveryDto.getDownloadedBy() != null) {
+                try {
+                    MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+                    supplyDeliveryDto.setUserDownloaded(userDto);
+                } catch (Exception e) {
+                    log.error("Error consultando usuario: " + e.getMessage());
+                }
+            }
 
-			} catch (Exception e) {
-				log.error("Error consultando insumo: " + e.getMessage());
-			}
+        }
 
-			if (supplyDeliveryDto.getDownloadedBy() != null) {
-				try {
-					MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
-					supplyDeliveryDto.setUserDownloaded(userDto);
-				} catch (Exception e) {
-					log.error("Error consultando usuario: " + e.getMessage());
-				}
-			}
+        return deliveryDto;
+    }
 
-		}
-
-		return deliveryDto;
-	}
+    public MicroserviceOperatorDto getOperatorByUserCode(Long userCode) {
+        MicroserviceOperatorDto operatorDto;
+        try {
+            operatorDto = operatorClient.findByUserCode(userCode);
+        } catch (Exception e) {
+            return null;
+        }
+        return operatorDto;
+    }
 
 }

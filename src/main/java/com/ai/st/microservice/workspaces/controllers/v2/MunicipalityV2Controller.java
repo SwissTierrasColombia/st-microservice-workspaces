@@ -22,46 +22,44 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Municipalities", tags = { "Municipalities" })
+@Api(value = "Manage Municipalities", tags = {"Municipalities"})
 @RestController
 @RequestMapping("api/workspaces/v2/municipalities")
 public class MunicipalityV2Controller {
 
-	private final Logger log = LoggerFactory.getLogger(MunicipalityV2Controller.class);
+    private final Logger log = LoggerFactory.getLogger(MunicipalityV2Controller.class);
 
-	@Autowired
-	private MunicipalityBusiness municipalityBusiness;
+    @Autowired
+    private MunicipalityBusiness municipalityBusiness;
 
-	@RequestMapping(value = "/{managerCode}/not-belong/departments/{departmentId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get municipalities where manager does not belong in")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get municipalities", response = MunicipalityDto.class, responseContainer = "List"),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<?> getMunicipalitiesWhereManagerDoesntBelongIn(@PathVariable Long managerCode,
-			@PathVariable Long departmentId) {
+    @RequestMapping(value = "/{managerCode}/not-belong/departments/{departmentId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get municipalities where manager does not belong in")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Get municipalities", response = MunicipalityDto.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getMunicipalitiesWhereManagerDoesntBelongIn(@PathVariable Long managerCode,
+                                                                         @PathVariable Long departmentId) {
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
-		try {
+        try {
 
-			responseDto = municipalityBusiness.getMunicipalitiesWhereManagerDoesNotBelong(managerCode, departmentId);
-			httpStatus = HttpStatus.OK;
+            responseDto = municipalityBusiness.getMunicipalitiesWhereManagerDoesNotBelong(managerCode, departmentId);
+            httpStatus = HttpStatus.OK;
 
-		} catch (BusinessException e) {
-			log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#Business ---> "
-					+ e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new BasicResponseDto(e.getMessage(), 2);
-		} catch (Exception e) {
-			log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#General ---> "
-					+ e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new BasicResponseDto(e.getMessage(), 3);
-		}
+        } catch (BusinessException e) {
+            log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            responseDto = new BasicResponseDto(e.getMessage(), 2);
+        } catch (Exception e) {
+            log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+        }
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
 }

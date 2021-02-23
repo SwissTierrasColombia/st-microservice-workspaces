@@ -5,10 +5,7 @@ import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.servlet.ServletContext;
 
@@ -37,7 +34,6 @@ import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.ManagerBusiness;
 import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
 import com.ai.st.microservice.workspaces.business.OperatorBusiness;
-import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.UserBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
@@ -53,14 +49,11 @@ import com.ai.st.microservice.workspaces.dto.CreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.UpdateManagerFromWorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
@@ -71,7 +64,6 @@ import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 import com.google.common.io.Files;
 
-import feign.FeignException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -192,42 +184,27 @@ public class WorkspaceV1Controller {
     public ResponseEntity<List<WorkspaceDto>> getWorkspacesByMunicipality(@PathVariable Long municipalityId,
                                                                           @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        List<WorkspaceDto> listWorkspaces = new ArrayList<WorkspaceDto>();
+        HttpStatus httpStatus;
+        List<WorkspaceDto> listWorkspaces = new ArrayList<>();
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-
-            MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-            if (roleAdministrator instanceof MicroserviceRoleDto) {
+            if (userBusiness.isAdministrator(userDtoSession)) {
 
                 listWorkspaces = workspaceBusiness.getWorkspacesByMunicipality(municipalityId, null);
 
-            } else if (roleManager instanceof MicroserviceRoleDto) {
-
-                // verify that you have access to the municipality
+            } else if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
-                MicroserviceManagerDto managerDto = null;
-                try {
-                    managerDto = managerClient.findByUserCode(userDtoSession.getId());
-                } catch (FeignException e) {
-                    throw new DisconnectedMicroserviceException(
-                            "No se ha podido establecer conexión con el microservicio de gestores.");
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
 
                 listWorkspaces = workspaceBusiness.getWorkspacesByMunicipality(municipalityId, managerDto.getId());
@@ -261,8 +238,8 @@ public class WorkspaceV1Controller {
                                                  @ModelAttribute AssignOperatorWorkpaceDto requestAssignOperator,
                                                  @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
@@ -277,14 +254,13 @@ public class WorkspaceV1Controller {
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
-
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para descargar el soporte.");
             }
 
             // validation start date
             String startDateString = requestAssignOperator.getStartDate();
-            Date startDate = null;
+            Date startDate;
             if (startDateString != null && !startDateString.isEmpty()) {
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -298,7 +274,7 @@ public class WorkspaceV1Controller {
 
             // validation end date
             String endDateString = requestAssignOperator.getEndDate();
-            Date endDate = null;
+            Date endDate;
             if (endDateString != null && !endDateString.isEmpty()) {
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -490,44 +466,33 @@ public class WorkspaceV1Controller {
     public ResponseEntity<Object> getWorkspaceById(@PathVariable Long workspaceId,
                                                    @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
+        HttpStatus httpStatus;
         Object responseDto = null;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
+            if (userBusiness.isAdministrator(userDtoSession)) {
 
-            MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-            if (roleAdministrator instanceof MicroserviceRoleDto) {
                 responseDto = workspaceBusiness.getWorkspaceById(workspaceId, null);
-            } else if (roleManager instanceof MicroserviceRoleDto) {
+
+            } else if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
-                MicroserviceManagerDto managerDto = null;
-                try {
-                    managerDto = managerClient.findByUserCode(userDtoSession.getId());
-                } catch (FeignException e) {
-                    throw new DisconnectedMicroserviceException(
-                            "No se ha podido establecer conexión con el microservicio de gestores.");
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
 
                 responseDto = workspaceBusiness.getWorkspaceById(workspaceId, managerDto.getId());
             }
 
-            httpStatus = (responseDto instanceof WorkspaceDto) ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+            httpStatus = (responseDto != null) ? HttpStatus.OK : HttpStatus.NOT_FOUND;
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error WorkspaceV1Controller@getWorkspaceById#Microservice ---> " + e.getMessage());
@@ -552,11 +517,11 @@ public class WorkspaceV1Controller {
             @ApiResponse(code = 200, message = "Get operators by workspace", response = WorkspaceDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
-    public ResponseEntity<Object> getOperatorsByWorkspace(@PathVariable Long workspaceId,
-                                                          @RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<?> getOperatorsByWorkspace(@PathVariable Long workspaceId,
+                                                     @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        List<WorkspaceOperatorDto> listOperators = new ArrayList<WorkspaceOperatorDto>();
+        HttpStatus httpStatus;
+        List<WorkspaceOperatorDto> listOperators = new ArrayList<>();
         Object responseDto = null;
 
         try {
@@ -568,7 +533,9 @@ public class WorkspaceV1Controller {
             }
 
             if (userBusiness.isAdministrator(userDtoSession)) {
+
                 listOperators = workspaceBusiness.getOperatorsByWorkspaceId(workspaceId, null);
+
             } else if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
@@ -609,7 +576,7 @@ public class WorkspaceV1Controller {
     public ResponseEntity<Object> getWorkspaceActiveByMunicipality(@PathVariable Long municipalityId,
                                                                    @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
+        HttpStatus httpStatus;
         Object responseDto = null;
 
         try {
@@ -642,8 +609,7 @@ public class WorkspaceV1Controller {
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error(
-                    "Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Microservice ---> " + e.getMessage());
+            log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 4);
         } catch (BusinessException e) {
@@ -668,40 +634,24 @@ public class WorkspaceV1Controller {
                                                       @RequestBody MakeIntegrationDto requestMakeIntegration,
                                                       @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             // get manager
-            MicroserviceManagerDto managerDto = null;
-            MicroserviceManagerProfileDto profileDirector = null;
-            try {
-                managerDto = managerClient.findByUserCode(userDtoSession.getId());
-
-                List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-                        .findProfilesByUser(userDtoSession.getId());
-
-                profileDirector = managerProfiles.stream()
-                        .filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-                        .orElse(null);
-
-            } catch (Exception e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de gestores.");
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
-            if (profileDirector == null) {
-                throw new InputValidationException("Acceso denegado.");
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para realizar la integración.");
             }
 
             // validation supply cadastre
@@ -747,40 +697,27 @@ public class WorkspaceV1Controller {
     public ResponseEntity<?> getIntegrationsByWorkspace(@PathVariable Long workspaceId,
                                                         @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
+        HttpStatus httpStatus;
         Object responseDto = null;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-
-            MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-            if (roleAdministrator instanceof MicroserviceRoleDto) {
+            if (userBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = integrationBusiness.getIntegrationsByWorkspace(workspaceId, null);
 
-            } else if (roleManager instanceof MicroserviceRoleDto) {
+            } else if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
-                MicroserviceManagerDto managerDto = null;
-                try {
-                    managerDto = managerClient.findByUserCode(userDtoSession.getId());
-                } catch (FeignException e) {
-                    throw new DisconnectedMicroserviceException(
-                            "No se ha podido establecer conexión con el microservicio de gestores.");
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
 
                 responseDto = integrationBusiness.getIntegrationsByWorkspace(workspaceId, managerDto.getId());
@@ -813,40 +750,24 @@ public class WorkspaceV1Controller {
     public ResponseEntity<?> startIntegrationAssisted(@PathVariable Long workspaceId, @PathVariable Long integrationId,
                                                       @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             // get manager
-            MicroserviceManagerDto managerDto = null;
-            MicroserviceManagerProfileDto profileDirector = null;
-            try {
-                managerDto = managerClient.findByUserCode(userDtoSession.getId());
-
-                List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-                        .findProfilesByUser(userDtoSession.getId());
-
-                profileDirector = managerProfiles.stream()
-                        .filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-                        .orElse(null);
-
-            } catch (Exception e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de gestores.");
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
-            if (profileDirector == null) {
-                throw new InputValidationException("Acceso denegado.");
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para realizar la integración asistida.");
             }
 
             responseDto = workspaceBusiness.startIntegrationAssisted(workspaceId, integrationId, managerDto,
@@ -878,55 +799,39 @@ public class WorkspaceV1Controller {
     public ResponseEntity<?> generateSupply(@PathVariable Long workspaceId, @PathVariable Long integrationId,
                                             @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             // get manager
-            MicroserviceManagerDto managerDto = null;
-            MicroserviceManagerProfileDto profileDirector = null;
-            try {
-                managerDto = managerClient.findByUserCode(userDtoSession.getId());
-
-                List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-                        .findProfilesByUser(userDtoSession.getId());
-
-                profileDirector = managerProfiles.stream()
-                        .filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-                        .orElse(null);
-
-            } catch (Exception e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de gestores.");
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
-            if (profileDirector == null) {
-                throw new InputValidationException("Acceso denegado.");
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para actualizar el soporte.");
             }
 
             responseDto = workspaceBusiness.exportXtf(workspaceId, integrationId, managerDto, userDtoSession);
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error WorkspaceV1Controller@exportXtf#Microservice ---> " + e.getMessage());
+            log.error("Error WorkspaceV1Controller@generateSupply#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 4);
         } catch (BusinessException e) {
-            log.error("Error WorkspaceV1Controller@exportXtf#Business ---> " + e.getMessage());
+            log.error("Error WorkspaceV1Controller@generateSupply#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
             responseDto = new BasicResponseDto(e.getMessage(), 2);
         } catch (Exception e) {
-            log.error("Error WorkspaceV1Controller@exportXtf#General ---> " + e.getMessage());
+            log.error("Error WorkspaceV1Controller@generateSupply#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 3);
         }
@@ -941,42 +846,27 @@ public class WorkspaceV1Controller {
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> removeIntegrationFromWorkspace(@PathVariable Long workspaceId,
-                                                            @PathVariable Long integrationId, @RequestHeader("authorization") String headerAuthorization) {
+                                                            @PathVariable Long integrationId,
+                                                            @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             // get manager
-            MicroserviceManagerDto managerDto = null;
-            MicroserviceManagerProfileDto profileDirector = null;
-            try {
-                managerDto = managerClient.findByUserCode(userDtoSession.getId());
-
-                List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-                        .findProfilesByUser(userDtoSession.getId());
-
-                profileDirector = managerProfiles.stream()
-                        .filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-                        .orElse(null);
-
-            } catch (Exception e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de gestores.");
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
-            if (profileDirector == null) {
-                throw new InputValidationException("Acceso denegado.");
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para actualizar el soporte.");
             }
 
             workspaceBusiness.removeIntegrationFromWorkspace(workspaceId, integrationId, managerDto.getId());
@@ -1008,85 +898,58 @@ public class WorkspaceV1Controller {
     public ResponseEntity<?> downloadSupply(@PathVariable Long supplyId,
                                             @RequestHeader("authorization") String headerAuthorization) {
 
-        MediaType mediaType = null;
-        File file = null;
-        InputStreamResource resource = null;
-        MicroserviceSupplyDto supplyDto = null;
+        MediaType mediaType;
+        File file;
+        InputStreamResource resource;
+        MicroserviceSupplyDto supplyDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-            MicroserviceRoleDto roleOperator = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
-
             supplyDto = supplyBusiness.getSupplyById(supplyId);
-            if (!(supplyDto instanceof MicroserviceSupplyDto)) {
+            if (supplyDto == null) {
                 throw new BusinessException("No se ha encontrado el insumo.");
             }
 
-            if (roleManager instanceof MicroserviceRoleDto) {
+            if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
-                MicroserviceManagerDto managerDto = null;
-                MicroserviceManagerProfileDto profileDirector = null;
-                try {
-                    managerDto = managerClient.findByUserCode(userDtoSession.getId());
-
-                    List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-                            .findProfilesByUser(userDtoSession.getId());
-
-                    profileDirector = managerProfiles.stream()
-                            .filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-                            .orElse(null);
-
-                } catch (FeignException e) {
-                    throw new DisconnectedMicroserviceException(
-                            "No se ha podido establecer conexión con el microservicio de gestores.");
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
-                if (profileDirector == null) {
-                    throw new InputValidationException("Acceso denegado.");
+                if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                    throw new InputValidationException("El usuario no tiene permisos para actualizar el soporte.");
                 }
 
-                if (!workspaceBusiness.managerHasAccessToMunicipality(supplyDto.getMunicipalityCode(),
-                        managerDto.getId())) {
+                if (!workspaceBusiness.managerHasAccessToMunicipality(supplyDto.getMunicipalityCode(), managerDto.getId())) {
                     throw new InputValidationException("El gestor no tiene acceso al insumo.");
                 }
 
-            } else if (roleOperator instanceof MicroserviceRoleDto) {
-
-                // get operator
-                MicroserviceOperatorDto operatorDto = null;
-                try {
-                    operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
-                } catch (Exception e) {
-                    throw new DisconnectedMicroserviceException(
-                            "No se ha podido establecer conexión con el microservicio de operadores.");
+                if (!supplyDto.getManagerCode().equals(managerDto.getId())) {
+                    throw new BusinessException("No tiene acceso al insumo");
                 }
 
-                MicroserviceDeliveryDto deliveryDto = workspaceOperatorBusiness
-                        .getDeliveryFromSupply(operatorDto.getId(), supplyDto.getId());
+            } else if (userBusiness.isOperator(userDtoSession)) {
+
+                // get operator
+                MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
+
+                MicroserviceDeliveryDto deliveryDto = workspaceOperatorBusiness.getDeliveryFromSupply(operatorDto.getId(), supplyDto.getId());
                 if (deliveryDto == null) {
                     throw new InputValidationException("El operador no tiene acceso al insumo.");
                 }
 
-                workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId(),
-                        userDtoSession.getId());
+                workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId(), userDtoSession.getId());
 
             }
 
-            String pathFile = null;
+            String pathFile;
 
             MicroserviceSupplyAttachmentDto attachmentFtp = supplyDto.getAttachments().stream()
                     .filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP))
@@ -1097,8 +960,7 @@ public class WorkspaceV1Controller {
                             .getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE))
                     .findAny().orElse(null);
 
-            MunicipalityDto municipalityDto = municipalityBusiness
-                    .getMunicipalityByCode(supplyDto.getMunicipalityCode());
+            MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(supplyDto.getMunicipalityCode());
 
             // the supply has FTP
             if (attachmentFtp != null && attachmentSupply == null) {
@@ -1106,22 +968,19 @@ public class WorkspaceV1Controller {
                 File fileFTP = supplyBusiness.generateFTPFile(supplyDto, municipalityDto);
 
                 String randomCode = RandomStringUtils.random(10, false, true);
-                pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileFTP)), "insumo_" + randomCode,
-                        stTemporalDirectory);
+                pathFile = ZipUtil.zipping(new ArrayList<>(Collections.singletonList(fileFTP)), "insumo_" + randomCode, stTemporalDirectory);
 
             }
             // the supply has file to download
             else if (attachmentFtp == null && attachmentSupply != null) {
                 pathFile = attachmentSupply.getData();
-            }
-            // the supply has both attachments types (file and FTP)
-            else {
+            } else { // the supply has both attachments types (file and FTP)
 
                 File fileFTP = supplyBusiness.generateFTPFile(supplyDto, municipalityDto);
                 File fileSupply = new File(attachmentSupply.getData());
 
                 String randomCode = RandomStringUtils.random(10, false, true);
-                pathFile = ZipUtil.zipping(new ArrayList<File>(Arrays.asList(fileFTP, fileSupply)),
+                pathFile = ZipUtil.zipping(new ArrayList<>(Arrays.asList(fileFTP, fileSupply)),
                         "insumo_" + randomCode, stTemporalDirectory);
 
             }
@@ -1170,8 +1029,8 @@ public class WorkspaceV1Controller {
     public ResponseEntity<?> removeSupply(@PathVariable Long workspaceId, @PathVariable Long supplyId,
                                           @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
@@ -1181,17 +1040,11 @@ public class WorkspaceV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-
-            MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-            if (roleAdministrator instanceof MicroserviceRoleDto) {
+            if (userBusiness.isAdministrator(userDtoSession)) {
 
                 workspaceBusiness.removeSupply(workspaceId, supplyId, null);
 
-            } else if (roleManager instanceof MicroserviceRoleDto) {
+            } else if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -1234,40 +1087,24 @@ public class WorkspaceV1Controller {
                                             @RequestHeader("authorization") String headerAuthorization,
                                             @RequestBody CreateDeliveryDto createDeliveryDto) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             // get manager
-            MicroserviceManagerDto managerDto = null;
-            MicroserviceManagerProfileDto profileDirector = null;
-            try {
-                managerDto = managerClient.findByUserCode(userDtoSession.getId());
-
-                List<MicroserviceManagerProfileDto> managerProfiles = managerClient
-                        .findProfilesByUser(userDtoSession.getId());
-
-                profileDirector = managerProfiles.stream()
-                        .filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
-                        .orElse(null);
-
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de gestores.");
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
-            if (profileDirector == null) {
-                throw new InputValidationException("Acceso denegado.");
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para actualizar el soporte.");
             }
 
             // validation observations
@@ -1276,6 +1113,7 @@ public class WorkspaceV1Controller {
                 throw new InputValidationException("Las observaciones son requeridas.");
             }
 
+            // validation supplies
             List<CreateSupplyDeliveryDto> supplies = createDeliveryDto.getSupplies();
             if (supplies == null || supplies.size() == 0) {
                 throw new InputValidationException("Los insumos son requeridos.");
@@ -1287,7 +1125,13 @@ public class WorkspaceV1Controller {
                 }
             }
 
-            responseDto = workspaceBusiness.createDelivery(workspaceId, managerDto.getId(), observations, supplies);
+            // validation operator
+            Long operatorCode = createDeliveryDto.getOperatorCode();
+            if (operatorCode == null || operatorCode <= 0) {
+                throw new InputValidationException("Es necesario definir a cuál operador se le realizará la entrega.");
+            }
+
+            responseDto = workspaceBusiness.createDelivery(workspaceId, managerDto.getId(), operatorCode, observations, supplies);
             httpStatus = HttpStatus.CREATED;
 
         } catch (DisconnectedMicroserviceException e) {
@@ -1318,28 +1162,21 @@ public class WorkspaceV1Controller {
     @ResponseBody
     public ResponseEntity<?> getSuppliesOperator(@RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             // get operator
-            MicroserviceOperatorDto operatorDto = null;
-            try {
-                operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
-            } catch (Exception e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de operadores.");
+            MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
+            if (operatorDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
             }
 
             responseDto = operatorBusiness.getDeliveriesActivesByOperator(operatorDto.getId());
@@ -1452,28 +1289,21 @@ public class WorkspaceV1Controller {
     public ResponseEntity<?> getDeliveriesClosed(@RequestHeader("authorization") String headerAuthorization,
                                                  @RequestParam(required = false, name = "municipality") Long municipalityId) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
             // user session
-            String token = headerAuthorization.replace("Bearer ", "").trim();
-            MicroserviceUserDto userDtoSession = null;
-            try {
-                userDtoSession = userClient.findByToken(token);
-            } catch (FeignException e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de usuarios.");
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             // get operator
-            MicroserviceOperatorDto operatorDto = null;
-            try {
-                operatorDto = operatorClient.findByUserCode(userDtoSession.getId());
-            } catch (Exception e) {
-                throw new DisconnectedMicroserviceException(
-                        "No se ha podido establecer conexión con el microservicio de operadores.");
+            MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
+            if (operatorDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
             }
 
             responseDto = operatorBusiness.getDeliveriesClosedByOperator(operatorDto.getId(), municipalityId);
@@ -1499,14 +1329,14 @@ public class WorkspaceV1Controller {
     @RequestMapping(value = "/location", method = RequestMethod.GET)
     @ApiOperation(value = "Get workspaces by location")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get deliveries closed", response = BasicResponseDto.class),
+            @ApiResponse(code = 200, message = "Get workspaces", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> getWorkspacesByLocation(@RequestHeader("authorization") String headerAuthorization,
                                                      @RequestParam(required = true, name = "department") Long departmentId,
                                                      @RequestParam(required = false, name = "municipality") Long municipalityId) {
 
-        HttpStatus httpStatus = null;
+        HttpStatus httpStatus;
         Object responseDto = null;
 
         try {
@@ -1517,29 +1347,19 @@ public class WorkspaceV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-
-            MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
-
-            if (roleAdministrator != null) {
+            if (userBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = workspaceBusiness.getWorskpacesByLocation(departmentId, municipalityId, null);
 
-            } else if (roleManager != null) {
+            } else if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
-                MicroserviceManagerDto managerDto = null;
-                try {
-                    managerDto = managerClient.findByUserCode(userDtoSession.getId());
-                } catch (FeignException e) {
-                    throw new DisconnectedMicroserviceException(
-                            "No se ha podido establecer conexión con el microservicio de gestores.");
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
 
-                responseDto = workspaceBusiness.getWorskpacesByLocation(departmentId, municipalityId,
-                        managerDto.getId());
+                responseDto = workspaceBusiness.getWorskpacesByLocation(departmentId, municipalityId, managerDto.getId());
             }
 
             httpStatus = HttpStatus.OK;
@@ -1569,9 +1389,9 @@ public class WorkspaceV1Controller {
     public ResponseEntity<?> reportDownloadDeliveryManager(@PathVariable Long deliveryId,
                                                            @RequestHeader("authorization") String headerAuthorization) {
 
-        MediaType mediaType = null;
-        File file = null;
-        InputStreamResource resource = null;
+        MediaType mediaType;
+        File file;
+        InputStreamResource resource;
 
         try {
 
@@ -1586,7 +1406,6 @@ public class WorkspaceV1Controller {
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
-
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para crear peticiones.");
             }
@@ -1625,15 +1444,15 @@ public class WorkspaceV1Controller {
     }
 
     @RequestMapping(value = "/unassign/{municipalityId}/managers/{managerCode}", method = RequestMethod.DELETE)
-    @ApiOperation(value = "Unassign manager from municipality")
+    @ApiOperation(value = "Unassigned manager from municipality")
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Unassign manager", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> unassignManagerFromMunicipality(@PathVariable Long municipalityId,
                                                              @PathVariable Long managerCode) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 

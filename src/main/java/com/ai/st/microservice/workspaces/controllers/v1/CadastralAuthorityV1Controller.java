@@ -41,130 +41,129 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Cadastral Authority Processes ", tags = { "Cadastral Authority" })
+@Api(value = "Manage Cadastral Authority Processes ", tags = {"Cadastral Authority"})
 @RestController
 @RequestMapping("api/workspaces/v1/cadastral-authority")
 public class CadastralAuthorityV1Controller {
 
-	private final Logger log = LoggerFactory.getLogger(CadastralAuthorityV1Controller.class);
+    private final Logger log = LoggerFactory.getLogger(CadastralAuthorityV1Controller.class);
 
-	@Autowired
-	private CadastralAuthorityBusiness cadastralAuthorityBusiness;
+    @Autowired
+    private CadastralAuthorityBusiness cadastralAuthorityBusiness;
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private ServletContext servletContext;
+    @Autowired
+    private ServletContext servletContext;
 
-	@RequestMapping(value = "/supplies/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Create supply (cadastral authority)")
-	@ApiResponses(value = {
-			@ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<Object> createSupply(@PathVariable Long municipalityId,
-			@RequestHeader("authorization") String headerAuthorization,
-			@RequestParam(name = "file", required = false) MultipartFile file,
-			@ModelAttribute CreateSupplyCadastralAuthorityDto supplyCadastralAuthorityDto) {
+    @RequestMapping(value = "/supplies/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Create supply (cadastral authority)")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<Object> createSupply(@PathVariable Long municipalityId,
+                                               @RequestHeader("authorization") String headerAuthorization,
+                                               @RequestParam(name = "file", required = false) MultipartFile file,
+                                               @ModelAttribute CreateSupplyCadastralAuthorityDto supplyCadastralAuthorityDto) {
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
-		try {
+        try {
 
-			// user session
-			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-			if (userDtoSession == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-			}
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-			// validation type supply
-			Long attachmentTypeId = supplyCadastralAuthorityDto.getAttachmentTypeId();
-			if (attachmentTypeId == null || attachmentTypeId <= 0) {
-				throw new InputValidationException("El tipo de adjunto es inválido.");
-			}
+            // validation type supply
+            Long attachmentTypeId = supplyCadastralAuthorityDto.getAttachmentTypeId();
+            if (attachmentTypeId == null || attachmentTypeId <= 0) {
+                throw new InputValidationException("El tipo de adjunto es inválido.");
+            }
 
-			// validation name
-			String name = supplyCadastralAuthorityDto.getName();
-			if (name == null || name.isEmpty()) {
-				throw new InputValidationException("El nombre es requerido.");
-			}
+            // validation name
+            String name = supplyCadastralAuthorityDto.getName();
+            if (name == null || name.isEmpty()) {
+                throw new InputValidationException("El nombre es requerido.");
+            }
 
-			// validation observations
-			String observations = supplyCadastralAuthorityDto.getObservations();
-			if (observations == null || observations.isEmpty()) {
-				throw new InputValidationException("Las observaciones son requeridas.");
-			}
+            // validation observations
+            String observations = supplyCadastralAuthorityDto.getObservations();
+            if (observations == null || observations.isEmpty()) {
+                throw new InputValidationException("Las observaciones son requeridas.");
+            }
 
-			responseDto = cadastralAuthorityBusiness.createSupplyCadastralAuthority(municipalityId, attachmentTypeId,
-					name, observations, supplyCadastralAuthorityDto.getFtp(), file, userDtoSession.getId());
-			httpStatus = HttpStatus.CREATED;
+            responseDto = cadastralAuthorityBusiness.createSupplyCadastralAuthority(municipalityId, attachmentTypeId,
+                    name, observations, supplyCadastralAuthorityDto.getFtp(), file, userDtoSession.getId());
+            httpStatus = HttpStatus.CREATED;
 
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error CadastralAuthorityV1Controller@createSupply#Microservice ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new BasicResponseDto(e.getMessage(), 4);
-		} catch (InputValidationException e) {
-			log.error("Error CadastralAuthorityV1Controller@createSupply#Validation ---> " + e.getMessage());
-			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new BasicResponseDto(e.getMessage(), 1);
-		} catch (BusinessException e) {
-			log.error("Error CadastralAuthorityV1Controller@createSupply#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new BasicResponseDto(e.getMessage(), 2);
-		} catch (Exception e) {
-			log.error("Error CadastralAuthorityV1Controller@createSupply#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new BasicResponseDto(e.getMessage(), 3);
-		}
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error CadastralAuthorityV1Controller@createSupply#Microservice ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 4);
+        } catch (InputValidationException e) {
+            log.error("Error CadastralAuthorityV1Controller@createSupply#Validation ---> " + e.getMessage());
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage(), 1);
+        } catch (BusinessException e) {
+            log.error("Error CadastralAuthorityV1Controller@createSupply#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            responseDto = new BasicResponseDto(e.getMessage(), 2);
+        } catch (Exception e) {
+            log.error("Error CadastralAuthorityV1Controller@createSupply#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+        }
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
-	@RequestMapping(value = "/report/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Create report (cadastral authority)")
-	@ApiResponses(value = {
-			@ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<Object> downloadReport(@PathVariable Long municipalityId,
-			@RequestHeader("authorization") String headerAuthorization) {
+    @RequestMapping(value = "/report/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Create report (cadastral authority)")
+    @ApiResponses(value = {
+            @ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<Object> downloadReport(@PathVariable Long municipalityId) {
 
-		MediaType mediaType = null;
-		File file = null;
-		InputStreamResource resource = null;
+        MediaType mediaType;
+        File file;
+        InputStreamResource resource;
 
-		try {
+        try {
 
-			String pathFile = cadastralAuthorityBusiness.generateReport(municipalityId);
+            String pathFile = cadastralAuthorityBusiness.generateReport(municipalityId);
 
-			Path path = Paths.get(pathFile);
-			String fileName = path.getFileName().toString();
+            Path path = Paths.get(pathFile);
+            String fileName = path.getFileName().toString();
 
-			String mineType = servletContext.getMimeType(fileName);
+            String mineType = servletContext.getMimeType(fileName);
 
-			try {
-				mediaType = MediaType.parseMediaType(mineType);
-			} catch (Exception e) {
-				mediaType = MediaType.APPLICATION_OCTET_STREAM;
-			}
+            try {
+                mediaType = MediaType.parseMediaType(mineType);
+            } catch (Exception e) {
+                mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            }
 
-			file = new File(pathFile);
-			resource = new InputStreamResource(new FileInputStream(file));
+            file = new File(pathFile);
+            resource = new InputStreamResource(new FileInputStream(file));
 
-		} catch (BusinessException e) {
-			log.error("Error CadastralAuthorityV1Controller@downloadReport#Business ---> " + e.getMessage());
-			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
-		} catch (Exception e) {
-			log.error("Error CadastralAuthorityV1Controller@downloadReport#General ---> " + e.getMessage());
-			return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
+        } catch (BusinessException e) {
+            log.error("Error CadastralAuthorityV1Controller@downloadReport#Business ---> " + e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+        } catch (Exception e) {
+            log.error("Error CadastralAuthorityV1Controller@downloadReport#General ---> " + e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 
-		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
-				.contentType(mediaType).contentLength(file.length())
-				.header("extension", Files.getFileExtension(file.getName())).body(resource);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
+                .contentType(mediaType).contentLength(file.length())
+                .header("extension", Files.getFileExtension(file.getName())).body(resource);
 
-	}
+    }
 
 }

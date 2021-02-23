@@ -4,10 +4,10 @@ import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
 
 public interface IIntegrationStateService {
 
-	public IntegrationStateEntity createIntegrationState(IntegrationStateEntity integrationState);
+    IntegrationStateEntity createIntegrationState(IntegrationStateEntity integrationState);
 
-	public Long getCount();
+    Long getCount();
 
-	public IntegrationStateEntity getIntegrationStateById(Long id);
+    IntegrationStateEntity getIntegrationStateById(Long id);
 
 }

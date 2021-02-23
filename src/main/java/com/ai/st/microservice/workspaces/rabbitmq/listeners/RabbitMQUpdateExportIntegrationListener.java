@@ -1,9 +1,6 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,167 +31,130 @@ import com.ai.st.microservice.workspaces.services.IntegrationService;
 @Component
 public class RabbitMQUpdateExportIntegrationListener {
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-	@Value("${st.filesDirectory}")
-	private String stFilesDirectory;
+    @Value("${st.filesDirectory}")
+    private String stFilesDirectory;
 
-	@Autowired
-	private IntegrationBusiness integrationBusiness;
+    @Autowired
+    private IntegrationBusiness integrationBusiness;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private NotificationBusiness notificationBusiness;
+    @Autowired
+    private NotificationBusiness notificationBusiness;
 
-	@Autowired
-	private DatabaseIntegrationBusiness databaseIntegration;
+    @Autowired
+    private DatabaseIntegrationBusiness databaseIntegration;
 
-	@Autowired
-	private CrytpoBusiness cryptoBusiness;
+    @Autowired
+    private CrytpoBusiness cryptoBusiness;
 
-	@Autowired
-	private SupplyBusiness supplyBusiness;
+    @Autowired
+    private SupplyBusiness supplyBusiness;
 
-	@Autowired
-	private IntegrationService integrationService;
+    @Autowired
+    private IntegrationService integrationService;
 
-	@RabbitListener(queues = "${st.rabbitmq.queueUpdateExport.queue}", concurrency = "${st.rabbitmq.queueUpdateExport.concurrency}")
-	public void updateExport(MicroserviceIliExportResultDto resultExportDto) {
+    @RabbitListener(queues = "${st.rabbitmq.queueUpdateExport.queue}", concurrency = "${st.rabbitmq.queueUpdateExport.concurrency}")
+    public void updateExport(MicroserviceIliExportResultDto resultExportDto) {
 
-		try {
+        try {
 
-			Long stateId = null;
+            Long stateId;
 
-			IntegrationEntity integrationEntity = integrationService
-					.getIntegrationById(resultExportDto.getIntegrationId());
+            IntegrationEntity integrationEntity = integrationService
+                    .getIntegrationById(resultExportDto.getIntegrationId());
 
-			if (integrationEntity instanceof IntegrationEntity) {
+            if (integrationEntity != null) {
 
-				WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
-				MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+                WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
+                MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-				if (resultExportDto.isStatus()) {
-					stateId = IntegrationStateBusiness.STATE_GENERATED_PRODUCT;
-					log.info("Export finished successful");
+                if (resultExportDto.isStatus()) {
+                    stateId = IntegrationStateBusiness.STATE_GENERATED_PRODUCT;
+                    log.info("Export finished successful");
 
-					if (resultExportDto.getStats() != null) {
-						integrationBusiness.addStatToIntegration(integrationEntity.getId(),
-								resultExportDto.getStats().getCountSNR(), resultExportDto.getStats().getCountGC(),
-								(long) 0, resultExportDto.getStats().getCountMatch(),
-								resultExportDto.getStats().getPercentage());
-					}
+                    if (resultExportDto.getStats() != null) {
+                        integrationBusiness.addStatToIntegration(integrationEntity.getId(),
+                                resultExportDto.getStats().getCountSNR(), resultExportDto.getStats().getCountGC(),
+                                (long) 0, resultExportDto.getStats().getCountMatch(),
+                                resultExportDto.getStats().getPercentage());
+                    }
 
-					String municipalityCode = municipalityEntity.getCode();
+                    String municipalityCode = municipalityEntity.getCode();
 
-					String urlDocumentaryRepository = resultExportDto.getPathFile();
+                    String urlDocumentaryRepository = resultExportDto.getPathFile();
 
-					log.info("saving url file: " + urlDocumentaryRepository);
+                    log.info("saving url file: " + urlDocumentaryRepository);
 
-					List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
-					attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
-							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+                    List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+                    attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
+                            SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
 
-					// load supply to municipality
-					String observations = "Archivo XTF generado para el modelo de insumos";
+                    // load supply to municipality
+                    String observations = "Archivo XTF generado para el modelo de insumos";
 
-					/**
-					 * TODO: Refactoring pending ...
-					 * 
-					 * Before:
-					 * 
-					 * supplyBusiness.createSupply(municipalityCode, observations, null,
-					 * attachments, null, null, null, workspaceEntity.getManagerCode(), null,
-					 * resultExportDto.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos
-					 * en modelo de insumos para el Municipio");
-					 * 
-					 * 
-					 */
+                    supplyBusiness.createSupply(municipalityCode, observations, null, integrationEntity.getManagerCode(), attachments, null,
+                            null, null, integrationEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
+                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio");
 
-					supplyBusiness.createSupply(municipalityCode, observations, null, attachments, null, null, null,
-							null, null, resultExportDto.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE,
-							"Datos en modelo de insumos para el Municipio");
+                    /*
+                     * try { // delete database
+                     * databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.
+                     * getDatabase()), cryptoBusiness.decrypt(integrationEntity.getUsername())); }
+                     * catch (Exception e) { log.error("No se ha podido borrar la base de datos: " +
+                     * e.getMessage()); }
+                     */
 
-					/*
-					 * try { // delete database
-					 * databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.
-					 * getDatabase()), cryptoBusiness.decrypt(integrationEntity.getUsername())); }
-					 * catch (Exception e) { log.error("No se ha podido borrar la base de datos: " +
-					 * e.getMessage()); }
-					 */
+                    // integrationBusiness.configureViewIntegration(integrationEntity.getId(), integrationEntity.getManagerCode());
 
-					/**
-					 * TODO: Refactoring pending ...
-					 * 
-					 * Before:
-					 * 
-					 * integrationBusiness.configureViewIntegration(integrationEntity.getId(),
-					 * workspaceEntity.getManagerCode());
-					 * 
-					 * 
-					 */
-					integrationBusiness.configureViewIntegration(integrationEntity.getId(), null);
+                    // send notification
 
-					// send notification
+                    try {
 
-					try {
+                        List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(integrationEntity.getManagerCode(),
+                                new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR)));
 
-						/**
-						 * TODO: Refactoring pending ...
-						 * 
-						 * Before:
-						 * 
-						 * List<MicroserviceManagerUserDto> directors =
-						 * managerBusiness.getUserByManager( workspaceEntity.getManagerCode(), new
-						 * ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
-						 * 
-						 * 
-						 */
+                        for (MicroserviceManagerUserDto directorDto : directors) {
 
-						List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(null,
-								new ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+                            MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+                            if (userDto != null) {
+                                notificationBusiness.sendNotificationProductGenerated(userDto.getEmail(),
+                                        userDto.getId(), municipalityEntity.getName(),
+                                        municipalityEntity.getDepartment().getName(), new Date());
+                            }
 
-						for (MicroserviceManagerUserDto directorDto : directors) {
+                        }
 
-							MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
-							if (userDto instanceof MicroserviceUserDto) {
-								notificationBusiness.sendNotificationProductGenerated(userDto.getEmail(),
-										userDto.getId(), municipalityEntity.getName(),
-										municipalityEntity.getDepartment().getName(), new Date());
-							}
+                    } catch (Exception e) {
+                        log.error("Error enviando notificación de producto generado: " + e.getMessage());
+                    }
 
-						}
+                } else {
+                    stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
+                    log.error("Export finished with errors");
+                }
 
-					} catch (Exception e) {
-						log.error("Error enviando notificación de producto generado: " + e.getMessage());
-					}
+                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null, "SISTEMA");
 
-				} else {
-					stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
-					log.error("Export finished with errors");
-				}
+            }
 
-				integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null,
-						"SISTEMA");
+        } catch (Exception e) {
+            log.info("Error update export integration: " + e.getMessage());
 
-			}
+            Long stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
+            try {
+                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null, "SISTEMA");
+            } catch (BusinessException e1) {
+                log.error("Error actualizando el estado de la integración por error: " + e.getMessage());
+            }
+        }
 
-		} catch (Exception e) {
-			log.info("Error update export integration: " + e.getMessage());
-
-			Long stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
-			try {
-				integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null,
-						"SISTEMA");
-			} catch (BusinessException e1) {
-				log.error("Error actualizando el estado de la integración por error: " + e.getMessage());
-			}
-		}
-
-	}
+    }
 
 }

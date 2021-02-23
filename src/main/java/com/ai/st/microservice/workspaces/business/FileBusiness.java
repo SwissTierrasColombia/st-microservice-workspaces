@@ -18,69 +18,69 @@ import com.ai.st.microservice.workspaces.utils.ZipUtil;
 @Component
 public class FileBusiness {
 
-	@Value("${st.temporalDirectory}")
-	private String stTemporalDirectory;
+    @Value("${st.temporalDirectory}")
+    private String stTemporalDirectory;
 
-	@Value("${st.filesDirectory}")
-	private String stFilesDirectory;
+    @Value("${st.filesDirectory}")
+    private String stFilesDirectory;
 
-	private final static Logger log = LoggerFactory.getLogger(FileBusiness.class);
+    private final static Logger log = LoggerFactory.getLogger(FileBusiness.class);
 
-	public String loadFileToSystem(MultipartFile file, String fileName) {
+    public String loadFileToSystem(MultipartFile file, String fileName) {
 
-		try {
+        try {
 
-			if (fileName == null) {
-				String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-				fileName = RandomStringUtils.random(14, true, false) + "." + fileExtension;
-			}
+            if (fileName == null) {
+                String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+                fileName = RandomStringUtils.random(14, true, false) + "." + fileExtension;
+            }
 
-			String temporalFile = stTemporalDirectory + File.separatorChar + StringUtils.cleanPath(fileName);
-			FileUtils.writeByteArrayToFile(new File(temporalFile), file.getBytes());
-			return temporalFile;
-		} catch (IOException e) {
-			log.error("Error saving file: " + e.getMessage());
-		}
+            String temporalFile = stTemporalDirectory + File.separatorChar + StringUtils.cleanPath(fileName);
+            FileUtils.writeByteArrayToFile(new File(temporalFile), file.getBytes());
+            return temporalFile;
+        } catch (IOException e) {
+            log.error("Error saving file: " + e.getMessage());
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	public void deleteFile(String path) {
+    public void deleteFile(String path) {
 
-		try {
-			FileUtils.forceDelete(FileUtils.getFile(path));
-		} catch (Exception e) {
-			log.error("It has not been possible delete the file: " + e.getMessage());
-		}
+        try {
+            FileUtils.forceDelete(FileUtils.getFile(path));
+        } catch (Exception e) {
+            log.error("It has not been possible delete the file: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public String saveFileToSystem(MultipartFile file, String namespace, Boolean zip) {
+    public String saveFileToSystem(MultipartFile file, String namespace, Boolean zip) {
 
-		try {
+        try {
 
-			String pathFile = null;
+            String pathFile;
 
-			String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
-			String fileName = RandomStringUtils.random(20, true, false) + "." + fileExtension;
+            String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+            String fileName = RandomStringUtils.random(20, true, false) + "." + fileExtension;
 
-			namespace = stFilesDirectory + namespace;
+            namespace = stFilesDirectory + namespace;
 
-			if (zip) {
-				String zipName = RandomStringUtils.random(20, true, false);
-				pathFile = ZipUtil.zipping(file, zipName, fileName, namespace);
-			} else {
-				pathFile = namespace + File.separatorChar + StringUtils.cleanPath(fileName);
-				FileUtils.writeByteArrayToFile(new File(pathFile), file.getBytes());
-			}
+            if (zip) {
+                String zipName = RandomStringUtils.random(20, true, false);
+                pathFile = ZipUtil.zipping(file, zipName, fileName, namespace);
+            } else {
+                pathFile = namespace + File.separatorChar + StringUtils.cleanPath(fileName);
+                FileUtils.writeByteArrayToFile(new File(pathFile), file.getBytes());
+            }
 
-			return pathFile;
+            return pathFile;
 
-		} catch (IOException e) {
-			log.error("Error saving file: " + e.getMessage());
-		}
+        } catch (IOException e) {
+            log.error("Error saving file: " + e.getMessage());
+        }
 
-		return null;
-	}
+        return null;
+    }
 
 }

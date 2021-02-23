@@ -73,8 +73,8 @@ public class WorkspaceV2Controller {
     public ResponseEntity<?> validateMunicipalitiesBeforeAssigned(
             @RequestParam(name = "municipalities") List<Long> municipalities) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
@@ -82,13 +82,11 @@ public class WorkspaceV2Controller {
             httpStatus = HttpStatus.OK;
 
         } catch (BusinessException e) {
-            log.error(
-                    "Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#Business ---> " + e.getMessage());
+            log.error("Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
             responseDto = new BasicResponseDto(e.getMessage(), 2);
         } catch (Exception e) {
-            log.error(
-                    "Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#General ---> " + e.getMessage());
+            log.error("Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 3);
         }
@@ -103,8 +101,8 @@ public class WorkspaceV2Controller {
     @ResponseBody
     public ResponseEntity<Object> assignManager(@ModelAttribute AssignManagerDto assignManagerDto) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
@@ -128,7 +126,7 @@ public class WorkspaceV2Controller {
 
             // validation start date
             String startDateString = assignManagerDto.getStartDate();
-            Date startDate = null;
+            Date startDate;
             if (startDateString != null && !startDateString.isEmpty()) {
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -175,9 +173,9 @@ public class WorkspaceV2Controller {
     public ResponseEntity<?> downloadSupportManager(@PathVariable Long workspaceId, @PathVariable Long managerCode,
                                                     @RequestHeader("authorization") String headerAuthorization) {
 
-        MediaType mediaType = null;
-        File file = null;
-        InputStreamResource resource = null;
+        MediaType mediaType;
+        File file;
+        InputStreamResource resource;
 
         try {
 
@@ -187,7 +185,7 @@ public class WorkspaceV2Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            String pathFile = null;
+            String pathFile;
             if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager
@@ -195,7 +193,6 @@ public class WorkspaceV2Controller {
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
-
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para descargar el soporte.");
                 }
@@ -246,8 +243,8 @@ public class WorkspaceV2Controller {
             @RequestBody UpdateManagerFromWorkspaceDto requestUpdateWorkspace, @PathVariable Long workspaceId,
             @PathVariable Long managerCode, @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
@@ -259,7 +256,7 @@ public class WorkspaceV2Controller {
 
             // validation start date
             String startDateString = requestUpdateWorkspace.getStartDate();
-            Date startDate = null;
+            Date startDate;
             if (startDateString != null && !startDateString.isEmpty()) {
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -301,8 +298,8 @@ public class WorkspaceV2Controller {
             @ModelAttribute UpdateOperatorFromWorkspaceDto updateOperatorWorkspace, @PathVariable Long workspaceId,
             @PathVariable Long operatorCode, @RequestHeader("authorization") String headerAuthorization) {
 
-        HttpStatus httpStatus = null;
-        Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
         try {
 
@@ -323,7 +320,7 @@ public class WorkspaceV2Controller {
 
             // validation start date
             String startDateString = updateOperatorWorkspace.getStartDate();
-            Date startDate = null;
+            Date startDate;
             if (startDateString != null && !startDateString.isEmpty()) {
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -337,7 +334,7 @@ public class WorkspaceV2Controller {
 
             // validation end date
             String endDateString = updateOperatorWorkspace.getEndDate();
-            Date endDate = null;
+            Date endDate;
             if (endDateString != null && !endDateString.isEmpty()) {
                 try {
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -400,9 +397,9 @@ public class WorkspaceV2Controller {
     public ResponseEntity<?> downloadSupportOperator(@PathVariable Long workspaceId, @PathVariable Long operatorCode,
                                                      @RequestHeader("authorization") String headerAuthorization) {
 
-        MediaType mediaType = null;
-        File file = null;
-        InputStreamResource resource = null;
+        MediaType mediaType;
+        File file;
+        InputStreamResource resource;
 
         try {
 
@@ -412,7 +409,7 @@ public class WorkspaceV2Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            String pathFile = null;
+            String pathFile;
             if (userBusiness.isManager(userDtoSession)) {
 
                 // get manager

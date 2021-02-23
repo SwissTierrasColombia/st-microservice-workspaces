@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.ai.st.microservice.workspaces.dto.WorkspaceManagerDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
-import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +61,6 @@ public class WorkspaceOperatorBusiness {
 
     public MicroserviceDeliveryDto getDeliveryFromSupply(Long operatorCode, Long supplyCode) throws BusinessException {
 
-        MicroserviceDeliveryDto deliveryDto = null;
-
         try {
 
             List<MicroserviceDeliveryDto> deliveries = operatorBusiness.getDeliveriesActivesByOperator(operatorCode);
@@ -85,7 +81,7 @@ public class WorkspaceOperatorBusiness {
             throw new BusinessException("No se ha podido obtener la entrega correspondiente al insumo.");
         }
 
-        return deliveryDto;
+        return null;
     }
 
     public MicroserviceDeliveryDto registerDownloadSupply(MicroserviceDeliveryDto deliveryDto, Long supplyCode,
@@ -184,12 +180,12 @@ public class WorkspaceOperatorBusiness {
         }
 
         MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
-        if (!(municipalityDto instanceof MunicipalityDto)) {
+        if (municipalityDto == null) {
             throw new BusinessException("No se ha encontrado el municipio.");
         }
 
         MicroserviceManagerDto managerDto = managerBusiness.getManagerById(deliveryDto.getManagerCode());
-        if (!(managerDto instanceof MicroserviceManagerDto)) {
+        if (managerDto == null) {
             throw new BusinessException("No se ha encontrado el gestor.");
         }
 
@@ -206,7 +202,7 @@ public class WorkspaceOperatorBusiness {
         String observations = deliveryDto.getObservations();
         String operatorName = operatorDto.getName();
 
-        List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<MicroserviceDownloadedSupplyDto>();
+        List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
         String supplyName = "";
         String providerName = "";
         MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
@@ -290,12 +286,12 @@ public class WorkspaceOperatorBusiness {
         }
 
         MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
-        if (!(municipalityDto instanceof MunicipalityDto)) {
+        if (municipalityDto == null) {
             throw new BusinessException("No se ha encontrado el municipio.");
         }
 
         MicroserviceManagerDto managerDto = managerBusiness.getManagerById(deliveryDto.getManagerCode());
-        if (!(managerDto instanceof MicroserviceManagerDto)) {
+        if (managerDto == null) {
             throw new BusinessException("No se ha encontrado el gestor.");
         }
 
@@ -312,7 +308,7 @@ public class WorkspaceOperatorBusiness {
         String observations = deliveryDto.getObservations();
         String operatorName = operatorDto.getName();
 
-        List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<MicroserviceDownloadedSupplyDto>();
+        List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
         for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : deliveryDto.getSupplies()) {
             String supplyName = "";
             String providerName = "";
@@ -369,6 +365,10 @@ public class WorkspaceOperatorBusiness {
             log.error("Error consultando entrega por id: " + e.getMessage());
         }
 
+        if (deliveryDto == null) {
+            throw new BusinessException("No se ha encontrado la entrega.");
+        }
+
         try {
             operatorDto = operatorBusiness.getOperatorById(deliveryDto.getOperator().getId());
         } catch (Exception e) {
@@ -379,21 +379,18 @@ public class WorkspaceOperatorBusiness {
             throw new BusinessException("No se ha encontrado el operador.");
         }
 
-        if (deliveryDto == null) {
-            throw new BusinessException("No se ha encontrado la entrega.");
-        }
 
         if (!deliveryDto.getManagerCode().equals(managerId)) {
             throw new BusinessException("La entrega no pertenece al gestor.");
         }
 
         MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(deliveryDto.getMunicipalityCode());
-        if (!(municipalityDto instanceof MunicipalityDto)) {
+        if (municipalityDto == null) {
             throw new BusinessException("No se ha encontrado el municipio.");
         }
 
         MicroserviceManagerDto managerDto = managerBusiness.getManagerById(deliveryDto.getManagerCode());
-        if (!(managerDto instanceof MicroserviceManagerDto)) {
+        if (managerDto == null) {
             throw new BusinessException("No se ha encontrado el gestor.");
         }
 
@@ -410,7 +407,7 @@ public class WorkspaceOperatorBusiness {
         String observations = deliveryDto.getObservations();
         String operatorName = operatorDto.getName();
 
-        List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<MicroserviceDownloadedSupplyDto>();
+        List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
         for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : deliveryDto.getSupplies()) {
             String supplyName = "";
             String providerName = "";

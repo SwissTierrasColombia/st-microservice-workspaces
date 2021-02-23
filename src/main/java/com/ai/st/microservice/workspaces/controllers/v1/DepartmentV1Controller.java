@@ -31,129 +31,129 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Departments", description = "Manage Departments", tags = { "Departments" })
+@Api(value = "Manage Departments", tags = {"Departments"})
 @RestController
 @RequestMapping("api/workspaces/v1/departments")
 public class DepartmentV1Controller {
 
-	private final Logger log = LoggerFactory.getLogger(DepartmentV1Controller.class);
+    private final Logger log = LoggerFactory.getLogger(DepartmentV1Controller.class);
 
-	@Autowired
-	private UserFeignClient userClient;
+    @Autowired
+    private UserFeignClient userClient;
 
-	@Autowired
-	private ManagerFeignClient managerClient;
+    @Autowired
+    private ManagerFeignClient managerClient;
 
-	@Autowired
-	private DepartmentBusiness departmentBusiness;
+    @Autowired
+    private DepartmentBusiness departmentBusiness;
 
-	@Autowired
-	private MunicipalityBusiness municipalityBusiness;
+    @Autowired
+    private MunicipalityBusiness municipalityBusiness;
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	@RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get departments")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get departments", response = DepartmentDto.class, responseContainer = "List"),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<List<DepartmentDto>> getDepartments(
-			@RequestHeader("authorization") String headerAuthorization) {
+    @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get departments")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Get departments", response = DepartmentDto.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<List<DepartmentDto>> getDepartments(
+            @RequestHeader("authorization") String headerAuthorization) {
 
-		HttpStatus httpStatus = null;
-		List<DepartmentDto> listDepartments = new ArrayList<DepartmentDto>();
+        HttpStatus httpStatus;
+        List<DepartmentDto> listDepartments = new ArrayList<>();
 
-		try {
+        try {
 
-			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-			if (userDtoSession == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-			}
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-			if (userBusiness.isAdministrator(userDtoSession)) {
-				listDepartments = departmentBusiness.getDepartments();
-			} else if (userBusiness.isManager(userDtoSession)) {
+            if (userBusiness.isAdministrator(userDtoSession)) {
+                listDepartments = departmentBusiness.getDepartments();
+            } else if (userBusiness.isManager(userDtoSession)) {
 
-				// get manager
-				MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
-				if (managerDto == null) {
-					throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
-				}
+                // get manager
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+                }
 
-				listDepartments = departmentBusiness.getDepartmentsByManagerCode(managerDto.getId());
-			}
+                listDepartments = departmentBusiness.getDepartmentsByManagerCode(managerDto.getId());
+            }
 
-			httpStatus = HttpStatus.OK;
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error DepartmentV1Controller@getMunicipalitiesById#Microservice ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		} catch (BusinessException e) {
-			listDepartments = null;
-			log.error("Error DepartmentV1Controller@getDepartments#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			listDepartments = null;
-			log.error("Error DepartmentV1Controller@getDepartments#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+            httpStatus = HttpStatus.OK;
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error DepartmentV1Controller@getDepartments#Microservice ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (BusinessException e) {
+            listDepartments = null;
+            log.error("Error DepartmentV1Controller@getDepartments#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        } catch (Exception e) {
+            listDepartments = null;
+            log.error("Error DepartmentV1Controller@getDepartments#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-		return new ResponseEntity<>(listDepartments, httpStatus);
-	}
+        return new ResponseEntity<>(listDepartments, httpStatus);
+    }
 
-	@RequestMapping(value = "/{departmentId}/municipalities", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get municipalities by department")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get municipalities by department", response = MunicipalityDto.class, responseContainer = "List"),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<List<MunicipalityDto>> getMunicipalitiesById(@PathVariable Long departmentId,
-			@RequestHeader("authorization") String headerAuthorization) {
+    @RequestMapping(value = "/{departmentId}/municipalities", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get municipalities by department")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Get municipalities by department", response = MunicipalityDto.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<List<MunicipalityDto>> getMunicipalitiesById(@PathVariable Long departmentId,
+                                                                       @RequestHeader("authorization") String headerAuthorization) {
 
-		HttpStatus httpStatus = null;
-		List<MunicipalityDto> listMunicipalities = new ArrayList<MunicipalityDto>();
+        HttpStatus httpStatus;
+        List<MunicipalityDto> listMunicipalities = new ArrayList<>();
 
-		try {
+        try {
 
-			// user session
-			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-			if (userDtoSession == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-			}
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-			if (userBusiness.isAdministrator(userDtoSession)) {
-				listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
-			} else if (userBusiness.isManager(userDtoSession)) {
+            if (userBusiness.isAdministrator(userDtoSession)) {
+                listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
+            } else if (userBusiness.isManager(userDtoSession)) {
 
-				// get manager
-				MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
-				if (managerDto == null) {
-					throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
-				}
+                // get manager
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+                }
 
-				listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentIdAndManager(departmentId,
-						managerDto.getId());
-			}
+                listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentIdAndManager(departmentId,
+                        managerDto.getId());
+            }
 
-			httpStatus = HttpStatus.OK;
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error DepartmentV1Controller@getMunicipalitiesById#Microservice ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		} catch (BusinessException e) {
-			listMunicipalities = null;
-			log.error("Error DepartmentV1Controller@getMunicipalitiesById#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			listMunicipalities = null;
-			log.error("Error DepartmentV1Controller@getMunicipalitiesById#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+            httpStatus = HttpStatus.OK;
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error DepartmentV1Controller@getMunicipalitiesById#Microservice ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (BusinessException e) {
+            listMunicipalities = null;
+            log.error("Error DepartmentV1Controller@getMunicipalitiesById#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        } catch (Exception e) {
+            listMunicipalities = null;
+            log.error("Error DepartmentV1Controller@getMunicipalitiesById#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-		return new ResponseEntity<>(listMunicipalities, httpStatus);
-	}
+        return new ResponseEntity<>(listMunicipalities, httpStatus);
+    }
 
 }

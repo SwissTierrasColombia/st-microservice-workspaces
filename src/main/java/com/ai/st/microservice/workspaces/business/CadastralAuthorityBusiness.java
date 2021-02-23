@@ -28,161 +28,165 @@ import com.ai.st.microservice.workspaces.utils.FileTool;
 @Component
 public class CadastralAuthorityBusiness {
 
-	@Value("${st.filesDirectory}")
-	private String stFilesDirectory;
+    @Value("${st.filesDirectory}")
+    private String stFilesDirectory;
 
-	@Autowired
-	private MunicipalityBusiness municipalityBusiness;
+    @Autowired
+    private MunicipalityBusiness municipalityBusiness;
 
-	@Autowired
-	private WorkspaceService workspaceService;
+    @Autowired
+    private WorkspaceService workspaceService;
 
-	@Autowired
-	private FileBusiness fileBusiness;
+    @Autowired
+    private FileBusiness fileBusiness;
 
-	@Autowired
-	private SupplyBusiness supplyBusiness;
+    @Autowired
+    private SupplyBusiness supplyBusiness;
 
-	@Autowired
-	private MunicipalityService municipalityService;
+    @Autowired
+    private MunicipalityService municipalityService;
 
-	@Autowired
-	private ReportBusiness reportBusiness;
+    @Autowired
+    private ReportBusiness reportBusiness;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long attachmentTypeId, String name,
-			String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
+    public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long attachmentTypeId, String name,
+                                                                String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
 
-		MicroserviceSupplyDto supplyDto = null;
+        MicroserviceSupplyDto supplyDto = null;
 
-		if (ftp == null && file == null) {
-			throw new BusinessException("Se debe cargar algun tipo de adjunto");
-		}
+        if (ftp == null && file == null) {
+            throw new BusinessException("Se debe cargar algun tipo de adjunto");
+        }
 
-		MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityById(municipalityId);
-		if (municipalityDto == null) {
-			throw new BusinessException("El municipio no existe");
-		}
+        MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityById(municipalityId);
+        if (municipalityDto == null) {
+            throw new BusinessException("El municipio no existe");
+        }
 
-		String municipalityCode = municipalityDto.getCode();
+        String municipalityCode = municipalityDto.getCode();
 
-		List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+        List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
 
-		if (file != null) {
+        if (file != null) {
 
-			if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE
-					&& attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY) {
-				throw new BusinessException("No se puede cargar un archivo para el tipo de insumo seleccionado.");
-			}
+            if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE
+                    && attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY) {
+                throw new BusinessException("No se puede cargar un archivo para el tipo de insumo seleccionado.");
+            }
 
-			String loadedFileName = file.getOriginalFilename();
-			String loadedFileExtension = FilenameUtils.getExtension(loadedFileName);
+            String loadedFileName = file.getOriginalFilename();
+            String loadedFileExtension = FilenameUtils.getExtension(loadedFileName);
 
-			Boolean zipFile = true;
-			if (loadedFileExtension.equalsIgnoreCase("zip")) {
-				zipFile = false;
-			}
+            Boolean zipFile = true;
+            if (loadedFileExtension.equalsIgnoreCase("zip")) {
+                zipFile = false;
+            }
 
-			// save file
-			String urlBase = "/" + municipalityCode.replace(" ", "_") + "/insumos/autoridad_catastral";
-			urlBase = FileTool.removeAccents(urlBase);
-			String urlDocumentaryRepository = fileBusiness.saveFileToSystem(file, urlBase, zipFile);
+            // save file
+            String urlBase = "/" + municipalityCode.replace(" ", "_") + "/insumos/autoridad_catastral";
+            urlBase = FileTool.removeAccents(urlBase);
+            String urlDocumentaryRepository = fileBusiness.saveFileToSystem(file, urlBase, zipFile);
 
-			attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository, attachmentTypeId));
+            attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository, attachmentTypeId));
 
-		} else if (ftp != null) {
+        } else if (ftp != null) {
 
-			if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP) {
-				throw new BusinessException("No se puede cargar FTP para el tipo de insumo seleccionado.");
-			}
+            if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP) {
+                throw new BusinessException("No se puede cargar FTP para el tipo de insumo seleccionado.");
+            }
 
-			attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftp, SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
-		}
+            attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftp, SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
+        }
 
-		try {
-			supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null, attachments, null, userCode,
-					null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name);
-		} catch (Exception e) {
-			throw new BusinessException("No se ha podido cargar el insumo.");
-		}
+        try {
 
-		return supplyDto;
-	}
+            /**
+             * Error refactoring ...
+             */
+//			supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null,  ,attachments, null, userCode,
+//					null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name);
+        } catch (Exception e) {
+            throw new BusinessException("No se ha podido cargar el insumo.");
+        }
 
-	public String generateReport(Long municipalityId) throws BusinessException {
+        return supplyDto;
+    }
 
-		MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityById(municipalityId);
-		if (municipalityDto == null) {
-			throw new BusinessException("El municipio no existe");
-		}
+    public String generateReport(Long municipalityId) throws BusinessException {
 
-		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+        MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityById(municipalityId);
+        if (municipalityDto == null) {
+            throw new BusinessException("El municipio no existe");
+        }
 
-		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
-		if (workspaceEntity == null) {
-			throw new BusinessException("El municipio aún no tiene asignado un gestor");
-		}
+        MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
 
-		/**
-		 * TODO: Refactoring pending ...
-		 * 
-		 * Before:
-		 * 
-		 * MicroserviceManagerDto managerDto =
-		 * managerBusiness.getManagerById(workspaceEntity.getManagerCode());
-		 * 
-		 * 
-		 */
+        WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+        if (workspaceEntity == null) {
+            throw new BusinessException("El municipio aún no tiene asignado un gestor");
+        }
 
-		MicroserviceManagerDto managerDto = managerBusiness.getManagerById(null);
-		if (!(managerDto instanceof MicroserviceManagerDto)) {
-			throw new BusinessException("No se ha encontrado el gestor.");
-		}
+        /**
+         * TODO: Refactoring pending ...
+         *
+         * Before:
+         *
+         * MicroserviceManagerDto managerDto =
+         * managerBusiness.getManagerById(workspaceEntity.getManagerCode());
+         *
+         *
+         */
 
-		String format = "yyyy-MM-dd hh:mm:ss";
+        MicroserviceManagerDto managerDto = managerBusiness.getManagerById(null);
+        if (managerDto == null) {
+            throw new BusinessException("No se ha encontrado el gestor.");
+        }
 
-		// configuration params
-		String namespace = "/" + municipalityDto.getCode() + "/reportes/entregas/ac/";
-		String createdAt = DateTool.formatDate(new Date(), format);
-		String departmentName = municipalityDto.getDepartment().getName();
-		String managerName = managerDto.getName();
-		String municipalityCode = municipalityDto.getCode();
-		String municipalityName = municipalityDto.getName();
+        String format = "yyyy-MM-dd hh:mm:ss";
 
-		List<MicroserviceSupplyACDto> suppliesReport = new ArrayList<MicroserviceSupplyACDto>();
+        // configuration params
+        String namespace = "/" + municipalityDto.getCode() + "/reportes/entregas/ac/";
+        String createdAt = DateTool.formatDate(new Date(), format);
+        String departmentName = municipalityDto.getDepartment().getName();
+        String managerName = managerDto.getName();
+        String municipalityCode = municipalityDto.getCode();
+        String municipalityName = municipalityDto.getName();
 
-		@SuppressWarnings("unchecked")
-		List<MicroserviceSupplyDto> supplies = (List<MicroserviceSupplyDto>) supplyBusiness
-				.getSuppliesByMunicipalityAdmin(municipalityId, new ArrayList<>(), null, null, false);
+        List<MicroserviceSupplyACDto> suppliesReport = new ArrayList<>();
 
-		for (MicroserviceSupplyDto supply : supplies) {
+        @SuppressWarnings("unchecked")
+        List<MicroserviceSupplyDto> supplies = (List<MicroserviceSupplyDto>) supplyBusiness
+                .getSuppliesByMunicipalityAdmin(municipalityId, new ArrayList<>(), null, null, false);
 
-			MicroserviceSupplyOwnerDto owner = supply.getOwners().stream()
-					.filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny().orElse(null);
-			if (owner != null) {
+        for (MicroserviceSupplyDto supply : supplies) {
 
-				String supplyName = supply.getName();
-				String providerName = "Autoridad Catastral";
+            MicroserviceSupplyOwnerDto owner = supply.getOwners().stream()
+                    .filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny().orElse(null);
+            if (owner != null) {
 
-				String type = supply.getAttachments().get(0).getAttachmentType().getName().toUpperCase();
+                String supplyName = supply.getName();
+                String providerName = "Autoridad Catastral";
 
-				suppliesReport.add(new MicroserviceSupplyACDto(supplyName,
-						DateTool.formatDate(supply.getCreatedAt(), format), type, providerName));
+                String type = supply.getAttachments().get(0).getAttachmentType().getName().toUpperCase();
 
-			}
+                suppliesReport.add(new MicroserviceSupplyACDto(supplyName,
+                        DateTool.formatDate(supply.getCreatedAt(), format), type, providerName));
 
-		}
+            }
 
-		if (suppliesReport.size() == 0) {
-			throw new BusinessException("No se puede generar el reporte porque no hay insumos entregados.");
-		}
+        }
 
-		MicroserviceReportInformationDto report = reportBusiness.generateReportDeliveryAC(namespace, createdAt,
-				departmentName, managerName, municipalityCode, municipalityName, suppliesReport);
+        if (suppliesReport.size() == 0) {
+            throw new BusinessException("No se puede generar el reporte porque no hay insumos entregados.");
+        }
 
-		return report.getUrlReport();
-	}
+        MicroserviceReportInformationDto report = reportBusiness.generateReportDeliveryAC(namespace, createdAt,
+                departmentName, managerName, municipalityCode, municipalityName, suppliesReport);
+
+        return report.getUrlReport();
+    }
 
 }
