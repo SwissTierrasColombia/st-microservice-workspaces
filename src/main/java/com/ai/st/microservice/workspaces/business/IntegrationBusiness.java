@@ -257,7 +257,7 @@ public class IntegrationBusiness {
 		integrationDto.setSupplyAntId(integrationEntity.getSupplyAntId());
 		integrationDto.setSupplyCadastreId(integrationEntity.getSupplyCadastreId());
 		integrationDto.setSupplySnrId(integrationEntity.getSupplySnrId());
-		integrationDto.setUrlMap(integrationEntity.getUrlMap());
+		// integrationDto.setUrlMap(integrationEntity.getUrlMap());
 
 		IntegrationStateEntity integrationStateEntity = integrationEntity.getState();
 		integrationDto.setIntegrationState(new IntegrationStateDto(integrationStateEntity.getId(),
@@ -410,7 +410,7 @@ public class IntegrationBusiness {
 			throw new BusinessException("No se ha encontrado la integración");
 		}
 
-		integrationEntity.setUrlMap(url);
+		// integrationEntity.setUrlMap(url);
 
 		integrationEntity = integrationService.updateIntegration(integrationEntity);
 
@@ -419,7 +419,7 @@ public class IntegrationBusiness {
 
 	public void configureViewIntegration(Long integrationId, Long managerId) throws BusinessException {
 
-		IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
+		/*IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
 		if (integrationEntity == null) {
 			throw new BusinessException("La integración no existe");
 		}
@@ -467,7 +467,7 @@ public class IntegrationBusiness {
 		} catch (Exception e) {
 			throw new BusinessException(
 					"No se ha podido realizar la configuración de la integración para su visualización.");
-		}
+		}*/
 
 	}
 

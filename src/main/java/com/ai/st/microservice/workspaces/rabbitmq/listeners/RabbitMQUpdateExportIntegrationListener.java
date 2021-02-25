@@ -115,7 +115,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 					}
 					*/
 					
-					// integrationBusiness.configureViewIntegration(integrationEntity.getId(), workspaceEntity.getManagerCode());
+					integrationBusiness.configureViewIntegration(integrationEntity.getId(), workspaceEntity.getManagerCode());
 
 					// send notification
 
