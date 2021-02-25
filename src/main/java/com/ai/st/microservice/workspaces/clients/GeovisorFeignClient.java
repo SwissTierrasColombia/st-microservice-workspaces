@@ -19,7 +19,7 @@ import feign.Feign;
 import feign.codec.Encoder;
 import feign.form.spring.SpringFormEncoder;
 
-@FeignClient(name = "data", configuration = GeovisorFeignClient.Configuration.class, url = "${st.geovisor.api}")
+@FeignClient(name = "data", configuration = GeovisorFeignClient.Configuration.class, url = "pending")
 public interface GeovisorFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/users/test", consumes = APPLICATION_JSON_VALUE)
