@@ -60,1769 +60,1784 @@ import com.ai.st.microservice.workspaces.utils.ZipUtil;
 @Component
 public class ProviderBusiness {
 
-	@Value("${integrations.database.hostname}")
-	private String databaseIntegrationHost;
+    @Value("${integrations.database.hostname}")
+    private String databaseIntegrationHost;
 
-	@Value("${integrations.database.port}")
-	private String databaseIntegrationPort;
+    @Value("${integrations.database.port}")
+    private String databaseIntegrationPort;
 
-	@Value("${integrations.database.schema}")
-	private String databaseIntegrationSchema;
+    @Value("${integrations.database.schema}")
+    private String databaseIntegrationSchema;
 
-	@Value("${integrations.database.username}")
-	private String databaseIntegrationUsername;
+    @Value("${integrations.database.username}")
+    private String databaseIntegrationUsername;
 
-	@Value("${integrations.database.password}")
-	private String databaseIntegrationPassword;
+    @Value("${integrations.database.password}")
+    private String databaseIntegrationPassword;
 
-	@Value("${st.temporalDirectory}")
-	private String stTemporalDirectory;
+    @Value("${st.temporalDirectory}")
+    private String stTemporalDirectory;
 
-	@Value("${st.filesDirectory}")
-	private String stFilesDirectory;
+    @Value("${st.filesDirectory}")
+    private String stFilesDirectory;
 
-	// Supplies requested states
-	public static final Long SUPPLY_REQUESTED_STATE_ACCEPTED = (long) 1;
-	public static final Long SUPPLY_REQUESTED_STATE_REJECTED = (long) 2;
-	public static final Long SUPPLY_REQUESTED_STATE_VALIDATING = (long) 3;
-	public static final Long SUPPLY_REQUESTED_STATE_PENDING = (long) 4;
-	public static final Long SUPPLY_REQUESTED_STATE_UNDELIVERED = (long) 5;
-	public static final Long SUPPLY_REQUESTED_STATE_PENDING_REVIEW = (long) 6;
-	public static final Long SUPPLY_REQUESTED_STATE_SETTING_REVIEW = (long) 7;
-	public static final Long SUPPLY_REQUESTED_STATE_IN_REVIEW = (long) 8;
-	public static final Long SUPPLY_REQUESTED_STATE_CLOSING_REVIEW = (long) 9;
+    // Supplies requested states
+    public static final Long SUPPLY_REQUESTED_STATE_ACCEPTED = (long) 1;
+    public static final Long SUPPLY_REQUESTED_STATE_REJECTED = (long) 2;
+    public static final Long SUPPLY_REQUESTED_STATE_VALIDATING = (long) 3;
+    public static final Long SUPPLY_REQUESTED_STATE_PENDING = (long) 4;
+    public static final Long SUPPLY_REQUESTED_STATE_UNDELIVERED = (long) 5;
+    public static final Long SUPPLY_REQUESTED_STATE_PENDING_REVIEW = (long) 6;
+    public static final Long SUPPLY_REQUESTED_STATE_SETTING_REVIEW = (long) 7;
+    public static final Long SUPPLY_REQUESTED_STATE_IN_REVIEW = (long) 8;
+    public static final Long SUPPLY_REQUESTED_STATE_CLOSING_REVIEW = (long) 9;
 
-	// Requests States
-	public static final Long REQUEST_STATE_REQUESTED = (long) 1;
-	public static final Long REQUEST_STATE_DELIVERED = (long) 2;
-	public static final Long REQUEST_STATE_CANCELLED = (long) 3;
+    // Requests States
+    public static final Long REQUEST_STATE_REQUESTED = (long) 1;
+    public static final Long REQUEST_STATE_DELIVERED = (long) 2;
+    public static final Long REQUEST_STATE_CANCELLED = (long) 3;
 
-	// Petitions States
-	public static final Long PETITION_STATE_PENDING = (long) 1;
-	public static final Long PETITION_STATE_ACCEPT = (long) 2;
-	public static final Long PETITION_STATE_REJECT = (long) 3;
+    // Petitions States
+    public static final Long PETITION_STATE_PENDING = (long) 1;
+    public static final Long PETITION_STATE_ACCEPT = (long) 2;
+    public static final Long PETITION_STATE_REJECT = (long) 3;
 
-	// Providers
-	public static final Long PROVIDER_IGAC_ID = (long) 1;
-	public static final Long PROVIDER_SNR_ID = (long) 8;
+    // Providers
+    public static final Long PROVIDER_IGAC_ID = (long) 1;
+    public static final Long PROVIDER_SNR_ID = (long) 8;
 
-	// Profiles
-	public static final Long PROVIDER_PROFILE_CADASTRAL = (long) 1;
+    // Profiles
+    public static final Long PROVIDER_PROFILE_CADASTRAL = (long) 1;
 
-	// Types supplies
-	public static final Long PROVIDER_SUPPLY_CADASTRAL = (long) 2;
-	public static final Long PROVIDER_SNR_SUPPLY_REGISTRAL = (long) 12;
+    // Types supplies
+    public static final Long PROVIDER_SUPPLY_CADASTRAL = (long) 2;
+    public static final Long PROVIDER_SNR_SUPPLY_REGISTRAL = (long) 12;
 
-	private final Logger log = LoggerFactory.getLogger(ProviderBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(ProviderBusiness.class);
 
-	@Autowired
-	private ProviderFeignClient providerClient;
+    @Autowired
+    private ProviderFeignClient providerClient;
 
-	@Autowired
-	private TaskFeignClient taskClient;
+    @Autowired
+    private TaskFeignClient taskClient;
 
-	@Autowired
-	private SupplyBusiness supplyBusiness;
+    @Autowired
+    private SupplyBusiness supplyBusiness;
 
-	@Autowired
-	private IliBusiness iliBusiness;
+    @Autowired
+    private IliBusiness iliBusiness;
 
-	@Autowired
-	private FileBusiness fileBusiness;
+    @Autowired
+    private FileBusiness fileBusiness;
 
-	@Autowired
-	private UserFeignClient userClient;
+    @Autowired
+    private UserFeignClient userClient;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private IMunicipalityService municipalityService;
+    @Autowired
+    private IMunicipalityService municipalityService;
 
-	@Autowired
-	private DatabaseIntegrationBusiness databaseIntegrationBusiness;
+    @Autowired
+    private DatabaseIntegrationBusiness databaseIntegrationBusiness;
 
-	@Autowired
-	private CrytpoBusiness cryptoBusiness;
+    @Autowired
+    private CrytpoBusiness cryptoBusiness;
 
-	@Autowired
-	private FTPBusiness ftpBusiness;
-
-	@Autowired
-	private MunicipalityBusiness municipalityBusiness;
-
-	public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
-			MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
-			throws BusinessException {
+    @Autowired
+    private FTPBusiness ftpBusiness;
+
+    @Autowired
+    private MunicipalityBusiness municipalityBusiness;
+
+    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
+                                                MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
+            throws BusinessException {
 
-		MicroserviceRequestDto requestUpdatedDto = null;
+        MicroserviceRequestDto requestUpdatedDto = null;
 
-		if (files.length == 0 && (url == null || url.isEmpty()) && (justification == null || justification.isEmpty())) {
-			throw new BusinessException("Se debe justificar porque no se cargará el insumo.");
-		}
-
-		MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
-
-		if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
-			throw new BusinessException("No tiene acceso a la solicitud.");
-		}
-
-		if (!requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
-			throw new BusinessException("La solicitud esta cerrada, no se puede modificar.");
-		}
-
-		Boolean delivered = (files.length > 0 || (url != null && !url.isEmpty())) ? true : false;
-		if (delivered && (observations == null || observations.isEmpty())) {
-			throw new BusinessException("Las observaciones son requeridas.");
-		}
-
-		List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
-		MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
-				.filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
-		if (userProviderFound == null) {
-			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
-		}
-
-		MicroserviceSupplyRequestedDto supplyRequested = requestDto.getSuppliesRequested().stream()
-				.filter(sR -> sR.getTypeSupply().getId().equals(typeSupplyId)).findAny().orElse(null);
+        if (files.length == 0 && (url == null || url.isEmpty()) && (justification == null || justification.isEmpty())) {
+            throw new BusinessException("Se debe justificar porque no se cargará el insumo.");
+        }
+
+        MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
+
+        if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
+            throw new BusinessException("No tiene acceso a la solicitud.");
+        }
+
+        if (!requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
+            throw new BusinessException("La solicitud esta cerrada, no se puede modificar.");
+        }
+
+        Boolean delivered = (files.length > 0 || (url != null && !url.isEmpty())) ? true : false;
+        if (delivered && (observations == null || observations.isEmpty())) {
+            throw new BusinessException("Las observaciones son requeridas.");
+        }
+
+        List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
+        MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
+                .filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
+        if (userProviderFound == null) {
+            throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
+        }
+
+        MicroserviceSupplyRequestedDto supplyRequested = requestDto.getSuppliesRequested().stream()
+                .filter(sR -> sR.getTypeSupply().getId().equals(typeSupplyId)).findAny().orElse(null);
 
-		if (supplyRequested == null) {
-			throw new BusinessException("El tipo de insumo no pertenece a la solicitud.");
-		}
-
-		// verify if the user's profile matches the input profile
-		MicroserviceProviderProfileDto profileSupply = supplyRequested.getTypeSupply().getProviderProfile();
-		MicroserviceProviderProfileDto profileUser = userProviderFound.getProfiles().stream()
-				.filter(profile -> profileSupply.getId().equals(profile.getId())).findAny().orElse(null);
-		if (profileUser == null) {
-			throw new BusinessException(
-					"El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
-		}
+        if (supplyRequested == null) {
+            throw new BusinessException("El tipo de insumo no pertenece a la solicitud.");
+        }
+
+        // verify if the user's profile matches the input profile
+        MicroserviceProviderProfileDto profileSupply = supplyRequested.getTypeSupply().getProviderProfile();
+        MicroserviceProviderProfileDto profileUser = userProviderFound.getProfiles().stream()
+                .filter(profile -> profileSupply.getId().equals(profile.getId())).findAny().orElse(null);
+        if (profileUser == null) {
+            throw new BusinessException(
+                    "El usuario no tiene asignado el perfil necesario para cargar el tipo de insumo.");
+        }
+
+        try {
+
+            // verify if the supply is assigned to a task
+            List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+            List<Long> taskCategories = new ArrayList<>(
+                    Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+            List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+            for (MicroserviceTaskDto taskDto : tasksDto) {
+                MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+                        .filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+                if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+                    MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
+                            .filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
+
+                    MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties().stream()
+                            .filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny().orElse(null);
+
+                    if (propertyRequest != null && propertyTypeSupply != null) {
+
+                        Long metaRequestId = Long.parseLong(propertyRequest.getValue());
+                        Long metaTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+
+                        if (metaRequestId.equals(requestId) && metaTypeSupplyId.equals(typeSupplyId)) {
+
+                            MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
+                                    .filter(m -> m.getMemberCode().equals(userCode)).findAny().orElse(null);
+                            if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
+                                throw new BusinessException(
+                                        "No es posible cargar el insumo, la tarea está asignada a otro usuario.");
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("No se ha podido consultar si la tarea esta asociada al cargue de insumo: " + e.getMessage());
+        }
+
+        if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
+            throw new BusinessException("Ya se ha cargado un insumo que esta en validación.");
+        }
+        if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)
+                || supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW)
+                || supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)
+                || supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW)) {
+            throw new BusinessException("No se puede cargar el insumo porque el insumo esta en revisión.");
+        }
+
+        Long supplyRequestedStateId = null;
+
+        MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+
+        if (delivered == true) {
+
+            // send supply to microservice supplies
+
+            List<String> urls = new ArrayList<String>();
+            if (files.length > 0) {
+                for (MultipartFile fileUploaded : files) {
+
+                    String loadedFileName = fileUploaded.getOriginalFilename();
+                    String loadedFileExtension = FilenameUtils.getExtension(loadedFileName);
+
+                    String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + loadedFileExtension;
+                    String filePathTemporal = fileBusiness.loadFileToSystem(fileUploaded, fileNameRandom);
+
+                    Boolean zipFile = false;
+
+                    List<MicroserviceExtensionDto> extensionAllowed = supplyRequested.getTypeSupply().getExtensions();
+
+                    Boolean fileAllowed = false;
+                    Boolean isLoadShp = false;
+                    List<String> loadedFileExtensions = new ArrayList<>();
 
-		try {
+                    // verify if the supply is a shp file
+                    MicroserviceExtensionDto extensionShpDto = extensionAllowed.stream()
+                            .filter(ext -> ext.getName().equalsIgnoreCase("shp")).findAny().orElse(null);
+                    if (extensionShpDto != null) {
+
+                        List<String> extensionsShp = new ArrayList<String>(Arrays.asList("shp", "dbf", "shx", "prj"));
+
+                        if (loadedFileExtension.equalsIgnoreCase("zip")) {
+
+                            isLoadShp = ZipUtil.zipContainsFile(filePathTemporal, extensionsShp);
+                            if (isLoadShp) {
+                                fileAllowed = ZipUtil.zipMustContains(filePathTemporal, extensionsShp);
+                                loadedFileExtensions = extensionsShp;
+                                zipFile = false;
+                            }
+
+                        }
 
-			// verify if the supply is assigned to a task
-			List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
-			List<Long> taskCategories = new ArrayList<>(
-					Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
-			List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
-			for (MicroserviceTaskDto taskDto : tasksDto) {
-				MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
-						.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
-				if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+                    }
+
+                    // verify if the supply is a gdb file
+                    boolean isLoadGdb = false;
+                    MicroserviceExtensionDto extensionGdbDto = extensionAllowed.stream()
+                            .filter(ext -> ext.getName().equalsIgnoreCase("gdb")).findAny().orElse(null);
+                    if (extensionGdbDto != null) {
+
+                        if (loadedFileExtension.equalsIgnoreCase("zip")) {
+                            isLoadGdb = ZipUtil.hasGDBDatabase(filePathTemporal);
+                            if (isLoadGdb) {
+                                zipFile = false;
+                                fileAllowed = true;
+                            }
+                        }
+                    }
+
+                    if (loadedFileExtension.equalsIgnoreCase("zip")) {
+
+                        if (!isLoadShp && !isLoadGdb) {
+                            List<String> extensionsAllowed = extensionAllowed.stream().map(ext -> {
+                                return ext.getName();
+                            }).collect(Collectors.toList());
+
+                            fileAllowed = ZipUtil.zipContainsFile(filePathTemporal, extensionsAllowed);
+                            loadedFileExtensions = ZipUtil.getExtensionsFromZip(filePathTemporal);
+                            zipFile = false;
+                        }
+
+                    } else {
+
+                        MicroserviceExtensionDto extensionDto = extensionAllowed.stream()
+                                .filter(ext -> ext.getName().equalsIgnoreCase(loadedFileExtension)).findAny()
+                                .orElse(null);
+                        fileAllowed = extensionDto instanceof MicroserviceExtensionDto;
+                        loadedFileExtensions.add(loadedFileExtension);
+                        zipFile = true;
+                    }
+
+                    if (!fileAllowed) {
+                        throw new BusinessException("El insumo no cumple los tipos de archivo permitidos.");
+                    }
+
+                    String supplyExtension = loadedFileExtensions.stream().filter(ext -> ext.equalsIgnoreCase("xtf"))
+                            .findAny().orElse("");
+
+                    try {
+                        FileUtils.deleteQuietly(new File(filePathTemporal));
+                    } catch (Exception e) {
+                        log.error("No se ha podido eliminar el archivo temporal: " + e.getMessage());
+                    }
+
+                    // save file
+                    String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
+                            + providerDto.getName().replace(" ", "_") + "/"
+                            + supplyRequested.getTypeSupply().getName().replace(" ", "_");
+
+                    urlBase = FileTool.removeAccents(urlBase);
+
+                    String urlDocumentaryRepository = fileBusiness.saveFileToSystem(fileUploaded, urlBase, zipFile);
+
+                    if (!supplyExtension.isEmpty()) {
+                        supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
+
+                        // validate xtf with ilivalidator
+                        iliBusiness.startValidation(requestId, observations, urlDocumentaryRepository,
+                                urlDocumentaryRepository, supplyRequested.getId(), userCode,
+                                supplyRequested.getModelVersion());
+
+                        updateSupply.setUrl(null);
+                        updateSupply.setFtp(null);
+
+                    } else {
+
+                        supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
+
+                        urls.add(urlDocumentaryRepository);
+
+                        updateSupply.setUrl(urls.get(0));
+                        updateSupply.setObservations(observations);
+
+                    }
+                }
+            } else {
+                updateSupply.setFtp(url);
+                updateSupply.setObservations(observations);
+                supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
+            }
+
+        } else {
+            supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED;
+        }
+
+        log.info("Update request # " + requestId + " - " + supplyRequested.getId());
+
+        // Update request
+        try {
+
+            updateSupply.setDelivered(delivered);
+            updateSupply.setDeliveryBy(userCode);
+            updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
+            updateSupply.setJustification(justification);
+            requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(), updateSupply);
+
+            for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
+                if (supply.getDeliveredBy() != null) {
+                    try {
+                        MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
+                        supply.setUserDeliveryBy(userDto);
+                    } catch (Exception e) {
+                        supply.setUserDeliveryBy(null);
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+        }
+
+        return requestUpdatedDto;
+    }
+
+    public MicroserviceRequestDto closeRequest(Long requestId, MicroserviceProviderDto providerDto, Long userCode)
+            throws BusinessException {
+
+        MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
+
+        if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
+            throw new BusinessException("No tiene acceso a la solicitud.");
+        }
+
+        if (!requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
+            throw new BusinessException("La solicitud esta cerrada, no se puede cerrar.");
+        }
+
+        List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
+        MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
+                .filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
+        if (userProviderFound == null) {
+            throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
+        }
+
+        Boolean canClose = false;
+        for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+            if (!supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)
+                    && !supplyRequested.getState().getId()
+                    .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
+                throw new BusinessException(
+                        "No se puede cerrar la solicitud porque no se han cargado todos los insumos.");
+            }
+
+            if (supplyRequested.getDeliveredBy().equals(userCode)) {
+                canClose = true;
+            }
+        }
+
+        if (!canClose) {
+            throw new BusinessException(
+                    "No se puede cerrar la solicitud porque el usuario no es la persona que ha cargado los insumos.");
+        }
+
+        Boolean sendToReview = false;
+        MicroserviceSupplyRequestedDto supplyRegistral = null;
+        if (requestDto.getProvider().getId().equals(ProviderBusiness.PROVIDER_SNR_ID)) {
+
+            supplyRegistral = requestDto.getSuppliesRequested().stream()
+                    .filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SNR_SUPPLY_REGISTRAL))
+                    .findAny().orElse(null);
+            sendToReview = (supplyRegistral != null);
+        }
+
+        MicroserviceRequestDto requestUpdatedDto = null;
+
+        if (sendToReview) {
+
+            // Update supply requested
+            try {
+
+                MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+                updateSupply.setDelivered(null);
+                updateSupply.setDeliveryBy(null);
+                updateSupply.setSupplyRequestedStateId(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
+                updateSupply.setJustification(null);
+                requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRegistral.getId(),
+                        updateSupply);
+
+                for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
+                    if (supply.getDeliveredBy() != null) {
+                        try {
+                            MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
+                            supply.setUserDeliveryBy(userDto);
+                        } catch (Exception e) {
+                            supply.setUserDeliveryBy(null);
+                        }
+                    }
+                }
+
+            } catch (Exception e) {
+                throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+            }
+
+        } else {
+
+            try {
+
+                for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+
+                    // verify if the supply is assigned to a task
+                    List<Long> taskStates = new ArrayList<>(
+                            Arrays.asList(TaskBusiness.TASK_STATE_STARTED, TaskBusiness.TASK_STATE_ASSIGNED));
+                    List<Long> taskCategories = new ArrayList<>(
+                            Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+
+                    List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+
+                    for (MicroserviceTaskDto taskDto : tasksDto) {
+                        MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+                                .filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
+                        if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+
+                            MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties()
+                                    .stream().filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny()
+                                    .orElse(null);
+
+                            MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties()
+                                    .stream().filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny()
+                                    .orElse(null);
+
+                            if (propertyRequest != null && propertyTypeSupply != null) {
+
+                                Long taskRequestId = Long.parseLong(propertyRequest.getValue());
+                                Long taskTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+
+                                if (taskRequestId.equals(requestId)
+                                        && taskTypeSupplyId.equals(supplyRequested.getTypeSupply().getId())) {
+
+                                    Long supplyRequestedState = supplyRequested.getState().getId();
+
+                                    if (supplyRequestedState.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
+                                        taskClient.closeTask(taskDto.getId());
+                                    } else if (supplyRequestedState
+                                            .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
+                                        MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
+                                        cancelTaskDto.setReason("Cancelada por el sistema.");
+                                        taskClient.cancelTask(taskDto.getId(), cancelTaskDto);
+                                    }
 
-					MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
-							.filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny().orElse(null);
+                                }
 
-					MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties().stream()
-							.filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny().orElse(null);
-
-					if (propertyRequest != null && propertyTypeSupply != null) {
-
-						Long metaRequestId = Long.parseLong(propertyRequest.getValue());
-						Long metaTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+                            }
+                        }
+                    }
 
-						if (metaRequestId.equals(requestId) && metaTypeSupplyId.equals(typeSupplyId)) {
-
-							MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
-									.filter(m -> m.getMemberCode().equals(userCode)).findAny().orElse(null);
-							if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
-								throw new BusinessException(
-										"No es posible cargar el insumo, la tarea está asignada a otro usuario.");
-							}
-						}
-					}
-				}
-			}
-
-		} catch (Exception e) {
-			log.error("No se ha podido consultar si la tarea esta asociada al cargue de insumo: " + e.getMessage());
-		}
-
-		if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
-			throw new BusinessException("Ya se ha cargado un insumo que esta en validación.");
-		}
-		if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)
-				|| supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW)
-				|| supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)
-				|| supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW)) {
-			throw new BusinessException("No se puede cargar el insumo porque el insumo esta en revisión.");
-		}
+                }
 
-		Long supplyRequestedStateId = null;
+            } catch (Exception e) {
+                log.error("Ha ocurrido un error intentando cerrar las tareas asociadas a la solicitud");
+            }
 
-		MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+            try {
 
-		if (delivered == true) {
+                for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
 
-			// send supply to microservice supplies
+                    if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
 
-			List<String> urls = new ArrayList<String>();
-			if (files.length > 0) {
-				for (MultipartFile fileUploaded : files) {
+                        List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+                        if (supplyRequested.getUrl() != null) {
+                            attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getUrl(),
+                                    SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+                        }
 
-					String loadedFileName = fileUploaded.getOriginalFilename();
-					String loadedFileExtension = FilenameUtils.getExtension(loadedFileName);
+                        if (supplyRequested.getFtp() != null) {
+                            attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getFtp(),
+                                    SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
+                        }
 
-					String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + loadedFileExtension;
-					String filePathTemporal = fileBusiness.loadFileToSystem(fileUploaded, fileNameRandom);
+                        supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
+                                supplyRequested.getTypeSupply().getId(), attachments, requestId, userCode,
+                                providerDto.getId(), null, null, supplyRequested.getModelVersion(),
+                                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName());
+                    }
 
-					Boolean zipFile = false;
+                }
 
-					List<MicroserviceExtensionDto> extensionAllowed = supplyRequested.getTypeSupply().getExtensions();
+            } catch (Exception e) {
+                log.error("No se ha podido crear los insumos: " + e.getMessage());
+                throw new BusinessException("No se ha podido disponer los insumos al municipio.");
+            }
 
-					Boolean fileAllowed = false;
-					Boolean isLoadShp = false;
-					List<String> loadedFileExtensions = new ArrayList<>();
+            try {
+                requestUpdatedDto = providerClient.closeRequest(requestId, userCode);
+            } catch (Exception e) {
+                throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+            }
 
-					// verify if the supply is a shp file
-					MicroserviceExtensionDto extensionShpDto = extensionAllowed.stream()
-							.filter(ext -> ext.getName().equalsIgnoreCase("shp")).findAny().orElse(null);
-					if (extensionShpDto != null) {
+        }
 
-						List<String> extensionsShp = new ArrayList<String>(Arrays.asList("shp", "dbf", "shx", "prj"));
+        return requestUpdatedDto;
+    }
 
-						if (loadedFileExtension.equalsIgnoreCase("zip")) {
+    public MicroserviceRequestDto closeRequest(Long requestId, Long userCode) {
 
-							isLoadShp = ZipUtil.zipContainsFile(filePathTemporal, extensionsShp);
-							if (isLoadShp) {
-								fileAllowed = ZipUtil.zipMustContains(filePathTemporal, extensionsShp);
-								loadedFileExtensions = extensionsShp;
-								zipFile = false;
-							}
-
-						}
-
-					}
-
-					if (loadedFileExtension.equalsIgnoreCase("zip")) {
-
-						if (!isLoadShp) {
-							List<String> extensionsAllowed = extensionAllowed.stream().map(ext -> {
-								return ext.getName();
-							}).collect(Collectors.toList());
+        MicroserviceRequestDto requestDto = null;
 
-							fileAllowed = ZipUtil.zipContainsFile(filePathTemporal, extensionsAllowed);
-							loadedFileExtensions = ZipUtil.getExtensionsFromZip(filePathTemporal);
-							zipFile = false;
-						}
+        try {
+            requestDto = providerClient.closeRequest(requestId, userCode);
+        } catch (Exception e) {
+            log.error("Error cerrando solicitud: " + e.getMessage());
+        }
 
-					} else {
+        return requestDto;
+    }
 
-						MicroserviceExtensionDto extensionDto = extensionAllowed.stream()
-								.filter(ext -> ext.getName().equalsIgnoreCase(loadedFileExtension)).findAny()
-								.orElse(null);
-						fileAllowed = extensionDto instanceof MicroserviceExtensionDto;
-						loadedFileExtensions.add(loadedFileExtension);
-						zipFile = true;
-					}
+    public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
+            throws BusinessException {
 
-					if (!fileAllowed) {
-						throw new BusinessException("El insumo no cumple los tipos de archivo permitidos.");
-					}
+        List<MicroserviceProviderUserDto> usersDto = new ArrayList<>();
 
-					String supplyExtension = loadedFileExtensions.stream().filter(ext -> ext.equalsIgnoreCase("xtf"))
-							.findAny().orElse("");
-
-					try {
-						FileUtils.deleteQuietly(new File(filePathTemporal));
-					} catch (Exception e) {
-						log.error("No se ha podido eliminar el archivo temporal: " + e.getMessage());
-					}
-
-					// save file
-					String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
-							+ providerDto.getName().replace(" ", "_") + "/"
-							+ supplyRequested.getTypeSupply().getName().replace(" ", "_");
-
-					urlBase = FileTool.removeAccents(urlBase);
-
-					String urlDocumentaryRepository = fileBusiness.saveFileToSystem(fileUploaded, urlBase, zipFile);
-
-					if (!supplyExtension.isEmpty()) {
-						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING;
-
-						// validate xtf with ilivalidator
-						iliBusiness.startValidation(requestId, observations, urlDocumentaryRepository,
-								urlDocumentaryRepository, supplyRequested.getId(), userCode,
-								supplyRequested.getModelVersion());
-
-						updateSupply.setUrl(null);
-						updateSupply.setFtp(null);
-
-					} else {
-
-						supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
-
-						urls.add(urlDocumentaryRepository);
-
-						updateSupply.setUrl(urls.get(0));
-						updateSupply.setObservations(observations);
-
-					}
-				}
-			} else {
-				updateSupply.setFtp(url);
-				updateSupply.setObservations(observations);
-				supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
-			}
-
-		} else {
-			supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED;
-		}
-
-		log.info("Update request # " + requestId + " - " + supplyRequested.getId());
-
-		// Update request
-		try {
-
-			updateSupply.setDelivered(delivered);
-			updateSupply.setDeliveryBy(userCode);
-			updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
-			updateSupply.setJustification(justification);
-			requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(), updateSupply);
-
-			for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
-				if (supply.getDeliveredBy() != null) {
-					try {
-						MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
-						supply.setUserDeliveryBy(userDto);
-					} catch (Exception e) {
-						supply.setUserDeliveryBy(null);
-					}
-				}
-			}
-
-		} catch (Exception e) {
-			throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
-		}
-
-		return requestUpdatedDto;
-	}
-
-	public MicroserviceRequestDto closeRequest(Long requestId, MicroserviceProviderDto providerDto, Long userCode)
-			throws BusinessException {
-
-		MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
-
-		if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
-			throw new BusinessException("No tiene acceso a la solicitud.");
-		}
-
-		if (!requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
-			throw new BusinessException("La solicitud esta cerrada, no se puede cerrar.");
-		}
-
-		List<MicroserviceProviderUserDto> usersByProvider = providerClient.findUsersByProviderId(providerDto.getId());
-		MicroserviceProviderUserDto userProviderFound = usersByProvider.stream()
-				.filter(user -> userCode.equals(user.getUserCode())).findAny().orElse(null);
-		if (userProviderFound == null) {
-			throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
-		}
-
-		Boolean canClose = false;
-		for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
-			if (!supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)
-					&& !supplyRequested.getState().getId()
-							.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
-				throw new BusinessException(
-						"No se puede cerrar la solicitud porque no se han cargado todos los insumos.");
-			}
-
-			if (supplyRequested.getDeliveredBy().equals(userCode)) {
-				canClose = true;
-			}
-		}
-
-		if (!canClose) {
-			throw new BusinessException(
-					"No se puede cerrar la solicitud porque el usuario no es la persona que ha cargado los insumos.");
-		}
-
-		Boolean sendToReview = false;
-		MicroserviceSupplyRequestedDto supplyRegistral = null;
-		if (requestDto.getProvider().getId().equals(ProviderBusiness.PROVIDER_SNR_ID)) {
-
-			supplyRegistral = requestDto.getSuppliesRequested().stream()
-					.filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SNR_SUPPLY_REGISTRAL))
-					.findAny().orElse(null);
-			sendToReview = (supplyRegistral != null);
-		}
-
-		MicroserviceRequestDto requestUpdatedDto = null;
-
-		if (sendToReview) {
-
-			// Update supply requested
-			try {
-
-				MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
-				updateSupply.setDelivered(null);
-				updateSupply.setDeliveryBy(null);
-				updateSupply.setSupplyRequestedStateId(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
-				updateSupply.setJustification(null);
-				requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRegistral.getId(),
-						updateSupply);
-
-				for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
-					if (supply.getDeliveredBy() != null) {
-						try {
-							MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
-							supply.setUserDeliveryBy(userDto);
-						} catch (Exception e) {
-							supply.setUserDeliveryBy(null);
-						}
-					}
-				}
-
-			} catch (Exception e) {
-				throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
-			}
-
-		} else {
+        try {
 
-			try {
+            if (profiles != null) {
+                usersDto = providerClient.findUsersByProviderIdAndProfiles(providerId, profiles);
+            } else {
+                usersDto = providerClient.findUsersByProviderId(providerId);
+            }
 
-				for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+        } catch (BusinessException e) {
+            String message = "No se han podido obtener los usuarios del proveedor.";
+            this.log.error(message + ": " + e.getMessage());
+            throw new BusinessException(message);
+        }
 
-					// verify if the supply is assigned to a task
-					List<Long> taskStates = new ArrayList<>(
-							Arrays.asList(TaskBusiness.TASK_STATE_STARTED, TaskBusiness.TASK_STATE_ASSIGNED));
-					List<Long> taskCategories = new ArrayList<>(
-							Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
-
-					List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+        return usersDto;
+    }
 
-					for (MicroserviceTaskDto taskDto : tasksDto) {
-						MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
-								.filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
-						if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+    public List<MicroserviceRequestDto> getRequestsByEmmitersManager(Long managerCode) throws BusinessException {
 
-							MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties()
-									.stream().filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny()
-									.orElse(null);
+        List<MicroserviceRequestDto> listRequestsDto = new ArrayList<>();
 
-							MicroserviceTaskMetadataPropertyDto propertyTypeSupply = metadataRequest.getProperties()
-									.stream().filter(p -> p.getKey().equalsIgnoreCase("typeSupplyId")).findAny()
-									.orElse(null);
+        try {
 
-							if (propertyRequest != null && propertyTypeSupply != null) {
+            listRequestsDto = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
 
-								Long taskRequestId = Long.parseLong(propertyRequest.getValue());
-								Long taskTypeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
+        } catch (Exception e) {
+            log.error("Error consultando solicitudes: " + e.getMessage());
+        }
 
-								if (taskRequestId.equals(requestId)
-										&& taskTypeSupplyId.equals(supplyRequested.getTypeSupply().getId())) {
+        return listRequestsDto;
+    }
 
-									Long supplyRequestedState = supplyRequested.getState().getId();
+    public MicroserviceRequestPaginatedDto getRequestsByManagerAndMunicipality(int page, Long managerCode,
+                                                                               String municipalityCode) throws BusinessException {
 
-									if (supplyRequestedState.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
-										taskClient.closeTask(taskDto.getId());
-									} else if (supplyRequestedState
-											.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
-										MicroserviceCancelTaskDto cancelTaskDto = new MicroserviceCancelTaskDto();
-										cancelTaskDto.setReason("Cancelada por el sistema.");
-										taskClient.cancelTask(taskDto.getId(), cancelTaskDto);
-									}
+        MicroserviceRequestPaginatedDto data = null;
 
-								}
+        try {
 
-							}
-						}
-					}
+            data = providerClient.getRequestsByManagerAndMunicipality(managerCode, municipalityCode, page);
 
-				}
+            List<MicroserviceRequestDto> requests = data.getItems();
+            for (MicroserviceRequestDto requestDto : requests) {
+                requestDto = this.completeInformationRequest(requestDto);
+            }
 
-			} catch (Exception e) {
-				log.error("Ha ocurrido un error intentando cerrar las tareas asociadas a la solicitud");
-			}
+        } catch (BusinessException e) {
+            log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
+        }
 
-			try {
+        return data;
+    }
 
-				for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+    public List<MicroserviceRequestDto> getRequestsByPackage(String packageLabel) throws BusinessException {
 
-					if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
+        List<MicroserviceRequestDto> requestsDto = new ArrayList<MicroserviceRequestDto>();
 
-						List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
-						if (supplyRequested.getUrl() != null) {
-							attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getUrl(),
-									SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
-						}
+        try {
 
-						if (supplyRequested.getFtp() != null) {
-							attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getFtp(),
-									SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
-						}
+            requestsDto = providerClient.getRequestsByPackage(packageLabel);
 
-						supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
-								supplyRequested.getTypeSupply().getId(), attachments, requestId, userCode,
-								providerDto.getId(), null, null, supplyRequested.getModelVersion(),
-								SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName());
-					}
+            for (MicroserviceRequestDto requestDto : requestsDto) {
+                requestDto = this.completeInformationRequest(requestDto);
+            }
 
-				}
+        } catch (BusinessException e) {
+            log.error("Error consultando solicitudes por paquete: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Error consultando solicitudes por paquete: " + e.getMessage());
+        }
 
-			} catch (Exception e) {
-				log.error("No se ha podido crear los insumos: " + e.getMessage());
-				throw new BusinessException("No se ha podido disponer los insumos al municipio.");
-			}
+        return requestsDto;
+    }
 
-			try {
-				requestUpdatedDto = providerClient.closeRequest(requestId, userCode);
-			} catch (Exception e) {
-				throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
-			}
+    public MicroserviceRequestPaginatedDto getRequestsByManagerAndProvider(int page, Long managerCode, Long providerId)
+            throws BusinessException {
 
-		}
+        MicroserviceRequestPaginatedDto data = null;
 
-		return requestUpdatedDto;
-	}
+        try {
 
-	public MicroserviceRequestDto closeRequest(Long requestId, Long userCode) {
+            data = providerClient.getRequestsByManagerAndProvider(managerCode, providerId, page);
 
-		MicroserviceRequestDto requestDto = null;
+            List<MicroserviceRequestDto> requests = data.getItems();
+            for (MicroserviceRequestDto requestDto : requests) {
+                requestDto = this.completeInformationRequest(requestDto);
+            }
 
-		try {
-			requestDto = providerClient.closeRequest(requestId, userCode);
-		} catch (Exception e) {
-			log.error("Error cerrando solicitud: " + e.getMessage());
-		}
+        } catch (BusinessException e) {
+            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
+        }
 
-		return requestDto;
-	}
+        return data;
+    }
 
-	public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
-			throws BusinessException {
+    public List<MicroserviceRequestPackageDto> getRequestsByManagerAndPackage(Long managerCode, String packageLabel)
+            throws BusinessException {
 
-		List<MicroserviceProviderUserDto> usersDto = new ArrayList<>();
+        List<MicroserviceRequestPackageDto> packages = new ArrayList<>();
+        List<MicroserviceRequestDto> requests = new ArrayList<>();
 
-		try {
+        List<String> labels = new ArrayList<String>();
 
-			if (profiles != null) {
-				usersDto = providerClient.findUsersByProviderIdAndProfiles(providerId, profiles);
-			} else {
-				usersDto = providerClient.findUsersByProviderId(providerId);
-			}
+        try {
 
-		} catch (BusinessException e) {
-			String message = "No se han podido obtener los usuarios del proveedor.";
-			this.log.error(message + ": " + e.getMessage());
-			throw new BusinessException(message);
-		}
+            if (packageLabel != null) {
+                requests = providerClient.getRequestsByManagerAndPackage(managerCode, packageLabel);
+            } else {
+                requests = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
+            }
 
-		return usersDto;
-	}
+            for (MicroserviceRequestDto requestDto : requests) {
 
-	public List<MicroserviceRequestDto> getRequestsByEmmitersManager(Long managerCode) throws BusinessException {
+                requestDto = this.completeInformationRequest(requestDto);
 
-		List<MicroserviceRequestDto> listRequestsDto = new ArrayList<>();
+                String packageRequest = requestDto.getPackageLabel();
 
-		try {
+                if (!labels.contains(packageRequest)) {
+                    MicroserviceRequestPackageDto data = new MicroserviceRequestPackageDto();
+                    data.setPackageLabel(packageRequest);
+                    data.getRequests().add(requestDto);
+                    packages.add(data);
+                    labels.add(packageRequest);
+                } else {
 
-			listRequestsDto = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
+                    MicroserviceRequestPackageDto packageFound = packages.stream()
+                            .filter(p -> p.getPackageLabel().equals(packageRequest)).findAny().orElse(null);
+                    if (packageFound instanceof MicroserviceRequestPackageDto) {
+                        packageFound.getRequests().add(requestDto);
+                    }
 
-		} catch (Exception e) {
-			log.error("Error consultando solicitudes: " + e.getMessage());
-		}
+                }
 
-		return listRequestsDto;
-	}
+            }
 
-	public MicroserviceRequestPaginatedDto getRequestsByManagerAndMunicipality(int page, Long managerCode,
-			String municipalityCode) throws BusinessException {
+        } catch (BusinessException e) {
+            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
+        }
 
-		MicroserviceRequestPaginatedDto data = null;
+        return packages;
+    }
 
-		try {
+    public MicroserviceRequestDto completeInformationRequest(MicroserviceRequestDto requestDto) {
 
-			data = providerClient.getRequestsByManagerAndMunicipality(managerCode, municipalityCode, page);
+        List<MicroserviceEmitterDto> emittersDto = new ArrayList<MicroserviceEmitterDto>();
+        for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
+            if (emitterDto.getEmitterType().equals("ENTITY")) {
+                try {
+                    MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
+                    emitterDto.setUser(managerDto);
+                } catch (Exception e) {
+                    emitterDto.setUser(null);
+                }
+            } else {
+                try {
+                    MicroserviceUserDto userDto = userBusiness.getUserById(emitterDto.getEmitterCode());
+                    emitterDto.setUser(userDto);
+                } catch (Exception e) {
+                    emitterDto.setUser(null);
+                }
+            }
+            emittersDto.add(emitterDto);
+        }
 
-			List<MicroserviceRequestDto> requests = data.getItems();
-			for (MicroserviceRequestDto requestDto : requests) {
-				requestDto = this.completeInformationRequest(requestDto);
-			}
+        MunicipalityEntity municipalityEntity = municipalityService
+                .getMunicipalityByCode(requestDto.getMunicipalityCode());
 
-		} catch (BusinessException e) {
-			log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
-		}
+        if (municipalityEntity instanceof MunicipalityEntity) {
+            DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
 
-		return data;
-	}
+            MunicipalityDto municipalityDto = new MunicipalityDto();
+            municipalityDto.setCode(municipalityEntity.getCode());
+            municipalityDto.setId(municipalityEntity.getId());
+            municipalityDto.setName(municipalityEntity.getName());
+            municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+                    departmentEntity.getCode()));
 
-	public List<MicroserviceRequestDto> getRequestsByPackage(String packageLabel) throws BusinessException {
+            requestDto.setEmitters(emittersDto);
+            requestDto.setMunicipality(municipalityDto);
+        }
 
-		List<MicroserviceRequestDto> requestsDto = new ArrayList<MicroserviceRequestDto>();
+        for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
 
-		try {
+            if (supply.getDeliveredBy() != null) {
 
-			requestsDto = providerClient.getRequestsByPackage(packageLabel);
+                try {
 
-			for (MicroserviceRequestDto requestDto : requestsDto) {
-				requestDto = this.completeInformationRequest(requestDto);
-			}
+                    MicroserviceUserDto userDto = userBusiness.getUserById(supply.getDeliveredBy());
+                    supply.setUserDeliveryBy(userDto);
+                } catch (Exception e) {
+                    supply.setUserDeliveryBy(null);
+                }
 
-		} catch (BusinessException e) {
-			log.error("Error consultando solicitudes por paquete: " + e.getMessage());
-		} catch (Exception e) {
-			log.error("Error consultando solicitudes por paquete: " + e.getMessage());
-		}
+            }
 
-		return requestsDto;
-	}
+        }
 
-	public MicroserviceRequestPaginatedDto getRequestsByManagerAndProvider(int page, Long managerCode, Long providerId)
-			throws BusinessException {
+        return requestDto;
+    }
 
-		MicroserviceRequestPaginatedDto data = null;
+    public MicroserviceProviderDto getProviderById(Long providerId) {
 
-		try {
+        MicroserviceProviderDto providerDto = null;
 
-			data = providerClient.getRequestsByManagerAndProvider(managerCode, providerId, page);
+        try {
+            providerDto = providerClient.findById(providerId);
+        } catch (Exception e) {
+            log.error("No se podido consultar el proveedor: " + e.getMessage());
+        }
 
-			List<MicroserviceRequestDto> requests = data.getItems();
-			for (MicroserviceRequestDto requestDto : requests) {
-				requestDto = this.completeInformationRequest(requestDto);
-			}
+        return providerDto;
+    }
 
-		} catch (BusinessException e) {
-			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
-		}
+    public MicroserviceProviderProfileDto createProfile(Long providerId, String name, String description)
+            throws BusinessException {
 
-		return data;
-	}
+        MicroserviceProviderProfileDto profileDto = null;
 
-	public List<MicroserviceRequestPackageDto> getRequestsByManagerAndPackage(Long managerCode, String packageLabel)
-			throws BusinessException {
+        try {
 
-		List<MicroserviceRequestPackageDto> packages = new ArrayList<>();
-		List<MicroserviceRequestDto> requests = new ArrayList<>();
+            MicroserviceCreateProviderProfileDto createProviderProfileDto = new MicroserviceCreateProviderProfileDto();
+            createProviderProfileDto.setName(name);
+            createProviderProfileDto.setDescription(description);
 
-		List<String> labels = new ArrayList<String>();
+            profileDto = providerClient.createProfile(providerId, createProviderProfileDto);
 
-		try {
+        } catch (BusinessException e) {
+            log.error("Error creando perfil del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error creando perfil del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido crear el perfil del proveedor");
+        }
 
-			if (packageLabel != null) {
-				requests = providerClient.getRequestsByManagerAndPackage(managerCode, packageLabel);
-			} else {
-				requests = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
-			}
+        return profileDto;
+    }
 
-			for (MicroserviceRequestDto requestDto : requests) {
+    public List<MicroserviceProviderProfileDto> getProfilesByProvider(Long providerId) throws BusinessException {
 
-				requestDto = this.completeInformationRequest(requestDto);
+        List<MicroserviceProviderProfileDto> profilesDto = new ArrayList<>();
 
-				String packageRequest = requestDto.getPackageLabel();
+        try {
 
-				if (!labels.contains(packageRequest)) {
-					MicroserviceRequestPackageDto data = new MicroserviceRequestPackageDto();
-					data.setPackageLabel(packageRequest);
-					data.getRequests().add(requestDto);
-					packages.add(data);
-					labels.add(packageRequest);
-				} else {
+            profilesDto = providerClient.getProfilesByProvider(providerId);
 
-					MicroserviceRequestPackageDto packageFound = packages.stream()
-							.filter(p -> p.getPackageLabel().equals(packageRequest)).findAny().orElse(null);
-					if (packageFound instanceof MicroserviceRequestPackageDto) {
-						packageFound.getRequests().add(requestDto);
-					}
+        } catch (BusinessException e) {
+            log.error("Error consultando perfiles del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error consultando perfiles del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar los perfiles del proveedor");
+        }
 
-				}
+        return profilesDto;
+    }
 
-			}
+    public MicroserviceProviderProfileDto updateProfile(Long providerId, Long profileId, String name,
+                                                        String description) throws BusinessException {
 
-		} catch (BusinessException e) {
-			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
-		}
+        MicroserviceProviderProfileDto profileDto = null;
 
-		return packages;
-	}
+        try {
 
-	public MicroserviceRequestDto completeInformationRequest(MicroserviceRequestDto requestDto) {
+            MicroserviceCreateProviderProfileDto createProviderProfileDto = new MicroserviceCreateProviderProfileDto();
+            createProviderProfileDto.setName(name);
+            createProviderProfileDto.setDescription(description);
 
-		List<MicroserviceEmitterDto> emittersDto = new ArrayList<MicroserviceEmitterDto>();
-		for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
-			if (emitterDto.getEmitterType().equals("ENTITY")) {
-				try {
-					MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
-					emitterDto.setUser(managerDto);
-				} catch (Exception e) {
-					emitterDto.setUser(null);
-				}
-			} else {
-				try {
-					MicroserviceUserDto userDto = userBusiness.getUserById(emitterDto.getEmitterCode());
-					emitterDto.setUser(userDto);
-				} catch (Exception e) {
-					emitterDto.setUser(null);
-				}
-			}
-			emittersDto.add(emitterDto);
-		}
+            profileDto = providerClient.updateProfile(providerId, profileId, createProviderProfileDto);
 
-		MunicipalityEntity municipalityEntity = municipalityService
-				.getMunicipalityByCode(requestDto.getMunicipalityCode());
+        } catch (BusinessException e) {
+            log.error("Error editando perfil del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error editando perfil del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido editar el perfil del proveedor");
+        }
 
-		if (municipalityEntity instanceof MunicipalityEntity) {
-			DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+        return profileDto;
+    }
 
-			MunicipalityDto municipalityDto = new MunicipalityDto();
-			municipalityDto.setCode(municipalityEntity.getCode());
-			municipalityDto.setId(municipalityEntity.getId());
-			municipalityDto.setName(municipalityEntity.getName());
-			municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
-					departmentEntity.getCode()));
+    public void deleteProfile(Long providerId, Long profileId) throws BusinessException {
 
-			requestDto.setEmitters(emittersDto);
-			requestDto.setMunicipality(municipalityDto);
-		}
+        try {
 
-		for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+            providerClient.deleteProfile(providerId, profileId);
 
-			if (supply.getDeliveredBy() != null) {
+        } catch (BusinessException e) {
+            log.error("Error eliminando perfil del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error eliminando perfil del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido eliminar el perfil del proveedor");
+        }
+    }
 
-				try {
+    public MicroserviceTypeSupplyDto createTypeSupply(Long providerId, String name, String description,
+                                                      Boolean metadataRequired, Boolean modelRequired, Long profileId, List<String> extensions)
+            throws BusinessException {
 
-					MicroserviceUserDto userDto = userBusiness.getUserById(supply.getDeliveredBy());
-					supply.setUserDeliveryBy(userDto);
-				} catch (Exception e) {
-					supply.setUserDeliveryBy(null);
-				}
+        MicroserviceTypeSupplyDto typeSupplyDto = null;
 
-			}
+        try {
 
-		}
+            MicroserviceCreateTypeSupplyDto create = new MicroserviceCreateTypeSupplyDto();
+            create.setName(name);
+            create.setDescription(description);
+            create.setExtensions(extensions);
+            create.setMetadataRequired(metadataRequired);
+            create.setModelRequired(modelRequired);
+            create.setProviderProfileId(profileId);
 
-		return requestDto;
-	}
+            typeSupplyDto = providerClient.createTypeSupplies(providerId, create);
 
-	public MicroserviceProviderDto getProviderById(Long providerId) {
+        } catch (BusinessException e) {
+            log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido crear el tipo de insumo para el proveedor");
+        }
 
-		MicroserviceProviderDto providerDto = null;
+        return typeSupplyDto;
+    }
 
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("No se podido consultar el proveedor: " + e.getMessage());
-		}
+    public List<MicroserviceTypeSupplyDto> getTypesSuppliesByProvider(Long providerId) throws BusinessException {
 
-		return providerDto;
-	}
+        List<MicroserviceTypeSupplyDto> typesSuppliesDto = new ArrayList<>();
 
-	public MicroserviceProviderProfileDto createProfile(Long providerId, String name, String description)
-			throws BusinessException {
+        try {
 
-		MicroserviceProviderProfileDto profileDto = null;
+            typesSuppliesDto = providerClient.getTypesSuppliesByProvider(providerId);
 
-		try {
+        } catch (BusinessException e) {
+            log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar los tipos de insumo del proveedor");
+        }
 
-			MicroserviceCreateProviderProfileDto createProviderProfileDto = new MicroserviceCreateProviderProfileDto();
-			createProviderProfileDto.setName(name);
-			createProviderProfileDto.setDescription(description);
+        return typesSuppliesDto;
+    }
 
-			profileDto = providerClient.createProfile(providerId, createProviderProfileDto);
+    public MicroserviceTypeSupplyDto updateTypeSupply(Long providerId, Long typeSupplyId, String name,
+                                                      String description, Boolean metadataRequired, Boolean modelRequired, Long profileId,
+                                                      List<String> extensions) throws BusinessException {
 
-		} catch (BusinessException e) {
-			log.error("Error creando perfil del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error creando perfil del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido crear el perfil del proveedor");
-		}
+        MicroserviceTypeSupplyDto typeSupplyDto = null;
 
-		return profileDto;
-	}
+        try {
 
-	public List<MicroserviceProviderProfileDto> getProfilesByProvider(Long providerId) throws BusinessException {
+            MicroserviceCreateTypeSupplyDto data = new MicroserviceCreateTypeSupplyDto();
+            data.setName(name);
+            data.setDescription(description);
+            data.setExtensions(extensions);
+            data.setMetadataRequired(metadataRequired);
+            data.setModelRequired(modelRequired);
+            data.setProviderProfileId(profileId);
 
-		List<MicroserviceProviderProfileDto> profilesDto = new ArrayList<>();
+            typeSupplyDto = providerClient.updateTypeSupplies(providerId, typeSupplyId, data);
 
-		try {
+        } catch (BusinessException e) {
+            log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido editar el tipo de insumo para el proveedor");
+        }
 
-			profilesDto = providerClient.getProfilesByProvider(providerId);
+        return typeSupplyDto;
+    }
 
-		} catch (BusinessException e) {
-			log.error("Error consultando perfiles del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error consultando perfiles del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar los perfiles del proveedor");
-		}
+    public void deleteTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
 
-		return profilesDto;
-	}
+        try {
 
-	public MicroserviceProviderProfileDto updateProfile(Long providerId, Long profileId, String name,
-			String description) throws BusinessException {
+            providerClient.deleteTypeSupply(providerId, typeSupplyId);
 
-		MicroserviceProviderProfileDto profileDto = null;
+        } catch (BusinessException e) {
+            log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido eliminar el tipo de insumo del proveedor");
+        }
+    }
 
-		try {
+    public MicroserviceProviderDto getProviderByUserAdministrator(Long userCode) {
 
-			MicroserviceCreateProviderProfileDto createProviderProfileDto = new MicroserviceCreateProviderProfileDto();
-			createProviderProfileDto.setName(name);
-			createProviderProfileDto.setDescription(description);
+        MicroserviceProviderDto providerDto = null;
 
-			profileDto = providerClient.updateProfile(providerId, profileId, createProviderProfileDto);
+        try {
+            providerDto = providerClient.findProviderByAdministrator(userCode);
+        } catch (Exception e) {
+            log.error("No se ha podido consultar el proveedor: " + e.getMessage());
+        }
 
-		} catch (BusinessException e) {
-			log.error("Error editando perfil del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error editando perfil del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido editar el perfil del proveedor");
-		}
+        return providerDto;
+    }
 
-		return profileDto;
-	}
+    public MicroserviceProviderDto getProviderByUserTechnical(Long userCode) {
 
-	public void deleteProfile(Long providerId, Long profileId) throws BusinessException {
+        MicroserviceProviderDto providerDto = null;
 
-		try {
+        try {
+            providerDto = providerClient.findByUserCode(userCode);
+        } catch (Exception e) {
+            log.error("No se ha podido consultar el proveedor: " + e.getMessage());
+        }
 
-			providerClient.deleteProfile(providerId, profileId);
+        return providerDto;
+    }
 
-		} catch (BusinessException e) {
-			log.error("Error eliminando perfil del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error eliminando perfil del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido eliminar el perfil del proveedor");
-		}
-	}
+    public MicroserviceProviderDto getProviderByUserTechnicalOrAdministrator(Long userCode) {
 
-	public MicroserviceTypeSupplyDto createTypeSupply(Long providerId, String name, String description,
-			Boolean metadataRequired, Boolean modelRequired, Long profileId, List<String> extensions)
-			throws BusinessException {
+        MicroserviceProviderDto providerDtoByAdministrator = getProviderByUserAdministrator(userCode);
+        MicroserviceProviderDto providerDtoByTechnical = getProviderByUserTechnical(userCode);
 
-		MicroserviceTypeSupplyDto typeSupplyDto = null;
+        if (providerDtoByAdministrator != null) {
+            return providerDtoByAdministrator;
+        }
 
-		try {
+        if (providerDtoByTechnical != null) {
+            return providerDtoByTechnical;
+        }
 
-			MicroserviceCreateTypeSupplyDto create = new MicroserviceCreateTypeSupplyDto();
-			create.setName(name);
-			create.setDescription(description);
-			create.setExtensions(extensions);
-			create.setMetadataRequired(metadataRequired);
-			create.setModelRequired(modelRequired);
-			create.setProviderProfileId(profileId);
+        return null;
+    }
 
-			typeSupplyDto = providerClient.createTypeSupplies(providerId, create);
+    public boolean userProviderIsDirector(Long userCode) {
 
-		} catch (BusinessException e) {
-			log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido crear el tipo de insumo para el proveedor");
-		}
+        Boolean isDirector = false;
 
-		return typeSupplyDto;
-	}
+        try {
 
-	public List<MicroserviceTypeSupplyDto> getTypesSuppliesByProvider(Long providerId) throws BusinessException {
+            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+                    .findRolesByUser(userCode);
 
-		List<MicroserviceTypeSupplyDto> typesSuppliesDto = new ArrayList<>();
+            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = providerRoles.stream()
+                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
+                    .orElse(null);
 
-		try {
+            if (roleDirector != null) {
+                isDirector = true;
+            }
 
-			typesSuppliesDto = providerClient.getTypesSuppliesByProvider(providerId);
+        } catch (Exception e) {
+            log.error("No se ha podido verificar si el usuario es un director(proveedor): " + e.getMessage());
+        }
 
-		} catch (BusinessException e) {
-			log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar los tipos de insumo del proveedor");
-		}
+        return isDirector;
+    }
 
-		return typesSuppliesDto;
-	}
+    public boolean userProviderIsDelegate(Long userCode) {
 
-	public MicroserviceTypeSupplyDto updateTypeSupply(Long providerId, Long typeSupplyId, String name,
-			String description, Boolean metadataRequired, Boolean modelRequired, Long profileId,
-			List<String> extensions) throws BusinessException {
+        Boolean isDelegate = false;
 
-		MicroserviceTypeSupplyDto typeSupplyDto = null;
+        try {
 
-		try {
+            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
+                    .findRolesByUser(userCode);
 
-			MicroserviceCreateTypeSupplyDto data = new MicroserviceCreateTypeSupplyDto();
-			data.setName(name);
-			data.setDescription(description);
-			data.setExtensions(extensions);
-			data.setMetadataRequired(metadataRequired);
-			data.setModelRequired(modelRequired);
-			data.setProviderProfileId(profileId);
+            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = providerRoles.stream()
+                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DELEGATE_PROVIDER)).findAny()
+                    .orElse(null);
 
-			typeSupplyDto = providerClient.updateTypeSupplies(providerId, typeSupplyId, data);
+            if (roleDirector != null) {
+                isDelegate = true;
+            }
 
-		} catch (BusinessException e) {
-			log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido editar el tipo de insumo para el proveedor");
-		}
+        } catch (Exception e) {
+            log.error("No se ha podido verificar si el usuario es un delegado(proveedor): " + e.getMessage());
+        }
 
-		return typeSupplyDto;
-	}
+        return isDelegate;
+    }
 
-	public void deleteTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
+    public List<MicroserviceSupplyRequestedDto> getSuppliesToReview(Long providerId) {
 
-		try {
+        List<MicroserviceSupplyRequestedDto> suppliesRequestedDto = new ArrayList<>();
 
-			providerClient.deleteTypeSupply(providerId, typeSupplyId);
+        try {
 
-		} catch (BusinessException e) {
-			log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido eliminar el tipo de insumo del proveedor");
-		}
-	}
+            List<Long> states = new ArrayList<>(Arrays.asList(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW,
+                    ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW,
+                    ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW,
+                    ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW));
 
-	public MicroserviceProviderDto getProviderByUserAdministrator(Long userCode) {
+            suppliesRequestedDto = providerClient.getSuppliesRequestedToReview(providerId, states);
 
-		MicroserviceProviderDto providerDto = null;
+            for (MicroserviceSupplyRequestedDto sR : suppliesRequestedDto) {
 
-		try {
-			providerDto = providerClient.findProviderByAdministrator(userCode);
-		} catch (Exception e) {
-			log.error("No se ha podido consultar el proveedor: " + e.getMessage());
-		}
+                MunicipalityDto municipalityDto = municipalityBusiness
+                        .getMunicipalityByCode(sR.getRequest().getMunicipalityCode());
 
-		return providerDto;
-	}
+                sR.getRequest().setMunicipality(municipalityDto);
+            }
 
-	public MicroserviceProviderDto getProviderByUserTechnical(Long userCode) {
+        } catch (Exception e) {
+            log.error("No se ha podido consultar los insumos pendiente de revisión: " + e.getMessage());
+        }
 
-		MicroserviceProviderDto providerDto = null;
+        return suppliesRequestedDto;
+    }
 
-		try {
-			providerDto = providerClient.findByUserCode(userCode);
-		} catch (Exception e) {
-			log.error("No se ha podido consultar el proveedor: " + e.getMessage());
-		}
+    public MicroserviceSupplyRequestedDto getSupplyRequestedById(Long supplyRequestedId) {
 
-		return providerDto;
-	}
+        MicroserviceSupplyRequestedDto supplyRequestedDto = null;
 
-	public MicroserviceProviderDto getProviderByUserTechnicalOrAdministrator(Long userCode) {
+        try {
 
-		MicroserviceProviderDto providerDtoByAdministrator = getProviderByUserAdministrator(userCode);
-		MicroserviceProviderDto providerDtoByTechnical = getProviderByUserTechnical(userCode);
+            supplyRequestedDto = providerClient.getSupplyRequested(supplyRequestedId);
 
-		if (providerDtoByAdministrator != null) {
-			return providerDtoByAdministrator;
-		}
+        } catch (Exception e) {
+            log.error("No se ha podido consultar el insumo solicitado: " + e.getMessage());
+        }
 
-		if (providerDtoByTechnical != null) {
-			return providerDtoByTechnical;
-		}
+        return supplyRequestedDto;
+    }
 
-		return null;
-	}
+    public MicroserviceSupplyRevisionDto createSupplyRevision(Long supplyRequestedId, String database, String hostname,
+                                                              String username, String password, String port, String schema, Long startBy) {
 
-	public boolean userProviderIsDirector(Long userCode) {
+        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
 
-		Boolean isDirector = false;
+        try {
 
-		try {
+            MicroserviceCreateSupplyRevisionDto createRevisionDto = new MicroserviceCreateSupplyRevisionDto();
+            createRevisionDto.setDatabase(database);
+            createRevisionDto.setHostname(hostname);
+            createRevisionDto.setPassword(password);
+            createRevisionDto.setPort(port);
+            createRevisionDto.setSchema(schema);
+            createRevisionDto.setStartBy(startBy);
+            createRevisionDto.setUsername(username);
 
-			List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
-					.findRolesByUser(userCode);
+            supplyRevisionDto = providerClient.createSupplyRevision(supplyRequestedId, createRevisionDto);
 
-			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = providerRoles.stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
-					.orElse(null);
+        } catch (Exception e) {
+            log.error("No se ha podido crear la revisión: " + e.getMessage());
+        }
 
-			if (roleDirector != null) {
-				isDirector = true;
-			}
+        return supplyRevisionDto;
+    }
 
-		} catch (Exception e) {
-			log.error("No se ha podido verificar si el usuario es un director(proveedor): " + e.getMessage());
-		}
+    public MicroserviceRequestDto updateStateToSupplyRequested(Long requestId, Long supplyRequestedId, Long stateId) {
 
-		return isDirector;
-	}
+        MicroserviceRequestDto requestDto = null;
 
-	public boolean userProviderIsDelegate(Long userCode) {
+        try {
 
-		Boolean isDelegate = false;
+            MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
+            updateSupply.setSupplyRequestedStateId(stateId);
 
-		try {
+            providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupply);
+        } catch (Exception e) {
+            log.error("No se ha podido actualizar el estado del insumo solicitado: " + e.getMessage());
+        }
 
-			List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
-					.findRolesByUser(userCode);
+        return requestDto;
+    }
 
-			com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = providerRoles.stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DELEGATE_PROVIDER)).findAny()
-					.orElse(null);
+    public MicroserviceRequestDto updateSupplyRequested(Long requestId, Long supplyRequestedId,
+                                                        MicroserviceUpdateSupplyRequestedDto updateSupplyData) {
 
-			if (roleDirector != null) {
-				isDelegate = true;
-			}
+        MicroserviceRequestDto requestDto = null;
 
-		} catch (Exception e) {
-			log.error("No se ha podido verificar si el usuario es un delegado(proveedor): " + e.getMessage());
-		}
+        try {
 
-		return isDelegate;
-	}
+            providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
+        } catch (Exception e) {
+            log.error("No se ha podido actualizar el insumo solicitado: " + e.getMessage());
+        }
 
-	public List<MicroserviceSupplyRequestedDto> getSuppliesToReview(Long providerId) {
+        return requestDto;
+    }
 
-		List<MicroserviceSupplyRequestedDto> suppliesRequestedDto = new ArrayList<>();
+    public void startRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+            throws BusinessException {
 
-		try {
+        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        if (supplyRequestedDto == null) {
+            throw new BusinessException("El insumo solicitado no existe");
+        }
 
-			List<Long> states = new ArrayList<>(Arrays.asList(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW,
-					ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW,
-					ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW,
-					ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW));
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+            throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+        }
 
-			suppliesRequestedDto = providerClient.getSuppliesRequestedToReview(providerId, states);
+        if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)) {
+            throw new BusinessException("El estado en el que se encuentra el insumo no permite iniciar una revisión.");
+        }
 
-			for (MicroserviceSupplyRequestedDto sR : suppliesRequestedDto) {
+        String randomUsername = RandomStringUtils.random(8, true, false).toLowerCase();
+        String randomPassword = RandomStringUtils.random(10, true, true);
 
-				MunicipalityDto municipalityDto = municipalityBusiness
-						.getMunicipalityByCode(sR.getRequest().getMunicipalityCode());
+        // create FTP credentials
+        boolean credentialsCreated = ftpBusiness.createFTPCredentials(randomUsername, randomPassword);
+        if (!credentialsCreated) {
+            throw new BusinessException("No se ha podido crear el espacio para el almacenamiento de archivos.");
+        }
 
-				sR.getRequest().setMunicipality(municipalityDto);
-			}
+        // create database
+        String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
+        String schema = "import_snr";
+        try {
+            databaseIntegrationBusiness.createDatabase(randomDatabaseName, randomUsername, randomPassword);
+        } catch (Exception e) {
+            throw new BusinessException("No se ha podido iniciar la revisión.");
+        }
 
-		} catch (Exception e) {
-			log.error("No se ha podido consultar los insumos pendiente de revisión: " + e.getMessage());
-		}
+        // create revision
+        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
+        try {
+            supplyRevisionDto = createSupplyRevision(supplyRequestedId, cryptoBusiness.encrypt(randomDatabaseName),
+                    cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(randomUsername),
+                    cryptoBusiness.encrypt(randomPassword), cryptoBusiness.encrypt(databaseIntegrationPort),
+                    cryptoBusiness.encrypt(schema), userCode);
+        } catch (Exception e) {
+            throw new BusinessException("Ha ocurrido un error intentando crear la revisión.");
+        }
+        if (supplyRevisionDto == null) {
+            throw new BusinessException("Ha ocurrido un error intentando crear la revisión.");
+        }
 
-		return suppliesRequestedDto;
-	}
+        // start import
+        try {
 
-	public MicroserviceSupplyRequestedDto getSupplyRequestedById(Long supplyRequestedId) {
+            String reference = "import-" + supplyRequestedDto.getId() + "-" + supplyRequestedDto.getRequest().getId();
 
-		MicroserviceSupplyRequestedDto supplyRequestedDto = null;
+            iliBusiness.startImport(supplyRequestedDto.getUrl(), databaseIntegrationHost, randomDatabaseName,
+                    databaseIntegrationPassword, databaseIntegrationPort, schema, databaseIntegrationUsername,
+                    reference, supplyRequestedDto.getModelVersion().trim(), IliBusiness.ILI_CONCEPT_INTEGRATION);
 
-		try {
+        } catch (Exception e) {
+            log.error("No se ha podido iniciar la revisión: " + e.getMessage());
+            throw new BusinessException("No se ha podido iniciar la revisión.");
+        }
 
-			supplyRequestedDto = providerClient.getSupplyRequested(supplyRequestedId);
+        // update state supply requested to Setting Revision
+        updateStateToSupplyRequested(supplyRequestedDto.getRequest().getId(), supplyRequestedId,
+                ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW);
+    }
 
-		} catch (Exception e) {
-			log.error("No se ha podido consultar el insumo solicitado: " + e.getMessage());
-		}
+    public MicroserviceSupplyRevisionDto getSupplyRevisionFromSupplyRequested(Long supplyRequestedId) {
 
-		return supplyRequestedDto;
-	}
+        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
 
-	public MicroserviceSupplyRevisionDto createSupplyRevision(Long supplyRequestedId, String database, String hostname,
-			String username, String password, String port, String schema, Long startBy) {
+        try {
 
-		MicroserviceSupplyRevisionDto supplyRevisionDto = null;
+            supplyRevisionDto = providerClient.getSupplyRevisionFromSupplyRequested(supplyRequestedId);
 
-		try {
+        } catch (Exception e) {
+            log.error("No se ha podido consultar la revisión del insumo solicitado: " + e.getMessage());
+        }
 
-			MicroserviceCreateSupplyRevisionDto createRevisionDto = new MicroserviceCreateSupplyRevisionDto();
-			createRevisionDto.setDatabase(database);
-			createRevisionDto.setHostname(hostname);
-			createRevisionDto.setPassword(password);
-			createRevisionDto.setPort(port);
-			createRevisionDto.setSchema(schema);
-			createRevisionDto.setStartBy(startBy);
-			createRevisionDto.setUsername(username);
+        return supplyRevisionDto;
+    }
 
-			supplyRevisionDto = providerClient.createSupplyRevision(supplyRequestedId, createRevisionDto);
+    public void deleteSupplyRevision(Long supplyRequestedId, Long supplyRevisionId) {
 
-		} catch (Exception e) {
-			log.error("No se ha podido crear la revisión: " + e.getMessage());
-		}
+        try {
 
-		return supplyRevisionDto;
-	}
+            providerClient.deleteSupplyRevision(supplyRequestedId, supplyRevisionId);
 
-	public MicroserviceRequestDto updateStateToSupplyRequested(Long requestId, Long supplyRequestedId, Long stateId) {
+        } catch (Exception e) {
+            log.error("No se ha podido eliminar la revisión del insumo solicitado: " + e.getMessage());
+        }
+    }
 
-		MicroserviceRequestDto requestDto = null;
+    public MicroserviceQueryResultRegistralRevisionDto getRecordsFromRevision(MicroserviceProviderDto prodiverDto,
+                                                                              Long supplyRequestedId, int page) throws BusinessException {
 
-		try {
+        if (page <= 0) {
+            page = 1;
+        }
 
-			MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
-			updateSupply.setSupplyRequestedStateId(stateId);
+        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        if (supplyRequestedDto == null) {
+            throw new BusinessException("El insumo solicitado no existe");
+        }
 
-			providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupply);
-		} catch (Exception e) {
-			log.error("No se ha podido actualizar el estado del insumo solicitado: " + e.getMessage());
-		}
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+            throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+        }
 
-		return requestDto;
-	}
+        if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
+            throw new BusinessException("El estado en el que se encuentra el insumo no permite realizar la consulta.");
+        }
 
-	public MicroserviceRequestDto updateSupplyRequested(Long requestId, Long supplyRequestedId,
-			MicroserviceUpdateSupplyRequestedDto updateSupplyData) {
+        MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+        if (supplyRevisionDto == null) {
+            throw new BusinessException("No existe una revisión para el insumo.");
+        }
 
-		MicroserviceRequestDto requestDto = null;
+        MicroserviceQueryResultRegistralRevisionDto resultDto = null;
 
-		try {
+        try {
 
-			providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
-		} catch (Exception e) {
-			log.error("No se ha podido actualizar el insumo solicitado: " + e.getMessage());
-		}
+            String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
+            String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
+            String password = databaseIntegrationPassword;
+            String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
+            String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
+            String username = databaseIntegrationUsername;
 
-		return requestDto;
-	}
+            int limit = 1000;
 
-	public void startRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
-			throws BusinessException {
+            resultDto = iliBusiness.getResultQueryRegistralRevision(host, database, password, port, schema, username,
+                    supplyRequestedDto.getModelVersion(), page, limit);
 
-		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
-		if (supplyRequestedDto == null) {
-			throw new BusinessException("El insumo solicitado no existe");
-		}
+        } catch (Exception e) {
+            log.error("No se ha podido realizar la consulta: " + e.getMessage());
+            throw new BusinessException("No se ha podido realizar la consulta.");
+        }
 
-		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
-			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
-		}
+        if (resultDto == null) {
+            throw new BusinessException("No se ha podido realizar la consulta.");
+        }
 
-		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)) {
-			throw new BusinessException("El estado en el que se encuentra el insumo no permite iniciar una revisión.");
-		}
+        return resultDto;
+    }
 
-		String randomUsername = RandomStringUtils.random(8, true, false).toLowerCase();
-		String randomPassword = RandomStringUtils.random(10, true, true);
+    public void uploadAttachmentToRevision(MicroserviceProviderDto prodiverDto, MultipartFile fileUploaded,
+                                           Long supplyRequestedId, Long boundaryId, Long userCode) throws BusinessException {
 
-		// create FTP credentials
-		boolean credentialsCreated = ftpBusiness.createFTPCredentials(randomUsername, randomPassword);
-		if (!credentialsCreated) {
-			throw new BusinessException("No se ha podido crear el espacio para el almacenamiento de archivos.");
-		}
+        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        if (supplyRequestedDto == null) {
+            throw new BusinessException("El insumo solicitado no existe");
+        }
 
-		// create database
-		String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
-		String schema = "import_snr";
-		try {
-			databaseIntegrationBusiness.createDatabase(randomDatabaseName, randomUsername, randomPassword);
-		} catch (Exception e) {
-			throw new BusinessException("No se ha podido iniciar la revisión.");
-		}
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+            throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+        }
 
-		// create revision
-		MicroserviceSupplyRevisionDto supplyRevisionDto = null;
-		try {
-			supplyRevisionDto = createSupplyRevision(supplyRequestedId, cryptoBusiness.encrypt(randomDatabaseName),
-					cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(randomUsername),
-					cryptoBusiness.encrypt(randomPassword), cryptoBusiness.encrypt(databaseIntegrationPort),
-					cryptoBusiness.encrypt(schema), userCode);
-		} catch (Exception e) {
-			throw new BusinessException("Ha ocurrido un error intentando crear la revisión.");
-		}
-		if (supplyRevisionDto == null) {
-			throw new BusinessException("Ha ocurrido un error intentando crear la revisión.");
-		}
+        if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
+            throw new BusinessException(
+                    "El estado en el que se encuentra el insumo no permite actualizar el registro.");
+        }
 
-		// start import
-		try {
+        MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+        if (supplyRevisionDto == null) {
+            throw new BusinessException("No existe una revisión para el insumo.");
+        }
 
-			String reference = "import-" + supplyRequestedDto.getId() + "-" + supplyRequestedDto.getRequest().getId();
+        // save file
+        String urlBase = "/anexos/" + supplyRequestedId;
+        urlBase = FileTool.removeAccents(urlBase);
+        String urlFile = fileBusiness.saveFileToSystem(fileUploaded, urlBase, true);
 
-			iliBusiness.startImport(supplyRequestedDto.getUrl(), databaseIntegrationHost, randomDatabaseName,
-					databaseIntegrationPassword, databaseIntegrationPort, schema, databaseIntegrationUsername,
-					reference, supplyRequestedDto.getModelVersion().trim(), IliBusiness.ILI_CONCEPT_INTEGRATION);
+        String FTPFileName = boundaryId + ".zip";
 
-		} catch (Exception e) {
-			log.error("No se ha podido iniciar la revisión: " + e.getMessage());
-			throw new BusinessException("No se ha podido iniciar la revisión.");
-		}
+        String usernameFTP = null;
+        String passwordFTP = null;
+        try {
+            usernameFTP = cryptoBusiness.decrypt(supplyRevisionDto.getUsername());
+            passwordFTP = cryptoBusiness.decrypt(supplyRevisionDto.getPassword());
+        } catch (Exception e) {
+            log.error("Error consultando datos de conexión al FTP:" + e.getMessage());
+        }
 
-		// update state supply requested to Setting Revision
-		updateStateToSupplyRequested(supplyRequestedDto.getRequest().getId(), supplyRequestedId,
-				ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW);
-	}
+        Boolean uploadFilToFTPServer = ftpBusiness.uploadFileToFTP(urlFile, FTPFileName, usernameFTP, passwordFTP);
+        if (!uploadFilToFTPServer) {
+            throw new BusinessException("No se ha podido cargar el archivo al servidor FTP.");
+        }
 
-	public MicroserviceSupplyRevisionDto getSupplyRevisionFromSupplyRequested(Long supplyRequestedId) {
+        try {
 
-		MicroserviceSupplyRevisionDto supplyRevisionDto = null;
+            String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
+            String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
+            String password = databaseIntegrationPassword;
+            String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
+            String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
+            String username = databaseIntegrationUsername;
 
-		try {
+            String namespace = supplyRequestedDto.getTypeSupply().getProvider().getName() + "_FUENTECABIDALINDEROS";
 
-			supplyRevisionDto = providerClient.getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+            iliBusiness.updateRecordFromRevision(host, database, password, port, schema, username,
+                    supplyRequestedDto.getModelVersion(), boundaryId, ProviderBusiness.PROVIDER_SNR_ID, namespace,
+                    FTPFileName);
 
-		} catch (Exception e) {
-			log.error("No se ha podido consultar la revisión del insumo solicitado: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("No se ha podido realizar la consulta: " + e.getMessage());
+            throw new BusinessException("No se ha podido actualizar el registro.");
+        }
 
-		return supplyRevisionDto;
-	}
+        // delete file
+        try {
+            FileUtils.deleteQuietly(new File(urlFile));
+        } catch (Exception e) {
+            log.error("No se ha podido eliminar el archivo temporal: " + e.getMessage());
+        }
 
-	public void deleteSupplyRevision(Long supplyRequestedId, Long supplyRevisionId) {
+    }
 
-		try {
+    public void closeRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+            throws BusinessException {
 
-			providerClient.deleteSupplyRevision(supplyRequestedId, supplyRevisionId);
+        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        if (supplyRequestedDto == null) {
+            throw new BusinessException("El insumo solicitado no existe");
+        }
 
-		} catch (Exception e) {
-			log.error("No se ha podido eliminar la revisión del insumo solicitado: " + e.getMessage());
-		}
-	}
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+            throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+        }
 
-	public MicroserviceQueryResultRegistralRevisionDto getRecordsFromRevision(MicroserviceProviderDto prodiverDto,
-			Long supplyRequestedId, int page) throws BusinessException {
+        if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
+            throw new BusinessException("El estado en el que se encuentra el insumo no permite cerrar una revisión.");
+        }
 
-		if (page <= 0) {
-			page = 1;
-		}
+        MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+        if (supplyRevisionDto == null) {
+            throw new BusinessException("No existe una revisión para el insumo.");
+        }
 
-		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
-		if (supplyRequestedDto == null) {
-			throw new BusinessException("El insumo solicitado no existe");
-		}
+        // start export
+        try {
 
-		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
-			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
-		}
+            String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
+            String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
+            String password = databaseIntegrationPassword;
+            String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
+            String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
+            String username = databaseIntegrationUsername;
 
-		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
-			throw new BusinessException("El estado en el que se encuentra el insumo no permite realizar la consulta.");
-		}
+            String reference = "export-" + supplyRequestedDto.getId() + "-" + supplyRequestedDto.getRequest().getId()
+                    + "-" + userCode;
 
-		MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
-		if (supplyRevisionDto == null) {
-			throw new BusinessException("No existe una revisión para el insumo.");
-		}
+            String randomFilename = RandomStringUtils.random(20, true, false).toLowerCase();
+            String pathFile = stFilesDirectory + "/anexos/" + supplyRequestedId + File.separator + randomFilename
+                    + ".xtf";
 
-		MicroserviceQueryResultRegistralRevisionDto resultDto = null;
+            iliBusiness.startExportReference(pathFile, host, database, password, port, schema, username, reference,
+                    supplyRequestedDto.getModelVersion().trim(), IliBusiness.ILI_CONCEPT_INTEGRATION);
 
-		try {
+        } catch (Exception e) {
+            log.error("No se ha podido iniciar la exportación: " + e.getMessage());
+            throw new BusinessException("No se ha podido iniciar la exportación.");
+        }
 
-			String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
-			String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
-			String password = databaseIntegrationPassword;
-			String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
-			String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
-			String username = databaseIntegrationUsername;
+        // update state supply requested to Closing Revision
+        updateStateToSupplyRequested(supplyRequestedDto.getRequest().getId(), supplyRequestedId,
+                ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW);
 
-			int limit = 1000;
+    }
 
-			resultDto = iliBusiness.getResultQueryRegistralRevision(host, database, password, port, schema, username,
-					supplyRequestedDto.getModelVersion(), page, limit);
+    public MicroserviceRequestDto getRequestById(Long requestId) {
 
-		} catch (Exception e) {
-			log.error("No se ha podido realizar la consulta: " + e.getMessage());
-			throw new BusinessException("No se ha podido realizar la consulta.");
-		}
+        MicroserviceRequestDto requestDto = null;
 
-		if (resultDto == null) {
-			throw new BusinessException("No se ha podido realizar la consulta.");
-		}
+        try {
+            requestDto = providerClient.findRequestById(requestId);
+        } catch (Exception e) {
+            log.error("Error consultando solicitud por id: " + e.getMessage());
+        }
 
-		return resultDto;
-	}
+        return requestDto;
+    }
 
-	public void uploadAttachmentToRevision(MicroserviceProviderDto prodiverDto, MultipartFile fileUploaded,
-			Long supplyRequestedId, Long boundaryId, Long userCode) throws BusinessException {
+    public MicroserviceSupplyRevisionDto updateSupplyRevision(Long supplyRequestedId, Long supplyRevisionId,
+                                                              MicroserviceUpdateSupplyRevisionDto updateData) {
 
-		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
-		if (supplyRequestedDto == null) {
-			throw new BusinessException("El insumo solicitado no existe");
-		}
+        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
 
-		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
-			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
-		}
+        try {
 
-		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
-			throw new BusinessException(
-					"El estado en el que se encuentra el insumo no permite actualizar el registro.");
-		}
+            supplyRevisionDto = providerClient.updateSupplyRevision(supplyRequestedId, supplyRevisionId, updateData);
 
-		MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
-		if (supplyRevisionDto == null) {
-			throw new BusinessException("No existe una revisión para el insumo.");
-		}
+        } catch (Exception e) {
+            log.error("No se ha podido actualizar la revisión: " + e.getMessage());
+        }
 
-		// save file
-		String urlBase = "/anexos/" + supplyRequestedId;
-		urlBase = FileTool.removeAccents(urlBase);
-		String urlFile = fileBusiness.saveFileToSystem(fileUploaded, urlBase, true);
+        return supplyRevisionDto;
+    }
 
-		String FTPFileName = boundaryId + ".zip";
+    public void skipRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+            throws BusinessException {
 
-		String usernameFTP = null;
-		String passwordFTP = null;
-		try {
-			usernameFTP = cryptoBusiness.decrypt(supplyRevisionDto.getUsername());
-			passwordFTP = cryptoBusiness.decrypt(supplyRevisionDto.getPassword());
-		} catch (Exception e) {
-			log.error("Error consultando datos de conexión al FTP:" + e.getMessage());
-		}
+        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        if (supplyRequestedDto == null) {
+            throw new BusinessException("El insumo solicitado no existe");
+        }
 
-		Boolean uploadFilToFTPServer = ftpBusiness.uploadFileToFTP(urlFile, FTPFileName, usernameFTP, passwordFTP);
-		if (!uploadFilToFTPServer) {
-			throw new BusinessException("No se ha podido cargar el archivo al servidor FTP.");
-		}
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+            throw new BusinessException("El insumo solicitado no pertenece al proveedor");
+        }
 
-		try {
+        if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)) {
+            throw new BusinessException("El estado en el que se encuentra el insumo no permite omitir la revisión.");
+        }
 
-			String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
-			String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
-			String password = databaseIntegrationPassword;
-			String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
-			String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
-			String username = databaseIntegrationUsername;
+        // create supply
 
-			String namespace = supplyRequestedDto.getTypeSupply().getProvider().getName() + "_FUENTECABIDALINDEROS";
+        Long requestId = supplyRequestedDto.getRequest().getId();
+        String urlDocumentaryRepository = supplyRequestedDto.getUrl();
 
-			iliBusiness.updateRecordFromRevision(host, database, password, port, schema, username,
-					supplyRequestedDto.getModelVersion(), boundaryId, ProviderBusiness.PROVIDER_SNR_ID, namespace,
-					FTPFileName);
+        MicroserviceRequestDto requestDto = this.getRequestById(requestId);
 
-		} catch (Exception e) {
-			log.error("No se ha podido realizar la consulta: " + e.getMessage());
-			throw new BusinessException("No se ha podido actualizar el registro.");
-		}
+        List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
 
-		// delete file
-		try {
-			FileUtils.deleteQuietly(new File(urlFile));
-		} catch (Exception e) {
-			log.error("No se ha podido eliminar el archivo temporal: " + e.getMessage());
-		}
+        attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
+                SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
 
-	}
+        supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
+                supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userCode,
+                requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
+                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName());
 
-	public void closeRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
-			throws BusinessException {
+        updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
 
-		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
-		if (supplyRequestedDto == null) {
-			throw new BusinessException("El insumo solicitado no existe");
-		}
+        // close request
+        closeRequest(requestId, userCode);
+    }
 
-		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
-			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
-		}
+    public MicroservicePetitionDto createPetition(Long providerId, Long managerId, String description)
+            throws BusinessException {
 
-		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)) {
-			throw new BusinessException("El estado en el que se encuentra el insumo no permite cerrar una revisión.");
-		}
+        MicroservicePetitionDto petitionDto = null;
 
-		MicroserviceSupplyRevisionDto supplyRevisionDto = getSupplyRevisionFromSupplyRequested(supplyRequestedId);
-		if (supplyRevisionDto == null) {
-			throw new BusinessException("No existe una revisión para el insumo.");
-		}
+        // validate provider
+        MicroserviceProviderDto providerDto = null;
+        try {
+            providerDto = providerClient.findById(providerId);
+        } catch (Exception e) {
+            log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+        }
+        if (providerDto == null) {
+            throw new BusinessException("El proveedor de insumo no existe.");
+        }
 
-		// start export
-		try {
+        try {
 
-			String host = cryptoBusiness.decrypt(supplyRevisionDto.getHostname());
-			String database = cryptoBusiness.decrypt(supplyRevisionDto.getDatabase());
-			String password = databaseIntegrationPassword;
-			String port = cryptoBusiness.decrypt(supplyRevisionDto.getPort());
-			String schema = cryptoBusiness.decrypt(supplyRevisionDto.getSchema());
-			String username = databaseIntegrationUsername;
+            MicroserviceCreatePetitionDto data = new MicroserviceCreatePetitionDto();
+            data.setManagerCode(managerId);
+            data.setObservations(description);
 
-			String reference = "export-" + supplyRequestedDto.getId() + "-" + supplyRequestedDto.getRequest().getId()
-					+ "-" + userCode;
+            petitionDto = providerClient.createPetition(providerId, data);
+            petitionDto = addAdditionalDataToPetition(petitionDto);
 
-			String randomFilename = RandomStringUtils.random(20, true, false).toLowerCase();
-			String pathFile = stFilesDirectory + "/anexos/" + supplyRequestedId + File.separator + randomFilename
-					+ ".xtf";
+        } catch (Exception e) {
+            log.error("Error creando petición: " + e.getMessage());
+            throw new BusinessException("No se ha podido crear la petición.");
+        }
 
-			iliBusiness.startExportReference(pathFile, host, database, password, port, schema, username, reference,
-					supplyRequestedDto.getModelVersion().trim(), IliBusiness.ILI_CONCEPT_INTEGRATION);
+        return petitionDto;
+    }
 
-		} catch (Exception e) {
-			log.error("No se ha podido iniciar la exportación: " + e.getMessage());
-			throw new BusinessException("No se ha podido iniciar la exportación.");
-		}
+    public List<MicroservicePetitionDto> getPetitionsForManager(Long providerId, Long managerId)
+            throws BusinessException {
 
-		// update state supply requested to Closing Revision
-		updateStateToSupplyRequested(supplyRequestedDto.getRequest().getId(), supplyRequestedId,
-				ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW);
+        List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
 
-	}
+        if (providerId == null) {
 
-	public MicroserviceRequestDto getRequestById(Long requestId) {
+            listPetitionsDto = providerClient.getPetitionsByManager(managerId);
 
-		MicroserviceRequestDto requestDto = null;
+        } else {
 
-		try {
-			requestDto = providerClient.findRequestById(requestId);
-		} catch (Exception e) {
-			log.error("Error consultando solicitud por id: " + e.getMessage());
-		}
+            // validate provider
+            MicroserviceProviderDto providerDto = null;
+            try {
+                providerDto = providerClient.findById(providerId);
+            } catch (Exception e) {
+                log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+            }
+            if (providerDto == null) {
+                throw new BusinessException("El proveedor de insumo no existe.");
+            }
 
-		return requestDto;
-	}
+            listPetitionsDto = providerClient.getPetitionsForManager(providerId, managerId);
 
-	public MicroserviceSupplyRevisionDto updateSupplyRevision(Long supplyRequestedId, Long supplyRevisionId,
-			MicroserviceUpdateSupplyRevisionDto updateData) {
+        }
 
-		MicroserviceSupplyRevisionDto supplyRevisionDto = null;
+        try {
 
-		try {
+            for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+                petitionDto = addAdditionalDataToPetition(petitionDto);
+            }
 
-			supplyRevisionDto = providerClient.updateSupplyRevision(supplyRequestedId, supplyRevisionId, updateData);
+        } catch (Exception e) {
+            log.error("Error obteniendo las peticiones para el gestor: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar las peticiones del gestor.");
+        }
 
-		} catch (Exception e) {
-			log.error("No se ha podido actualizar la revisión: " + e.getMessage());
-		}
+        return listPetitionsDto;
+    }
 
-		return supplyRevisionDto;
-	}
+    public List<MicroservicePetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
 
-	public void skipRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
-			throws BusinessException {
+        List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
 
-		MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
-		if (supplyRequestedDto == null) {
-			throw new BusinessException("El insumo solicitado no existe");
-		}
+        // validate provider
+        MicroserviceProviderDto providerDto = null;
+        try {
+            providerDto = providerClient.findById(providerId);
+        } catch (Exception e) {
+            log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+        }
+        if (providerDto == null) {
+            throw new BusinessException("El proveedor de insumo no existe.");
+        }
 
-		if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
-			throw new BusinessException("El insumo solicitado no pertenece al proveedor");
-		}
+        try {
 
-		if (!supplyRequestedDto.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)) {
-			throw new BusinessException("El estado en el que se encuentra el insumo no permite omitir la revisión.");
-		}
+            List<Long> states = new ArrayList<Long>(Arrays.asList(ProviderBusiness.PETITION_STATE_PENDING));
 
-		// create supply
+            listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
 
-		Long requestId = supplyRequestedDto.getRequest().getId();
-		String urlDocumentaryRepository = supplyRequestedDto.getUrl();
+            for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+                petitionDto = addAdditionalDataToPetition(petitionDto);
+            }
 
-		MicroserviceRequestDto requestDto = this.getRequestById(requestId);
+        } catch (Exception e) {
+            log.error("Error obteniendo las peticiones pendientes para el proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
+        }
 
-		List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+        return listPetitionsDto;
+    }
 
-		attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
-				SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+    public List<MicroservicePetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
 
-		supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
-				supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userCode,
-				requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
-				SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName());
+        List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
 
-		updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
+        // validate provider
+        MicroserviceProviderDto providerDto = null;
+        try {
+            providerDto = providerClient.findById(providerId);
+        } catch (Exception e) {
+            log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+        }
+        if (providerDto == null) {
+            throw new BusinessException("El proveedor de insumo no existe.");
+        }
 
-		// close request
-		closeRequest(requestId, userCode);
-	}
+        try {
 
-	public MicroservicePetitionDto createPetition(Long providerId, Long managerId, String description)
-			throws BusinessException {
+            List<Long> states = new ArrayList<Long>(
+                    Arrays.asList(ProviderBusiness.PETITION_STATE_ACCEPT, ProviderBusiness.PETITION_STATE_REJECT));
 
-		MicroservicePetitionDto petitionDto = null;
+            listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
 
-		// validate provider
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
-		}
-		if (providerDto == null) {
-			throw new BusinessException("El proveedor de insumo no existe.");
-		}
+            for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+                petitionDto = addAdditionalDataToPetition(petitionDto);
+            }
 
-		try {
+        } catch (Exception e) {
+            log.error("Error obteniendo las peticiones cerradas para el proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
+        }
 
-			MicroserviceCreatePetitionDto data = new MicroserviceCreatePetitionDto();
-			data.setManagerCode(managerId);
-			data.setObservations(description);
+        return listPetitionsDto;
+    }
 
-			petitionDto = providerClient.createPetition(providerId, data);
-			petitionDto = addAdditionalDataToPetition(petitionDto);
+    public MicroservicePetitionDto acceptPetition(Long providerId, Long petitionId, String justification)
+            throws BusinessException {
 
-		} catch (Exception e) {
-			log.error("Error creando petición: " + e.getMessage());
-			throw new BusinessException("No se ha podido crear la petición.");
-		}
+        MicroservicePetitionDto petitionDto = null;
 
-		return petitionDto;
-	}
+        // validate provider
+        MicroserviceProviderDto providerDto = null;
+        try {
+            providerDto = providerClient.findById(providerId);
+        } catch (Exception e) {
+            log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
+        }
+        if (providerDto == null) {
+            throw new BusinessException("El proveedor de insumo no existe.");
+        }
 
-	public List<MicroservicePetitionDto> getPetitionsForManager(Long providerId, Long managerId)
-			throws BusinessException {
+        try {
 
-		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+            MicroserviceUpdatePetitionDto data = new MicroserviceUpdatePetitionDto();
+            data.setJustitication(justification);
+            data.setPetitionStateId(ProviderBusiness.PETITION_STATE_ACCEPT);
 
-		if (providerId == null) {
+            petitionDto = providerClient.updatePetition(providerId, petitionId, data);
+            petitionDto = addAdditionalDataToPetition(petitionDto);
 
-			listPetitionsDto = providerClient.getPetitionsByManager(managerId);
+        } catch (BusinessException e) {
+            log.error("Error aceptando la petición: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error aceptando la petición: " + e.getMessage());
+            throw new BusinessException("No se ha podido aceptar la petición.");
+        }
 
-		} else {
+        return petitionDto;
+    }
 
-			// validate provider
-			MicroserviceProviderDto providerDto = null;
-			try {
-				providerDto = providerClient.findById(providerId);
-			} catch (Exception e) {
-				log.error("Error verificando proveedor para crear petición: " + e.getMessage());
-			}
-			if (providerDto == null) {
-				throw new BusinessException("El proveedor de insumo no existe.");
-			}
+    public MicroservicePetitionDto rejectPetition(Long providerId, Long petitionId, String justification)
+            throws BusinessException {
 
-			listPetitionsDto = providerClient.getPetitionsForManager(providerId, managerId);
+        MicroservicePetitionDto petitionDto = null;
 
-		}
+        // validate provider
+        MicroserviceProviderDto providerDto = null;
+        try {
+            providerDto = providerClient.findById(providerId);
+        } catch (Exception e) {
+            log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
+        }
+        if (providerDto == null) {
+            throw new BusinessException("El proveedor de insumo no existe.");
+        }
 
-		try {
+        try {
 
-			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
-				petitionDto = addAdditionalDataToPetition(petitionDto);
-			}
+            MicroserviceUpdatePetitionDto data = new MicroserviceUpdatePetitionDto();
+            data.setJustitication(justification);
+            data.setPetitionStateId(ProviderBusiness.PETITION_STATE_REJECT);
 
-		} catch (Exception e) {
-			log.error("Error obteniendo las peticiones para el gestor: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar las peticiones del gestor.");
-		}
+            petitionDto = providerClient.updatePetition(providerId, petitionId, data);
+            petitionDto = addAdditionalDataToPetition(petitionDto);
 
-		return listPetitionsDto;
-	}
+        } catch (BusinessException e) {
+            log.error("Error rechazando la petición: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error rechazando la petición: " + e.getMessage());
+            throw new BusinessException("No se ha podido rechazar la petición.");
+        }
 
-	public List<MicroservicePetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
+        return petitionDto;
+    }
 
-		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+    private MicroservicePetitionDto addAdditionalDataToPetition(MicroservicePetitionDto petitionDto) {
 
-		// validate provider
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
-		}
-		if (providerDto == null) {
-			throw new BusinessException("El proveedor de insumo no existe.");
-		}
+        try {
 
-		try {
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerById(petitionDto.getManagerCode());
+            petitionDto.setManager(managerDto);
 
-			List<Long> states = new ArrayList<Long>(Arrays.asList(ProviderBusiness.PETITION_STATE_PENDING));
+        } catch (Exception e) {
+            petitionDto.setManager(null);
+            log.error("Error agregando información adicional a una petición: " + e.getMessage());
+        }
 
-			listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
+        return petitionDto;
+    }
 
-			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
-				petitionDto = addAdditionalDataToPetition(petitionDto);
-			}
+    public MicroserviceTypeSupplyDto enableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
 
-		} catch (Exception e) {
-			log.error("Error obteniendo las peticiones pendientes para el proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
-		}
+        MicroserviceTypeSupplyDto typeSupplyDto = null;
 
-		return listPetitionsDto;
-	}
+        Boolean belongToProvider = false;
+        try {
 
-	public List<MicroservicePetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
+            List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
+            MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
+                    .filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
 
-		List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+            belongToProvider = (foundTypeSpplyDto != null);
 
-		// validate provider
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("Error verificando proveedor para crear petición: " + e.getMessage());
-		}
-		if (providerDto == null) {
-			throw new BusinessException("El proveedor de insumo no existe.");
-		}
+        } catch (Exception e) {
+            belongToProvider = false;
+            log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
+        }
+        if (!belongToProvider) {
+            throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
+        }
 
-		try {
+        try {
 
-			List<Long> states = new ArrayList<Long>(
-					Arrays.asList(ProviderBusiness.PETITION_STATE_ACCEPT, ProviderBusiness.PETITION_STATE_REJECT));
+            typeSupplyDto = providerClient.enableTypeSupply(typeSupplyId);
 
-			listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
+        } catch (BusinessException e) {
+            log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido activar el tipo de insumo.");
+        }
 
-			for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
-				petitionDto = addAdditionalDataToPetition(petitionDto);
-			}
+        return typeSupplyDto;
+    }
 
-		} catch (Exception e) {
-			log.error("Error obteniendo las peticiones cerradas para el proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
-		}
+    public MicroserviceTypeSupplyDto disableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
 
-		return listPetitionsDto;
-	}
+        MicroserviceTypeSupplyDto typeSupplyDto = null;
 
-	public MicroservicePetitionDto acceptPetition(Long providerId, Long petitionId, String justification)
-			throws BusinessException {
+        Boolean belongToProvider = false;
+        try {
 
-		MicroservicePetitionDto petitionDto = null;
+            List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
+            MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
+                    .filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
 
-		// validate provider
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
-		}
-		if (providerDto == null) {
-			throw new BusinessException("El proveedor de insumo no existe.");
-		}
+            belongToProvider = (foundTypeSpplyDto != null);
 
-		try {
+        } catch (Exception e) {
+            belongToProvider = false;
+            log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
+        }
+        if (!belongToProvider) {
+            throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
+        }
 
-			MicroserviceUpdatePetitionDto data = new MicroserviceUpdatePetitionDto();
-			data.setJustitication(justification);
-			data.setPetitionStateId(ProviderBusiness.PETITION_STATE_ACCEPT);
+        try {
 
-			petitionDto = providerClient.updatePetition(providerId, petitionId, data);
-			petitionDto = addAdditionalDataToPetition(petitionDto);
+            typeSupplyDto = providerClient.disableTypeSupply(typeSupplyId);
 
-		} catch (BusinessException e) {
-			log.error("Error aceptando la petición: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error aceptando la petición: " + e.getMessage());
-			throw new BusinessException("No se ha podido aceptar la petición.");
-		}
+        } catch (BusinessException e) {
+            log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
+            throw new BusinessException("No se ha podido desactivar el tipo de insumo.");
+        }
 
-		return petitionDto;
-	}
-
-	public MicroservicePetitionDto rejectPetition(Long providerId, Long petitionId, String justification)
-			throws BusinessException {
-
-		MicroservicePetitionDto petitionDto = null;
-
-		// validate provider
-		MicroserviceProviderDto providerDto = null;
-		try {
-			providerDto = providerClient.findById(providerId);
-		} catch (Exception e) {
-			log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
-		}
-		if (providerDto == null) {
-			throw new BusinessException("El proveedor de insumo no existe.");
-		}
-
-		try {
-
-			MicroserviceUpdatePetitionDto data = new MicroserviceUpdatePetitionDto();
-			data.setJustitication(justification);
-			data.setPetitionStateId(ProviderBusiness.PETITION_STATE_REJECT);
-
-			petitionDto = providerClient.updatePetition(providerId, petitionId, data);
-			petitionDto = addAdditionalDataToPetition(petitionDto);
-
-		} catch (BusinessException e) {
-			log.error("Error rechazando la petición: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error rechazando la petición: " + e.getMessage());
-			throw new BusinessException("No se ha podido rechazar la petición.");
-		}
-
-		return petitionDto;
-	}
-
-	private MicroservicePetitionDto addAdditionalDataToPetition(MicroservicePetitionDto petitionDto) {
-
-		try {
-
-			MicroserviceManagerDto managerDto = managerBusiness.getManagerById(petitionDto.getManagerCode());
-			petitionDto.setManager(managerDto);
-
-		} catch (Exception e) {
-			petitionDto.setManager(null);
-			log.error("Error agregando información adicional a una petición: " + e.getMessage());
-		}
-
-		return petitionDto;
-	}
-
-	public MicroserviceTypeSupplyDto enableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
-
-		MicroserviceTypeSupplyDto typeSupplyDto = null;
-
-		Boolean belongToProvider = false;
-		try {
-
-			List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
-			MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
-					.filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
-
-			belongToProvider = (foundTypeSpplyDto != null);
-
-		} catch (Exception e) {
-			belongToProvider = false;
-			log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
-		}
-		if (!belongToProvider) {
-			throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
-		}
-
-		try {
-
-			typeSupplyDto = providerClient.enableTypeSupply(typeSupplyId);
-
-		} catch (BusinessException e) {
-			log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido activar el tipo de insumo.");
-		}
-
-		return typeSupplyDto;
-	}
-
-	public MicroserviceTypeSupplyDto disableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
-
-		MicroserviceTypeSupplyDto typeSupplyDto = null;
-
-		Boolean belongToProvider = false;
-		try {
-
-			List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
-			MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
-					.filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
-
-			belongToProvider = (foundTypeSpplyDto != null);
-
-		} catch (Exception e) {
-			belongToProvider = false;
-			log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
-		}
-		if (!belongToProvider) {
-			throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
-		}
-
-		try {
-
-			typeSupplyDto = providerClient.disableTypeSupply(typeSupplyId);
-
-		} catch (BusinessException e) {
-			log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
-			throw new BusinessException("No se ha podido desactivar el tipo de insumo.");
-		}
-
-		return typeSupplyDto;
-	}
+        return typeSupplyDto;
+    }
 
 }
