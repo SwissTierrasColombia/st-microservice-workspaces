@@ -300,10 +300,25 @@ public class ProviderBusiness {
 
                     }
 
+                    // verify if the supply is a gdb file
+                    boolean isLoadGdb = false;
+                    MicroserviceExtensionDto extensionGdbDto = extensionAllowed.stream()
+                            .filter(ext -> ext.getName().equalsIgnoreCase("gdb")).findAny().orElse(null);
+                    if (extensionGdbDto != null) {
+
+                        if (loadedFileExtension.equalsIgnoreCase("zip")) {
+                            isLoadGdb = ZipUtil.hasGDBDatabase(filePathTemporal);
+                            if (isLoadGdb) {
+                                zipFile = false;
+                                fileAllowed = true;
+                            }
+                        }
+                    }
+
                     assert loadedFileExtension != null;
                     if (loadedFileExtension.equalsIgnoreCase("zip")) {
 
-                        if (!isLoadShp) {
+                        if (!isLoadShp && !isLoadGdb) {
                             List<String> extensionsAllowed = extensionAllowed.stream().map(MicroserviceExtensionDto::getName).collect(Collectors.toList());
 
                             fileAllowed = ZipUtil.zipContainsFile(filePathTemporal, extensionsAllowed);
