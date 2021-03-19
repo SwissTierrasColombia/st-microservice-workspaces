@@ -66,6 +66,7 @@ public class SupplyV1Controller {
                                                        @RequestParam(name = "extensions", required = false) List<String> extensions,
                                                        @RequestHeader("authorization") String headerAuthorization,
                                                        @RequestParam(name = "page", required = false) Integer page,
+                                                       @RequestParam(name = "manager", required = false) Long managerCode,
                                                        @RequestParam(name = "active", required = true, defaultValue = "true") boolean active,
                                                        @RequestParam(name = "requests", required = false) List<Long> requests) {
 
@@ -83,7 +84,7 @@ public class SupplyV1Controller {
             if (userBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions, page, requests,
-                        active);
+                        active, managerCode);
 
             } else if (userBusiness.isManager(userDtoSession)) {
 

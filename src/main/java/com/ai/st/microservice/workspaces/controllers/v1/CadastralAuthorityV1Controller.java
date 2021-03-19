@@ -79,6 +79,12 @@ public class CadastralAuthorityV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
+            // validation manager
+            Long managerCode = supplyCadastralAuthorityDto.getManagerCode();
+            if (managerCode == null || managerCode <= 0) {
+                throw new InputValidationException("El gestor es requerido.");
+            }
+
             // validation type supply
             Long attachmentTypeId = supplyCadastralAuthorityDto.getAttachmentTypeId();
             if (attachmentTypeId == null || attachmentTypeId <= 0) {
@@ -97,7 +103,7 @@ public class CadastralAuthorityV1Controller {
                 throw new InputValidationException("Las observaciones son requeridas.");
             }
 
-            responseDto = cadastralAuthorityBusiness.createSupplyCadastralAuthority(municipalityId, attachmentTypeId,
+            responseDto = cadastralAuthorityBusiness.createSupplyCadastralAuthority(municipalityId, managerCode, attachmentTypeId,
                     name, observations, supplyCadastralAuthorityDto.getFtp(), file, userDtoSession.getId());
             httpStatus = HttpStatus.CREATED;
 
@@ -128,7 +134,8 @@ public class CadastralAuthorityV1Controller {
             @ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
-    public ResponseEntity<Object> downloadReport(@PathVariable Long municipalityId) {
+    public ResponseEntity<Object> downloadReport(@PathVariable Long municipalityId,
+                                                 @RequestParam(name = "manager", required = true) Long managerCode) {
 
         MediaType mediaType;
         File file;
@@ -136,7 +143,7 @@ public class CadastralAuthorityV1Controller {
 
         try {
 
-            String pathFile = cadastralAuthorityBusiness.generateReport(municipalityId);
+            String pathFile = cadastralAuthorityBusiness.generateReport(municipalityId, managerCode);
 
             Path path = Paths.get(pathFile);
             String fileName = path.getFileName().toString();

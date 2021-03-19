@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces.business;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import org.apache.commons.lang.RandomStringUtils;
@@ -69,7 +70,7 @@ public class SupplyBusiness {
     private OperatorBusiness operatorBusiness;
 
     public Object getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions, Integer page,
-                                                 List<Long> requests, boolean active) throws BusinessException {
+                                                 List<Long> requests, boolean active, Long managerCode) throws BusinessException {
 
         // validate if the municipality exists
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -77,7 +78,7 @@ public class SupplyBusiness {
             throw new BusinessException("No se ha encontrado el municipio.");
         }
 
-        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, null);
+        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, managerCode);
     }
 
     public Object getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode, List<String> extensions,
@@ -90,6 +91,9 @@ public class SupplyBusiness {
         }
 
         if (managerCode != null) {
+
+            System.out.println("aqui llega");
+
             WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
             if (workspaceActive instanceof WorkspaceEntity) {
                 WorkspaceManagerEntity workspaceManagerEntity =
@@ -128,6 +132,11 @@ public class SupplyBusiness {
                 suppliesDto = dataPaginated.getItems();
             } else {
                 suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode(), states);
+
+                if (managerCode != null) {
+                    suppliesDto = suppliesDto.stream().filter(s -> s.getManagerCode().equals(managerCode)).collect(Collectors.toList());
+                }
+
             }
 
             for (MicroserviceSupplyDto supplyDto : suppliesDto) {

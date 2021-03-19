@@ -1,15 +1,5 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
@@ -19,11 +9,21 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.MunicipalityService;
 import com.ai.st.microservice.workspaces.services.WorkspaceService;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Component
 public class CadastralAuthorityBusiness {
@@ -52,22 +52,31 @@ public class CadastralAuthorityBusiness {
     @Autowired
     private ManagerBusiness managerBusiness;
 
-    public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long attachmentTypeId, String name,
+    public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId, String name,
                                                                 String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
 
-        MicroserviceSupplyDto supplyDto = null;
+        MicroserviceSupplyDto supplyDto;
 
         if (ftp == null && file == null) {
             throw new BusinessException("Se debe cargar algun tipo de adjunto");
         }
 
-        MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityById(municipalityId);
-        if (municipalityDto == null) {
+        MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+        if (municipalityEntity == null) {
             throw new BusinessException("El municipio no existe");
         }
 
-        String municipalityCode = municipalityDto.getCode();
+        WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+        if (workspaceEntity == null) {
+            throw new BusinessException("El municipio no tiene asignado un gestor");
+        }
+        WorkspaceManagerEntity workspaceManagerEntity =
+                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+        if (workspaceManagerEntity == null) {
+            throw new BusinessException("El gestor no pertenece al municipio");
+        }
 
+        String municipalityCode = municipalityEntity.getCode();
         List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
 
         if (file != null) {
@@ -102,12 +111,8 @@ public class CadastralAuthorityBusiness {
         }
 
         try {
-
-            /**
-             * Error refactoring ...
-             */
-//			supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null,  ,attachments, null, userCode,
-//					null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name);
+            supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null, managerCode, attachments, null,
+                    userCode, null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name);
         } catch (Exception e) {
             throw new BusinessException("No se ha podido cargar el insumo.");
         }
@@ -115,7 +120,7 @@ public class CadastralAuthorityBusiness {
         return supplyDto;
     }
 
-    public String generateReport(Long municipalityId) throws BusinessException {
+    public String generateReport(Long municipalityId, Long managerCode) throws BusinessException {
 
         MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityById(municipalityId);
         if (municipalityDto == null) {
@@ -129,18 +134,14 @@ public class CadastralAuthorityBusiness {
             throw new BusinessException("El municipio aún no tiene asignado un gestor");
         }
 
-        /**
-         * TODO: Refactoring pending ...
-         *
-         * Before:
-         *
-         * MicroserviceManagerDto managerDto =
-         * managerBusiness.getManagerById(workspaceEntity.getManagerCode());
-         *
-         *
-         */
 
-        MicroserviceManagerDto managerDto = managerBusiness.getManagerById(null);
+        WorkspaceManagerEntity workspaceManagerEntity =
+                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+        if (workspaceManagerEntity == null) {
+            throw new BusinessException("El gestor no pertenece al municipio");
+        }
+
+        MicroserviceManagerDto managerDto = managerBusiness.getManagerById(workspaceManagerEntity.getManagerCode());
         if (managerDto == null) {
             throw new BusinessException("No se ha encontrado el gestor.");
         }
@@ -157,9 +158,8 @@ public class CadastralAuthorityBusiness {
 
         List<MicroserviceSupplyACDto> suppliesReport = new ArrayList<>();
 
-        @SuppressWarnings("unchecked")
         List<MicroserviceSupplyDto> supplies = (List<MicroserviceSupplyDto>) supplyBusiness
-                .getSuppliesByMunicipalityAdmin(municipalityId, new ArrayList<>(), null, null, false);
+                .getSuppliesByMunicipalityAdmin(municipalityId, new ArrayList<>(), null, null, false, workspaceManagerEntity.getManagerCode());
 
         for (MicroserviceSupplyDto supply : supplies) {
 
