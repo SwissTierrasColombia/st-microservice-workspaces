@@ -393,7 +393,7 @@ public class WorkspaceBusiness {
             List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorDto.getId());
             for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
                 MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
-                if (userDto != null) {
+                if (userDto != null && userDto.getEnabled()) {
                     notificationBusiness.sendNotificationAssignamentOperation(userDto.getEmail(), userDto.getId(),
                             managerDto.getName(), municipalityEntity.getName(),
                             municipalityEntity.getDepartment().getName(), startDate, endDate, "");
@@ -768,13 +768,15 @@ public class WorkspaceBusiness {
                     for (MicroserviceProviderUserDto providerUser : providerUsers) {
 
                         MicroserviceUserDto userDto = userBusiness.getUserById(providerUser.getUserCode());
+                        if (userDto.getEnabled()) {
+                            providerUser.getProfiles().stream()
+                                    .filter(p -> p.getId().equals(providerProfileId)).findAny()
+                                    .ifPresent(profileFound -> notificationBusiness.sendNotificationInputRequest(userDto.getEmail(), userCode,
+                                            managerDto.getName(), municipalityEntity.getName(),
+                                            municipalityEntity.getDepartment().getName(), responseRequest.getId().toString(),
+                                            new Date()));
+                        }
 
-                        providerUser.getProfiles().stream()
-                                .filter(p -> p.getId().equals(providerProfileId)).findAny()
-                                .ifPresent(profileFound -> notificationBusiness.sendNotificationInputRequest(userDto.getEmail(), userCode,
-                                        managerDto.getName(), municipalityEntity.getName(),
-                                        municipalityEntity.getDepartment().getName(), responseRequest.getId().toString(),
-                                        new Date()));
 
                     }
 
@@ -1312,7 +1314,7 @@ public class WorkspaceBusiness {
                 for (MicroserviceManagerUserDto managerUserDto : listUsersIntegrators) {
 
                     MicroserviceUserDto userIntegratorDto = userBusiness.getUserById(managerUserDto.getUserCode());
-                    if (userIntegratorDto != null) {
+                    if (userIntegratorDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationTaskAssignment(userIntegratorDto.getEmail(),
                                 userIntegratorDto.getId(), name, municipalityEntity.getName(),
                                 municipalityEntity.getDepartment().getName(), new Date());
@@ -1619,7 +1621,7 @@ public class WorkspaceBusiness {
                 List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorCode);
                 for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
                     MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
-                    if (userDto != null) {
+                    if (userDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationDeliverySupplies(userDto.getEmail(), userDto.getId(),
                                 managerDto.getName(), municipalityEntity.getName(),
                                 municipalityEntity.getDepartment().getName(), "", deliveryDto.getCreatedAt());
@@ -1924,7 +1926,7 @@ public class WorkspaceBusiness {
                 for (MicroserviceManagerUserDto directorDto : directors) {
 
                     MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
-                    if (userDto != null) {
+                    if (userDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationMunicipalityManagementDto(userDto.getEmail(), municipalityEntity.getDepartment().getName(),
                                 municipalityEntity.getName(), startDate, userDto.getId(), "");
                     }

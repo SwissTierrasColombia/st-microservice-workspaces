@@ -123,7 +123,7 @@ public class RabbitMQUpdateExportIntegrationListener {
                         for (MicroserviceManagerUserDto directorDto : directors) {
 
                             MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
-                            if (userDto != null) {
+                            if (userDto != null && userDto.getEnabled()) {
                                 notificationBusiness.sendNotificationProductGenerated(userDto.getEmail(),
                                         userDto.getId(), municipalityEntity.getName(),
                                         municipalityEntity.getDepartment().getName(), new Date());

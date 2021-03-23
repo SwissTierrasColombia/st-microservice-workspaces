@@ -80,7 +80,7 @@ public class RabbitMQUpdateStateSupplyListener {
                         .getMunicipalityByCode(requestDto.getMunicipalityCode());
 
                 MicroserviceUserDto userDto = userBusiness.getUserById(supplyRequestedDto.getDeliveredBy());
-                if (userDto != null) {
+                if (userDto != null && userDto.getEnabled()) {
                     notificationBusiness.sendNotificationLoadOfInputs(userDto.getEmail(), userDto.getId(),
                             validationDto.getIsValid(), municipalityEntity.getName(),
                             municipalityEntity.getDepartment().getName(), validationDto.getRequestId().toString(),

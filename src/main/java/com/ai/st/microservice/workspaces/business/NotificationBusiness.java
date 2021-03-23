@@ -21,229 +21,229 @@ import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificat
 @Component
 public class NotificationBusiness {
 
-	private final Logger log = LoggerFactory.getLogger(NotificationBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(NotificationBusiness.class);
 
-	@Autowired
-	private NotifierFeignClient notifierClient;
+    @Autowired
+    private NotifierFeignClient notifierClient;
 
-	public void sendNotificationCreationUser(String email, String password, String profile, String user,
-			Long userCode) {
+    public void sendNotificationCreationUser(String email, String password, String profile, String user,
+                                             Long userCode) {
 
-		try {
+        try {
 
-			MicroserviceNotificationNewUserDto notification = new MicroserviceNotificationNewUserDto();
-			notification.setEmail(email);
-			notification.setPassword(password);
-			notification.setProfile(profile);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setUser(user);
-			notification.setUserCode(userCode);
+            MicroserviceNotificationNewUserDto notification = new MicroserviceNotificationNewUserDto();
+            notification.setEmail(email);
+            notification.setPassword(password);
+            notification.setProfile(profile);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setUser(user);
+            notification.setUserCode(userCode);
 
-			notifierClient.creationUser(notification);
+            notifierClient.creationUser(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #1: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #1: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationMunicipalityManagementDto(String email, String dpto, String mpio, Date startDate,
-			Long userCode, String supportFile) {
+    public void sendNotificationMunicipalityManagementDto(String email, String dpto, String mpio, Date startDate,
+                                                          Long userCode, String supportFile) {
 
-		try {
+        try {
 
-			MicroserviceNotificationMunicipalityManagementDto notification = new MicroserviceNotificationMunicipalityManagementDto();
+            MicroserviceNotificationMunicipalityManagementDto notification = new MicroserviceNotificationMunicipalityManagementDto();
 
-			notification.setEmail(email);
-			notification.setDpto(dpto);
-			notification.setMpio(mpio);
-			notification.setStartDate(startDate);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setUserCode(userCode);
-			notification.setSupportFile(supportFile);
+            notification.setEmail(email);
+            notification.setDpto(dpto);
+            notification.setMpio(mpio);
+            notification.setStartDate(startDate);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setUserCode(userCode);
+            notification.setSupportFile(supportFile);
 
-			notifierClient.municipalityManagement(notification);
+            notifierClient.municipalityManagement(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #2: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #2: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationAssignamentOperation(String email, Long userCode, String manager, String mpio,
-			String dpto, Date requestDateFrom, Date requestDateTo, String supportFile) {
+    public void sendNotificationAssignamentOperation(String email, Long userCode, String manager, String mpio,
+                                                     String dpto, Date requestDateFrom, Date requestDateTo, String supportFile) {
 
-		try {
+        try {
 
-			MicroserviceNotificationAssignmentOperationMunicipalityDto notification = new MicroserviceNotificationAssignmentOperationMunicipalityDto();
+            MicroserviceNotificationAssignmentOperationMunicipalityDto notification = new MicroserviceNotificationAssignmentOperationMunicipalityDto();
 
-			notification.setEmail(email);
-			notification.setUserCode(userCode);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setManager(manager);
-			notification.setMpio(mpio);
-			notification.setDpto(dpto);
-			notification.setRequestNumber("");
-			notification.setRequestDateFrom(requestDateFrom);
-			notification.setRequestDateTo(requestDateTo);
-			notification.setSupportFile(supportFile);
+            notification.setEmail(email);
+            notification.setUserCode(userCode);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setManager(manager);
+            notification.setMpio(mpio);
+            notification.setDpto(dpto);
+            notification.setRequestNumber("");
+            notification.setRequestDateFrom(requestDateFrom);
+            notification.setRequestDateTo(requestDateTo);
+            notification.setSupportFile(supportFile);
 
-			notifierClient.assignmentOperation(notification);
+            notifierClient.assignmentOperation(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #3: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #3: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationInputRequest(String email, Long userCode, String manager, String mpio, String dpto,
-			String requestNumber, Date requestDate) {
+    public void sendNotificationInputRequest(String email, Long userCode, String manager, String mpio, String dpto,
+                                             String requestNumber, Date requestDate) {
 
-		try {
+        try {
 
-			MicroserviceNotificationInputRequestDto notification = new MicroserviceNotificationInputRequestDto();
+            MicroserviceNotificationInputRequestDto notification = new MicroserviceNotificationInputRequestDto();
 
-			notification.setEmail(email);
-			notification.setUserCode(userCode);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setManager(manager);
-			notification.setMpio(mpio);
-			notification.setDpto(dpto);
-			notification.setRequestNumber(requestNumber);
-			notification.setRequestDate(requestDate);
+            notification.setEmail(email);
+            notification.setUserCode(userCode);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setManager(manager);
+            notification.setMpio(mpio);
+            notification.setDpto(dpto);
+            notification.setRequestNumber(requestNumber);
+            notification.setRequestDate(requestDate);
 
-			notifierClient.inputRequest(notification);
+            notifierClient.inputRequest(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #4: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #4: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationLoadOfInputs(String email, Long userCode, boolean loadStatus, String mpio, String dpto,
-			String requestNumber, Date loadDate, String supportFile) {
+    public void sendNotificationLoadOfInputs(String email, Long userCode, boolean loadStatus, String mpio, String dpto,
+                                             String requestNumber, Date loadDate, String supportFile) {
 
-		try {
+        try {
 
-			MicroserviceNotificationLoadOfInputsDto notification = new MicroserviceNotificationLoadOfInputsDto();
+            MicroserviceNotificationLoadOfInputsDto notification = new MicroserviceNotificationLoadOfInputsDto();
 
-			notification.setEmail(email);
-			notification.setUserCode(userCode);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setLoadStatus(loadStatus);
-			notification.setMpio(mpio);
-			notification.setDpto(dpto);
-			notification.setRequestNumber(requestNumber);
-			notification.setLoadDate(loadDate);
-			notification.setSupportFile(supportFile);
+            notification.setEmail(email);
+            notification.setUserCode(userCode);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setLoadStatus(loadStatus);
+            notification.setMpio(mpio);
+            notification.setDpto(dpto);
+            notification.setRequestNumber(requestNumber);
+            notification.setLoadDate(loadDate);
+            notification.setSupportFile(supportFile);
 
-			notifierClient.loadOfInputs(notification);
+            notifierClient.loadOfInputs(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #5: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #5: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationInputIntegrations(String email, Long userCode, String integrationStatus, String mpio,
-			String dpto, Date integrationDate) {
+    public void sendNotificationInputIntegrations(String email, Long userCode, String integrationStatus, String mpio,
+                                                  String dpto, Date integrationDate) {
 
-		try {
+        try {
 
-			MicroserviceNotificationInputIntegrationsDto notification = new MicroserviceNotificationInputIntegrationsDto();
+            MicroserviceNotificationInputIntegrationsDto notification = new MicroserviceNotificationInputIntegrationsDto();
 
-			notification.setEmail(email);
-			notification.setUserCode(userCode);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setIntegrationStatus(integrationStatus);
-			notification.setMpio(mpio);
-			notification.setDpto(dpto);
-			notification.setIntegrationDate(integrationDate);
+            notification.setEmail(email);
+            notification.setUserCode(userCode);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setIntegrationStatus(integrationStatus);
+            notification.setMpio(mpio);
+            notification.setDpto(dpto);
+            notification.setIntegrationDate(integrationDate);
 
-			notifierClient.inputIntegration(notification);
+            notifierClient.inputIntegration(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #6: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #6: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationTaskAssignment(String email, Long userCode, String task, String mpio, String dpto,
-			Date taskDate) {
+    public void sendNotificationTaskAssignment(String email, Long userCode, String task, String mpio, String dpto,
+                                               Date taskDate) {
 
-		try {
+        try {
 
-			MicroserviceNotificationTaskAssignmentDto notification = new MicroserviceNotificationTaskAssignmentDto();
+            MicroserviceNotificationTaskAssignmentDto notification = new MicroserviceNotificationTaskAssignmentDto();
 
-			notification.setEmail(email);
-			notification.setUserCode(userCode);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setTask(task);
-			notification.setMpio(mpio);
-			notification.setDpto(dpto);
-			notification.setTaskDate(taskDate);
+            notification.setEmail(email);
+            notification.setUserCode(userCode);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setTask(task);
+            notification.setMpio(mpio);
+            notification.setDpto(dpto);
+            notification.setTaskDate(taskDate);
 
-			notifierClient.taskAssignment(notification);
+            notifierClient.taskAssignment(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #7: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #7: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationProductGenerated(String email, Long userCode, String mpio, String dpto,
-			Date requestDate) {
+    public void sendNotificationProductGenerated(String email, Long userCode, String mpio, String dpto,
+                                                 Date requestDate) {
 
-		try {
+        try {
 
-			MicroserviceNotificationIntegrationFileGenerationDto notification = new MicroserviceNotificationIntegrationFileGenerationDto();
+            MicroserviceNotificationIntegrationFileGenerationDto notification = new MicroserviceNotificationIntegrationFileGenerationDto();
 
-			notification.setEmail(email);
-			notification.setUserCode(userCode);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setMpio(mpio);
-			notification.setDpto(dpto);
-			notification.setRequestDate(requestDate);
+            notification.setEmail(email);
+            notification.setUserCode(userCode);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setMpio(mpio);
+            notification.setDpto(dpto);
+            notification.setRequestDate(requestDate);
 
-			notifierClient.productGenerated(notification);
+            notifierClient.productGenerated(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #8: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #8: " + e.getMessage());
+        }
 
-	}
+    }
 
-	public void sendNotificationDeliverySupplies(String email, Long userCode, String manager, String mpio, String dpto,
-			String supportFile, Date requestDate) {
+    public void sendNotificationDeliverySupplies(String email, Long userCode, String manager, String mpio, String dpto,
+                                                 String supportFile, Date requestDate) {
 
-		try {
+        try {
 
-			MicroserviceNotificationDeliveryOfInputsDto notification = new MicroserviceNotificationDeliveryOfInputsDto();
+            MicroserviceNotificationDeliveryOfInputsDto notification = new MicroserviceNotificationDeliveryOfInputsDto();
 
-			notification.setEmail(email);
-			notification.setUserCode(userCode);
-			notification.setStatus(0);
-			notification.setType("sucess");
-			notification.setManager(manager);
-			notification.setMpio(mpio);
-			notification.setDpto(dpto);
-			notification.setSupportFile(supportFile);
-			notification.setRequestDate(requestDate);
+            notification.setEmail(email);
+            notification.setUserCode(userCode);
+            notification.setStatus(0);
+            notification.setType("success");
+            notification.setManager(manager);
+            notification.setMpio(mpio);
+            notification.setDpto(dpto);
+            notification.setSupportFile(supportFile);
+            notification.setRequestDate(requestDate);
 
-			notifierClient.deliverySupplies(notification);
+            notifierClient.deliverySupplies(notification);
 
-		} catch (Exception e) {
-			log.error("Error enviando la notificación #9: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #9: " + e.getMessage());
+        }
 
-	}
+    }
 
 }
