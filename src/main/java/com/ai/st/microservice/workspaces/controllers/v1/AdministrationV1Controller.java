@@ -200,7 +200,8 @@ public class AdministrationV1Controller {
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Update user", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
-    public ResponseEntity<Object> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDto requestUpdateUser,
+    public ResponseEntity<Object> updateUser(@PathVariable Long userId,
+                                             @RequestBody UpdateUserDto requestUpdateUser,
                                              @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -216,12 +217,12 @@ public class AdministrationV1Controller {
 
             if (userBusiness.isSuperAdministrator(userDtoSession)) {
                 responseDto = administrationBusiness.updateUserFromSuperAdmin(userId, requestUpdateUser.getFirstName(),
-                        requestUpdateUser.getLastName());
+                        requestUpdateUser.getLastName(), requestUpdateUser.getEmail());
             }
 
             if (userBusiness.isAdministrator(userDtoSession)) {
                 responseDto = administrationBusiness.updateUserFromAdministrator(userId,
-                        requestUpdateUser.getFirstName(), requestUpdateUser.getLastName());
+                        requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail());
             }
 
             if (userBusiness.isManager(userDtoSession)) {
@@ -236,13 +237,13 @@ public class AdministrationV1Controller {
                 }
 
                 responseDto = administrationBusiness.updateUserFromManager(userId, requestUpdateUser.getFirstName(),
-                        requestUpdateUser.getLastName(), managerDto.getId());
+                        requestUpdateUser.getLastName(), requestUpdateUser.getEmail(), managerDto.getId());
 
             }
 
             if (userBusiness.isProvider(userDtoSession)) {
 
-                // get provider
+                // get providers
                 MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
@@ -252,7 +253,7 @@ public class AdministrationV1Controller {
                 }
 
                 responseDto = administrationBusiness.updateUserFromProvider(userId, requestUpdateUser.getFirstName(),
-                        requestUpdateUser.getLastName(), providerDto.getId());
+                        requestUpdateUser.getLastName(), requestUpdateUser.getEmail(), providerDto.getId());
 
             }
 

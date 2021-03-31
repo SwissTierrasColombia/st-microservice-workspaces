@@ -300,7 +300,7 @@ public class AdministrationBusiness {
         return userDto;
     }
 
-    public MicroserviceUserDto updateUserFromSuperAdmin(Long userId, String firstName, String lastName)
+    public MicroserviceUserDto updateUserFromSuperAdmin(Long userId, String firstName, String lastName, String email)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -318,10 +318,10 @@ public class AdministrationBusiness {
             throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
         }
 
-        return this.updateUser(userId, firstName, lastName);
+        return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUserFromAdministrator(Long userId, String firstName, String lastName)
+    public MicroserviceUserDto updateUserFromAdministrator(Long userId, String firstName, String lastName, String email)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -385,10 +385,10 @@ public class AdministrationBusiness {
 
         }
 
-        return this.updateUser(userId, firstName, lastName);
+        return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUserFromManager(Long userId, String firstName, String lastName, Long managerCode)
+    public MicroserviceUserDto updateUserFromManager(Long userId, String firstName, String lastName, String email, Long managerCode)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -420,10 +420,10 @@ public class AdministrationBusiness {
             throw new BusinessException("El usuario que se desea editar no pertenece al gestor.");
         }
 
-        return this.updateUser(userId, firstName, lastName);
+        return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUserFromProvider(Long userId, String firstName, String lastName, Long providerCode)
+    public MicroserviceUserDto updateUserFromProvider(Long userId, String firstName, String lastName, String email, Long providerCode)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -469,10 +469,10 @@ public class AdministrationBusiness {
             throw new BusinessException("El usuario que se desea editar no pertenece al proveedor.");
         }
 
-        return this.updateUser(userId, firstName, lastName);
+        return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUser(Long userId, String firstName, String lastName) throws BusinessException {
+    public MicroserviceUserDto updateUser(Long userId, String firstName, String lastName, String email) throws BusinessException {
 
         MicroserviceUserDto userDto;
 
@@ -481,6 +481,7 @@ public class AdministrationBusiness {
             MicroserviceUpdateUserDto updateUser = new MicroserviceUpdateUserDto();
             updateUser.setFirstName(firstName);
             updateUser.setLastName(lastName);
+            updateUser.setEmail(email);
 
             userDto = userClient.updateUser(userId, updateUser);
 

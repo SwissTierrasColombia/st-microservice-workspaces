@@ -78,24 +78,22 @@ public class SupplyBusiness {
             throw new BusinessException("No se ha encontrado el municipio.");
         }
 
-        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, managerCode);
+        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, managerCode, null);
     }
 
     public Object getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode, List<String> extensions,
-                                                   Integer page, List<Long> requests, boolean active) throws BusinessException {
+                                                   Integer page, List<Long> requests, boolean active, Long operatorCode) throws BusinessException {
 
         // validate if the municipality exists
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
-        if (!(municipalityEntity instanceof MunicipalityEntity)) {
+        if (municipalityEntity == null) {
             throw new BusinessException("No se ha encontrado el municipio.");
         }
 
         if (managerCode != null) {
 
-            System.out.println("aqui llega");
-
             WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
-            if (workspaceActive instanceof WorkspaceEntity) {
+            if (workspaceActive != null) {
                 WorkspaceManagerEntity workspaceManagerEntity =
                         workspaceActive.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
                 if (workspaceManagerEntity == null) {
@@ -104,11 +102,11 @@ public class SupplyBusiness {
             }
         }
 
-        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, managerCode);
+        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, managerCode, operatorCode);
     }
 
     private Object getSuppliesByMunicipality(MunicipalityEntity municipality, List<String> extensions, Integer page,
-                                             List<Long> requests, boolean active, Long managerCode) throws BusinessException {
+                                             List<Long> requests, boolean active, Long managerCode, Long operatorCode) throws BusinessException {
 
         List<Long> states = new ArrayList<>();
 
@@ -155,18 +153,19 @@ public class SupplyBusiness {
 
                 }
 
-                // verify if the supply has been delivered to operator
-                try {
+                if (operatorCode != null) {
+                    // verify if the supply has been delivered to operator
+                    try {
 
-                    WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipality);
+                        WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipality);
+                        WorkspaceOperatorEntity workspaceOperatorEntity =
+                                workspaceActive.getOperators().stream().filter(o -> o.getOperatorCode().equals(operatorCode)
+                                        && o.getManagerCode().equals(managerCode)).findAny().orElse(null);
 
-                    if (workspaceActive != null) {
-                        List<WorkspaceOperatorEntity> operators = workspaceActive.getOperators();
-
-                        if (operators.size() >= 1) {
+                        if (workspaceOperatorEntity != null) {
 
                             List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
-                                    operators.get(0).getOperatorCode(), municipality.getCode());
+                                    operatorCode, municipality.getCode());
 
                             for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
 
@@ -180,13 +179,17 @@ public class SupplyBusiness {
                                 }
                             }
 
-                        }
-                    }
 
-                } catch (Exception e) {
-                    log.error(
-                            "No se ha podido consultar si el insumo ha sido entregado al operador: " + e.getMessage());
+                        } else {
+                            throw new BusinessException("El operador no pertenece al municipio");
+                        }
+
+                    } catch (Exception e) {
+                        log.error(
+                                "No se ha podido consultar si el insumo ha sido entregado al operador: " + e.getMessage());
+                    }
                 }
+
 
             }
 

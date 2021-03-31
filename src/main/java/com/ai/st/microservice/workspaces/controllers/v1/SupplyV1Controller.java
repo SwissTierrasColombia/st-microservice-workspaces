@@ -67,6 +67,7 @@ public class SupplyV1Controller {
                                                        @RequestHeader("authorization") String headerAuthorization,
                                                        @RequestParam(name = "page", required = false) Integer page,
                                                        @RequestParam(name = "manager", required = false) Long managerCode,
+                                                       @RequestParam(name = "operator", required = false) Long operatorCode,
                                                        @RequestParam(name = "active", required = true, defaultValue = "true") boolean active,
                                                        @RequestParam(name = "requests", required = false) List<Long> requests) {
 
@@ -95,7 +96,7 @@ public class SupplyV1Controller {
                 }
 
                 responseDto = supplyBusiness.getSuppliesByMunicipalityManager(municipalityId, managerDto.getId(),
-                        extensions, page, requests, active);
+                        extensions, page, requests, active, operatorCode);
             }
 
             httpStatus = HttpStatus.OK;
