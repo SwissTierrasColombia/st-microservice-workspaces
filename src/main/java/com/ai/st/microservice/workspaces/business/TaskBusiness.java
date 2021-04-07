@@ -325,7 +325,7 @@ public class TaskBusiness {
                             // modify integration state to finish assisted
                             String textHistory = userDto.getFirstName() + " " + userDto.getLastName();
                             integrationBusiness.updateStateToIntegration(integrationId,
-                                    IntegrationStateBusiness.STATE_FINISHED_ASSISTED, userDto.getId(), null,
+                                    IntegrationStateBusiness.STATE_FINISHED_ASSISTED, null, userDto.getId(), null,
                                     textHistory);
 
                             String hostnameDecrypt = cryptoBusiness.decrypt(integrationEntity.getHostname());
@@ -348,7 +348,7 @@ public class TaskBusiness {
 
                             // modify integration state to generating product
                             integrationBusiness.updateStateToIntegration(integrationId,
-                                    IntegrationStateBusiness.STATE_GENERATING_PRODUCT, null, null, "SISTEMA");
+                                    IntegrationStateBusiness.STATE_GENERATING_PRODUCT, null,null, null, "SISTEMA");
 
                         }
                     }
@@ -532,7 +532,7 @@ public class TaskBusiness {
                             // modify integration state to finish assisted
                             String textHistory = userDto.getFirstName() + " " + userDto.getLastName();
                             integrationBusiness.updateStateToIntegration(integrationId,
-                                    IntegrationStateBusiness.STATE_STARTED_AUTOMATIC, userDto.getId(), null,
+                                    IntegrationStateBusiness.STATE_STARTED_AUTOMATIC, null,userDto.getId(), null,
                                     textHistory);
 
                         }

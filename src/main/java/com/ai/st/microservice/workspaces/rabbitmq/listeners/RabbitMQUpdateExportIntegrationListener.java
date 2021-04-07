@@ -136,11 +136,21 @@ public class RabbitMQUpdateExportIntegrationListener {
                     }
 
                 } else {
+
                     stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
                     log.error("Export finished with errors");
                 }
 
-                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null, "SISTEMA");
+                String logErrors = null;
+                if (resultExportDto.getErrors().size() > 0) {
+                    StringBuilder errors = new StringBuilder();
+                    for (String error : resultExportDto.getErrors()) {
+                        errors.append(error).append("\n");
+                    }
+                    logErrors = errors.toString();
+                }
+
+                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, logErrors, null, null, "SISTEMA");
 
             }
 
@@ -149,7 +159,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 
             Long stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
             try {
-                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, null, null, "SISTEMA");
+                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, e.getMessage(), null, null, "SISTEMA");
             } catch (BusinessException e1) {
                 log.error("Error actualizando el estado de la integración por error: " + e.getMessage());
             }

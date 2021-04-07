@@ -43,6 +43,9 @@ public class IntegrationEntity {
     @JoinColumn(name = "integration_state_id", referencedColumnName = "id", nullable = false)
     private IntegrationStateEntity state;
 
+    @Column(name = "errors", nullable = true, length = 1000)
+    private String errors;
+
     @Column(name = "hostname", nullable = false)
     private String hostname;
 
@@ -230,4 +233,11 @@ public class IntegrationEntity {
         this.managerCode = managerCode;
     }
 
+    public String getErrors() {
+        return errors;
+    }
+
+    public void setErrors(String errors) {
+        this.errors = errors;
+    }
 }

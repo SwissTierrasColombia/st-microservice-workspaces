@@ -97,7 +97,16 @@ public class RabbitMQUpdateIntegrationListener {
                         + e.getMessage());
             }
 
-            integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, null, null,
+            String logErrors = null;
+            if (integrationStats.getErrors().size() > 0) {
+                StringBuilder errors = new StringBuilder();
+                for (String error : integrationStats.getErrors()) {
+                    errors.append(error).append("\n");
+                }
+                logErrors = errors.toString();
+            }
+
+            integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, logErrors, null, null,
                     "SISTEMA");
 
         } catch (Exception e) {

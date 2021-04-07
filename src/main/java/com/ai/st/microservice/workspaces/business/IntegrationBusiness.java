@@ -24,7 +24,6 @@ import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationHistoryEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStatEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
-import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
@@ -148,7 +147,7 @@ public class IntegrationBusiness {
         return this.transformEntityToDto(integrationEntity);
     }
 
-    public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId, Long userCode, Long managerCode,
+    public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId, String errors, Long userCode, Long managerCode,
                                                    String user) throws BusinessException {
 
         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
@@ -160,6 +159,8 @@ public class IntegrationBusiness {
         if (stateEntity == null) {
             throw new BusinessException("No se ha encontrado el estado de integración");
         }
+
+        integrationEntity.setErrors(errors);
 
         // new integration history
         IntegrationHistoryEntity historyEntity = new IntegrationHistoryEntity();
@@ -263,6 +264,7 @@ public class IntegrationBusiness {
         integrationDto.setSupplySnrId(integrationEntity.getSupplySnrId());
         integrationDto.setUrlMap(integrationEntity.getUrlMap());
         integrationDto.setManagerCode(integrationEntity.getManagerCode());
+        integrationDto.setErrors(integrationEntity.getErrors());
 
         IntegrationStateEntity integrationStateEntity = integrationEntity.getState();
         integrationDto.setIntegrationState(new IntegrationStateDto(integrationStateEntity.getId(),

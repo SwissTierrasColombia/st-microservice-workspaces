@@ -1186,7 +1186,7 @@ public class WorkspaceBusiness {
 
         } catch (Exception e) {
             integrationBusiness.updateStateToIntegration(integrationId,
-                    IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC, null, null, "SISTEMA");
+                    IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC, e.getMessage(), null, null, "SISTEMA");
             log.error("No se ha podido iniciar la integración: " + e.getMessage());
             throw new BusinessException("No se ha podido iniciar la integración.");
         }
@@ -1236,7 +1236,7 @@ public class WorkspaceBusiness {
 
         String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
         integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
-                IntegrationStateBusiness.STATE_STARTED_ASSISTED, userDto.getId(), managerDto.getId(), textHistory);
+                IntegrationStateBusiness.STATE_STARTED_ASSISTED, null, userDto.getId(), managerDto.getId(), textHistory);
 
         String host = integrationEntity.getHostname();
         String port = integrationEntity.getPort();
@@ -1394,7 +1394,7 @@ public class WorkspaceBusiness {
             // modify integration state
             String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
             integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
-                    IntegrationStateBusiness.STATE_GENERATING_PRODUCT, userDto.getId(), managerDto.getId(),
+                    IntegrationStateBusiness.STATE_GENERATING_PRODUCT, null, userDto.getId(), managerDto.getId(),
                     textHistory);
 
         } catch (Exception e) {
