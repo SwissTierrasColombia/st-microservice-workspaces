@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 
 public class MicroserviceSupplyRequestedDto implements Serializable {
 

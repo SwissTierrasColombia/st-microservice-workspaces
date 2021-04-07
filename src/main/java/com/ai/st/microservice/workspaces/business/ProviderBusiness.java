@@ -1119,7 +1119,17 @@ public class ProviderBusiness {
                 MunicipalityDto municipalityDto = municipalityBusiness
                         .getMunicipalityByCode(sR.getRequest().getMunicipalityCode());
 
-                sR.getRequest().setMunicipality(municipalityDto);
+                if (sR.getRequest() != null) {
+                    MicroserviceEmitterDto emitterDto =
+                            sR.getRequest().getEmitters().stream().filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY"))
+                                    .findAny().orElse(null);
+                    if (emitterDto != null) {
+                        MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
+                        emitterDto.setUser(managerDto);
+                    }
+                    sR.getRequest().setMunicipality(municipalityDto);
+                }
+
             }
 
         } catch (Exception e) {
