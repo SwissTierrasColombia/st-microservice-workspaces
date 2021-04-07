@@ -1,68 +1,73 @@
 package com.ai.st.microservice.workspaces.dto.ili;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class MicroserviceValidationDto implements Serializable {
 
-	private static final long serialVersionUID = 1185381344046839161L;
+    private static final long serialVersionUID = 1185381344046839161L;
 
-	private Boolean isValid;
-	private Long requestId;
-	private Long supplyRequestedId;
-	private String filenameTemporal;
-	private Long userCode;
-	private String observations;
+    private Boolean isValid;
+    private Long requestId;
+    private Long supplyRequestedId;
+    private String filenameTemporal;
+    private Long userCode;
+    private String observations;
+    private List<String> errors;
 
-	public MicroserviceValidationDto() {
+    public Boolean getIsValid() {
+        return isValid;
+    }
 
-	}
+    public void setIsValid(Boolean isValid) {
+        this.isValid = isValid;
+    }
 
-	public Boolean getIsValid() {
-		return isValid;
-	}
+    public Long getRequestId() {
+        return requestId;
+    }
 
-	public void setIsValid(Boolean isValid) {
-		this.isValid = isValid;
-	}
+    public void setRequestId(Long requestId) {
+        this.requestId = requestId;
+    }
 
-	public Long getRequestId() {
-		return requestId;
-	}
+    public Long getSupplyRequestedId() {
+        return supplyRequestedId;
+    }
 
-	public void setRequestId(Long requestId) {
-		this.requestId = requestId;
-	}
+    public void setSupplyRequestedId(Long supplyRequestedId) {
+        this.supplyRequestedId = supplyRequestedId;
+    }
 
-	public Long getSupplyRequestedId() {
-		return supplyRequestedId;
-	}
+    public String getFilenameTemporal() {
+        return filenameTemporal;
+    }
 
-	public void setSupplyRequestedId(Long supplyRequestedId) {
-		this.supplyRequestedId = supplyRequestedId;
-	}
+    public void setFilenameTemporal(String filenameTemporal) {
+        this.filenameTemporal = filenameTemporal;
+    }
 
-	public String getFilenameTemporal() {
-		return filenameTemporal;
-	}
+    public Long getUserCode() {
+        return userCode;
+    }
 
-	public void setFilenameTemporal(String filenameTemporal) {
-		this.filenameTemporal = filenameTemporal;
-	}
+    public void setUserCode(Long userCode) {
+        this.userCode = userCode;
+    }
 
-	public Long getUserCode() {
-		return userCode;
-	}
+    public String getObservations() {
+        return observations;
+    }
 
-	public void setUserCode(Long userCode) {
-		this.userCode = userCode;
-	}
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
-	public String getObservations() {
-		return observations;
-	}
+    public List<String> getErrors() {
+        return errors;
+    }
 
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
-
+    public void setErrors(List<String> errors) {
+        this.errors = errors;
+    }
 }

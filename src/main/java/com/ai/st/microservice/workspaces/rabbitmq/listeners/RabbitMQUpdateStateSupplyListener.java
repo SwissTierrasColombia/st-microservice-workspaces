@@ -97,6 +97,14 @@ public class RabbitMQUpdateStateSupplyListener {
             updateSupply.setJustification("");
             updateSupply.setDeliveryBy(null);
             updateSupply.setObservations(validationDto.getObservations());
+            if (validationDto.getErrors().size() > 0) {
+                StringBuilder errors = new StringBuilder();
+                for (String error : validationDto.getErrors()) {
+                    errors.append(error).append("\n");
+                }
+                updateSupply.setErrors(errors.toString());
+            }
+
             providerClient.updateSupplyRequested(validationDto.getRequestId(), validationDto.getSupplyRequestedId(),
                     updateSupply);
 

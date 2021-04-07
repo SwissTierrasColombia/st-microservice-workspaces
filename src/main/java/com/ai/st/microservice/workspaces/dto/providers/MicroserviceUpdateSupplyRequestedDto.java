@@ -12,6 +12,7 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
 	private Long deliveryBy;
 	private String url;
 	private String observations;
+	private String errors;
 	private String ftp;
 
 	public MicroserviceUpdateSupplyRequestedDto() {
@@ -74,4 +75,11 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
 		this.ftp = ftp;
 	}
 
+	public String getErrors() {
+		return errors;
+	}
+
+	public void setErrors(String errors) {
+		this.errors = errors;
+	}
 }
