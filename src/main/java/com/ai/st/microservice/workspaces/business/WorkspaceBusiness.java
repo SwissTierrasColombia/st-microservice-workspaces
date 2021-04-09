@@ -375,7 +375,8 @@ public class WorkspaceBusiness {
         }
 
         WorkspaceOperatorEntity workspaceOperatorEntityFound = workspaceEntity.getOperators().stream()
-                .filter(o -> o.getOperatorCode().equals(operatorCode)).findAny().orElse(null);
+                .filter(o -> o.getOperatorCode().equals(operatorCode) && o.getManagerCode().equals(managerCode))
+                .findAny().orElse(null);
 
         if (workspaceOperatorEntityFound != null) {
             throw new BusinessException("El operador ya ha sido asignado al municipio.");

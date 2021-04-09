@@ -74,7 +74,7 @@ public class SupplyBusiness {
 
         // validate if the municipality exists
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
-        if (!(municipalityEntity instanceof MunicipalityEntity)) {
+        if (municipalityEntity == null) {
             throw new BusinessException("No se ha encontrado el municipio.");
         }
 
