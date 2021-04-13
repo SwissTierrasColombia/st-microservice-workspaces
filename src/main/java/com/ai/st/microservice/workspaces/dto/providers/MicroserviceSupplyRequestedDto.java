@@ -27,6 +27,7 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
     private String ftp;
     private MicroserviceRequestDto request;
     private String errors;
+    private Boolean isGeometryValidated;
 
     public Long getId() {
         return id;
@@ -162,5 +163,13 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 
     public void setErrors(String errors) {
         this.errors = errors;
+    }
+
+    public Boolean getGeometryValidated() {
+        return isGeometryValidated;
+    }
+
+    public void setGeometryValidated(Boolean geometryValidated) {
+        isGeometryValidated = geometryValidated;
     }
 }

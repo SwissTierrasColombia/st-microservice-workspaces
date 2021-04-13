@@ -230,7 +230,8 @@ public class SupplyBusiness {
 
     public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode, Long toManagerCode,
                                               List<MicroserviceCreateSupplyAttachmentDto> attachments, Long requestId, Long userCode, Long providerCode,
-                                              Long managerCode, Long cadastralAuthority, String modelVersion, Long stateSupplyId, String name)
+                                              Long managerCode, Long cadastralAuthority, String modelVersion, Long stateSupplyId, String name,
+                                              Boolean hasGeometryValidation)
             throws BusinessException {
 
         MicroserviceSupplyDto supplyDto;
@@ -242,6 +243,7 @@ public class SupplyBusiness {
             createSupplyDto.setObservations(observations);
             createSupplyDto.setModelVersion(modelVersion);
             createSupplyDto.setManagerCode(toManagerCode);
+            createSupplyDto.setHasGeometryValidation(hasGeometryValidation);
 
             if (stateSupplyId != null) {
                 createSupplyDto.setSupplyStateId(stateSupplyId);

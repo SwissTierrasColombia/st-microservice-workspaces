@@ -112,7 +112,7 @@ public class CadastralAuthorityBusiness {
 
         try {
             supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null, managerCode, attachments, null,
-                    userCode, null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name);
+                    userCode, null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name, false);
         } catch (Exception e) {
             throw new BusinessException("No se ha podido cargar el insumo.");
         }

@@ -290,7 +290,7 @@ public class ProviderV1Controller {
                 throw new InputValidationException("El tipo de insumo es inválido.");
             }
 
-            responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getJustification(),
+            responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getSkipGeometryValidation(), answerRequest.getJustification(),
                     files, answerRequest.getUrl(), providerDto, userDtoSession.getId(),
                     answerRequest.getObservations());
             httpStatus = HttpStatus.OK;

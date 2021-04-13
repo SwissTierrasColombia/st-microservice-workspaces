@@ -155,7 +155,7 @@ public class ProviderBusiness {
     @Autowired
     private MunicipalityBusiness municipalityBusiness;
 
-    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
+    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipGeometryValidation, String justification,
                                                 MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
             throws BusinessException {
 
@@ -258,8 +258,6 @@ public class ProviderBusiness {
         MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
 
         if (delivered) {
-
-            // send supply to microservice supplies
 
             List<String> urls = new ArrayList<>();
             if (files.length > 0) {
@@ -364,7 +362,7 @@ public class ProviderBusiness {
                         // validate xtf with ilivalidator
                         iliBusiness.startValidation(requestId, observations, urlDocumentaryRepository,
                                 urlDocumentaryRepository, supplyRequested.getId(), userCode,
-                                supplyRequested.getModelVersion());
+                                supplyRequested.getModelVersion(), skipGeometryValidation);
 
                         updateSupply.setUrl(null);
                         updateSupply.setFtp(null);
@@ -576,10 +574,15 @@ public class ProviderBusiness {
                         MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
                                 filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
+
+                        if (supplyRequested.getGeometryValidated() != null) {
+
+                        }
+
                         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
                                 supplyRequested.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userCode,
                                 providerDto.getId(), null, null, supplyRequested.getModelVersion(),
-                                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName());
+                                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName(), supplyRequested.getGeometryValidated());
                     }
 
                 }
@@ -1543,7 +1546,7 @@ public class ProviderBusiness {
         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
                 supplyRequestedDto.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userCode,
                 requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
-                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName());
+                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), null);
 
         updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
 

@@ -101,7 +101,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 
                     supplyBusiness.createSupply(municipalityCode, observations, null, integrationEntity.getManagerCode(), attachments, null,
                             null, null, integrationEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
-                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio");
+                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio", false);
 
                     /*
                      * try { // delete database

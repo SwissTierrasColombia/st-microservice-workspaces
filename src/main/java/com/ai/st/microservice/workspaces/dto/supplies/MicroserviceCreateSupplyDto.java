@@ -18,10 +18,11 @@ public class MicroserviceCreateSupplyDto implements Serializable {
     private Long managerCode;
     private List<MicroserviceCreateSupplyOwnerDto> owners;
     private List<MicroserviceCreateSupplyAttachmentDto> attachments;
+    private Boolean hasGeometryValidation;
 
     public MicroserviceCreateSupplyDto() {
-        this.owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
-        this.attachments = new ArrayList<MicroserviceCreateSupplyAttachmentDto>();
+        this.owners = new ArrayList<>();
+        this.attachments = new ArrayList<>();
     }
 
     public String getMunicipalityCode() {
@@ -102,5 +103,13 @@ public class MicroserviceCreateSupplyDto implements Serializable {
 
     public void setManagerCode(Long managerCode) {
         this.managerCode = managerCode;
+    }
+
+    public Boolean getHasGeometryValidation() {
+        return hasGeometryValidation;
+    }
+
+    public void setHasGeometryValidation(Boolean hasGeometryValidation) {
+        this.hasGeometryValidation = hasGeometryValidation;
     }
 }
