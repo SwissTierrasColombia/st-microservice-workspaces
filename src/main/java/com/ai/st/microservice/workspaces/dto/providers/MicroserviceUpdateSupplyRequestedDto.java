@@ -4,74 +4,87 @@ import java.io.Serializable;
 
 public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
 
-	private static final long serialVersionUID = -1302858811309199472L;
+    private static final long serialVersionUID = -1302858811309199472L;
 
-	private Boolean delivered;
-	private String justification;
-	private Long supplyRequestedStateId;
-	private Long deliveryBy;
-	private String url;
-	private String observations;
-	private String ftp;
+    private Boolean delivered;
+    private String justification;
+    private Long supplyRequestedStateId;
+    private Long deliveryBy;
+    private String url;
+    private String observations;
+    private String errors;
+    private String ftp;
+    private boolean validated;
 
-	public MicroserviceUpdateSupplyRequestedDto() {
+    public Boolean getDelivered() {
+        return delivered;
+    }
 
-	}
+    public void setDelivered(Boolean delivered) {
+        this.delivered = delivered;
+    }
 
-	public Boolean getDelivered() {
-		return delivered;
-	}
+    public String getJustification() {
+        return justification;
+    }
 
-	public void setDelivered(Boolean delivered) {
-		this.delivered = delivered;
-	}
+    public void setJustification(String justification) {
+        this.justification = justification;
+    }
 
-	public String getJustification() {
-		return justification;
-	}
+    public Long getSupplyRequestedStateId() {
+        return supplyRequestedStateId;
+    }
 
-	public void setJustification(String justification) {
-		this.justification = justification;
-	}
+    public void setSupplyRequestedStateId(Long supplyRequestedStateId) {
+        this.supplyRequestedStateId = supplyRequestedStateId;
+    }
 
-	public Long getSupplyRequestedStateId() {
-		return supplyRequestedStateId;
-	}
+    public Long getDeliveryBy() {
+        return deliveryBy;
+    }
 
-	public void setSupplyRequestedStateId(Long supplyRequestedStateId) {
-		this.supplyRequestedStateId = supplyRequestedStateId;
-	}
+    public void setDeliveryBy(Long deliveryBy) {
+        this.deliveryBy = deliveryBy;
+    }
 
-	public Long getDeliveryBy() {
-		return deliveryBy;
-	}
+    public String getUrl() {
+        return url;
+    }
 
-	public void setDeliveryBy(Long deliveryBy) {
-		this.deliveryBy = deliveryBy;
-	}
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-	public String getUrl() {
-		return url;
-	}
+    public String getObservations() {
+        return observations;
+    }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
-	public String getObservations() {
-		return observations;
-	}
+    public String getFtp() {
+        return ftp;
+    }
 
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
+    public void setFtp(String ftp) {
+        this.ftp = ftp;
+    }
 
-	public String getFtp() {
-		return ftp;
-	}
+    public String getErrors() {
+        return errors;
+    }
 
-	public void setFtp(String ftp) {
-		this.ftp = ftp;
-	}
+    public void setErrors(String errors) {
+        this.errors = errors;
+    }
 
+    public boolean isValidated() {
+        return validated;
+    }
+
+    public void setValidated(boolean validated) {
+        this.validated = validated;
+    }
 }

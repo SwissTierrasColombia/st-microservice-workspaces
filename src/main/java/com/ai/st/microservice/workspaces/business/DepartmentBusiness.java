@@ -14,43 +14,43 @@ import com.ai.st.microservice.workspaces.services.IDepartmentService;
 @Component
 public class DepartmentBusiness {
 
-	@Autowired
-	private IDepartmentService departmentService;
+    @Autowired
+    private IDepartmentService departmentService;
 
-	public List<DepartmentDto> getDepartments() throws BusinessException {
+    public List<DepartmentDto> getDepartments() throws BusinessException {
 
-		List<DepartmentDto> listDepartmentsDto = new ArrayList<DepartmentDto>();
+        List<DepartmentDto> listDepartmentsDto = new ArrayList<>();
 
-		List<DepartmentEntity> listDeparmentsEntity = departmentService.getAllDepartments();
+        List<DepartmentEntity> listDepartmentsEntity = departmentService.getAllDepartments();
 
-		for (DepartmentEntity departmentEntity : listDeparmentsEntity) {
+        for (DepartmentEntity departmentEntity : listDepartmentsEntity) {
 
-			DepartmentDto departmentDto = new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
-					departmentEntity.getCode());
+            DepartmentDto departmentDto = new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+                    departmentEntity.getCode());
 
-			listDepartmentsDto.add(departmentDto);
+            listDepartmentsDto.add(departmentDto);
 
-		}
+        }
 
-		return listDepartmentsDto;
-	}
+        return listDepartmentsDto;
+    }
 
-	public List<DepartmentDto> getDepartmentsByManagerCode(Long managerCode) throws BusinessException {
+    public List<DepartmentDto> getDepartmentsByManagerCode(Long managerCode) throws BusinessException {
 
-		List<DepartmentDto> listDepartmentsDto = new ArrayList<DepartmentDto>();
+        List<DepartmentDto> listDepartmentsDto = new ArrayList<>();
 
-		List<DepartmentEntity> listDeparmentsEntity = departmentService.getDepartmentsByManagerCode(managerCode);
+        List<DepartmentEntity> listDepartmentsEntity = departmentService.getDepartmentsByManagerCode(managerCode);
 
-		for (DepartmentEntity departmentEntity : listDeparmentsEntity) {
+        for (DepartmentEntity departmentEntity : listDepartmentsEntity) {
 
-			DepartmentDto departmentDto = new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
-					departmentEntity.getCode());
+            DepartmentDto departmentDto = new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(),
+                    departmentEntity.getCode());
 
-			listDepartmentsDto.add(departmentDto);
+            listDepartmentsDto.add(departmentDto);
 
-		}
+        }
 
-		return listDepartmentsDto;
-	}
+        return listDepartmentsDto;
+    }
 
 }

@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces.business;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -154,11 +155,11 @@ public class ProviderBusiness {
     @Autowired
     private MunicipalityBusiness municipalityBusiness;
 
-    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, String justification,
+    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipGeometryValidation, String justification,
                                                 MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
             throws BusinessException {
 
-        MicroserviceRequestDto requestUpdatedDto = null;
+        MicroserviceRequestDto requestUpdatedDto;
 
         if (files.length == 0 && (url == null || url.isEmpty()) && (justification == null || justification.isEmpty())) {
             throw new BusinessException("Se debe justificar porque no se cargará el insumo.");
@@ -174,7 +175,7 @@ public class ProviderBusiness {
             throw new BusinessException("La solicitud esta cerrada, no se puede modificar.");
         }
 
-        Boolean delivered = (files.length > 0 || (url != null && !url.isEmpty())) ? true : false;
+        boolean delivered = files.length > 0 || (url != null && !url.isEmpty());
         if (delivered && (observations == null || observations.isEmpty())) {
             throw new BusinessException("Las observaciones son requeridas.");
         }
@@ -205,9 +206,9 @@ public class ProviderBusiness {
         try {
 
             // verify if the supply is assigned to a task
-            List<Long> taskStates = new ArrayList<>(Arrays.asList(TaskBusiness.TASK_STATE_STARTED));
+            List<Long> taskStates = new ArrayList<>(Collections.singletonList(TaskBusiness.TASK_STATE_STARTED));
             List<Long> taskCategories = new ArrayList<>(
-                    Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+                    Collections.singletonList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
             List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
             for (MicroserviceTaskDto taskDto : tasksDto) {
                 MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
@@ -256,11 +257,9 @@ public class ProviderBusiness {
 
         MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
 
-        if (delivered == true) {
+        if (delivered) {
 
-            // send supply to microservice supplies
-
-            List<String> urls = new ArrayList<String>();
+            List<String> urls = new ArrayList<>();
             if (files.length > 0) {
                 for (MultipartFile fileUploaded : files) {
 
@@ -270,12 +269,12 @@ public class ProviderBusiness {
                     String fileNameRandom = RandomStringUtils.random(14, true, false) + "." + loadedFileExtension;
                     String filePathTemporal = fileBusiness.loadFileToSystem(fileUploaded, fileNameRandom);
 
-                    Boolean zipFile = false;
+                    boolean zipFile = false;
 
                     List<MicroserviceExtensionDto> extensionAllowed = supplyRequested.getTypeSupply().getExtensions();
 
-                    Boolean fileAllowed = false;
-                    Boolean isLoadShp = false;
+                    boolean fileAllowed = false;
+                    boolean isLoadShp = false;
                     List<String> loadedFileExtensions = new ArrayList<>();
 
                     // verify if the supply is a shp file
@@ -283,8 +282,9 @@ public class ProviderBusiness {
                             .filter(ext -> ext.getName().equalsIgnoreCase("shp")).findAny().orElse(null);
                     if (extensionShpDto != null) {
 
-                        List<String> extensionsShp = new ArrayList<String>(Arrays.asList("shp", "dbf", "shx", "prj"));
+                        List<String> extensionsShp = new ArrayList<>(Arrays.asList("shp", "dbf", "shx", "prj"));
 
+                        assert loadedFileExtension != null;
                         if (loadedFileExtension.equalsIgnoreCase("zip")) {
 
                             isLoadShp = ZipUtil.zipContainsFile(filePathTemporal, extensionsShp);
@@ -313,12 +313,11 @@ public class ProviderBusiness {
                         }
                     }
 
+                    assert loadedFileExtension != null;
                     if (loadedFileExtension.equalsIgnoreCase("zip")) {
 
                         if (!isLoadShp && !isLoadGdb) {
-                            List<String> extensionsAllowed = extensionAllowed.stream().map(ext -> {
-                                return ext.getName();
-                            }).collect(Collectors.toList());
+                            List<String> extensionsAllowed = extensionAllowed.stream().map(MicroserviceExtensionDto::getName).collect(Collectors.toList());
 
                             fileAllowed = ZipUtil.zipContainsFile(filePathTemporal, extensionsAllowed);
                             loadedFileExtensions = ZipUtil.getExtensionsFromZip(filePathTemporal);
@@ -363,7 +362,7 @@ public class ProviderBusiness {
                         // validate xtf with ilivalidator
                         iliBusiness.startValidation(requestId, observations, urlDocumentaryRepository,
                                 urlDocumentaryRepository, supplyRequested.getId(), userCode,
-                                supplyRequested.getModelVersion());
+                                supplyRequested.getModelVersion(), skipGeometryValidation);
 
                         updateSupply.setUrl(null);
                         updateSupply.setFtp(null);
@@ -438,7 +437,7 @@ public class ProviderBusiness {
             throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
         }
 
-        Boolean canClose = false;
+        boolean canClose = false;
         for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
             if (!supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)
                     && !supplyRequested.getState().getId()
@@ -457,7 +456,7 @@ public class ProviderBusiness {
                     "No se puede cerrar la solicitud porque el usuario no es la persona que ha cargado los insumos.");
         }
 
-        Boolean sendToReview = false;
+        boolean sendToReview = false;
         MicroserviceSupplyRequestedDto supplyRegistral = null;
         if (requestDto.getProvider().getId().equals(ProviderBusiness.PROVIDER_SNR_ID)) {
 
@@ -467,7 +466,7 @@ public class ProviderBusiness {
             sendToReview = (supplyRegistral != null);
         }
 
-        MicroserviceRequestDto requestUpdatedDto = null;
+        MicroserviceRequestDto requestUpdatedDto;
 
         if (sendToReview) {
 
@@ -507,7 +506,7 @@ public class ProviderBusiness {
                     List<Long> taskStates = new ArrayList<>(
                             Arrays.asList(TaskBusiness.TASK_STATE_STARTED, TaskBusiness.TASK_STATE_ASSIGNED));
                     List<Long> taskCategories = new ArrayList<>(
-                            Arrays.asList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
+                            Collections.singletonList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
 
                     List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
 
@@ -572,10 +571,18 @@ public class ProviderBusiness {
                                     SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
                         }
 
+                        MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
+                                filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
+
+
+                        if (supplyRequested.getGeometryValidated() != null) {
+
+                        }
+
                         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
-                                supplyRequested.getTypeSupply().getId(), attachments, requestId, userCode,
+                                supplyRequested.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userCode,
                                 providerDto.getId(), null, null, supplyRequested.getModelVersion(),
-                                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName());
+                                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName(), supplyRequested.getGeometryValidated());
                     }
 
                 }
@@ -612,7 +619,7 @@ public class ProviderBusiness {
     public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
             throws BusinessException {
 
-        List<MicroserviceProviderUserDto> usersDto = new ArrayList<>();
+        List<MicroserviceProviderUserDto> usersDto;
 
         try {
 
@@ -649,7 +656,7 @@ public class ProviderBusiness {
     public MicroserviceRequestPaginatedDto getRequestsByManagerAndMunicipality(int page, Long managerCode,
                                                                                String municipalityCode) throws BusinessException {
 
-        MicroserviceRequestPaginatedDto data = null;
+        MicroserviceRequestPaginatedDto data;
 
         try {
 
@@ -671,9 +678,9 @@ public class ProviderBusiness {
         return data;
     }
 
-    public List<MicroserviceRequestDto> getRequestsByPackage(String packageLabel) throws BusinessException {
+    public List<MicroserviceRequestDto> getRequestsByPackage(String packageLabel) {
 
-        List<MicroserviceRequestDto> requestsDto = new ArrayList<MicroserviceRequestDto>();
+        List<MicroserviceRequestDto> requestsDto = new ArrayList<>();
 
         try {
 
@@ -683,8 +690,6 @@ public class ProviderBusiness {
                 requestDto = this.completeInformationRequest(requestDto);
             }
 
-        } catch (BusinessException e) {
-            log.error("Error consultando solicitudes por paquete: " + e.getMessage());
         } catch (Exception e) {
             log.error("Error consultando solicitudes por paquete: " + e.getMessage());
         }
@@ -695,7 +700,7 @@ public class ProviderBusiness {
     public MicroserviceRequestPaginatedDto getRequestsByManagerAndProvider(int page, Long managerCode, Long providerId)
             throws BusinessException {
 
-        MicroserviceRequestPaginatedDto data = null;
+        MicroserviceRequestPaginatedDto data;
 
         try {
 
@@ -721,9 +726,9 @@ public class ProviderBusiness {
             throws BusinessException {
 
         List<MicroserviceRequestPackageDto> packages = new ArrayList<>();
-        List<MicroserviceRequestDto> requests = new ArrayList<>();
+        List<MicroserviceRequestDto> requests;
 
-        List<String> labels = new ArrayList<String>();
+        List<String> labels = new ArrayList<>();
 
         try {
 
@@ -770,7 +775,7 @@ public class ProviderBusiness {
 
     public MicroserviceRequestDto completeInformationRequest(MicroserviceRequestDto requestDto) {
 
-        List<MicroserviceEmitterDto> emittersDto = new ArrayList<MicroserviceEmitterDto>();
+        List<MicroserviceEmitterDto> emittersDto = new ArrayList<>();
         for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
             if (emitterDto.getEmitterType().equals("ENTITY")) {
                 try {
@@ -793,7 +798,7 @@ public class ProviderBusiness {
         MunicipalityEntity municipalityEntity = municipalityService
                 .getMunicipalityByCode(requestDto.getMunicipalityCode());
 
-        if (municipalityEntity instanceof MunicipalityEntity) {
+        if (municipalityEntity != null) {
             DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
 
             MunicipalityDto municipalityDto = new MunicipalityDto();
@@ -842,7 +847,7 @@ public class ProviderBusiness {
     public MicroserviceProviderProfileDto createProfile(Long providerId, String name, String description)
             throws BusinessException {
 
-        MicroserviceProviderProfileDto profileDto = null;
+        MicroserviceProviderProfileDto profileDto;
 
         try {
 
@@ -865,7 +870,7 @@ public class ProviderBusiness {
 
     public List<MicroserviceProviderProfileDto> getProfilesByProvider(Long providerId) throws BusinessException {
 
-        List<MicroserviceProviderProfileDto> profilesDto = new ArrayList<>();
+        List<MicroserviceProviderProfileDto> profilesDto;
 
         try {
 
@@ -885,7 +890,7 @@ public class ProviderBusiness {
     public MicroserviceProviderProfileDto updateProfile(Long providerId, Long profileId, String name,
                                                         String description) throws BusinessException {
 
-        MicroserviceProviderProfileDto profileDto = null;
+        MicroserviceProviderProfileDto profileDto;
 
         try {
 
@@ -925,7 +930,7 @@ public class ProviderBusiness {
                                                       Boolean metadataRequired, Boolean modelRequired, Long profileId, List<String> extensions)
             throws BusinessException {
 
-        MicroserviceTypeSupplyDto typeSupplyDto = null;
+        MicroserviceTypeSupplyDto typeSupplyDto;
 
         try {
 
@@ -952,7 +957,7 @@ public class ProviderBusiness {
 
     public List<MicroserviceTypeSupplyDto> getTypesSuppliesByProvider(Long providerId) throws BusinessException {
 
-        List<MicroserviceTypeSupplyDto> typesSuppliesDto = new ArrayList<>();
+        List<MicroserviceTypeSupplyDto> typesSuppliesDto;
 
         try {
 
@@ -973,7 +978,7 @@ public class ProviderBusiness {
                                                       String description, Boolean metadataRequired, Boolean modelRequired, Long profileId,
                                                       List<String> extensions) throws BusinessException {
 
-        MicroserviceTypeSupplyDto typeSupplyDto = null;
+        MicroserviceTypeSupplyDto typeSupplyDto;
 
         try {
 
@@ -1048,16 +1053,12 @@ public class ProviderBusiness {
             return providerDtoByAdministrator;
         }
 
-        if (providerDtoByTechnical != null) {
-            return providerDtoByTechnical;
-        }
-
-        return null;
+        return providerDtoByTechnical;
     }
 
     public boolean userProviderIsDirector(Long userCode) {
 
-        Boolean isDirector = false;
+        boolean isDirector = false;
 
         try {
 
@@ -1081,7 +1082,7 @@ public class ProviderBusiness {
 
     public boolean userProviderIsDelegate(Long userCode) {
 
-        Boolean isDelegate = false;
+        boolean isDelegate = false;
 
         try {
 
@@ -1121,7 +1122,17 @@ public class ProviderBusiness {
                 MunicipalityDto municipalityDto = municipalityBusiness
                         .getMunicipalityByCode(sR.getRequest().getMunicipalityCode());
 
-                sR.getRequest().setMunicipality(municipalityDto);
+                if (sR.getRequest() != null) {
+                    MicroserviceEmitterDto emitterDto =
+                            sR.getRequest().getEmitters().stream().filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY"))
+                                    .findAny().orElse(null);
+                    if (emitterDto != null) {
+                        MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
+                        emitterDto.setUser(managerDto);
+                    }
+                    sR.getRequest().setMunicipality(municipalityDto);
+                }
+
             }
 
         } catch (Exception e) {
@@ -1180,7 +1191,7 @@ public class ProviderBusiness {
             MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
             updateSupply.setSupplyRequestedStateId(stateId);
 
-            providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupply);
+            requestDto = providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupply);
         } catch (Exception e) {
             log.error("No se ha podido actualizar el estado del insumo solicitado: " + e.getMessage());
         }
@@ -1195,7 +1206,7 @@ public class ProviderBusiness {
 
         try {
 
-            providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
+            requestDto = providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
         } catch (Exception e) {
             log.error("No se ha podido actualizar el insumo solicitado: " + e.getMessage());
         }
@@ -1238,7 +1249,7 @@ public class ProviderBusiness {
         }
 
         // create revision
-        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
+        MicroserviceSupplyRevisionDto supplyRevisionDto;
         try {
             supplyRevisionDto = createSupplyRevision(supplyRequestedId, cryptoBusiness.encrypt(randomDatabaseName),
                     cryptoBusiness.encrypt(databaseIntegrationHost), cryptoBusiness.encrypt(randomUsername),
@@ -1321,7 +1332,7 @@ public class ProviderBusiness {
             throw new BusinessException("No existe una revisión para el insumo.");
         }
 
-        MicroserviceQueryResultRegistralRevisionDto resultDto = null;
+        MicroserviceQueryResultRegistralRevisionDto resultDto;
 
         try {
 
@@ -1387,7 +1398,7 @@ public class ProviderBusiness {
             log.error("Error consultando datos de conexión al FTP:" + e.getMessage());
         }
 
-        Boolean uploadFilToFTPServer = ftpBusiness.uploadFileToFTP(urlFile, FTPFileName, usernameFTP, passwordFTP);
+        boolean uploadFilToFTPServer = ftpBusiness.uploadFileToFTP(urlFile, FTPFileName, usernameFTP, passwordFTP);
         if (!uploadFilToFTPServer) {
             throw new BusinessException("No se ha podido cargar el archivo al servidor FTP.");
         }
@@ -1456,8 +1467,7 @@ public class ProviderBusiness {
                     + "-" + userCode;
 
             String randomFilename = RandomStringUtils.random(20, true, false).toLowerCase();
-            String pathFile = stFilesDirectory + "/anexos/" + supplyRequestedId + File.separator + randomFilename
-                    + ".xtf";
+            String pathFile = stFilesDirectory + "/anexos/" + supplyRequestedId + File.separator + randomFilename + ".xtf";
 
             iliBusiness.startExportReference(pathFile, host, database, password, port, schema, username, reference,
                     supplyRequestedDto.getModelVersion().trim(), IliBusiness.ILI_CONCEPT_INTEGRATION);
@@ -1530,10 +1540,13 @@ public class ProviderBusiness {
         attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
                 SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
 
+        MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
+                filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
+
         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
-                supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userCode,
+                supplyRequestedDto.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userCode,
                 requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
-                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName());
+                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), null);
 
         updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
 
@@ -1544,7 +1557,7 @@ public class ProviderBusiness {
     public MicroservicePetitionDto createPetition(Long providerId, Long managerId, String description)
             throws BusinessException {
 
-        MicroservicePetitionDto petitionDto = null;
+        MicroservicePetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1577,7 +1590,7 @@ public class ProviderBusiness {
     public List<MicroservicePetitionDto> getPetitionsForManager(Long providerId, Long managerId)
             throws BusinessException {
 
-        List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+        List<MicroservicePetitionDto> listPetitionsDto;
 
         if (providerId == null) {
 
@@ -1616,7 +1629,7 @@ public class ProviderBusiness {
 
     public List<MicroservicePetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
 
-        List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+        List<MicroservicePetitionDto> listPetitionsDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1631,7 +1644,7 @@ public class ProviderBusiness {
 
         try {
 
-            List<Long> states = new ArrayList<Long>(Arrays.asList(ProviderBusiness.PETITION_STATE_PENDING));
+            List<Long> states = new ArrayList<>(Collections.singletonList(ProviderBusiness.PETITION_STATE_PENDING));
 
             listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
 
@@ -1649,7 +1662,7 @@ public class ProviderBusiness {
 
     public List<MicroservicePetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
 
-        List<MicroservicePetitionDto> listPetitionsDto = new ArrayList<MicroservicePetitionDto>();
+        List<MicroservicePetitionDto> listPetitionsDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1664,7 +1677,7 @@ public class ProviderBusiness {
 
         try {
 
-            List<Long> states = new ArrayList<Long>(
+            List<Long> states = new ArrayList<>(
                     Arrays.asList(ProviderBusiness.PETITION_STATE_ACCEPT, ProviderBusiness.PETITION_STATE_REJECT));
 
             listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
@@ -1684,7 +1697,7 @@ public class ProviderBusiness {
     public MicroservicePetitionDto acceptPetition(Long providerId, Long petitionId, String justification)
             throws BusinessException {
 
-        MicroservicePetitionDto petitionDto = null;
+        MicroservicePetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1720,7 +1733,7 @@ public class ProviderBusiness {
     public MicroservicePetitionDto rejectPetition(Long providerId, Long petitionId, String justification)
             throws BusinessException {
 
-        MicroservicePetitionDto petitionDto = null;
+        MicroservicePetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1770,16 +1783,16 @@ public class ProviderBusiness {
 
     public MicroserviceTypeSupplyDto enableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
 
-        MicroserviceTypeSupplyDto typeSupplyDto = null;
+        MicroserviceTypeSupplyDto typeSupplyDto;
 
-        Boolean belongToProvider = false;
+        boolean belongToProvider;
         try {
 
             List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
-            MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
+            MicroserviceTypeSupplyDto foundTypeSupplyDto = typesSuppliesList.stream()
                     .filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
 
-            belongToProvider = (foundTypeSpplyDto != null);
+            belongToProvider = (foundTypeSupplyDto != null);
 
         } catch (Exception e) {
             belongToProvider = false;
@@ -1806,16 +1819,16 @@ public class ProviderBusiness {
 
     public MicroserviceTypeSupplyDto disableTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
 
-        MicroserviceTypeSupplyDto typeSupplyDto = null;
+        MicroserviceTypeSupplyDto typeSupplyDto;
 
-        Boolean belongToProvider = false;
+        boolean belongToProvider;
         try {
 
             List<MicroserviceTypeSupplyDto> typesSuppliesList = providerClient.getTypesSuppliesByProvider(providerId);
-            MicroserviceTypeSupplyDto foundTypeSpplyDto = typesSuppliesList.stream()
+            MicroserviceTypeSupplyDto foundTypeSupplyDto = typesSuppliesList.stream()
                     .filter(t -> t.getId().equals(typeSupplyId)).findAny().orElse(null);
 
-            belongToProvider = (foundTypeSpplyDto != null);
+            belongToProvider = (foundTypeSupplyDto != null);
 
         } catch (Exception e) {
             belongToProvider = false;

@@ -10,7 +10,7 @@ ENV CLOUD_CONFIG=$CLOUD_CONFIG
 
 VOLUME /tmp
 
-ADD ./target/st-microservice-workspaces-2.6.0.jar st-microservice-workspaces.jar
+ADD ./target/st-microservice-workspaces-3.11.1.jar st-microservice-workspaces.jar
 
 EXPOSE 8080
 

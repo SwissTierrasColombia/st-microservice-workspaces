@@ -6,20 +6,22 @@ import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 
 public interface IMunicipalityService {
 
-	public Long getCount();
+    Long getCount();
 
-	public MunicipalityEntity createMunicipality(MunicipalityEntity municipalityEntity);
+    MunicipalityEntity createMunicipality(MunicipalityEntity municipalityEntity);
 
-	public List<MunicipalityEntity> getMunicipalitiesByDepartmentId(Long departmentId);
+    List<MunicipalityEntity> getMunicipalitiesByDepartmentId(Long departmentId);
 
-	public MunicipalityEntity getMunicipalityById(Long id);
+    MunicipalityEntity getMunicipalityById(Long id);
 
-	public List<MunicipalityEntity> getMunicipalitiesByDepartmentIdAndManagerCode(Long departmentId, Long managerCode);
+    List<MunicipalityEntity> getMunicipalitiesByDepartmentIdAndManagerCode(Long departmentId, Long managerCode);
 
-	public MunicipalityEntity getMunicipalityByCode(String code);
+    MunicipalityEntity getMunicipalityByCode(String code);
 
-	public List<MunicipalityEntity> getMunicipalitiesByManagerCode(Long managerCode);
+    List<MunicipalityEntity> getMunicipalitiesByManagerCode(Long managerCode);
 
-	public List<MunicipalityEntity> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId);
+    List<MunicipalityEntity> getMunicipalitiesNotWorkspaceByDepartment(Long departmentId);
+
+    List<MunicipalityEntity> getMunicipalitiesWhereManagerDoesNotBelongIn(Long managerCode, Long departmentId);
 
 }

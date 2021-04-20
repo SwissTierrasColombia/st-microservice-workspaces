@@ -3,12 +3,13 @@ package com.ai.st.microservice.workspaces.dto;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(value = "WorkspaceOperatorDto", description = "Workspace Operator Dto")
+@ApiModel(value = "WorkspaceOperatorDto")
 public class WorkspaceOperatorDto implements Serializable {
 
 	private static final long serialVersionUID = -1943824478121434815L;
@@ -36,6 +37,12 @@ public class WorkspaceOperatorDto implements Serializable {
 
 	@ApiModelProperty(required = false, notes = "Operator")
 	private MicroserviceOperatorDto operator;
+
+	@ApiModelProperty(required = true, notes = "Manager Code")
+	private Long managerCode;
+
+	@ApiModelProperty(required = false, notes = "Manager")
+	private MicroserviceManagerDto manager;
 
 	@ApiModelProperty(required = false, notes = "Observations")
 	private String observations;
@@ -114,6 +121,22 @@ public class WorkspaceOperatorDto implements Serializable {
 
 	public void setObservations(String observations) {
 		this.observations = observations;
+	}
+
+	public Long getManagerCode() {
+		return managerCode;
+	}
+
+	public void setManagerCode(Long managerCode) {
+		this.managerCode = managerCode;
+	}
+
+	public MicroserviceManagerDto getManager() {
+		return manager;
+	}
+
+	public void setManager(MicroserviceManagerDto manager) {
+		this.manager = manager;
 	}
 
 }

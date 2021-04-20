@@ -13,231 +13,252 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value = "IntegrationDto", description = "Integration Dto")
 public class IntegrationDto implements Serializable {
 
-	private static final long serialVersionUID = -2795942533700928564L;
+    private static final long serialVersionUID = -2795942533700928564L;
 
-	@ApiModelProperty(required = true, notes = "Integration ID")
-	private Long id;
+    @ApiModelProperty(required = true, notes = "Integration ID")
+    private Long id;
 
-	@ApiModelProperty(required = true, notes = "Started at")
-	private Date startedAt;
+    @ApiModelProperty(required = true, notes = "Started at")
+    private Date startedAt;
 
-	@ApiModelProperty(required = true, notes = "Finished at")
-	private Date finishedAt;
+    @ApiModelProperty(required = true, notes = "Finished at")
+    private Date finishedAt;
 
-	@ApiModelProperty(required = true, notes = "Integration state")
-	private IntegrationStateDto integrationState;
+    @ApiModelProperty(required = true, notes = "Integration state")
+    private IntegrationStateDto integrationState;
 
-	@ApiModelProperty(required = true, notes = "Hostname (crypto)")
-	private String hostname;
+    @ApiModelProperty(required = true, notes = "Manager code")
+    private Long managerCode;
 
-	@ApiModelProperty(required = true, notes = "Port (crypto)")
-	private String port;
+    @ApiModelProperty(required = true, notes = "Errors")
+    private String errors;
 
-	@ApiModelProperty(required = true, notes = "Database (crypto)")
-	private String database;
+    @ApiModelProperty(required = true, notes = "Hostname (crypto)")
+    private String hostname;
 
-	@ApiModelProperty(required = true, notes = "Schema (crypto)")
-	private String schema;
+    @ApiModelProperty(required = true, notes = "Port (crypto)")
+    private String port;
 
-	@ApiModelProperty(required = true, notes = "Username (crypto)")
-	private String username;
+    @ApiModelProperty(required = true, notes = "Database (crypto)")
+    private String database;
 
-	@ApiModelProperty(required = true, notes = "Password (crypto)")
-	private String password;
+    @ApiModelProperty(required = true, notes = "Schema (crypto)")
+    private String schema;
 
-	@ApiModelProperty(required = true, notes = "Supply Cadastre ID")
-	private Long supplyCadastreId;
+    @ApiModelProperty(required = true, notes = "Username (crypto)")
+    private String username;
 
-	@ApiModelProperty(required = true, notes = "Supply SNR ID")
-	private Long supplySnrId;
+    @ApiModelProperty(required = true, notes = "Password (crypto)")
+    private String password;
 
-	@ApiModelProperty(required = true, notes = "Supply ANT ID")
-	private Long supplyAntId;
+    @ApiModelProperty(required = true, notes = "Supply Cadastre ID")
+    private Long supplyCadastreId;
 
-	@ApiModelProperty(required = true, notes = "Supply Cadastre")
-	private MicroserviceSupplyDto supplyCadastre;
+    @ApiModelProperty(required = true, notes = "Supply SNR ID")
+    private Long supplySnrId;
 
-	@ApiModelProperty(required = true, notes = "Supply Snr")
-	private MicroserviceSupplyDto supplySnr;
+    @ApiModelProperty(required = true, notes = "Supply ANT ID")
+    private Long supplyAntId;
 
-	@ApiModelProperty(required = true, notes = "Supply Ant")
-	private MicroserviceSupplyDto supplyAnt;
+    @ApiModelProperty(required = true, notes = "Supply Cadastre")
+    private MicroserviceSupplyDto supplyCadastre;
 
-	@ApiModelProperty(required = true, notes = "Stats")
-	private List<IntegrationStatDto> stats;
+    @ApiModelProperty(required = true, notes = "Supply Snr")
+    private MicroserviceSupplyDto supplySnr;
 
-	@ApiModelProperty(required = true, notes = "Histories")
-	private List<IntegrationHistoryDto> histories;
+    @ApiModelProperty(required = true, notes = "Supply Ant")
+    private MicroserviceSupplyDto supplyAnt;
 
-	@ApiModelProperty(required = true, notes = "Municipality")
-	private MunicipalityDto municipalityDto;
+    @ApiModelProperty(required = true, notes = "Stats")
+    private List<IntegrationStatDto> stats;
 
-	@ApiModelProperty(required = true, notes = "URL Map")
-	private String urlMap;
+    @ApiModelProperty(required = true, notes = "Histories")
+    private List<IntegrationHistoryDto> histories;
 
-	public IntegrationDto() {
-		this.stats = new ArrayList<>();
-		this.histories = new ArrayList<>();
-	}
+    @ApiModelProperty(required = true, notes = "Municipality")
+    private MunicipalityDto municipalityDto;
 
-	public Long getId() {
-		return id;
-	}
+    @ApiModelProperty(required = true, notes = "URL Map")
+    private String urlMap;
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public IntegrationDto() {
+        this.stats = new ArrayList<>();
+        this.histories = new ArrayList<>();
+    }
 
-	public Date getStartedAt() {
-		return startedAt;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setStartedAt(Date startedAt) {
-		this.startedAt = startedAt;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public Date getFinishedAt() {
-		return finishedAt;
-	}
+    public Date getStartedAt() {
+        return startedAt;
+    }
 
-	public void setFinishedAt(Date finishedAt) {
-		this.finishedAt = finishedAt;
-	}
+    public void setStartedAt(Date startedAt) {
+        this.startedAt = startedAt;
+    }
 
-	public IntegrationStateDto getIntegrationState() {
-		return integrationState;
-	}
+    public Date getFinishedAt() {
+        return finishedAt;
+    }
 
-	public void setIntegrationState(IntegrationStateDto integrationState) {
-		this.integrationState = integrationState;
-	}
+    public void setFinishedAt(Date finishedAt) {
+        this.finishedAt = finishedAt;
+    }
 
-	public String getHostname() {
-		return hostname;
-	}
+    public IntegrationStateDto getIntegrationState() {
+        return integrationState;
+    }
 
-	public void setHostname(String hostname) {
-		this.hostname = hostname;
-	}
+    public void setIntegrationState(IntegrationStateDto integrationState) {
+        this.integrationState = integrationState;
+    }
 
-	public String getPort() {
-		return port;
-	}
+    public String getHostname() {
+        return hostname;
+    }
 
-	public void setPort(String port) {
-		this.port = port;
-	}
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
 
-	public String getDatabase() {
-		return database;
-	}
+    public String getPort() {
+        return port;
+    }
 
-	public void setDatabase(String database) {
-		this.database = database;
-	}
+    public void setPort(String port) {
+        this.port = port;
+    }
 
-	public String getSchema() {
-		return schema;
-	}
+    public String getDatabase() {
+        return database;
+    }
 
-	public void setSchema(String schema) {
-		this.schema = schema;
-	}
+    public void setDatabase(String database) {
+        this.database = database;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public String getSchema() {
+        return schema;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public void setSchema(String schema) {
+        this.schema = schema;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public List<IntegrationStatDto> getStats() {
-		return stats;
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public void setStats(List<IntegrationStatDto> stats) {
-		this.stats = stats;
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-	public Long getSupplyCadastreId() {
-		return supplyCadastreId;
-	}
+    public List<IntegrationStatDto> getStats() {
+        return stats;
+    }
 
-	public void setSupplyCadastreId(Long supplyCadastreId) {
-		this.supplyCadastreId = supplyCadastreId;
-	}
+    public void setStats(List<IntegrationStatDto> stats) {
+        this.stats = stats;
+    }
 
-	public Long getSupplySnrId() {
-		return supplySnrId;
-	}
+    public Long getSupplyCadastreId() {
+        return supplyCadastreId;
+    }
 
-	public void setSupplySnrId(Long supplySnrId) {
-		this.supplySnrId = supplySnrId;
-	}
+    public void setSupplyCadastreId(Long supplyCadastreId) {
+        this.supplyCadastreId = supplyCadastreId;
+    }
 
-	public Long getSupplyAntId() {
-		return supplyAntId;
-	}
+    public Long getSupplySnrId() {
+        return supplySnrId;
+    }
 
-	public void setSupplyAntId(Long supplyAntId) {
-		this.supplyAntId = supplyAntId;
-	}
+    public void setSupplySnrId(Long supplySnrId) {
+        this.supplySnrId = supplySnrId;
+    }
 
-	public MicroserviceSupplyDto getSupplyCadastre() {
-		return supplyCadastre;
-	}
+    public Long getSupplyAntId() {
+        return supplyAntId;
+    }
 
-	public void setSupplyCadastre(MicroserviceSupplyDto supplyCadastre) {
-		this.supplyCadastre = supplyCadastre;
-	}
+    public void setSupplyAntId(Long supplyAntId) {
+        this.supplyAntId = supplyAntId;
+    }
 
-	public MicroserviceSupplyDto getSupplySnr() {
-		return supplySnr;
-	}
+    public MicroserviceSupplyDto getSupplyCadastre() {
+        return supplyCadastre;
+    }
 
-	public void setSupplySnr(MicroserviceSupplyDto supplySnr) {
-		this.supplySnr = supplySnr;
-	}
+    public void setSupplyCadastre(MicroserviceSupplyDto supplyCadastre) {
+        this.supplyCadastre = supplyCadastre;
+    }
 
-	public MicroserviceSupplyDto getSupplyAnt() {
-		return supplyAnt;
-	}
+    public MicroserviceSupplyDto getSupplySnr() {
+        return supplySnr;
+    }
 
-	public void setSupplyAnt(MicroserviceSupplyDto supplyAnt) {
-		this.supplyAnt = supplyAnt;
-	}
+    public void setSupplySnr(MicroserviceSupplyDto supplySnr) {
+        this.supplySnr = supplySnr;
+    }
 
-	public List<IntegrationHistoryDto> getHistories() {
-		return histories;
-	}
+    public MicroserviceSupplyDto getSupplyAnt() {
+        return supplyAnt;
+    }
 
-	public void setHistories(List<IntegrationHistoryDto> histories) {
-		this.histories = histories;
-	}
+    public void setSupplyAnt(MicroserviceSupplyDto supplyAnt) {
+        this.supplyAnt = supplyAnt;
+    }
 
-	public MunicipalityDto getMunicipalityDto() {
-		return municipalityDto;
-	}
+    public List<IntegrationHistoryDto> getHistories() {
+        return histories;
+    }
 
-	public void setMunicipalityDto(MunicipalityDto municipalityDto) {
-		this.municipalityDto = municipalityDto;
-	}
+    public void setHistories(List<IntegrationHistoryDto> histories) {
+        this.histories = histories;
+    }
 
-	public String getUrlMap() {
-		return urlMap;
-	}
+    public MunicipalityDto getMunicipalityDto() {
+        return municipalityDto;
+    }
 
-	public void setUrlMap(String urlMap) {
-		this.urlMap = urlMap;
-	}
+    public void setMunicipalityDto(MunicipalityDto municipalityDto) {
+        this.municipalityDto = municipalityDto;
+    }
 
+    public String getUrlMap() {
+        return urlMap;
+    }
+
+    public void setUrlMap(String urlMap) {
+        this.urlMap = urlMap;
+    }
+
+    public Long getManagerCode() {
+        return managerCode;
+    }
+
+    public void setManagerCode(Long managerCode) {
+        this.managerCode = managerCode;
+    }
+
+    public String getErrors() {
+        return errors;
+    }
+
+    public void setErrors(String errors) {
+        this.errors = errors;
+    }
 }

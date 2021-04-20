@@ -1,7 +1,7 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -29,82 +29,90 @@ import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 @Component
 public class RabbitMQUpdateIntegrationListener {
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-	@Autowired
-	private IntegrationBusiness integrationBusiness;
+    @Autowired
+    private IntegrationBusiness integrationBusiness;
 
-	@Autowired
-	private NotificationBusiness notificationBusiness;
+    @Autowired
+    private NotificationBusiness notificationBusiness;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private IIntegrationService integrationService;
+    @Autowired
+    private IIntegrationService integrationService;
 
-	@Autowired
-	private IIntegrationStateService integrationStateService;
+    @Autowired
+    private IIntegrationStateService integrationStateService;
 
-	@RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}", concurrency = "${st.rabbitmq.queueUpdateIntegration.concurrency}")
-	public void updateIntegration(MicroserviceIntegrationStatDto integrationStats) {
+    @RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}", concurrency = "${st.rabbitmq.queueUpdateIntegration.concurrency}")
+    public void updateIntegration(MicroserviceIntegrationStatDto integrationStats) {
 
-		try {
+        try {
 
-			Long stateId = null;
+            Long stateId;
 
-			if (integrationStats.isStatus()) {
-				integrationBusiness.addStatToIntegration(integrationStats.getIntegrationId(),
-						integrationStats.getCountSNR(), integrationStats.getCountGC(), (long) 0,
-						integrationStats.getCountMatch(), integrationStats.getPercentage());
-				stateId = IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC;
-				log.info("Integration automatic finished successful");
-			} else {
-				stateId = IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC;
-				log.info("Integration automatic finished with errors");
-			}
+            if (integrationStats.isStatus()) {
+                integrationBusiness.addStatToIntegration(integrationStats.getIntegrationId(),
+                        integrationStats.getCountSNR(), integrationStats.getCountGC(), (long) 0,
+                        integrationStats.getCountMatch(), integrationStats.getPercentage());
+                stateId = IntegrationStateBusiness.STATE_FINISHED_AUTOMATIC;
+                log.info("Integration automatic finished successful");
+            } else {
+                stateId = IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC;
+                log.info("Integration automatic finished with errors");
+            }
 
-			// send notification
-			try {
+            // send notification
+            try {
 
-				IntegrationEntity integrationEntity = integrationService
-						.getIntegrationById(integrationStats.getIntegrationId());
+                IntegrationEntity integrationEntity = integrationService
+                        .getIntegrationById(integrationStats.getIntegrationId());
 
-				IntegrationStateEntity integrationStatus = integrationStateService.getIntegrationStateById(stateId);
+                IntegrationStateEntity integrationStatus = integrationStateService.getIntegrationStateById(stateId);
 
-				WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
-				MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
+                WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
+                MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-				List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
-						workspaceEntity.getManagerCode(),
-						new ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+                List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(integrationEntity.getManagerCode(),
+                        new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR)));
 
-				for (MicroserviceManagerUserDto directorDto : directors) {
+                for (MicroserviceManagerUserDto directorDto : directors) {
 
-					MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
-					if (userDto instanceof MicroserviceUserDto) {
-						notificationBusiness.sendNotificationInputIntegrations(userDto.getEmail(), userDto.getId(),
-								integrationStatus.getName(), municipalityEntity.getName(),
-								municipalityEntity.getDepartment().getName(), integrationEntity.getStartedAt());
-					}
+                    MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+                    if (userDto != null && userDto.getEnabled()) {
+                        notificationBusiness.sendNotificationInputIntegrations(userDto.getEmail(), userDto.getId(),
+                                integrationStatus.getName(), municipalityEntity.getName(),
+                                municipalityEntity.getDepartment().getName(), integrationEntity.getStartedAt());
+                    }
 
-				}
+                }
 
-			} catch (Exception e) {
-				log.error("Error enviando notificación informando estado de la integración automática: "
-						+ e.getMessage());
-			}
+            } catch (Exception e) {
+                log.error("Error enviando notificación informando estado de la integración automática: "
+                        + e.getMessage());
+            }
 
-			integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, null, null,
-					"SISTEMA");
+            String logErrors = null;
+            if (integrationStats.getErrors().size() > 0) {
+                StringBuilder errors = new StringBuilder();
+                for (String error : integrationStats.getErrors()) {
+                    errors.append(error).append("\n");
+                }
+                logErrors = errors.toString();
+            }
 
-		} catch (Exception e) {
-			log.error("Error RabbitMQUpdateIntegrationListener@updateIntegration#Business ---> " + e.getMessage());
-		}
+            integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, logErrors, null, null,
+                    "SISTEMA");
 
-	}
+        } catch (Exception e) {
+            log.error("Error RabbitMQUpdateIntegrationListener@updateIntegration#Business ---> " + e.getMessage());
+        }
+
+    }
 
 }

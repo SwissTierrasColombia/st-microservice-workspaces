@@ -6,10 +6,9 @@ import java.util.Date;
 
 public class DateTool {
 
-	public static String formatDate(Date date, String format) {
-		DateFormat dateFormat = new SimpleDateFormat(format);
-		String strDate = dateFormat.format(date);
-		return strDate;
-	}
+    public static String formatDate(Date date, String format) {
+        DateFormat dateFormat = new SimpleDateFormat(format);
+        return dateFormat.format(date);
+    }
 
 }

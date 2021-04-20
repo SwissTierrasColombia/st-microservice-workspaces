@@ -6,45 +6,77 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 
 @Component
 public class UserBusiness {
 
-	private final Logger log = LoggerFactory.getLogger(UserBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(UserBusiness.class);
 
-	@Autowired
-	private UserFeignClient userClient;
+    @Autowired
+    private UserFeignClient userClient;
 
-	public MicroserviceUserDto getUserById(Long userId) {
+    public MicroserviceUserDto getUserById(Long userId) {
+        MicroserviceUserDto userDto = null;
+        try {
+            userDto = userClient.findById(userId);
+        } catch (Exception e) {
+            log.info("Error consultando el usuario: " + e.getMessage());
+        }
+        return userDto;
+    }
 
-		MicroserviceUserDto userDto = null;
+    public MicroserviceUserDto getUserByToken(String headerAuthorization) {
+        MicroserviceUserDto userDto = null;
+        try {
+            String token = headerAuthorization.replace("Bearer ", "").trim();
+            userDto = userClient.findByToken(token);
+        } catch (Exception e) {
+            log.info("Error consultando el usuario: " + e.getMessage());
+        }
+        return userDto;
+    }
 
-		try {
+    public boolean isManager(MicroserviceUserDto userDto) {
+        MicroserviceRoleDto roleManager = userDto.getRoles().stream()
+                .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-			userDto = userClient.findById(userId);
+        return roleManager != null;
+    }
 
-		} catch (Exception e) {
-			log.info("Error consultando el usuario: " + e.getMessage());
-		}
+    public boolean isSuperAdministrator(MicroserviceUserDto userDto) {
 
-		return userDto;
-	}
+        MicroserviceRoleDto roleSuper = userDto.getRoles().stream()
+                .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_SUPER_ADMINISTRATOR)).findAny()
+                .orElse(null);
 
-	public MicroserviceUserDto getUserByToken(String headerAuthorization) {
+        return roleSuper != null;
+    }
 
-		MicroserviceUserDto userDto = null;
+    public boolean isAdministrator(MicroserviceUserDto userDto) {
 
-		try {
+        MicroserviceRoleDto roleAdministrator = userDto.getRoles().stream()
+                .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			userDto = userClient.findByToken(token);
+        return roleAdministrator != null;
+    }
 
-		} catch (Exception e) {
-			log.info("Error consultando el usuario: " + e.getMessage());
-		}
+    public boolean isOperator(MicroserviceUserDto userDto) {
 
-		return userDto;
-	}
+        MicroserviceRoleDto roleOperator = userDto.getRoles().stream()
+                .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_OPERATOR)).findAny().orElse(null);
+
+        return roleOperator != null;
+    }
+
+    public boolean isProvider(MicroserviceUserDto userDto) {
+
+        MicroserviceRoleDto roleProvider = userDto.getRoles().stream()
+                .filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny()
+                .orElse(null);
+
+        return roleProvider != null;
+    }
 
 }

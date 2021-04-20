@@ -7,35 +7,45 @@ import java.util.List;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(value = "CreateDeliveryDto", description = "Create Delivery Dto")
+@ApiModel(value = "CreateDeliveryDto")
 public class CreateDeliveryDto implements Serializable {
 
-	private static final long serialVersionUID = -2960319633239145257L;
+    private static final long serialVersionUID = -2960319633239145257L;
 
-	@ApiModelProperty(required = true, notes = "Observations")
-	private String observations;
+    @ApiModelProperty(required = true, notes = "Observations")
+    private String observations;
 
-	@ApiModelProperty(required = true, notes = "Supplies")
-	private List<CreateSupplyDeliveryDto> supplies;
+    @ApiModelProperty(required = true, notes = "Operator Code")
+    private Long operatorCode;
 
-	public CreateDeliveryDto() {
-		this.supplies = new ArrayList<CreateSupplyDeliveryDto>();
-	}
+    @ApiModelProperty(required = true, notes = "Supplies")
+    private List<CreateSupplyDeliveryDto> supplies;
 
-	public String getObservations() {
-		return observations;
-	}
+    public CreateDeliveryDto() {
+        this.supplies = new ArrayList<>();
+    }
 
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
+    public String getObservations() {
+        return observations;
+    }
 
-	public List<CreateSupplyDeliveryDto> getSupplies() {
-		return supplies;
-	}
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
-	public void setSupplies(List<CreateSupplyDeliveryDto> supplies) {
-		this.supplies = supplies;
-	}
+    public List<CreateSupplyDeliveryDto> getSupplies() {
+        return supplies;
+    }
 
+    public void setSupplies(List<CreateSupplyDeliveryDto> supplies) {
+        this.supplies = supplies;
+    }
+
+    public Long getOperatorCode() {
+        return operatorCode;
+    }
+
+    public void setOperatorCode(Long operatorCode) {
+        this.operatorCode = operatorCode;
+    }
 }

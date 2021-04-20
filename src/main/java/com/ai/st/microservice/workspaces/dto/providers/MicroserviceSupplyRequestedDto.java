@@ -4,158 +4,172 @@ import java.io.Serializable;
 import java.util.Date;
 
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 
 public class MicroserviceSupplyRequestedDto implements Serializable {
 
-	private static final long serialVersionUID = -5639936149692833884L;
+    private static final long serialVersionUID = -5639936149692833884L;
 
-	private Long id;
-	private String description;
-	private MicroserviceTypeSupplyDto typeSupply;
-	private Date createdAt;
-	private Boolean delivered;
-	private Date deliveredAt;
-	private String justification;
-	private MicroserviceSupplyRequestedStateDto state;
-	private String modelVersion;
-	private Boolean canUpload;
-	private Long deliveredBy;
-	private MicroserviceUserDto userDeliveryBy;
-	private String url;
-	private String observations;
-	private String ftp;
-	private MicroserviceRequestDto request;
+    private Long id;
+    private String description;
+    private MicroserviceTypeSupplyDto typeSupply;
+    private Date createdAt;
+    private Boolean delivered;
+    private Date deliveredAt;
+    private String justification;
+    private MicroserviceSupplyRequestedStateDto state;
+    private String modelVersion;
+    private Boolean canUpload;
+    private Long deliveredBy;
+    private MicroserviceUserDto userDeliveryBy;
+    private String url;
+    private String observations;
+    private String ftp;
+    private MicroserviceRequestDto request;
+    private String errors;
+    private Boolean isGeometryValidated;
 
-	public MicroserviceSupplyRequestedDto() {
+    public Long getId() {
+        return id;
+    }
 
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public Long getId() {
-		return id;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public MicroserviceTypeSupplyDto getTypeSupply() {
+        return typeSupply;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public void setTypeSupply(MicroserviceTypeSupplyDto typeSupply) {
+        this.typeSupply = typeSupply;
+    }
 
-	public MicroserviceTypeSupplyDto getTypeSupply() {
-		return typeSupply;
-	}
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-	public void setTypeSupply(MicroserviceTypeSupplyDto typeSupply) {
-		this.typeSupply = typeSupply;
-	}
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-	public Date getCreatedAt() {
-		return createdAt;
-	}
+    public Boolean getDelivered() {
+        return delivered;
+    }
 
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
+    public void setDelivered(Boolean delivered) {
+        this.delivered = delivered;
+    }
 
-	public Boolean getDelivered() {
-		return delivered;
-	}
+    public Date getDeliveredAt() {
+        return deliveredAt;
+    }
 
-	public void setDelivered(Boolean delivered) {
-		this.delivered = delivered;
-	}
+    public void setDeliveredAt(Date deliveredAt) {
+        this.deliveredAt = deliveredAt;
+    }
 
-	public Date getDeliveredAt() {
-		return deliveredAt;
-	}
+    public String getJustification() {
+        return justification;
+    }
 
-	public void setDeliveredAt(Date deliveredAt) {
-		this.deliveredAt = deliveredAt;
-	}
+    public void setJustification(String justification) {
+        this.justification = justification;
+    }
 
-	public String getJustification() {
-		return justification;
-	}
+    public MicroserviceSupplyRequestedStateDto getState() {
+        return state;
+    }
 
-	public void setJustification(String justification) {
-		this.justification = justification;
-	}
+    public void setState(MicroserviceSupplyRequestedStateDto state) {
+        this.state = state;
+    }
 
-	public MicroserviceSupplyRequestedStateDto getState() {
-		return state;
-	}
+    public String getModelVersion() {
+        return modelVersion;
+    }
 
-	public void setState(MicroserviceSupplyRequestedStateDto state) {
-		this.state = state;
-	}
+    public void setModelVersion(String modelVersion) {
+        this.modelVersion = modelVersion;
+    }
 
-	public String getModelVersion() {
-		return modelVersion;
-	}
+    public Boolean getCanUpload() {
+        return canUpload;
+    }
 
-	public void setModelVersion(String modelVersion) {
-		this.modelVersion = modelVersion;
-	}
+    public void setCanUpload(Boolean canUpload) {
+        this.canUpload = canUpload;
+    }
 
-	public Boolean getCanUpload() {
-		return canUpload;
-	}
+    public Long getDeliveredBy() {
+        return deliveredBy;
+    }
 
-	public void setCanUpload(Boolean canUpload) {
-		this.canUpload = canUpload;
-	}
+    public void setDeliveredBy(Long deliveredBy) {
+        this.deliveredBy = deliveredBy;
+    }
 
-	public Long getDeliveredBy() {
-		return deliveredBy;
-	}
+    public MicroserviceUserDto getUserDeliveryBy() {
+        return userDeliveryBy;
+    }
 
-	public void setDeliveredBy(Long deliveredBy) {
-		this.deliveredBy = deliveredBy;
-	}
+    public void setUserDeliveryBy(MicroserviceUserDto userDeliveryBy) {
+        this.userDeliveryBy = userDeliveryBy;
+    }
 
-	public MicroserviceUserDto getUserDeliveryBy() {
-		return userDeliveryBy;
-	}
+    public String getUrl() {
+        return url;
+    }
 
-	public void setUserDeliveryBy(MicroserviceUserDto userDeliveryBy) {
-		this.userDeliveryBy = userDeliveryBy;
-	}
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-	public String getUrl() {
-		return url;
-	}
+    public String getObservations() {
+        return observations;
+    }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
-	public String getObservations() {
-		return observations;
-	}
+    public String getFtp() {
+        return ftp;
+    }
 
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
+    public void setFtp(String ftp) {
+        this.ftp = ftp;
+    }
 
-	public String getFtp() {
-		return ftp;
-	}
+    public MicroserviceRequestDto getRequest() {
+        return request;
+    }
 
-	public void setFtp(String ftp) {
-		this.ftp = ftp;
-	}
+    public void setRequest(MicroserviceRequestDto request) {
+        this.request = request;
+    }
 
-	public MicroserviceRequestDto getRequest() {
-		return request;
-	}
+    public String getErrors() {
+        return errors;
+    }
 
-	public void setRequest(MicroserviceRequestDto request) {
-		this.request = request;
-	}
+    public void setErrors(String errors) {
+        this.errors = errors;
+    }
 
+    public Boolean getGeometryValidated() {
+        return isGeometryValidated;
+    }
+
+    public void setGeometryValidated(Boolean geometryValidated) {
+        isGeometryValidated = geometryValidated;
+    }
 }

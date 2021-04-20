@@ -5,57 +5,67 @@ import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(value = "AnswerRequestDto", description = "Answer Request Dto")
+@ApiModel(value = "AnswerRequestDto")
 public class AnswerRequestDto implements Serializable {
 
-	private static final long serialVersionUID = 177256820188869027L;
+    private static final long serialVersionUID = 177256820188869027L;
 
-	@ApiModelProperty(required = true, notes = "Type Supply")
-	private Long typeSupplyId;
+    @ApiModelProperty(required = true, notes = "Type Supply")
+    private Long typeSupplyId;
 
-	@ApiModelProperty(required = false, notes = "Justification")
-	private String justification;
+    @ApiModelProperty(notes = "Justification")
+    private String justification;
 
-	@ApiModelProperty(required = false, notes = "Url")
-	private String url;
+    @ApiModelProperty(notes = "Url")
+    private String url;
 
-	@ApiModelProperty(required = false, notes = "Observations")
-	private String observations;
+    @ApiModelProperty(notes = "Observations")
+    private String observations;
 
-	public AnswerRequestDto() {
+    @ApiModelProperty(notes = "Skip geometry validation?")
+    private Boolean skipGeometryValidation;
 
-	}
+    public AnswerRequestDto() {
+        this.skipGeometryValidation = null;
+    }
 
-	public Long getTypeSupplyId() {
-		return typeSupplyId;
-	}
+    public Long getTypeSupplyId() {
+        return typeSupplyId;
+    }
 
-	public void setTypeSupplyId(Long typeSupplyId) {
-		this.typeSupplyId = typeSupplyId;
-	}
+    public void setTypeSupplyId(Long typeSupplyId) {
+        this.typeSupplyId = typeSupplyId;
+    }
 
-	public String getJustification() {
-		return justification;
-	}
+    public String getJustification() {
+        return justification;
+    }
 
-	public void setJustification(String justification) {
-		this.justification = justification;
-	}
+    public void setJustification(String justification) {
+        this.justification = justification;
+    }
 
-	public String getUrl() {
-		return url;
-	}
+    public String getUrl() {
+        return url;
+    }
 
-	public void setUrl(String url) {
-		this.url = url;
-	}
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
-	public String getObservations() {
-		return observations;
-	}
+    public String getObservations() {
+        return observations;
+    }
 
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
+    public Boolean getSkipGeometryValidation() {
+        return skipGeometryValidation;
+    }
+
+    public void setSkipGeometryValidation(Boolean skipGeometryValidation) {
+        this.skipGeometryValidation = skipGeometryValidation;
+    }
 }

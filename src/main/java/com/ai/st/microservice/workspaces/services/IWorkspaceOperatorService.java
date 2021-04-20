@@ -4,8 +4,12 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 
 public interface IWorkspaceOperatorService {
 
-	public void deleteWorkspaceOperatorById(Long id);
-	
-	public WorkspaceOperatorEntity createOperator(WorkspaceOperatorEntity operator);
-	
+    void deleteWorkspaceOperatorById(Long id);
+
+    WorkspaceOperatorEntity createOperator(WorkspaceOperatorEntity operator);
+
+    WorkspaceOperatorEntity getWorkspaceOperatorById(Long id);
+
+    WorkspaceOperatorEntity updateOperator(WorkspaceOperatorEntity operator);
+
 }

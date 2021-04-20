@@ -13,55 +13,55 @@ import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisio
 @Component
 public class RabbitMQResultImportListener {
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-	@Autowired
-	private ProviderBusiness providerBusiness;
+    @Autowired
+    private ProviderBusiness providerBusiness;
 
-	@RabbitListener(queues = "${st.rabbitmq.queueResultImport.queue}", concurrency = "${st.rabbitmq.queueResultImport.concurrency}")
-	public void updateIntegration(MicroserviceResultImportDto resultDto) {
+    @RabbitListener(queues = "${st.rabbitmq.queueResultImport.queue}", concurrency = "${st.rabbitmq.queueResultImport.concurrency}")
+    public void updateIntegration(MicroserviceResultImportDto resultDto) {
 
-		log.info("procesando resultado de la importación ... " + resultDto.getReference());
+        log.info("procesando resultado de la importación ... " + resultDto.getReference());
 
-		try {
+        try {
 
-			String reference[] = resultDto.getReference().split("-");
+            String[] reference = resultDto.getReference().split("-");
 
-			String typeResult = reference[0];
+            String typeResult = reference[0];
 
-			if (typeResult.equalsIgnoreCase("import")) {
+            if (typeResult.equalsIgnoreCase("import")) {
 
-				Long supplyRequestedId = Long.parseLong(reference[1]);
-				Long requestId = Long.parseLong(reference[2]);
+                Long supplyRequestedId = Long.parseLong(reference[1]);
+                Long requestId = Long.parseLong(reference[2]);
 
-				MicroserviceSupplyRevisionDto supplyRevisionDto = providerBusiness
-						.getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+                MicroserviceSupplyRevisionDto supplyRevisionDto = providerBusiness
+                        .getSupplyRevisionFromSupplyRequested(supplyRequestedId);
 
-				if (supplyRevisionDto == null || !resultDto.getResult()) {
-					providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
-							ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
+                if (supplyRevisionDto == null || !resultDto.getResult()) {
+                    providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
+                            ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
 
-				}
+                }
 
-				if (resultDto.getResult()) {
+                if (resultDto.getResult()) {
 
-					providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
-							ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW);
+                    providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
+                            ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW);
 
-				} else {
+                } else {
 
-					providerBusiness.deleteSupplyRevision(supplyRequestedId, supplyRevisionDto.getId());
+                    providerBusiness.deleteSupplyRevision(supplyRequestedId, supplyRevisionDto.getId());
 
-				}
+                }
 
-				log.info("se realizaron los procesos del resultado: " + resultDto.getResult());
+                log.info("se realizaron los procesos del resultado: " + resultDto.getResult());
 
-			}
+            }
 
-		} catch (Exception e) {
-			log.error("Ha ocurrido un error actualizando el resultado de la importación: " + e.getMessage());
-		}
+        } catch (Exception e) {
+            log.error("Ha ocurrido un error actualizando el resultado de la importación: " + e.getMessage());
+        }
 
-	}
+    }
 
 }

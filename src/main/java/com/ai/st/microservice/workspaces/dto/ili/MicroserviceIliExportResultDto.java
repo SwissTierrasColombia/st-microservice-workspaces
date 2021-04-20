@@ -1,6 +1,7 @@
 package com.ai.st.microservice.workspaces.dto.ili;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class MicroserviceIliExportResultDto implements Serializable {
 
@@ -11,6 +12,7 @@ public class MicroserviceIliExportResultDto implements Serializable {
 	private String pathFile;
 	private MicroserviceIntegrationStatDto stats;
 	private String modelVersion;
+	private List<String> errors;
 
 	public MicroserviceIliExportResultDto() {
 
@@ -56,4 +58,11 @@ public class MicroserviceIliExportResultDto implements Serializable {
 		this.modelVersion = modelVersion;
 	}
 
+	public List<String> getErrors() {
+		return errors;
+	}
+
+	public void setErrors(List<String> errors) {
+		this.errors = errors;
+	}
 }

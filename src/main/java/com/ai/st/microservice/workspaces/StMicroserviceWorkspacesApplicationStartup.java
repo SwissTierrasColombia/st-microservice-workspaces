@@ -9,18 +9,12 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.business.IntegrationStateBusiness;
-import com.ai.st.microservice.workspaces.business.MilestoneBusiness;
-import com.ai.st.microservice.workspaces.business.StateBusiness;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
-import com.ai.st.microservice.workspaces.entities.MilestoneEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
-import com.ai.st.microservice.workspaces.entities.StateEntity;
 import com.ai.st.microservice.workspaces.services.IDepartmentService;
 import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
-import com.ai.st.microservice.workspaces.services.IMilestoneService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
-import com.ai.st.microservice.workspaces.services.IStateService;
 
 @Component
 public class StMicroserviceWorkspacesApplicationStartup implements ApplicationListener<ContextRefreshedEvent> {
@@ -37,20 +31,12 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 	private IMunicipalityService municipalityService;
 
 	@Autowired
-	private IMilestoneService milestoneService;
-
-	@Autowired
-	private IStateService stateService;
-
-	@Autowired
 	private IIntegrationStateService integrationStateService;
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		log.info("ST - Loading Domains ... ");
 
-		this.initMilestones();
-		this.initStates();
 		this.initIntegrationStates();
 
 		if (activeProfile.equalsIgnoreCase("develop")) {
@@ -143,86 +129,6 @@ public class StMicroserviceWorkspacesApplicationStartup implements ApplicationLi
 
 		}
 
-	}
-
-	public void initMilestones() {
-		Long countMilestones = milestoneService.getCount();
-		if (countMilestones == 0) {
-
-			try {
-
-				MilestoneEntity milestone1 = new MilestoneEntity();
-				milestone1.setId(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
-				milestone1.setName("NUEVO ESPACIO TRABAJO PARA UN MUNICIPIO");
-				milestoneService.createMilestone(milestone1);
-
-				MilestoneEntity milestone2 = new MilestoneEntity();
-				milestone2.setId(MilestoneBusiness.MILESTONE_UPDATE_WORKSPACE);
-				milestone2.setName("EDITAR ESPACIO TRABAJO PARA UN MUNICIPIO ");
-				milestoneService.createMilestone(milestone2);
-
-				MilestoneEntity milestone3 = new MilestoneEntity();
-				milestone3.setId(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT);
-				milestone3.setName("ASIGNACIÓN DE OPERADOR A UN MUNICIPIO");
-				milestoneService.createMilestone(milestone3);
-
-				log.info("The domains 'milestones' have been loaded!");
-			} catch (Exception e) {
-				log.error("Failed to load 'milestones' domains");
-			}
-
-		}
-
-	}
-
-	public void initStates() {
-		Long countStates = stateService.getCount();
-		if (countStates == 0) {
-
-			try {
-
-				StateEntity stateStart = new StateEntity();
-				stateStart.setId(StateBusiness.STATE_START);
-				stateStart.setName("INICIO");
-				stateStart.setDescription("Cuando se crea un espacio de trabajo a un municipio.");
-				stateService.createState(stateStart);
-
-				StateEntity stateRequested = new StateEntity();
-				stateRequested.setId(StateBusiness.STATE_SUPPLIES_REQUESTED);
-				stateRequested.setName("INSUMOS SOLICITADOS");
-				stateRequested.setDescription("Cuando se solicitan insumos por parte del gestor.");
-				stateService.createState(stateRequested);
-
-				StateEntity stateReceived = new StateEntity();
-				stateReceived.setId(StateBusiness.STATE_SUPPLIES_RECEIVED);
-				stateReceived.setName("INSUMOS RECIBIDOS");
-				stateReceived.setDescription("Cuando se reciben los insumos solicitados.");
-				stateService.createState(stateReceived);
-
-				StateEntity stateIntegrated = new StateEntity();
-				stateIntegrated.setId(StateBusiness.STATE_SUPPLIES_INTEGRATED);
-				stateIntegrated.setName("INSUMOS INTEGRADOS");
-				stateIntegrated.setDescription("Cuando se integran los insumos por parte del gestor.");
-				stateService.createState(stateIntegrated);
-
-				StateEntity stateDelivered = new StateEntity();
-				stateDelivered.setId(StateBusiness.STATE_SUPPLIES_DELIVERED);
-				stateDelivered.setName("INSUMOS ENTREGADOS");
-				stateDelivered.setDescription("Cuando se entregan los insumos generados al operador.");
-				stateService.createState(stateDelivered);
-
-				StateEntity stateDownloaded = new StateEntity();
-				stateDownloaded.setId(StateBusiness.STATE_SUPPLIES_DOWNLOADED);
-				stateDownloaded.setName("INSUMOS DESCARGADOS");
-				stateDownloaded.setDescription("Cuando se descargan los insumos por parte del operador");
-				stateService.createState(stateDownloaded);
-
-				log.info("The domains 'states' have been loaded!");
-			} catch (Exception e) {
-				log.error("Failed to load 'states' domains");
-			}
-
-		}
 	}
 
 	public void initIntegrationStates() {

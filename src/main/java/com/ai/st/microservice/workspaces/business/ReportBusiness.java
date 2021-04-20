@@ -19,101 +19,101 @@ import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 @Service
 public class ReportBusiness {
 
-	private final Logger log = LoggerFactory.getLogger(ReportBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(ReportBusiness.class);
 
-	@Autowired
-	private ReportFeignClient reportClient;
+    @Autowired
+    private ReportFeignClient reportClient;
 
-	public MicroserviceReportInformationDto generateReportDownloadSupply(String namespace, String dateCreation,
-			String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
-			String municipalityName, String observations, String operatorName,
-			List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
+    public MicroserviceReportInformationDto generateReportDownloadSupply(String namespace, String dateCreation,
+                                                                         String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
+                                                                         String municipalityName, String observations, String operatorName,
+                                                                         List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
 
-		MicroserviceReportInformationDto informationDto = null;
+        MicroserviceReportInformationDto informationDto;
 
-		try {
+        try {
 
-			MicroserviceRequestReportDownloadSupplyDto data = new MicroserviceRequestReportDownloadSupplyDto();
-			data.setNamespace(namespace);
-			data.setDateCreation(dateCreation);
-			data.setDateDelivery(dateDelivery);
-			data.setDeliveryId(deliveryId);
-			data.setDepartmentName(departmentName);
-			data.setManagerName(managerName);
-			data.setMunicipalityCode(municipalityCode);
-			data.setMunicipalityName(municipalityName);
-			data.setObservations(observations);
-			data.setOperatorName(operatorName);
-			data.setSupplies(supplies);
+            MicroserviceRequestReportDownloadSupplyDto data = new MicroserviceRequestReportDownloadSupplyDto();
+            data.setNamespace(namespace);
+            data.setDateCreation(dateCreation);
+            data.setDateDelivery(dateDelivery);
+            data.setDeliveryId(deliveryId);
+            data.setDepartmentName(departmentName);
+            data.setManagerName(managerName);
+            data.setMunicipalityCode(municipalityCode);
+            data.setMunicipalityName(municipalityName);
+            data.setObservations(observations);
+            data.setOperatorName(operatorName);
+            data.setSupplies(supplies);
 
-			informationDto = reportClient.createReportDownloadSuppliesTotal(data);
-		} catch (Exception e) {
-			log.error("Error creando reporte (entrega de insumos por parte del gestor al operador): " + e.getMessage());
-			throw new BusinessException("No se ha podido generar el reporte.");
-		}
+            informationDto = reportClient.createReportDownloadSuppliesTotal(data);
+        } catch (Exception e) {
+            log.error("Error creando reporte (entrega de insumos por parte del gestor al operador): " + e.getMessage());
+            throw new BusinessException("No se ha podido generar el reporte.");
+        }
 
-		return informationDto;
-	}
+        return informationDto;
+    }
 
-	public MicroserviceReportInformationDto generateReportDeliveryAC(String namespace, String createdAt,
-			String departmentName, String managerName, String municipalityCode, String municipalityName,
-			List<MicroserviceSupplyACDto> supplies) throws BusinessException {
+    public MicroserviceReportInformationDto generateReportDeliveryAC(String namespace, String createdAt,
+                                                                     String departmentName, String managerName, String municipalityCode, String municipalityName,
+                                                                     List<MicroserviceSupplyACDto> supplies) throws BusinessException {
 
-		MicroserviceReportInformationDto informationDto = null;
+        MicroserviceReportInformationDto informationDto;
 
-		try {
+        try {
 
-			MicroserviceRequestReportDeliveryACDto data = new MicroserviceRequestReportDeliveryACDto();
-			data.setNamespace(namespace);
-			data.setCreatedAt(createdAt);
+            MicroserviceRequestReportDeliveryACDto data = new MicroserviceRequestReportDeliveryACDto();
+            data.setNamespace(namespace);
+            data.setCreatedAt(createdAt);
 
-			data.setDepartmentName(departmentName);
-			data.setManagerName(managerName);
-			data.setMunicipalityCode(municipalityCode);
-			data.setMunicipalityName(municipalityName);
+            data.setDepartmentName(departmentName);
+            data.setManagerName(managerName);
+            data.setMunicipalityCode(municipalityCode);
+            data.setMunicipalityName(municipalityName);
 
-			data.setSupplies(supplies);
+            data.setSupplies(supplies);
 
-			informationDto = reportClient.createReportDeliverySuppliesAC(data);
-		} catch (Exception e) {
-			log.error("Error creando reporte (entrega de insumos por parte de la autoridad catastral): "
-					+ e.getMessage());
-			throw new BusinessException("No se ha podido generar el reporte.");
-		}
+            informationDto = reportClient.createReportDeliverySuppliesAC(data);
+        } catch (Exception e) {
+            log.error("Error creando reporte (entrega de insumos por parte de la autoridad catastral): "
+                    + e.getMessage());
+            throw new BusinessException("No se ha podido generar el reporte.");
+        }
 
-		return informationDto;
+        return informationDto;
 
-	}
+    }
 
-	public MicroserviceReportInformationDto generateReportDeliveryManager(String namespace, String dateCreation,
-			String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
-			String municipalityName, String observations, String operatorName,
-			List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
+    public MicroserviceReportInformationDto generateReportDeliveryManager(String namespace, String dateCreation,
+                                                                          String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
+                                                                          String municipalityName, String observations, String operatorName,
+                                                                          List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
 
-		MicroserviceReportInformationDto informationDto = null;
+        MicroserviceReportInformationDto informationDto;
 
-		try {
+        try {
 
-			MicroserviceRequestReportDeliveryManagerDto data = new MicroserviceRequestReportDeliveryManagerDto();
-			data.setNamespace(namespace);
-			data.setDateCreation(dateCreation);
-			data.setDateDelivery(dateDelivery);
-			data.setDeliveryId(deliveryId);
-			data.setDepartmentName(departmentName);
-			data.setManagerName(managerName);
-			data.setMunicipalityCode(municipalityCode);
-			data.setMunicipalityName(municipalityName);
-			data.setObservations(observations);
-			data.setOperatorName(operatorName);
-			data.setSupplies(supplies);
+            MicroserviceRequestReportDeliveryManagerDto data = new MicroserviceRequestReportDeliveryManagerDto();
+            data.setNamespace(namespace);
+            data.setDateCreation(dateCreation);
+            data.setDateDelivery(dateDelivery);
+            data.setDeliveryId(deliveryId);
+            data.setDepartmentName(departmentName);
+            data.setManagerName(managerName);
+            data.setMunicipalityCode(municipalityCode);
+            data.setMunicipalityName(municipalityName);
+            data.setObservations(observations);
+            data.setOperatorName(operatorName);
+            data.setSupplies(supplies);
 
-			informationDto = reportClient.createReportDeliveryManager(data);
-		} catch (Exception e) {
-			log.error("Error creando reporte (entrega de insumos por parte del gestor al operador): " + e.getMessage());
-			throw new BusinessException("No se ha podido generar el reporte.");
-		}
+            informationDto = reportClient.createReportDeliveryManager(data);
+        } catch (Exception e) {
+            log.error("Error creando reporte (entrega de insumos por parte del gestor al operador): " + e.getMessage());
+            throw new BusinessException("No se ha podido generar el reporte.");
+        }
 
-		return informationDto;
-	}
+        return informationDto;
+    }
 
 }
