@@ -17,13 +17,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.workspaces.business.ManagerBusiness;
-import com.ai.st.microservice.workspaces.business.RoleBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.UserBusiness;
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
@@ -31,202 +29,190 @@ import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 
-import feign.FeignException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Supplies", description = "Manage Supplies", tags = { "Supplies" })
+@Api(value = "Manage Supplies", tags = {"Supplies"})
 @RestController
 @RequestMapping("api/workspaces/v1/supplies")
 public class SupplyV1Controller {
 
-	private final Logger log = LoggerFactory.getLogger(SupplyV1Controller.class);
+    private final Logger log = LoggerFactory.getLogger(SupplyV1Controller.class);
 
-	@Autowired
-	private UserFeignClient userClient;
+    @Autowired
+    private UserFeignClient userClient;
 
-	@Autowired
-	private ManagerFeignClient managerClient;
+    @Autowired
+    private ManagerFeignClient managerClient;
 
-	@Autowired
-	private SupplyBusiness supplyBusiness;
+    @Autowired
+    private SupplyBusiness supplyBusiness;
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	@RequestMapping(value = "/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get supplies by municipality")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get supplies", response = MicroserviceSupplyDto.class, responseContainer = "List"),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<?> getSuppliesByMunicipality(@PathVariable Long municipalityId,
-			@RequestParam(name = "extensions", required = false) List<String> extensions,
-			@RequestHeader("authorization") String headerAuthorization,
-			@RequestParam(name = "page", required = false) Integer page,
-			@RequestParam(name = "active", required = true, defaultValue = "true") boolean active,
-			@RequestParam(name = "requests", required = false) List<Long> requests) {
+    @RequestMapping(value = "/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get supplies by municipality")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Get supplies", response = MicroserviceSupplyDto.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getSuppliesByMunicipality(@PathVariable Long municipalityId,
+                                                       @RequestParam(name = "extensions", required = false) List<String> extensions,
+                                                       @RequestHeader("authorization") String headerAuthorization,
+                                                       @RequestParam(name = "page", required = false) Integer page,
+                                                       @RequestParam(name = "manager", required = false) Long managerCode,
+                                                       @RequestParam(name = "operator", required = false) Long operatorCode,
+                                                       @RequestParam(name = "active", required = true, defaultValue = "true") boolean active,
+                                                       @RequestParam(name = "requests", required = false) List<Long> requests) {
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto = null;
 
-		try {
+        try {
 
-			// user session
-			String token = headerAuthorization.replace("Bearer ", "").trim();
-			MicroserviceUserDto userDtoSession = null;
-			try {
-				userDtoSession = userClient.findByToken(token);
-			} catch (FeignException e) {
-				throw new DisconnectedMicroserviceException(
-						"No se ha podido establecer conexión con el microservicio de usuarios.");
-			}
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-			MicroserviceRoleDto roleAdministrator = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
+            if (userBusiness.isAdministrator(userDtoSession)) {
 
-			MicroserviceRoleDto roleManager = userDtoSession.getRoles().stream()
-					.filter(roleDto -> roleDto.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
+                responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions, page, requests,
+                        active, managerCode);
 
-			if (roleAdministrator instanceof MicroserviceRoleDto) {
+            } else if (userBusiness.isManager(userDtoSession)) {
 
-				responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions, page, requests,
-						active);
+                // get manager
+                MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+                if (managerDto == null) {
+                    throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+                }
 
-			} else if (roleManager instanceof MicroserviceRoleDto) {
+                responseDto = supplyBusiness.getSuppliesByMunicipalityManager(municipalityId, managerDto.getId(),
+                        extensions, page, requests, active, operatorCode);
+            }
 
-				// get manager
-				MicroserviceManagerDto managerDto = null;
-				try {
-					managerDto = managerClient.findByUserCode(userDtoSession.getId());
-				} catch (FeignException e) {
-					throw new DisconnectedMicroserviceException(
-							"No se ha podido establecer conexión con el microservicio de gestores.");
-				}
+            httpStatus = HttpStatus.OK;
 
-				responseDto = supplyBusiness.getSuppliesByMunicipalityManager(municipalityId, managerDto.getId(),
-						extensions, page, requests, active);
-			}
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error SupplyV1Controller@getSuppliesByMunicipality#Microservice ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (BusinessException e) {
+            log.error("Error SupplyV1Controller@getSuppliesByMunicipality#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        } catch (Exception e) {
+            log.error("Error SupplyV1Controller@getSuppliesByMunicipality#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-			httpStatus = HttpStatus.OK;
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error SupplyV1Controller@getSuppliesByMunicipality#Microservice ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		} catch (BusinessException e) {
-			log.error("Error SupplyV1Controller@getSuppliesByMunicipality#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error SupplyV1Controller@getSuppliesByMunicipality#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+    @RequestMapping(value = "/{supplyId}/active", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Active supply")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> activeSupply(@PathVariable Long supplyId,
+                                          @RequestHeader("authorization") String headerAuthorization) {
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+        HttpStatus httpStatus;
+        Object responseDto;
 
-	@RequestMapping(value = "/{supplyId}/active", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Active supply")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<?> activeSupply(@PathVariable Long supplyId,
-			@RequestHeader("authorization") String headerAuthorization) {
+        try {
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-		try {
+            // get manager
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+            }
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para activar insumos.");
+            }
 
-			// user session
-			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-			if (userDtoSession == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-			}
+            responseDto = supplyBusiness.changeStateSupply(supplyId, SupplyBusiness.SUPPLY_STATE_ACTIVE,
+                    managerDto.getId());
+            httpStatus = HttpStatus.OK;
 
-			// get manager
-			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
-			if (managerDto == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
-			}
-			if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-				throw new InputValidationException("El usuario no tiene permisos para activar insumos.");
-			}
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error SupplyV1Controller@activeSupply#Microservice ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 5);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (BusinessException e) {
+            log.error("Error SupplyV1Controller@activeSupply#Business ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        } catch (Exception e) {
+            log.error("Error SupplyV1Controller@activeSupply#General ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-			responseDto = supplyBusiness.changeStateSupply(supplyId, SupplyBusiness.SUPPLY_STATE_ACTIVE,
-					managerDto.getId());
-			httpStatus = HttpStatus.OK;
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error SupplyV1Controller@activeSupply#Microservice ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 5);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		} catch (BusinessException e) {
-			log.error("Error SupplyV1Controller@activeSupply#Business ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 4);
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error SupplyV1Controller@activeSupply#General ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 3);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+    @RequestMapping(value = "/{supplyId}/inactive", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Inactive supply")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> inactiveSupply(@PathVariable Long supplyId,
+                                            @RequestHeader("authorization") String headerAuthorization) {
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+        HttpStatus httpStatus;
+        Object responseDto;
 
-	@RequestMapping(value = "/{supplyId}/inactive", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Inactive supply")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<?> inactiveSupply(@PathVariable Long supplyId,
-			@RequestHeader("authorization") String headerAuthorization) {
+        try {
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-		try {
+            // get manager
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+            }
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para activar insumos.");
+            }
 
-			// user session
-			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-			if (userDtoSession == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-			}
+            responseDto = supplyBusiness.changeStateSupply(supplyId, SupplyBusiness.SUPPLY_STATE_INACTIVE,
+                    managerDto.getId());
+            httpStatus = HttpStatus.OK;
 
-			// get manager
-			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
-			if (managerDto == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
-			}
-			if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-				throw new InputValidationException("El usuario no tiene permisos para activar insumos.");
-			}
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error SupplyV1Controller@inactiveSupply#Microservice ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 5);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (BusinessException e) {
+            log.error("Error SupplyV1Controller@inactiveSupply#Business ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        } catch (Exception e) {
+            log.error("Error SupplyV1Controller@inactiveSupply#General ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-			responseDto = supplyBusiness.changeStateSupply(supplyId, SupplyBusiness.SUPPLY_STATE_INACTIVE,
-					managerDto.getId());
-			httpStatus = HttpStatus.OK;
-
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error SupplyV1Controller@inactiveSupply#Microservice ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 5);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		} catch (BusinessException e) {
-			log.error("Error SupplyV1Controller@inactiveSupply#Business ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 4);
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error SupplyV1Controller@inactiveSupply#General ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 3);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
-
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
 }

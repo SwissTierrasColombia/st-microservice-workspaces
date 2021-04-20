@@ -8,23 +8,25 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 
 public interface IIntegrationService {
 
-	public IntegrationEntity getIntegrationByWorkspaceAndState(WorkspaceEntity workspace, IntegrationStateEntity state);
+    IntegrationEntity getIntegrationByWorkspaceAndState(WorkspaceEntity workspace, IntegrationStateEntity state);
 
-	public IntegrationEntity createIntegration(IntegrationEntity integrationEntity);
+    IntegrationEntity createIntegration(IntegrationEntity integrationEntity);
 
-	public List<IntegrationEntity> getIntegrationByWorkspaceAndStates(Long workspaceId, List<Long> states);
+    List<IntegrationEntity> getIntegrationByWorkspaceAndStates(Long workspaceId, List<Long> states);
 
-	public IntegrationEntity getIntegrationById(Long id);
+    IntegrationEntity getIntegrationById(Long id);
 
-	public IntegrationEntity updateIntegration(IntegrationEntity integrationEntity);
+    IntegrationEntity updateIntegration(IntegrationEntity integrationEntity);
 
-	public List<IntegrationEntity> getIntegrationByWorkspace(WorkspaceEntity workspaceEntity);
+    List<IntegrationEntity> getIntegrationByWorkspace(WorkspaceEntity workspaceEntity, Long managerCode);
 
-	public IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
-			IntegrationStateEntity state);
+    IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
+                                                             IntegrationStateEntity state, Long managerCode);
 
-	public void deleteIntegration(Long id);
+    void deleteIntegration(Long id);
 
-	public List<IntegrationEntity> getIntegrationsByWorkspaces(List<WorkspaceEntity> workspaces);
+    List<IntegrationEntity> getIntegrationsByWorkspaces(List<WorkspaceEntity> workspaces, Long managerCode);
+
+    List<IntegrationEntity> getPendingIntegrations(Long workspaceId, List<Long> states, Long managerCode);
 
 }

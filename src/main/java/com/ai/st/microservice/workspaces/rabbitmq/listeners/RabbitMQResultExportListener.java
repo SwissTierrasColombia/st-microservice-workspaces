@@ -3,6 +3,7 @@ package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.dto.providers.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,133 +16,133 @@ import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceResultExportDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 
 @Component
 public class RabbitMQResultExportListener {
 
-	@Value("${st.filesDirectory}")
-	private String stFilesDirectory;
+    @Value("${st.filesDirectory}")
+    private String stFilesDirectory;
 
-	@Value("${st.ftp.host}")
-	private String hostFTP;
+    @Value("${st.ftp.host}")
+    private String hostFTP;
 
-	@Value("${st.ftp.port}")
-	private int portFTP;
+    @Value("${st.ftp.port}")
+    private int portFTP;
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-	@Autowired
-	private ProviderBusiness providerBusiness;
+    @Autowired
+    private ProviderBusiness providerBusiness;
 
-	@Autowired
-	private DatabaseIntegrationBusiness databaseIntegration;
+    @Autowired
+    private DatabaseIntegrationBusiness databaseIntegration;
 
-	@Autowired
-	private CrytpoBusiness cryptoBusiness;
+    @Autowired
+    private CrytpoBusiness cryptoBusiness;
 
-	@Autowired
-	private SupplyBusiness supplyBusiness;
+    @Autowired
+    private SupplyBusiness supplyBusiness;
 
-	@RabbitListener(queues = "${st.rabbitmq.queueResultExport.queue}", concurrency = "${st.rabbitmq.queueResultExport.concurrency}")
-	public void updateIntegration(MicroserviceResultExportDto resultDto) {
+    @RabbitListener(queues = "${st.rabbitmq.queueResultExport.queue}", concurrency = "${st.rabbitmq.queueResultExport.concurrency}")
+    public void updateIntegration(MicroserviceResultExportDto resultDto) {
 
-		log.info("procesando resultado de la exportación ... " + resultDto.getReference());
+        log.info("procesando resultado de la exportación ... " + resultDto.getReference());
 
-		try {
+        try {
 
-			String reference[] = resultDto.getReference().split("-");
+            String[] reference = resultDto.getReference().split("-");
 
-			String typeResult = reference[0];
+            String typeResult = reference[0];
 
-			if (typeResult.equalsIgnoreCase("export")) {
+            if (typeResult.equalsIgnoreCase("export")) {
 
-				Long supplyRequestedId = Long.parseLong(reference[1]);
-				Long requestId = Long.parseLong(reference[2]);
-				Long userId = Long.parseLong(reference[3]);
+                Long supplyRequestedId = Long.parseLong(reference[1]);
+                Long requestId = Long.parseLong(reference[2]);
+                Long userId = Long.parseLong(reference[3]);
 
-				MicroserviceSupplyRevisionDto supplyRevisionDto = providerBusiness
-						.getSupplyRevisionFromSupplyRequested(supplyRequestedId);
+                MicroserviceSupplyRevisionDto supplyRevisionDto = providerBusiness
+                        .getSupplyRevisionFromSupplyRequested(supplyRequestedId);
 
-				if (resultDto.getResult()) {
+                if (resultDto.getResult()) {
 
-					// save zip file
+                    // save zip file
 
-					MicroserviceRequestDto requestDto = providerBusiness.getRequestById(requestId);
+                    MicroserviceRequestDto requestDto = providerBusiness.getRequestById(requestId);
 
-					MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
-							.filter(sR -> sR.getId().equals(supplyRequestedId)).findAny().orElse(null);
+                    MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
+                            .filter(sR -> sR.getId().equals(supplyRequestedId)).findAny().orElse(null);
 
-					String urlDocumentaryRepository = resultDto.getPathFile();
+                    String urlDocumentaryRepository = resultDto.getPathFile();
 
-					log.info("url file (snr export): " + urlDocumentaryRepository);
+                    log.info("url file (snr export): " + urlDocumentaryRepository);
 
-					// update state and URL from supply requested
+                    // update state and URL from supply requested
 
-					MicroserviceUpdateSupplyRequestedDto updateSupplyData = new MicroserviceUpdateSupplyRequestedDto();
-					updateSupplyData.setSupplyRequestedStateId(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
-					updateSupplyData.setUrl(urlDocumentaryRepository);
-					providerBusiness.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
+                    MicroserviceUpdateSupplyRequestedDto updateSupplyData = new MicroserviceUpdateSupplyRequestedDto();
+                    updateSupplyData.setSupplyRequestedStateId(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
+                    updateSupplyData.setUrl(urlDocumentaryRepository);
+                    providerBusiness.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
 
-					MicroserviceUpdateSupplyRevisionDto updateRevisionData = new MicroserviceUpdateSupplyRevisionDto();
-					updateRevisionData.setFinishedBy(userId);
-					providerBusiness.updateSupplyRevision(supplyRequestedId, supplyRevisionDto.getId(),
-							updateRevisionData);
+                    MicroserviceUpdateSupplyRevisionDto updateRevisionData = new MicroserviceUpdateSupplyRevisionDto();
+                    updateRevisionData.setFinishedBy(userId);
+                    providerBusiness.updateSupplyRevision(supplyRequestedId, supplyRevisionDto.getId(),
+                            updateRevisionData);
 
-					// close request
-					providerBusiness.closeRequest(requestId, userId);
+                    // close request
+                    providerBusiness.closeRequest(requestId, userId);
 
-					// create supply
+                    // create supply
 
-					List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
+                    List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
 
-					attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
-							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+                    attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
+                            SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
 
-					String ftpData = null;
-					try {
-						ftpData = "Servidor: " + hostFTP + " Puerto: " + portFTP + " Usuario: "
-								+ cryptoBusiness.decrypt(supplyRevisionDto.getUsername()) + " Contraseña: "
-								+ cryptoBusiness.decrypt(supplyRevisionDto.getPassword());
-					} catch (Exception e) {
-						log.error("Error creando información FTP: " + e.getMessage());
-					}
+                    String ftpData = null;
+                    try {
+                        ftpData = "Servidor: " + hostFTP + " Puerto: " + portFTP + " Usuario: "
+                                + cryptoBusiness.decrypt(supplyRevisionDto.getUsername()) + " Contraseña: "
+                                + cryptoBusiness.decrypt(supplyRevisionDto.getPassword());
+                    } catch (Exception e) {
+                        log.error("Error creando información FTP: " + e.getMessage());
+                    }
 
-					attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftpData,
-							SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
-					supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
-							supplyRequestedDto.getTypeSupply().getId(), attachments, requestId, userId,
-							requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
-							SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName());
+                    attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftpData,
+                            SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 
-					// delete database
-					try {
-						databaseIntegration.dropDatabase(cryptoBusiness.decrypt(supplyRevisionDto.getDatabase()),
-								cryptoBusiness.decrypt(supplyRevisionDto.getUsername()));
-					} catch (Exception e) {
-						log.error("No se ha podido borrar la base de datos: " + e.getMessage());
-					}
 
-				} else {
+                    MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
+                            filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
-					providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
-							ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW);
+                    supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
+                            supplyRequestedDto.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userId,
+                            requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
+                            SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), false);
 
-				}
+                    // delete database
+                    try {
+                        databaseIntegration.dropDatabase(cryptoBusiness.decrypt(supplyRevisionDto.getDatabase()),
+                                cryptoBusiness.decrypt(supplyRevisionDto.getUsername()));
+                    } catch (Exception e) {
+                        log.error("No se ha podido borrar la base de datos: " + e.getMessage());
+                    }
 
-				log.info("se realizaron los procesos del resultado: " + resultDto.getResult());
+                } else {
 
-			}
+                    providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
+                            ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW);
 
-		} catch (Exception e) {
-			log.error("Ha ocurrido un error actualizando el resultado de la exportación: " + e.getMessage());
-		}
+                }
 
-	}
+                log.info("se realizaron los procesos del resultado: " + resultDto.getResult());
+
+            }
+
+        } catch (Exception e) {
+            log.error("Ha ocurrido un error actualizando el resultado de la exportación: " + e.getMessage());
+        }
+
+    }
 
 }

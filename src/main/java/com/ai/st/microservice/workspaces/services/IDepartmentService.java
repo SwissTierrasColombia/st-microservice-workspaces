@@ -6,12 +6,12 @@ import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 
 public interface IDepartmentService {
 
-	public Long getCount();
+    Long getCount();
 
-	public DepartmentEntity createDepartment(DepartmentEntity departmentEntity);
+    DepartmentEntity createDepartment(DepartmentEntity departmentEntity);
 
-	public List<DepartmentEntity> getAllDepartments();
+    List<DepartmentEntity> getAllDepartments();
 
-	public List<DepartmentEntity> getDepartmentsByManagerCode(Long managerCode);
+    List<DepartmentEntity> getDepartmentsByManagerCode(Long managerCode);
 
 }

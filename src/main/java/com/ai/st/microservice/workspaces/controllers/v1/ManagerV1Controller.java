@@ -30,119 +30,119 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Managers ", tags = { "Managers" })
+@Api(value = "Managers ", tags = {"Managers"})
 @RestController
 @RequestMapping("api/workspaces/v1/managers")
 public class ManagerV1Controller {
 
-	private final Logger log = LoggerFactory.getLogger(ManagerV1Controller.class);
+    private final Logger log = LoggerFactory.getLogger(ManagerV1Controller.class);
 
-	@Autowired
-	private UserBusiness userBusiness;
+    @Autowired
+    private UserBusiness userBusiness;
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    @Autowired
+    private ManagerBusiness managerBusiness;
 
-	@Autowired
-	private OperatorBusiness operatorBusiness;
+    @Autowired
+    private OperatorBusiness operatorBusiness;
 
-	@RequestMapping(value = "/deliveries", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get deliveries by manager")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class, responseContainer = "List"),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<?> getDeliveriesByManager(@RequestHeader("authorization") String headerAuthorization) {
+    @RequestMapping(value = "/deliveries", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get deliveries by manager")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getDeliveriesByManager(@RequestHeader("authorization") String headerAuthorization) {
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
-		try {
+        try {
 
-			// user session
-			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-			if (userDtoSession == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-			}
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-			// get manager
-			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
-			if (managerDto == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
-			}
+            // get manager
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+            }
 
-			if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-				throw new InputValidationException("El usuario no tiene permisos para consultar entregas.");
-			}
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para consultar entregas.");
+            }
 
-			responseDto = operatorBusiness.getDeliveriesByManager(managerDto.getId());
-			httpStatus = HttpStatus.OK;
+            responseDto = operatorBusiness.getDeliveriesByManager(managerDto.getId());
+            httpStatus = HttpStatus.OK;
 
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error ManagerV1Controller@getDeliveriesByManager#Microservice ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 4);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		} catch (BusinessException e) {
-			log.error("Error ManagerV1Controller@getDeliveriesByManager#Business ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 2);
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error ManagerV1Controller@getDeliveriesByManager#General ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 3);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error ManagerV1Controller@getDeliveriesByManager#Microservice ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (BusinessException e) {
+            log.error("Error ManagerV1Controller@getDeliveriesByManager#Business ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        } catch (Exception e) {
+            log.error("Error ManagerV1Controller@getDeliveriesByManager#General ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
-	@RequestMapping(value = "/deliveries/{deliveryId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-	@ApiOperation(value = "Get delivery by id")
-	@ApiResponses(value = {
-			@ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class),
-			@ApiResponse(code = 500, message = "Error Server", response = String.class) })
-	@ResponseBody
-	public ResponseEntity<?> getDeliveriesById(@RequestHeader("authorization") String headerAuthorization,
-			@PathVariable Long deliveryId) {
+    @RequestMapping(value = "/deliveries/{deliveryId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get delivery by id")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getDeliveriesById(@RequestHeader("authorization") String headerAuthorization,
+                                               @PathVariable Long deliveryId) {
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+        HttpStatus httpStatus;
+        Object responseDto;
 
-		try {
+        try {
 
-			// user session
-			MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-			if (userDtoSession == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-			}
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
 
-			// get manager
-			MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
-			if (managerDto == null) {
-				throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
-			}
+            // get manager
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+            }
 
-			if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-				throw new InputValidationException("El usuario no tiene permisos para consultar entregas.");
-			}
+            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
+                throw new InputValidationException("El usuario no tiene permisos para consultar entregas.");
+            }
 
-			responseDto = operatorBusiness.getDeliveryIdAndManager(deliveryId, managerDto.getId());
-			httpStatus = HttpStatus.OK;
+            responseDto = operatorBusiness.getDeliveryIdAndManager(deliveryId, managerDto.getId());
+            httpStatus = HttpStatus.OK;
 
-		} catch (DisconnectedMicroserviceException e) {
-			log.error("Error ManagerV1Controller@getDeliveriesById#Microservice ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 4);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		} catch (BusinessException e) {
-			log.error("Error ManagerV1Controller@getDeliveriesById#Business ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 2);
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error ManagerV1Controller@getDeliveriesById#General ---> " + e.getMessage());
-			responseDto = new BasicResponseDto(e.getMessage(), 3);
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error ManagerV1Controller@getDeliveriesById#Microservice ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        } catch (BusinessException e) {
+            log.error("Error ManagerV1Controller@getDeliveriesById#Business ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+        } catch (Exception e) {
+            log.error("Error ManagerV1Controller@getDeliveriesById#General ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
 }

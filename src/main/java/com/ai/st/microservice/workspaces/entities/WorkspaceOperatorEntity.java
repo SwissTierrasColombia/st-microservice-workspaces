@@ -38,14 +38,20 @@ public class WorkspaceOperatorEntity {
 	@Column(name = "operator_code", nullable = false)
 	private Long operatorCode;
 
+	@Column(name = "manager_code", nullable = false)
+	private Long managerCode;
+
 	@Column(name = "number_parcels_expected", nullable = true)
 	private Long numberParcelsExpected;
 
 	@Column(name = "work_area", precision = 10, scale = 2, nullable = true)
 	private Double workArea;
-	
+
 	@Column(name = "observations", nullable = true, length = 255)
 	private String observations;
+
+	@Column(name = "support", nullable = false, length = 1000)
+	private String supportFile;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = false)
@@ -125,6 +131,22 @@ public class WorkspaceOperatorEntity {
 
 	public void setObservations(String observations) {
 		this.observations = observations;
+	}
+
+	public String getSupportFile() {
+		return supportFile;
+	}
+
+	public void setSupportFile(String supportFile) {
+		this.supportFile = supportFile;
+	}
+
+	public Long getManagerCode() {
+		return managerCode;
+	}
+
+	public void setManagerCode(Long managerCode) {
+		this.managerCode = managerCode;
 	}
 
 }

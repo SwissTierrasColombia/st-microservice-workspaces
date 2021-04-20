@@ -30,21 +30,6 @@ public class WorkspaceEntity {
 	@Column(name = "is_active")
 	private Boolean isActive;
 
-	@Column(name = "municipality_area", precision = 10, scale = 2, nullable = true)
-	private Double municipalityArea;
-
-	@Column(name = "number_alphanumeric_parcels", nullable = true)
-	private Long numberAlphanumericParcels;
-
-	@Column(name = "version", nullable = false)
-	private Long version;
-
-	@Column(name = "manager_code", nullable = false)
-	private Long managerCode;
-
-	@Column(name = "observations", nullable = false, length = 255)
-	private String observations;
-
 	@Column(name = "created_at", nullable = false)
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date createdAt;
@@ -53,30 +38,50 @@ public class WorkspaceEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date udpatedAt;
 
-	@Column(name = "start_date", nullable = false)
-	@Temporal(TemporalType.DATE)
-	private Date startDate;
-
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "municipality_id", referencedColumnName = "id", nullable = false)
 	private MunicipalityEntity municipality;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "state_id", referencedColumnName = "id", nullable = false)
-	private StateEntity state;
-
-	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = true)
 	private WorkspaceEntity workspace;
 
-	@OneToMany(mappedBy = "workspace")
-	private List<SupportEntity> supports = new ArrayList<SupportEntity>();
-
-	@OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL)
-	private List<WorkspaceStateEntity> statesHistory = new ArrayList<WorkspaceStateEntity>();
-
 	@OneToMany(mappedBy = "workspace", fetch = FetchType.LAZY)
 	private List<WorkspaceOperatorEntity> operators = new ArrayList<WorkspaceOperatorEntity>();
+
+	@OneToMany(mappedBy = "workspace", fetch = FetchType.LAZY)
+	private List<WorkspaceManagerEntity> managers = new ArrayList<WorkspaceManagerEntity>();
+
+	/*
+	 * @Column(name = "municipality_area", precision = 10, scale = 2, nullable =
+	 * true) private Double municipalityArea;
+	 * 
+	 * @Column(name = "number_alphanumeric_parcels", nullable = true) private Long
+	 * numberAlphanumericParcels;
+	 * 
+	 * @Column(name = "version", nullable = false) private Long version;
+	 * 
+	 * @Column(name = "manager_code", nullable = false) private Long managerCode;
+	 * 
+	 * @Column(name = "observations", nullable = false, length = 255) private String
+	 * observations;
+	 * 
+	 * @Column(name = "start_date", nullable = false)
+	 * 
+	 * @Temporal(TemporalType.DATE) private Date startDate;
+	 * 
+	 * @ManyToOne(fetch = FetchType.LAZY)
+	 * 
+	 * @JoinColumn(name = "state_id", referencedColumnName = "id", nullable = false)
+	 * private StateEntity state;
+	 * 
+	 * @OneToMany(mappedBy = "workspace") private List<SupportEntity> supports = new
+	 * ArrayList<SupportEntity>();
+	 * 
+	 * @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL) private
+	 * List<WorkspaceStateEntity> statesHistory = new
+	 * ArrayList<WorkspaceStateEntity>();
+	 */
 
 	public WorkspaceEntity() {
 
@@ -98,22 +103,6 @@ public class WorkspaceEntity {
 		this.isActive = isActive;
 	}
 
-	public Long getVersion() {
-		return version;
-	}
-
-	public void setVersion(Long version) {
-		this.version = version;
-	}
-
-	public Long getManagerCode() {
-		return managerCode;
-	}
-
-	public void setManagerCode(Long managerCode) {
-		this.managerCode = managerCode;
-	}
-
 	public Date getCreatedAt() {
 		return createdAt;
 	}
@@ -128,46 +117,6 @@ public class WorkspaceEntity {
 
 	public void setMunicipality(MunicipalityEntity municipality) {
 		this.municipality = municipality;
-	}
-
-	public Date getStartDate() {
-		return startDate;
-	}
-
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
-	}
-
-	public String getObservations() {
-		return observations;
-	}
-
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
-
-	public List<SupportEntity> getSupports() {
-		return supports;
-	}
-
-	public void setSupports(List<SupportEntity> supports) {
-		this.supports = supports;
-	}
-
-	public Double getMunicipalityArea() {
-		return municipalityArea;
-	}
-
-	public void setMunicipalityArea(Double municipalityArea) {
-		this.municipalityArea = municipalityArea;
-	}
-
-	public Long getNumberAlphanumericParcels() {
-		return numberAlphanumericParcels;
-	}
-
-	public void setNumberAlphanumericParcels(Long numberAlphanumericParcels) {
-		this.numberAlphanumericParcels = numberAlphanumericParcels;
 	}
 
 	public List<WorkspaceOperatorEntity> getOperators() {
@@ -194,20 +143,12 @@ public class WorkspaceEntity {
 		this.workspace = workspace;
 	}
 
-	public StateEntity getState() {
-		return state;
+	public List<WorkspaceManagerEntity> getManagers() {
+		return managers;
 	}
 
-	public void setState(StateEntity state) {
-		this.state = state;
-	}
-
-	public List<WorkspaceStateEntity> getStatesHistory() {
-		return statesHistory;
-	}
-
-	public void setStatesHistory(List<WorkspaceStateEntity> statesHistory) {
-		this.statesHistory = statesHistory;
+	public void setManagers(List<WorkspaceManagerEntity> managers) {
+		this.managers = managers;
 	}
 
 }

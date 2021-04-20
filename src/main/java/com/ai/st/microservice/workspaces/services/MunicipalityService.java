@@ -57,4 +57,9 @@ public class MunicipalityService implements IMunicipalityService {
 		return municipalityRepository.getMunicipalitiesNotWorkspaceInDepartment(departmentId);
 	}
 
+	@Override
+	public List<MunicipalityEntity> getMunicipalitiesWhereManagerDoesNotBelongIn(Long managerCode, Long departmentId) {
+		return municipalityRepository.getMunicipalitiesWhereManagerDoesNotBelongIn(managerCode, departmentId);
+	}
+
 }

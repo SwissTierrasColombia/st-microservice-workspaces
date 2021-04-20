@@ -4,6 +4,6 @@ import com.ai.st.microservice.workspaces.entities.IntegrationStatEntity;
 
 public interface IIntegrationStatService {
 
-	public IntegrationStatEntity createIntegrationStat(IntegrationStatEntity stat);
+    IntegrationStatEntity createIntegrationStat(IntegrationStatEntity stat);
 
 }

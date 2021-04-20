@@ -10,20 +10,31 @@ import com.ai.st.microservice.workspaces.repositories.WorkspaceOperatorRepositor
 
 @Service
 public class WorkspaceOperatorService implements IWorkspaceOperatorService {
-	
-	@Autowired
-	private WorkspaceOperatorRepository workspaceOperatorRepository;
 
-	@Override
-	@Transactional
-	public void deleteWorkspaceOperatorById(Long id) {
-		workspaceOperatorRepository.deleteById(id);
-	}
+    @Autowired
+    private WorkspaceOperatorRepository workspaceOperatorRepository;
 
-	@Override
-	@Transactional
-	public WorkspaceOperatorEntity createOperator(WorkspaceOperatorEntity operator) {
-		return workspaceOperatorRepository.save(operator);
-	}
+    @Override
+    @Transactional
+    public void deleteWorkspaceOperatorById(Long id) {
+        workspaceOperatorRepository.deleteById(id);
+    }
+
+    @Override
+    @Transactional
+    public WorkspaceOperatorEntity createOperator(WorkspaceOperatorEntity operator) {
+        return workspaceOperatorRepository.save(operator);
+    }
+
+    @Override
+    public WorkspaceOperatorEntity getWorkspaceOperatorById(Long id) {
+        return workspaceOperatorRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public WorkspaceOperatorEntity updateOperator(WorkspaceOperatorEntity operator) {
+        return workspaceOperatorRepository.save(operator);
+    }
 
 }

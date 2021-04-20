@@ -22,190 +22,222 @@ import javax.persistence.TemporalType;
 @Table(name = "integrations", schema = "workspaces")
 public class IntegrationEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = false)
-	private WorkspaceEntity workspace;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = false)
+    private WorkspaceEntity workspace;
 
-	@Column(name = "started_at", nullable = false)
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date startedAt;
+    @Column(name = "started_at", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date startedAt;
 
-	@Column(name = "finished_at", nullable = true)
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date finishedAt;
+    @Column(name = "finished_at", nullable = true)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date finishedAt;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "integration_state_id", referencedColumnName = "id", nullable = false)
-	private IntegrationStateEntity state;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "integration_state_id", referencedColumnName = "id", nullable = false)
+    private IntegrationStateEntity state;
 
-	@Column(name = "hostname", nullable = false)
-	private String hostname;
+    @Column(name = "errors", nullable = true, length = 1000)
+    private String errors;
 
-	@Column(name = "port", nullable = false)
-	private String port;
+    @Column(name = "hostname", nullable = false)
+    private String hostname;
 
-	@Column(name = "database", nullable = false)
-	private String database;
+    @Column(name = "port", nullable = false)
+    private String port;
 
-	@Column(name = "schema", nullable = false)
-	private String schema;
+    @Column(name = "database", nullable = false)
+    private String database;
 
-	@Column(name = "username", nullable = false)
-	private String username;
+    @Column(name = "schema", nullable = false)
+    private String schema;
 
-	@Column(name = "password", nullable = false)
-	private String password;
+    @Column(name = "username", nullable = false)
+    private String username;
 
-	@Column(name = "supply_cadastre_id", nullable = false)
-	private Long supplyCadastreId;
+    @Column(name = "password", nullable = false)
+    private String password;
 
-	@Column(name = "supply_snr_id", nullable = false)
-	private Long supplySnrId;
+    @Column(name = "supply_cadastre_id", nullable = false)
+    private Long supplyCadastreId;
 
-	@Column(name = "supply_ant_id", nullable = true)
-	private Long supplyAntId;
+    @Column(name = "supply_snr_id", nullable = false)
+    private Long supplySnrId;
 
-	@OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
-	private List<IntegrationStatEntity> stats = new ArrayList<IntegrationStatEntity>();
+    @Column(name = "supply_ant_id", nullable = true)
+    private Long supplyAntId;
 
-	@OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
-	private List<IntegrationHistoryEntity> histories = new ArrayList<IntegrationHistoryEntity>();
+    @Column(name = "url_map", nullable = true)
+    private String urlMap;
 
-	public IntegrationEntity() {
+    @Column(name = "manager_code", nullable = false)
+    private Long managerCode;
 
-	}
+    @OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
+    private List<IntegrationStatEntity> stats = new ArrayList<IntegrationStatEntity>();
 
-	public Long getId() {
-		return id;
-	}
+    @OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
+    private List<IntegrationHistoryEntity> histories = new ArrayList<IntegrationHistoryEntity>();
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public IntegrationEntity() {
 
-	public Date getStartedAt() {
-		return startedAt;
-	}
+    }
 
-	public void setStartedAt(Date startedAt) {
-		this.startedAt = startedAt;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public Date getFinishedAt() {
-		return finishedAt;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setFinishedAt(Date finishedAt) {
-		this.finishedAt = finishedAt;
-	}
+    public Date getStartedAt() {
+        return startedAt;
+    }
 
-	public String getHostname() {
-		return hostname;
-	}
+    public void setStartedAt(Date startedAt) {
+        this.startedAt = startedAt;
+    }
 
-	public void setHostname(String hostname) {
-		this.hostname = hostname;
-	}
+    public Date getFinishedAt() {
+        return finishedAt;
+    }
 
-	public String getPort() {
-		return port;
-	}
+    public void setFinishedAt(Date finishedAt) {
+        this.finishedAt = finishedAt;
+    }
 
-	public void setPort(String port) {
-		this.port = port;
-	}
+    public String getHostname() {
+        return hostname;
+    }
 
-	public String getDatabase() {
-		return database;
-	}
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
 
-	public void setDatabase(String database) {
-		this.database = database;
-	}
+    public String getPort() {
+        return port;
+    }
 
-	public String getSchema() {
-		return schema;
-	}
+    public void setPort(String port) {
+        this.port = port;
+    }
 
-	public void setSchema(String schema) {
-		this.schema = schema;
-	}
+    public String getDatabase() {
+        return database;
+    }
 
-	public String getUsername() {
-		return username;
-	}
+    public void setDatabase(String database) {
+        this.database = database;
+    }
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+    public String getSchema() {
+        return schema;
+    }
 
-	public String getPassword() {
-		return password;
-	}
+    public void setSchema(String schema) {
+        this.schema = schema;
+    }
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public IntegrationStateEntity getState() {
-		return state;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public void setState(IntegrationStateEntity state) {
-		this.state = state;
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public WorkspaceEntity getWorkspace() {
-		return workspace;
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-	public void setWorkspace(WorkspaceEntity workspace) {
-		this.workspace = workspace;
-	}
+    public IntegrationStateEntity getState() {
+        return state;
+    }
 
-	public List<IntegrationStatEntity> getStats() {
-		return stats;
-	}
+    public void setState(IntegrationStateEntity state) {
+        this.state = state;
+    }
 
-	public void setStats(List<IntegrationStatEntity> stats) {
-		this.stats = stats;
-	}
+    public WorkspaceEntity getWorkspace() {
+        return workspace;
+    }
 
-	public Long getSupplyCadastreId() {
-		return supplyCadastreId;
-	}
+    public void setWorkspace(WorkspaceEntity workspace) {
+        this.workspace = workspace;
+    }
 
-	public void setSupplyCadastreId(Long supplyCadastreId) {
-		this.supplyCadastreId = supplyCadastreId;
-	}
+    public List<IntegrationStatEntity> getStats() {
+        return stats;
+    }
 
-	public Long getSupplySnrId() {
-		return supplySnrId;
-	}
+    public void setStats(List<IntegrationStatEntity> stats) {
+        this.stats = stats;
+    }
 
-	public void setSupplySnrId(Long supplySnrId) {
-		this.supplySnrId = supplySnrId;
-	}
+    public Long getSupplyCadastreId() {
+        return supplyCadastreId;
+    }
 
-	public Long getSupplyAntId() {
-		return supplyAntId;
-	}
+    public void setSupplyCadastreId(Long supplyCadastreId) {
+        this.supplyCadastreId = supplyCadastreId;
+    }
 
-	public void setSupplyAntId(Long supplyAntId) {
-		this.supplyAntId = supplyAntId;
-	}
+    public Long getSupplySnrId() {
+        return supplySnrId;
+    }
 
-	public List<IntegrationHistoryEntity> getHistories() {
-		return histories;
-	}
+    public void setSupplySnrId(Long supplySnrId) {
+        this.supplySnrId = supplySnrId;
+    }
 
-	public void setHistories(List<IntegrationHistoryEntity> histories) {
-		this.histories = histories;
-	}
+    public Long getSupplyAntId() {
+        return supplyAntId;
+    }
 
+    public void setSupplyAntId(Long supplyAntId) {
+        this.supplyAntId = supplyAntId;
+    }
+
+    public List<IntegrationHistoryEntity> getHistories() {
+        return histories;
+    }
+
+    public void setHistories(List<IntegrationHistoryEntity> histories) {
+        this.histories = histories;
+    }
+
+    public String getUrlMap() {
+        return urlMap;
+    }
+
+    public void setUrlMap(String urlMap) {
+        this.urlMap = urlMap;
+    }
+
+    public Long getManagerCode() {
+        return managerCode;
+    }
+
+    public void setManagerCode(Long managerCode) {
+        this.managerCode = managerCode;
+    }
+
+    public String getErrors() {
+        return errors;
+    }
+
+    public void setErrors(String errors) {
+        this.errors = errors;
+    }
 }

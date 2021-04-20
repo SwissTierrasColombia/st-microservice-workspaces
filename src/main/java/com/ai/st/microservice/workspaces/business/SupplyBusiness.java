@@ -3,7 +3,9 @@ package com.ai.st.microservice.workspaces.business;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,363 +39,368 @@ import com.ai.st.microservice.workspaces.utils.FileTool;
 @Component
 public class SupplyBusiness {
 
-	@Value("${st.temporalDirectory}")
-	private String stTemporalDirectory;
+    @Value("${st.temporalDirectory}")
+    private String stTemporalDirectory;
 
-	private final Logger log = LoggerFactory.getLogger(SupplyBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(SupplyBusiness.class);
 
-	// attachments types
-	public static final Long SUPPLY_ATTACHMENT_TYPE_SUPPLY = (long) 1;
-	public static final Long SUPPLY_ATTACHMENT_TYPE_FTP = (long) 2;
-	public static final Long SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE = (long) 3;
+    // attachments types
+    public static final Long SUPPLY_ATTACHMENT_TYPE_SUPPLY = (long) 1;
+    public static final Long SUPPLY_ATTACHMENT_TYPE_FTP = (long) 2;
+    public static final Long SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE = (long) 3;
 
-	// states
-	public static final Long SUPPLY_STATE_ACTIVE = (long) 1;
-	public static final Long SUPPLY_STATE_INACTIVE = (long) 2;
-	public static final Long SUPPLY_STATE_REMOVED = (long) 3;
+    // states
+    public static final Long SUPPLY_STATE_ACTIVE = (long) 1;
+    public static final Long SUPPLY_STATE_INACTIVE = (long) 2;
+    public static final Long SUPPLY_STATE_REMOVED = (long) 3;
 
-	@Autowired
-	private IMunicipalityService municipalityService;
+    @Autowired
+    private IMunicipalityService municipalityService;
 
-	@Autowired
-	private IWorkspaceService workspaceService;
+    @Autowired
+    private IWorkspaceService workspaceService;
 
-	@Autowired
-	private SupplyFeignClient supplyClient;
+    @Autowired
+    private SupplyFeignClient supplyClient;
 
-	@Autowired
-	private ProviderFeignClient providerClient;
+    @Autowired
+    private ProviderFeignClient providerClient;
 
-	@Autowired
-	private OperatorBusiness operatorBusiness;
+    @Autowired
+    private OperatorBusiness operatorBusiness;
 
-	public Object getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions, Integer page,
-			List<Long> requests, boolean active) throws BusinessException {
+    public Object getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions, Integer page,
+                                                 List<Long> requests, boolean active, Long managerCode) throws BusinessException {
 
-		// validate if the municipality exists
-		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
-		if (!(municipalityEntity instanceof MunicipalityEntity)) {
-			throw new BusinessException("No se ha encontrado el municipio.");
-		}
+        // validate if the municipality exists
+        MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+        if (municipalityEntity == null) {
+            throw new BusinessException("No se ha encontrado el municipio.");
+        }
 
-		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active);
-	}
+        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, managerCode, null);
+    }
 
-	public Object getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode, List<String> extensions,
-			Integer page, List<Long> requests, boolean active) throws BusinessException {
+    public Object getSuppliesByMunicipalityManager(Long municipalityId, Long managerCode, List<String> extensions,
+                                                   Integer page, List<Long> requests, boolean active, Long operatorCode) throws BusinessException {
 
-		// validate if the municipality exists
-		MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
-		if (!(municipalityEntity instanceof MunicipalityEntity)) {
-			throw new BusinessException("No se ha encontrado el municipio.");
-		}
+        // validate if the municipality exists
+        MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
+        if (municipalityEntity == null) {
+            throw new BusinessException("No se ha encontrado el municipio.");
+        }
 
-		if (managerCode != null) {
-			WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
-			if (workspaceActive instanceof WorkspaceEntity) {
-				if (!managerCode.equals(workspaceActive.getManagerCode())) {
-					throw new BusinessException("No tiene acceso al municipio.");
-				}
-			}
-		}
+        if (managerCode != null) {
 
-		return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active);
-	}
+            WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
+            if (workspaceActive != null) {
+                WorkspaceManagerEntity workspaceManagerEntity =
+                        workspaceActive.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+                if (workspaceManagerEntity == null) {
+                    throw new BusinessException("No tiene acceso al municipio.");
+                }
+            }
+        }
 
-	private Object getSuppliesByMunicipality(MunicipalityEntity municipality, List<String> extensions, Integer page,
-			List<Long> requests, boolean active) throws BusinessException {
+        return this.getSuppliesByMunicipality(municipalityEntity, extensions, page, requests, active, managerCode, operatorCode);
+    }
 
-		List<Long> states = new ArrayList<>();
+    private Object getSuppliesByMunicipality(MunicipalityEntity municipality, List<String> extensions, Integer page,
+                                             List<Long> requests, boolean active, Long managerCode, Long operatorCode) throws BusinessException {
 
-		if (active) {
-			states.add(SupplyBusiness.SUPPLY_STATE_ACTIVE);
-		} else {
-			states.add(SupplyBusiness.SUPPLY_STATE_ACTIVE);
-			states.add(SupplyBusiness.SUPPLY_STATE_INACTIVE);
-			states.add(SupplyBusiness.SUPPLY_STATE_REMOVED);
-		}
+        List<Long> states = new ArrayList<>();
 
-		List<MicroserviceSupplyDto> suppliesDto = new ArrayList<>();
+        if (active) {
+            states.add(SupplyBusiness.SUPPLY_STATE_ACTIVE);
+        } else {
+            states.add(SupplyBusiness.SUPPLY_STATE_ACTIVE);
+            states.add(SupplyBusiness.SUPPLY_STATE_INACTIVE);
+            states.add(SupplyBusiness.SUPPLY_STATE_REMOVED);
+        }
 
-		try {
+        List<MicroserviceSupplyDto> suppliesDto;
 
-			MicroserviceDataPaginatedDto dataPaginated = null;
+        try {
 
-			if (page != null) {
-				dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipality.getCode(), page,
-						requests, states);
-				suppliesDto = dataPaginated.getItems();
-			} else {
-				suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode(), states);
-			}
+            MicroserviceDataPaginatedDto dataPaginated = null;
 
-			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
+            if (page != null) {
+                dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipality.getCode(), page, managerCode,
+                        requests, states);
+                suppliesDto = dataPaginated.getItems();
+            } else {
+                suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode(), states);
 
-				if (supplyDto.getTypeSupplyCode() != null) {
+                if (managerCode != null) {
+                    suppliesDto = suppliesDto.stream().filter(s -> s.getManagerCode().equals(managerCode)).collect(Collectors.toList());
+                }
 
-					try {
-						MicroserviceTypeSupplyDto typeSupplyDto = providerClient
-								.findTypeSuppleById(supplyDto.getTypeSupplyCode());
+            }
 
-						supplyDto.setTypeSupply(typeSupplyDto);
+            for (MicroserviceSupplyDto supplyDto : suppliesDto) {
 
-					} catch (Exception e) {
-						throw new BusinessException("No se ha podido consultar el tipo de insumo.");
-					}
+                if (supplyDto.getTypeSupplyCode() != null) {
 
-				}
+                    try {
+                        MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+                                .findTypeSuppleById(supplyDto.getTypeSupplyCode());
 
-				// verify if the supply has been delivered to operator
-				try {
+                        supplyDto.setTypeSupply(typeSupplyDto);
 
-					WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipality);
+                    } catch (Exception e) {
+                        throw new BusinessException("No se ha podido consultar el tipo de insumo.");
+                    }
 
-					if (workspaceActive != null) {
-						List<WorkspaceOperatorEntity> operators = workspaceActive.getOperators();
+                }
 
-						if (operators.size() >= 1) {
+                if (operatorCode != null) {
+                    // verify if the supply has been delivered to operator
+                    try {
 
-							List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
-									operators.get(0).getOperatorCode(), municipality.getCode());
+                        WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipality);
+                        WorkspaceOperatorEntity workspaceOperatorEntity =
+                                workspaceActive.getOperators().stream().filter(o -> o.getOperatorCode().equals(operatorCode)
+                                        && o.getManagerCode().equals(managerCode)).findAny().orElse(null);
 
-							for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
+                        if (workspaceOperatorEntity != null) {
 
-								MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
-										.filter(sDto -> sDto.getSupplyCode().equals(supplyDto.getId())).findAny()
-										.orElse(null);
+                            List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
+                                    operatorCode, municipality.getCode());
 
-								if (supplyFound != null) {
-									supplyDto.setDelivered(true);
-									supplyDto.setDelivery(deliveryFoundDto);
-								}
-							}
+                            for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
 
-						}
-					}
+                                MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
+                                        .filter(sDto -> sDto.getSupplyCode().equals(supplyDto.getId())).findAny()
+                                        .orElse(null);
 
-				} catch (Exception e) {
-					log.error(
-							"No se ha podido consultar si el insumo ha sido entregado al operador: " + e.getMessage());
-				}
+                                if (supplyFound != null) {
+                                    supplyDto.setDelivered(true);
+                                    supplyDto.setDelivery(deliveryFoundDto);
+                                }
+                            }
 
-			}
 
-			if (page != null) {
-				return dataPaginated;
-			}
+                        } else {
+                            throw new BusinessException("El operador no pertenece al municipio");
+                        }
 
-		} catch (Exception e) {
-			throw new BusinessException("No se ha podido consultar los insumos del municipio.");
-		}
+                    } catch (Exception e) {
+                        log.error(
+                                "No se ha podido consultar si el insumo ha sido entregado al operador: " + e.getMessage());
+                    }
+                }
 
-		List<MicroserviceSupplyDto> suppliesFinal = new ArrayList<>();
 
-		if (extensions != null && extensions.size() > 0) {
+            }
 
-			for (MicroserviceSupplyDto supplyDto : suppliesDto) {
+            if (page != null) {
+                return dataPaginated;
+            }
 
-				if (supplyDto.getTypeSupply() != null) {
-					List<MicroserviceExtensionDto> extensionsDto = supplyDto.getTypeSupply().getExtensions();
-					for (MicroserviceExtensionDto extensionDto : extensionsDto) {
+        } catch (Exception e) {
+            throw new BusinessException("No se ha podido consultar los insumos del municipio.");
+        }
 
-						String extensionFound = extensions.stream().filter(
-								extension -> extensionDto.getName().toLowerCase().equals(extension.toLowerCase()))
-								.findAny().orElse(null);
-						if (extensionFound != null) {
-							suppliesFinal.add(supplyDto);
-						}
-					}
-				}
-			}
+        List<MicroserviceSupplyDto> suppliesFinal = new ArrayList<>();
 
-		} else {
-			suppliesFinal = suppliesDto;
-		}
+        if (extensions != null && extensions.size() > 0) {
 
-		return suppliesFinal;
-	}
+            for (MicroserviceSupplyDto supplyDto : suppliesDto) {
 
-	public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode,
-			List<MicroserviceCreateSupplyAttachmentDto> attachments, Long requestId, Long userCode, Long providerCode,
-			Long managerCode, Long cadastralAuthority, String modelVersion, Long stateSupplyId, String name)
-			throws BusinessException {
+                if (supplyDto.getTypeSupply() != null) {
+                    List<MicroserviceExtensionDto> extensionsDto = supplyDto.getTypeSupply().getExtensions();
+                    for (MicroserviceExtensionDto extensionDto : extensionsDto) {
 
-		MicroserviceSupplyDto supplyDto = null;
+                        String extensionFound = extensions.stream().filter(
+                                extension -> extensionDto.getName().equalsIgnoreCase(extension))
+                                .findAny().orElse(null);
+                        if (extensionFound != null) {
+                            suppliesFinal.add(supplyDto);
+                        }
+                    }
+                }
+            }
 
-		try {
+        } else {
+            suppliesFinal = suppliesDto;
+        }
 
-			MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
-			createSupplyDto.setMunicipalityCode(municipalityCode);
-			createSupplyDto.setObservations(observations);
-			createSupplyDto.setModelVersion(modelVersion);
+        return suppliesFinal;
+    }
 
-			if (stateSupplyId != null) {
-				createSupplyDto.setSupplyStateId(stateSupplyId);
-			}
+    public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode, Long toManagerCode,
+                                              List<MicroserviceCreateSupplyAttachmentDto> attachments, Long requestId, Long userCode, Long providerCode,
+                                              Long managerCode, Long cadastralAuthority, String modelVersion, Long stateSupplyId, String name,
+                                              Boolean hasGeometryValidation)
+            throws BusinessException {
 
-			if (name != null) {
-				createSupplyDto.setName(name);
-			}
+        MicroserviceSupplyDto supplyDto;
 
-			if (requestId != null) {
-				createSupplyDto.setRequestCode(requestId);
-			}
+        try {
 
-			if (typeSupplyCode != null) {
-				createSupplyDto.setTypeSupplyCode(typeSupplyCode);
-			}
+            MicroserviceCreateSupplyDto createSupplyDto = new MicroserviceCreateSupplyDto();
+            createSupplyDto.setMunicipalityCode(municipalityCode);
+            createSupplyDto.setObservations(observations);
+            createSupplyDto.setModelVersion(modelVersion);
+            createSupplyDto.setManagerCode(toManagerCode);
+            createSupplyDto.setHasGeometryValidation(hasGeometryValidation);
 
-			createSupplyDto.setAttachments(attachments);
+            if (stateSupplyId != null) {
+                createSupplyDto.setSupplyStateId(stateSupplyId);
+            }
 
-			List<MicroserviceCreateSupplyOwnerDto> owners = new ArrayList<MicroserviceCreateSupplyOwnerDto>();
+            if (name != null) {
+                createSupplyDto.setName(name);
+            }
 
-			if (userCode != null) {
-				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
-				owner.setOwnerCode(userCode);
-				owner.setOwnerType("USER");
-				owners.add(owner);
-			}
+            if (requestId != null) {
+                createSupplyDto.setRequestCode(requestId);
+            }
 
-			if (providerCode != null) {
-				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
-				owner.setOwnerCode(providerCode);
-				owner.setOwnerType("ENTITY_PROVIDER");
-				owners.add(owner);
-			}
+            if (typeSupplyCode != null) {
+                createSupplyDto.setTypeSupplyCode(typeSupplyCode);
+            }
 
-			if (managerCode != null) {
-				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
-				owner.setOwnerCode(managerCode);
-				owner.setOwnerType("ENTITY_MANAGER");
-				owners.add(owner);
-			}
+            createSupplyDto.setAttachments(attachments);
 
-			if (cadastralAuthority != null) {
-				MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
-				owner.setOwnerCode(cadastralAuthority);
-				owner.setOwnerType("CADASTRAL_AUTHORITY");
-				owners.add(owner);
-			}
+            List<MicroserviceCreateSupplyOwnerDto> owners = new ArrayList<>();
 
-			createSupplyDto.setOwners(owners);
+            if (userCode != null) {
+                MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+                owner.setOwnerCode(userCode);
+                owner.setOwnerType("USER");
+                owners.add(owner);
+            }
 
-			supplyDto = supplyClient.createSupply(createSupplyDto);
+            if (providerCode != null) {
+                MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+                owner.setOwnerCode(providerCode);
+                owner.setOwnerType("ENTITY_PROVIDER");
+                owners.add(owner);
+            }
 
-		} catch (Exception e) {
-			log.error("No se ha podido crear el insumo: " + e.getMessage());
-			throw new BusinessException("No se ha podido cargar el insumo");
-		}
+            if (managerCode != null) {
+                MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+                owner.setOwnerCode(managerCode);
+                owner.setOwnerType("ENTITY_MANAGER");
+                owners.add(owner);
+            }
 
-		return supplyDto;
-	}
+            if (cadastralAuthority != null) {
+                MicroserviceCreateSupplyOwnerDto owner = new MicroserviceCreateSupplyOwnerDto();
+                owner.setOwnerCode(cadastralAuthority);
+                owner.setOwnerType("CADASTRAL_AUTHORITY");
+                owners.add(owner);
+            }
 
-	public MicroserviceSupplyDto getSupplyById(Long supplyId) throws BusinessException {
+            createSupplyDto.setOwners(owners);
 
-		MicroserviceSupplyDto supplyDto = null;
+            supplyDto = supplyClient.createSupply(createSupplyDto);
 
-		try {
-			supplyDto = supplyClient.findSupplyById(supplyId);
+        } catch (Exception e) {
+            log.error("No se ha podido crear el insumo: " + e.getMessage());
+            throw new BusinessException("No se ha podido cargar el insumo");
+        }
 
-			if (supplyDto.getTypeSupplyCode() != null) {
+        return supplyDto;
+    }
 
-				MicroserviceTypeSupplyDto typeSupplyDto = providerClient
-						.findTypeSuppleById(supplyDto.getTypeSupplyCode());
+    public MicroserviceSupplyDto getSupplyById(Long supplyId) throws BusinessException {
 
-				supplyDto.setTypeSupply(typeSupplyDto);
-			}
+        MicroserviceSupplyDto supplyDto = null;
 
-		} catch (Exception e) {
-			log.error("No se ha podido consultar el insumo: " + e.getMessage());
-		}
+        try {
+            supplyDto = supplyClient.findSupplyById(supplyId);
 
-		return supplyDto;
-	}
+            if (supplyDto.getTypeSupplyCode() != null) {
 
-	public void deleteSupply(Long supplyId) throws BusinessException {
+                MicroserviceTypeSupplyDto typeSupplyDto = providerClient
+                        .findTypeSuppleById(supplyDto.getTypeSupplyCode());
 
-		try {
+                supplyDto.setTypeSupply(typeSupplyDto);
+            }
 
-			supplyClient.deleteSupplyById(supplyId);
+        } catch (Exception e) {
+            log.error("No se ha podido consultar el insumo: " + e.getMessage());
+        }
 
-		} catch (Exception e) {
-			log.error("No se ha podido eliminar el insumo: " + e.getMessage());
-		}
+        return supplyDto;
+    }
 
-	}
+    public void deleteSupply(Long supplyId) {
 
-	public File generateFTPFile(MicroserviceSupplyDto supplyDto, MunicipalityDto municipalityDto) {
+        try {
 
-		String randomCode = RandomStringUtils.random(10, false, true);
+            supplyClient.deleteSupplyById(supplyId);
 
-		String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + ".txt";
+        } catch (Exception e) {
+            log.error("No se ha podido eliminar el insumo: " + e.getMessage());
+        }
 
-		MicroserviceSupplyAttachmentDto attachmentFtp = supplyDto.getAttachments().stream()
-				.filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP)).findAny()
-				.orElse(null);
+    }
 
-		String content = "***********************************************" + "\n";
-		content += "Sistema de transición Barrido Predial \n";
-		content += "Fecha de Cargue del Insumo: " + DateTool.formatDate(supplyDto.getCreatedAt(), "yyyy-MM-dd") + "\n";
-		content += "***********************************************" + "\n";
-		content += "Código de Municipio: " + municipalityDto.getCode() + "\n";
-		content += "Municipio: " + municipalityDto.getName() + "\n";
-		content += "Departamento: " + municipalityDto.getDepartment().getName() + "\n";
-		content += "***********************************************" + "\n";
+    public File generateFTPFile(MicroserviceSupplyDto supplyDto, MunicipalityDto municipalityDto) {
 
-		if (supplyDto.getTypeSupply() != null) {
-			String typeSupplyName = supplyDto.getTypeSupply().getName().replace(" ", "_");
-			content += "Nombre Insumo: " + typeSupplyName + "\n";
-			content += "Proveedor: " + supplyDto.getTypeSupply().getProvider().getName() + "\n";
-			content += "***********************************************" + "\n";
-		}
+        String randomCode = RandomStringUtils.random(10, false, true);
 
-		content += "URL: " + attachmentFtp.getData() + "\n";
-		content += "Observaciones: " + supplyDto.getObservations() + "\n";
-		content += "***********************************************" + "\n";
+        String filename = stTemporalDirectory + File.separatorChar + "insumo_" + randomCode + ".txt";
 
-		File fileSupply = FileTool.createSimpleFile(content, filename);
+        MicroserviceSupplyAttachmentDto attachmentFtp = supplyDto.getAttachments().stream()
+                .filter(a -> a.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP)).findAny()
+                .orElse(null);
 
-		return fileSupply;
-	}
+        String content = "***********************************************" + "\n";
+        content += "Sistema de transición Barrido Predial \n";
+        content += "Fecha de Cargue del Insumo: " + DateTool.formatDate(supplyDto.getCreatedAt(), "yyyy-MM-dd") + "\n";
+        content += "***********************************************" + "\n";
+        content += "Código de Municipio: " + municipalityDto.getCode() + "\n";
+        content += "Municipio: " + municipalityDto.getName() + "\n";
+        content += "Departamento: " + municipalityDto.getDepartment().getName() + "\n";
+        content += "***********************************************" + "\n";
 
-	public MicroserviceSupplyDto changeStateSupply(Long supplyId, Long stateId, Long managerCode)
-			throws BusinessException {
+        if (supplyDto.getTypeSupply() != null) {
+            String typeSupplyName = supplyDto.getTypeSupply().getName().replace(" ", "_");
+            content += "Nombre Insumo: " + typeSupplyName + "\n";
+            content += "Proveedor: " + supplyDto.getTypeSupply().getProvider().getName() + "\n";
+            content += "***********************************************" + "\n";
+        }
 
-		List<WorkspaceEntity> workspaces = workspaceService.getWorkspacesByManagerAndIsActive(managerCode, true);
+        assert attachmentFtp != null;
+        content += "URL: " + attachmentFtp.getData() + "\n";
+        content += "Observaciones: " + supplyDto.getObservations() + "\n";
+        content += "***********************************************" + "\n";
 
-		MicroserviceSupplyDto supplyDto = getSupplyById(supplyId);
-		if (supplyDto == null) {
-			throw new BusinessException("No se ha encontrado el insumo");
-		}
+        return FileTool.createSimpleFile(content, filename);
+    }
 
-		boolean belong = false;
-		for (WorkspaceEntity workspace : workspaces) {
-			if (workspace.getMunicipality().getCode().equals(supplyDto.getMunicipalityCode())) {
-				belong = true;
-				break;
-			}
-		}
+    public MicroserviceSupplyDto changeStateSupply(Long supplyId, Long stateId, Long managerCode)
+            throws BusinessException {
 
-		if (!belong) {
-			throw new BusinessException("El gestor no tiene permisos para modificar el insumo");
-		}
+        MicroserviceSupplyDto supplyDto = getSupplyById(supplyId);
+        if (supplyDto == null) {
+            throw new BusinessException("No se ha encontrado el insumo");
+        }
 
-		try {
+        if (!supplyDto.getManagerCode().equals(managerCode)) {
+            throw new BusinessException("No tiene acceso al insumo");
+        }
 
-			MicroserviceUpdateSupplyDto data = new MicroserviceUpdateSupplyDto();
-			data.setStateId(stateId);
+        try {
 
-			supplyDto = supplyClient.updateSupply(supplyId, data);
+            MicroserviceUpdateSupplyDto data = new MicroserviceUpdateSupplyDto();
+            data.setStateId(stateId);
 
-		} catch (BusinessException e) {
-			log.error("Error actualizando el estado del insumo: " + e.getMessage());
-			throw new BusinessException(e.getMessage());
-		} catch (Exception e) {
-			log.error("Error actualizando el estado del insumo: " + e.getMessage());
-			throw new BusinessException("No se ha podido cambiar el estado del insumo.");
-		}
+            supplyDto = supplyClient.updateSupply(supplyId, data);
 
-		return supplyDto;
-	}
+        } catch (BusinessException e) {
+            log.error("Error actualizando el estado del insumo: " + e.getMessage());
+            throw new BusinessException(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error actualizando el estado del insumo: " + e.getMessage());
+            throw new BusinessException("No se ha podido cambiar el estado del insumo.");
+        }
+
+        return supplyDto;
+    }
 
 }
