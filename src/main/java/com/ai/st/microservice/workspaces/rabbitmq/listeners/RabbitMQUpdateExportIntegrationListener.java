@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
 import java.util.*;
 
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -99,9 +100,15 @@ public class RabbitMQUpdateExportIntegrationListener {
                     // load supply to municipality
                     String observations = "Archivo XTF generado para el modelo de insumos";
 
+                    MicroserviceSupplyDto supplyCadastralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplyCadastreId());
+                    boolean hasGeometryValidation = true;
+                    if (!supplyCadastralDto.getHasGeometryValidation()) {
+                        hasGeometryValidation = false;
+                    }
+
                     supplyBusiness.createSupply(municipalityCode, observations, null, integrationEntity.getManagerCode(), attachments, null,
                             null, null, integrationEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
-                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio", false);
+                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio", hasGeometryValidation);
 
                     /*
                      * try { // delete database
