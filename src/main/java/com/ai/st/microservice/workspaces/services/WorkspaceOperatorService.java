@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.repositories.WorkspaceOperatorRepository;
 
+import java.util.List;
+
 @Service
 public class WorkspaceOperatorService implements IWorkspaceOperatorService {
 
@@ -35,6 +37,11 @@ public class WorkspaceOperatorService implements IWorkspaceOperatorService {
     @Transactional
     public WorkspaceOperatorEntity updateOperator(WorkspaceOperatorEntity operator) {
         return workspaceOperatorRepository.save(operator);
+    }
+
+    @Override
+    public List<WorkspaceOperatorEntity> getWorkspacesOperatorsByOperatorCode(Long operatorCode) {
+        return workspaceOperatorRepository.findByOperatorCode(operatorCode);
     }
 
 }

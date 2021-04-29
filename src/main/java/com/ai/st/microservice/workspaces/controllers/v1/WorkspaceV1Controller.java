@@ -1473,4 +1473,44 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
+    @RequestMapping(value = "/operators", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get workspaces by operator")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getWorkspacesByOperator(@RequestHeader("authorization") String headerAuthorization) {
+
+        HttpStatus httpStatus;
+        Object responseDto;
+
+        try {
+
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
+
+            // get operator
+            MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
+            if (operatorDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
+            }
+
+            responseDto = workspaceBusiness.getWorkspacesByOperator(operatorDto.getId());
+            httpStatus = HttpStatus.OK;
+
+        } catch (DisconnectedMicroserviceException e) {
+            log.error("Error WorkspaceV1Controller@getWorkspacesByOperator#Microservice ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 2);
+        } catch (Exception e) {
+            log.error("Error WorkspaceV1Controller@getWorkspacesByOperator#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+        }
+
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
+
 }

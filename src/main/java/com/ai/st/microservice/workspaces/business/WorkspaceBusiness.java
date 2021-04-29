@@ -2036,4 +2036,21 @@ public class WorkspaceBusiness {
         return supportURL;
     }
 
+    public List<WorkspaceDto> getWorkspacesByOperator(Long operatorCode) {
+
+        List<WorkspaceOperatorEntity> workspaceOperatorEntities =
+                workspaceOperatorService.getWorkspacesOperatorsByOperatorCode(operatorCode);
+
+        List<WorkspaceDto> workspacesDto = new ArrayList<>();
+
+        for (WorkspaceOperatorEntity operatorEntity : workspaceOperatorEntities) {
+            WorkspaceEntity workspaceEntity = operatorEntity.getWorkspace();
+            if (workspaceEntity.getIsActive()) {
+                workspacesDto.add(entityParseToDto(workspaceEntity));
+            }
+        }
+
+        return workspacesDto;
+    }
+
 }
