@@ -101,14 +101,12 @@ public class RabbitMQUpdateExportIntegrationListener {
                     String observations = "Archivo XTF generado para el modelo de insumos";
 
                     MicroserviceSupplyDto supplyCadastralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplyCadastreId());
-                    boolean hasGeometryValidation = true;
-                    if (!supplyCadastralDto.getHasGeometryValidation()) {
-                        hasGeometryValidation = false;
-                    }
+                    MicroserviceSupplyDto supplyRegistralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplySnrId());
+                    boolean isValid = supplyCadastralDto.getValid() && supplyRegistralDto.getValid();
 
                     supplyBusiness.createSupply(municipalityCode, observations, null, integrationEntity.getManagerCode(), attachments, null,
                             null, null, integrationEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
-                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio", hasGeometryValidation);
+                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio", isValid);
 
                     /*
                      * try { // delete database

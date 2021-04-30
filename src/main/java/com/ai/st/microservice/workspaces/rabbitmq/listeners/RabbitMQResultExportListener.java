@@ -118,7 +118,7 @@ public class RabbitMQResultExportListener {
                     supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
                             supplyRequestedDto.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userId,
                             requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
-                            SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), false);
+                            SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), supplyRequestedDto.getValid());
 
                     // delete database
                     try {

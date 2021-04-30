@@ -26,7 +26,7 @@ public class MicroserviceSupplyDto implements Serializable {
     private MicroserviceTypeSupplyDto typeSupply;
     private Boolean delivered;
     private MicroserviceDeliveryDto delivery;
-    private Boolean hasGeometryValidation;
+    private Boolean isValid;
 
     public MicroserviceSupplyDto() {
         this.owners = new ArrayList<>();
@@ -146,11 +146,11 @@ public class MicroserviceSupplyDto implements Serializable {
         this.managerCode = managerCode;
     }
 
-    public Boolean getHasGeometryValidation() {
-        return hasGeometryValidation;
+    public Boolean getValid() {
+        return isValid;
     }
 
-    public void setHasGeometryValidation(Boolean hasGeometryValidation) {
-        this.hasGeometryValidation = hasGeometryValidation;
+    public void setValid(Boolean valid) {
+        isValid = valid;
     }
 }

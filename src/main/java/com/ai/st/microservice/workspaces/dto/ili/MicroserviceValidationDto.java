@@ -15,6 +15,8 @@ public class MicroserviceValidationDto implements Serializable {
     private String observations;
     private List<String> errors;
     private Boolean isGeometryValidated;
+    private Boolean skipErrors;
+    private String log;
 
     public Boolean getIsValid() {
         return isValid;
@@ -78,5 +80,21 @@ public class MicroserviceValidationDto implements Serializable {
 
     public void setGeometryValidated(Boolean geometryValidated) {
         isGeometryValidated = geometryValidated;
+    }
+
+    public Boolean getSkipErrors() {
+        return skipErrors;
+    }
+
+    public void setSkipErrors(Boolean skipErrors) {
+        this.skipErrors = skipErrors;
+    }
+
+    public String getLog() {
+        return log;
+    }
+
+    public void setLog(String log) {
+        this.log = log;
     }
 }

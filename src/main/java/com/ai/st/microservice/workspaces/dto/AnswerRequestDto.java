@@ -22,11 +22,11 @@ public class AnswerRequestDto implements Serializable {
     @ApiModelProperty(notes = "Observations")
     private String observations;
 
-    @ApiModelProperty(notes = "Skip geometry validation?")
-    private Boolean skipGeometryValidation;
+    @ApiModelProperty(notes = "Skip errors?")
+    private Boolean skipErrors;
 
     public AnswerRequestDto() {
-        this.skipGeometryValidation = null;
+        this.skipErrors = true;
     }
 
     public Long getTypeSupplyId() {
@@ -61,11 +61,11 @@ public class AnswerRequestDto implements Serializable {
         this.observations = observations;
     }
 
-    public Boolean getSkipGeometryValidation() {
-        return skipGeometryValidation;
+    public Boolean getSkipErrors() {
+        return skipErrors;
     }
 
-    public void setSkipGeometryValidation(Boolean skipGeometryValidation) {
-        this.skipGeometryValidation = skipGeometryValidation;
+    public void setSkipErrors(Boolean skipErrors) {
+        this.skipErrors = skipErrors;
     }
 }
