@@ -14,6 +14,7 @@ public class MicroserviceIlivalidatorBackgroundDto implements Serializable {
     private String observations;
     private String versionModel;
     private Boolean hasGeometryValidation;
+    private Boolean skipErrors;
 
     public MicroserviceIlivalidatorBackgroundDto() {
 
@@ -81,5 +82,13 @@ public class MicroserviceIlivalidatorBackgroundDto implements Serializable {
 
     public void setHasGeometryValidation(Boolean hasGeometryValidation) {
         this.hasGeometryValidation = hasGeometryValidation;
+    }
+
+    public Boolean getSkipErrors() {
+        return skipErrors;
+    }
+
+    public void setSkipErrors(Boolean skipErrors) {
+        this.skipErrors = skipErrors;
     }
 }

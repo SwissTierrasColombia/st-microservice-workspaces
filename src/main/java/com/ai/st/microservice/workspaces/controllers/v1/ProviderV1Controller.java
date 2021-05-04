@@ -265,6 +265,7 @@ public class ProviderV1Controller {
     public ResponseEntity<Object> answerRequest(@PathVariable Long requestId,
                                                 @RequestHeader("authorization") String headerAuthorization,
                                                 @RequestParam(name = "files[]", required = false) MultipartFile[] files,
+                                                @RequestParam(name = "extra", required = false) MultipartFile extraFile,
                                                 @ModelAttribute AnswerRequestDto answerRequest) {
 
         HttpStatus httpStatus;
@@ -290,8 +291,8 @@ public class ProviderV1Controller {
                 throw new InputValidationException("El tipo de insumo es inválido.");
             }
 
-            responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getSkipGeometryValidation(), answerRequest.getJustification(),
-                    files, answerRequest.getUrl(), providerDto, userDtoSession.getId(),
+            responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getSkipErrors(), answerRequest.getJustification(),
+                    files, extraFile, answerRequest.getUrl(), providerDto, userDtoSession.getId(),
                     answerRequest.getObservations());
             httpStatus = HttpStatus.OK;
 

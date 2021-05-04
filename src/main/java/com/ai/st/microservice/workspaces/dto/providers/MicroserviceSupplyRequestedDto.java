@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Date;
 
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 
 public class MicroserviceSupplyRequestedDto implements Serializable {
 
@@ -27,7 +26,9 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
     private String ftp;
     private MicroserviceRequestDto request;
     private String errors;
-    private Boolean isGeometryValidated;
+    private Boolean isValid;
+    private String log;
+    private String extraFile;
 
     public Long getId() {
         return id;
@@ -165,11 +166,27 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
         this.errors = errors;
     }
 
-    public Boolean getGeometryValidated() {
-        return isGeometryValidated;
+    public Boolean getValid() {
+        return isValid;
     }
 
-    public void setGeometryValidated(Boolean geometryValidated) {
-        isGeometryValidated = geometryValidated;
+    public void setValid(Boolean valid) {
+        isValid = valid;
+    }
+
+    public String getLog() {
+        return log;
+    }
+
+    public void setLog(String log) {
+        this.log = log;
+    }
+
+    public String getExtraFile() {
+        return extraFile;
+    }
+
+    public void setExtraFile(String extraFile) {
+        this.extraFile = extraFile;
     }
 }

@@ -155,8 +155,8 @@ public class ProviderBusiness {
     @Autowired
     private MunicipalityBusiness municipalityBusiness;
 
-    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipGeometryValidation, String justification,
-                                                MultipartFile[] files, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
+    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipErrors, String justification,
+                                                MultipartFile[] files, MultipartFile extraFile, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
             throws BusinessException {
 
         MicroserviceRequestDto requestUpdatedDto;
@@ -257,10 +257,23 @@ public class ProviderBusiness {
 
         MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
 
+        String urlExtraFileSaved = null;
+
         if (delivered) {
 
             List<String> urls = new ArrayList<>();
             if (files.length > 0) {
+
+                String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
+                        + providerDto.getName().replace(" ", "_") + "/"
+                        + supplyRequested.getTypeSupply().getName().replace(" ", "_");
+                urlBase = FileTool.removeAccents(urlBase);
+
+                if (extraFile != null) {
+                    boolean isZip = FilenameUtils.getExtension(extraFile.getOriginalFilename()).equalsIgnoreCase("zip");
+                    urlExtraFileSaved = fileBusiness.saveFileToSystem(extraFile, urlBase, !isZip);
+                }
+
                 for (MultipartFile fileUploaded : files) {
 
                     String loadedFileName = fileUploaded.getOriginalFilename();
@@ -348,12 +361,6 @@ public class ProviderBusiness {
                     }
 
                     // save file
-                    String urlBase = "/" + requestDto.getMunicipalityCode().replace(" ", "_") + "/insumos/proveedores/"
-                            + providerDto.getName().replace(" ", "_") + "/"
-                            + supplyRequested.getTypeSupply().getName().replace(" ", "_");
-
-                    urlBase = FileTool.removeAccents(urlBase);
-
                     String urlDocumentaryRepository = fileBusiness.saveFileToSystem(fileUploaded, urlBase, zipFile);
 
                     if (!supplyExtension.isEmpty()) {
@@ -362,7 +369,7 @@ public class ProviderBusiness {
                         // validate xtf with ilivalidator
                         iliBusiness.startValidation(requestId, observations, urlDocumentaryRepository,
                                 urlDocumentaryRepository, supplyRequested.getId(), userCode,
-                                supplyRequested.getModelVersion(), skipGeometryValidation);
+                                supplyRequested.getModelVersion(), false, skipErrors);
 
                         updateSupply.setUrl(null);
                         updateSupply.setFtp(null);
@@ -388,8 +395,6 @@ public class ProviderBusiness {
             supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED;
         }
 
-        log.info("Update request # " + requestId + " - " + supplyRequested.getId());
-
         // Update request
         try {
 
@@ -397,6 +402,7 @@ public class ProviderBusiness {
             updateSupply.setDeliveryBy(userCode);
             updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
             updateSupply.setJustification(justification);
+            updateSupply.setExtraFile(urlExtraFileSaved);
             requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(), updateSupply);
 
             for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
@@ -561,28 +567,45 @@ public class ProviderBusiness {
                     if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
 
                         List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
-                        if (supplyRequested.getUrl() != null) {
-                            attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getUrl(),
-                                    SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
-                        }
 
-                        if (supplyRequested.getFtp() != null) {
-                            attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getFtp(),
-                                    SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
+
+                        if (supplyRequested.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL)) {
+                            List<File> supplyFiles = new ArrayList<>(Collections.singletonList(new File(supplyRequested.getUrl())));
+                            if (supplyRequested.getLog() != null) {
+                                supplyFiles.add(new File(supplyRequested.getLog()));
+                            }
+                            if (supplyRequested.getExtraFile() != null) {
+                                supplyFiles.add(new File(supplyRequested.getExtraFile()));
+                            }
+                            String zipName = "insumo_" + RandomStringUtils.random(10, false, true);
+                            String namespace = stFilesDirectory + "/" + requestDto.getMunicipalityCode().replace(" ", "_")
+                                    + "/insumos/proveedores/" + providerDto.getName().replace(" ", "_") + "/"
+                                    + supplyRequested.getTypeSupply().getName().replace(" ", "_");
+
+                            String pathSupplyFile = ZipUtil.zipping(supplyFiles, zipName, FileTool.removeAccents(namespace));
+
+                            attachments.add(new MicroserviceCreateSupplyAttachmentDto(pathSupplyFile,
+                                    SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+                        } else {
+
+                            if (supplyRequested.getUrl() != null) {
+                                attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getUrl(),
+                                        SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
+                            }
+                            if (supplyRequested.getFtp() != null) {
+                                attachments.add(new MicroserviceCreateSupplyAttachmentDto(supplyRequested.getFtp(),
+                                        SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
+                            }
+
                         }
 
                         MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
                                 filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
-
-                        if (supplyRequested.getGeometryValidated() != null) {
-
-                        }
-
                         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
                                 supplyRequested.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userCode,
                                 providerDto.getId(), null, null, supplyRequested.getModelVersion(),
-                                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName(), supplyRequested.getGeometryValidated());
+                                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequested.getTypeSupply().getName(), supplyRequested.getValid());
                     }
 
                 }
@@ -1546,7 +1569,7 @@ public class ProviderBusiness {
         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
                 supplyRequestedDto.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userCode,
                 requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
-                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), null);
+                SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), supplyRequestedDto.getValid());
 
         updateStateToSupplyRequested(requestId, supplyRequestedId, ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED);
 

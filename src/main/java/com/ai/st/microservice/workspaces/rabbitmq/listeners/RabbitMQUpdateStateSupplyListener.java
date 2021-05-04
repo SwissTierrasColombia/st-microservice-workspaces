@@ -52,7 +52,8 @@ public class RabbitMQUpdateStateSupplyListener {
 
             MicroserviceRequestDto requestDto = providerClient.findRequestById(validationDto.getRequestId());
 
-            if (validationDto.getIsValid()) {
+            boolean xtfAccept = validationDto.getIsValid() || validationDto.getSkipErrors();
+            if (xtfAccept) {
 
                 supplyRequestedStateId = ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED;
                 updateSupply.setUrl(validationDto.getFilenameTemporal());
@@ -82,7 +83,7 @@ public class RabbitMQUpdateStateSupplyListener {
                 MicroserviceUserDto userDto = userBusiness.getUserById(supplyRequestedDto.getDeliveredBy());
                 if (userDto != null && userDto.getEnabled()) {
                     notificationBusiness.sendNotificationLoadOfInputs(userDto.getEmail(), userDto.getId(),
-                            validationDto.getIsValid(), municipalityEntity.getName(),
+                            xtfAccept, municipalityEntity.getName(),
                             municipalityEntity.getDepartment().getName(), validationDto.getRequestId().toString(),
                             new Date(), "");
                 }
@@ -97,7 +98,8 @@ public class RabbitMQUpdateStateSupplyListener {
             updateSupply.setJustification("");
             updateSupply.setDeliveryBy(null);
             updateSupply.setObservations(validationDto.getObservations());
-            updateSupply.setValidated(validationDto.getGeometryValidated());
+            updateSupply.setValidated(validationDto.getIsValid()); // is xtf valid?
+            updateSupply.setLog(validationDto.getLog());
             if (validationDto.getErrors().size() > 0) {
                 StringBuilder errors = new StringBuilder();
                 for (String error : validationDto.getErrors()) {
