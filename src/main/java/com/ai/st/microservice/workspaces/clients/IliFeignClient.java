@@ -29,45 +29,45 @@ import feign.form.spring.SpringFormEncoder;
 @FeignClient(name = "st-microservice-ili", configuration = IliFeignClient.Configuration.class)
 public interface IliFeignClient {
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/integration/cadastre-registration-reference", consumes = APPLICATION_JSON_VALUE)
-	public void startIntegrationCadastreRegistration(@RequestBody MicroserviceIntegrationCadastreRegistrationDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/integration/cadastre-registration-reference", consumes = APPLICATION_JSON_VALUE)
+    void startIntegrationCadastreRegistration(@RequestBody MicroserviceIntegrationCadastreRegistrationDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/export", consumes = APPLICATION_JSON_VALUE)
-	public void startExport(@RequestBody MicroserviceIli2pgExportDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/export", consumes = APPLICATION_JSON_VALUE)
+    void startExport(@RequestBody MicroserviceIli2pgExportDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ilivalidator/v1/validate/background", consumes = APPLICATION_JSON_VALUE)
-	public void startValidation(@RequestBody MicroserviceIlivalidatorBackgroundDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/ili/ilivalidator/v1/validate/background", consumes = APPLICATION_JSON_VALUE)
+    void startValidation(@RequestBody MicroserviceIlivalidatorBackgroundDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/import-reference", consumes = APPLICATION_JSON_VALUE)
-	public void startImport(@RequestBody MicroserviceIli2pgImportReferenceDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/import-reference", consumes = APPLICATION_JSON_VALUE)
+    void startImport(@RequestBody MicroserviceIli2pgImportReferenceDto data);
 
-	@GetMapping("/api/ili/query/v1/execute/registral-to-revision")
-	public MicroserviceQueryResultRegistralRevisionDto getRecordsFromQueryRegistralRevision(
-			@RequestParam(name = "host") String host, @RequestParam(name = "database") String database,
-			@RequestParam(name = "schema") String schema, @RequestParam(name = "port") String port,
-			@RequestParam(name = "username") String username, @RequestParam(name = "password") String password,
-			@RequestParam(name = "modelVersion") String modelVersion, @RequestParam(name = "concept") Long conceptId,
-			@RequestParam(name = "page") int page, @RequestParam(name = "limit") int limit);
+    @GetMapping("/api/ili/query/v1/execute/registral-to-revision")
+    MicroserviceQueryResultRegistralRevisionDto getRecordsFromQueryRegistralRevision(
+            @RequestParam(name = "host") String host, @RequestParam(name = "database") String database,
+            @RequestParam(name = "schema") String schema, @RequestParam(name = "port") String port,
+            @RequestParam(name = "username") String username, @RequestParam(name = "password") String password,
+            @RequestParam(name = "modelVersion") String modelVersion, @RequestParam(name = "concept") Long conceptId,
+            @RequestParam(name = "page") int page, @RequestParam(name = "limit") int limit);
 
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/ili/query/v1/execute/update-to-revision", consumes = APPLICATION_JSON_VALUE)
-	public void updateRecordFromRevision(@RequestBody MicroserviceExecuteQueryUpdateToRevisionDto data);
+    @RequestMapping(method = RequestMethod.PUT, value = "/api/ili/query/v1/execute/update-to-revision", consumes = APPLICATION_JSON_VALUE)
+    void updateRecordFromRevision(@RequestBody MicroserviceExecuteQueryUpdateToRevisionDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/export-reference", consumes = APPLICATION_JSON_VALUE)
-	public void startExportReference(@RequestBody MicroserviceIli2pgExportReferenceDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/ili/ili2pg/v1/export-reference", consumes = APPLICATION_JSON_VALUE)
+    void startExportReference(@RequestBody MicroserviceIli2pgExportReferenceDto data);
 
-	class Configuration {
+    class Configuration {
 
-		@Bean
-		Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
-			return new SpringFormEncoder(new SpringEncoder(converters));
-		}
+        @Bean
+        Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
+            return new SpringFormEncoder(new SpringEncoder(converters));
+        }
 
-		@Bean
-		@Scope("prototype")
-		public Feign.Builder feignBuilder() {
-			return Feign.builder();
-		}
+        @Bean
+        @Scope("prototype")
+        public Feign.Builder feignBuilder() {
+            return Feign.builder();
+        }
 
-	}
+    }
 
 }

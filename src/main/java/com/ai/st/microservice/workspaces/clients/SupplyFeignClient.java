@@ -32,28 +32,28 @@ import feign.form.spring.SpringFormEncoder;
 public interface SupplyFeignClient {
 
     @RequestMapping(method = RequestMethod.POST, value = "/api/supplies/v1/supplies", consumes = APPLICATION_JSON_VALUE)
-    public MicroserviceSupplyDto createSupply(@RequestBody MicroserviceCreateSupplyDto createSupply);
+    MicroserviceSupplyDto createSupply(@RequestBody MicroserviceCreateSupplyDto createSupply);
 
     @GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
-    public List<MicroserviceSupplyDto> getSuppliesByMunicipalityCode(@PathVariable String municipalityId,
-                                                                     @RequestParam(name = "states", required = false) List<Long> states);
+    List<MicroserviceSupplyDto> getSuppliesByMunicipalityCode(@PathVariable String municipalityId,
+                                                              @RequestParam(name = "states", required = false) List<Long> states);
 
     @GetMapping("/api/supplies/v1/supplies/municipality/{municipalityId}")
-    public MicroserviceDataPaginatedDto getSuppliesByMunicipalityCodeByFilters(@PathVariable String municipalityId,
-                                                                               @RequestParam(name = "page", required = false) Integer page,
-                                                                               @RequestParam(name = "manager", required = false) Long managerCode,
-                                                                               @RequestParam(name = "requests", required = false) List<Long> requests,
-                                                                               @RequestParam(name = "states", required = false) List<Long> states);
+    MicroserviceDataPaginatedDto getSuppliesByMunicipalityCodeByFilters(@PathVariable String municipalityId,
+                                                                        @RequestParam(name = "page", required = false) Integer page,
+                                                                        @RequestParam(name = "manager", required = false) Long managerCode,
+                                                                        @RequestParam(name = "requests", required = false) List<Long> requests,
+                                                                        @RequestParam(name = "states", required = false) List<Long> states);
 
     @GetMapping("/api/supplies/v1/supplies/{supplyId}")
-    public MicroserviceSupplyDto findSupplyById(@PathVariable Long supplyId);
+    MicroserviceSupplyDto findSupplyById(@PathVariable Long supplyId);
 
     @DeleteMapping("/api/supplies/v1/supplies/{supplyId}")
-    public void deleteSupplyById(@PathVariable Long supplyId);
+    void deleteSupplyById(@PathVariable Long supplyId);
 
     @RequestMapping(method = RequestMethod.PUT, value = "/api/supplies/v1/supplies/{supplyId}", consumes = APPLICATION_JSON_VALUE)
-    public MicroserviceSupplyDto updateSupply(@PathVariable Long supplyId,
-                                              @RequestBody MicroserviceUpdateSupplyDto updateSupply) throws BusinessException;
+    MicroserviceSupplyDto updateSupply(@PathVariable Long supplyId,
+                                       @RequestBody MicroserviceUpdateSupplyDto updateSupply) throws BusinessException;
 
     class Configuration {
 

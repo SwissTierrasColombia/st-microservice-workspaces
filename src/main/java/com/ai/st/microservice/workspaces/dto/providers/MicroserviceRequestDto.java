@@ -28,8 +28,8 @@ public class MicroserviceRequestDto implements Serializable {
 	private MicroserviceUserDto userClosedBy;
 
 	public MicroserviceRequestDto() {
-		suppliesRequested = new ArrayList<MicroserviceSupplyRequestedDto>();
-		emitters = new ArrayList<MicroserviceEmitterDto>();
+		suppliesRequested = new ArrayList<>();
+		emitters = new ArrayList<>();
 	}
 
 	public Long getId() {

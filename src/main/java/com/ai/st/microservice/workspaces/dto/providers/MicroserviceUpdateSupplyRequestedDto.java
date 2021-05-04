@@ -14,7 +14,9 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
     private String observations;
     private String errors;
     private String ftp;
-    private boolean validated;
+    private Boolean validated;
+    private String log;
+    private String extraFile;
 
     public Boolean getDelivered() {
         return delivered;
@@ -80,11 +82,27 @@ public class MicroserviceUpdateSupplyRequestedDto implements Serializable {
         this.errors = errors;
     }
 
-    public boolean isValidated() {
+    public Boolean isValidated() {
         return validated;
     }
 
-    public void setValidated(boolean validated) {
+    public void setValidated(Boolean validated) {
         this.validated = validated;
+    }
+
+    public String getLog() {
+        return log;
+    }
+
+    public void setLog(String log) {
+        this.log = log;
+    }
+
+    public String getExtraFile() {
+        return extraFile;
+    }
+
+    public void setExtraFile(String extraFile) {
+        this.extraFile = extraFile;
     }
 }
