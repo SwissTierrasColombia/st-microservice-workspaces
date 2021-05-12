@@ -434,7 +434,7 @@ public class WorkspaceBusiness {
 
         workspaceManagerBusiness.updateWorkspaceManager(workspaceManagerFound.getId(), observations, startDate);
 
-        workspaceEntity.setUdpatedAt(new Date());
+        workspaceEntity.setUpdatedAt(new Date());
         workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
 
         workspaceDto = entityParseToDto(workspaceEntity);
@@ -1712,7 +1712,7 @@ public class WorkspaceBusiness {
         WorkspaceDto workspaceDto = new WorkspaceDto();
         workspaceDto.setId(workspaceEntity.getId());
         workspaceDto.setCreatedAt(workspaceEntity.getCreatedAt());
-        workspaceDto.setUpdatedAt(workspaceEntity.getUdpatedAt());
+        workspaceDto.setUpdatedAt(workspaceEntity.getUpdatedAt());
         workspaceDto.setIsActive(workspaceEntity.getIsActive());
 
         MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
@@ -1995,7 +1995,7 @@ public class WorkspaceBusiness {
         workspaceOperatorBusiness.updateWorkspaceOperator(workspaceOperatorFound.getId(), startDate, endDate,
                 observations, numberParcelsExpected, workArea, urlDocumentaryRepository);
 
-        workspaceEntity.setUdpatedAt(new Date());
+        workspaceEntity.setUpdatedAt(new Date());
         workspaceEntity = workspaceService.updateWorkspace(workspaceEntity);
 
         workspaceDto = entityParseToDto(workspaceEntity);
@@ -2036,21 +2036,19 @@ public class WorkspaceBusiness {
         return supportURL;
     }
 
-    public List<WorkspaceDto> getWorkspacesByOperator(Long operatorCode) {
+    public List<WorkspaceOperatorDto> getWorkspacesByOperator(Long operatorCode) {
 
         List<WorkspaceOperatorEntity> workspaceOperatorEntities =
                 workspaceOperatorService.getWorkspacesOperatorsByOperatorCode(operatorCode);
 
-        List<WorkspaceDto> workspacesDto = new ArrayList<>();
+        List<WorkspaceOperatorDto> workspacesOperators = new ArrayList<>();
 
         for (WorkspaceOperatorEntity operatorEntity : workspaceOperatorEntities) {
-            WorkspaceEntity workspaceEntity = operatorEntity.getWorkspace();
-            if (workspaceEntity.getIsActive()) {
-                workspacesDto.add(entityParseToDto(workspaceEntity));
-            }
+            WorkspaceOperatorDto workspaceOperatorDto = workspaceOperatorBusiness.entityParseToDto(operatorEntity);
+            workspacesOperators.add(workspaceOperatorDto);
         }
 
-        return workspacesDto;
+        return workspacesOperators;
     }
 
 }

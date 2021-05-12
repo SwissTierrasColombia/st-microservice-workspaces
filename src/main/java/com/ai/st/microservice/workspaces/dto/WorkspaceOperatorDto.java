@@ -29,23 +29,26 @@ public class WorkspaceOperatorDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Number parcels expected")
 	private Long numberParcelsExpected;
 
-	@ApiModelProperty(required = false, notes = "Work area")
+	@ApiModelProperty(notes = "Work area")
 	private Double workArea;
 
 	@ApiModelProperty(required = true, notes = "Operator Code")
 	private Long operatorCode;
 
-	@ApiModelProperty(required = false, notes = "Operator")
+	@ApiModelProperty(notes = "Operator")
 	private MicroserviceOperatorDto operator;
 
 	@ApiModelProperty(required = true, notes = "Manager Code")
 	private Long managerCode;
 
-	@ApiModelProperty(required = false, notes = "Manager")
+	@ApiModelProperty(notes = "Manager")
 	private MicroserviceManagerDto manager;
 
-	@ApiModelProperty(required = false, notes = "Observations")
+	@ApiModelProperty(notes = "Observations")
 	private String observations;
+
+	@ApiModelProperty(notes = "Observations")
+	private MunicipalityDto municipality;
 
 	public WorkspaceOperatorDto() {
 
@@ -139,4 +142,11 @@ public class WorkspaceOperatorDto implements Serializable {
 		this.manager = manager;
 	}
 
+	public MunicipalityDto getMunicipality() {
+		return municipality;
+	}
+
+	public void setMunicipality(MunicipalityDto municipality) {
+		this.municipality = municipality;
+	}
 }

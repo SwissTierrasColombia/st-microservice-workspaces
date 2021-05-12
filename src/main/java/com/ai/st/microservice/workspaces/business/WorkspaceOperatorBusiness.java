@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.workspaces.dto.DepartmentDto;
+import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import org.slf4j.Logger;
@@ -505,6 +508,16 @@ public class WorkspaceOperatorBusiness {
         workspaceOperatorDto.setStartDate(workspaceOperatorEntity.getStartDate());
         workspaceOperatorDto.setWorkArea(workspaceOperatorEntity.getWorkArea());
         workspaceOperatorDto.setManagerCode(workspaceOperatorEntity.getManagerCode());
+
+        MunicipalityEntity municipalityEntity = workspaceOperatorEntity.getWorkspace().getMunicipality();
+        DepartmentEntity departmentEntity = municipalityEntity.getDepartment();
+
+        MunicipalityDto municipalityDto = new MunicipalityDto();
+        municipalityDto.setId(municipalityEntity.getId());
+        municipalityDto.setName(municipalityEntity.getName());
+        municipalityDto.setCode(municipalityEntity.getCode());
+        municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
+        workspaceOperatorDto.setMunicipality(municipalityDto);
 
         try {
             MicroserviceManagerDto managerDto = managerBusiness

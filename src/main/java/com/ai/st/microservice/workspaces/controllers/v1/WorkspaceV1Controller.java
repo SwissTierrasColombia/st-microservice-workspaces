@@ -1513,4 +1513,28 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
+    @RequestMapping(value = "/operators/{operatorCode}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get workspaces by operator")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getWorkspacesByOperator(@PathVariable Long operatorCode) {
+
+        HttpStatus httpStatus;
+        Object responseDto;
+
+        try {
+
+            responseDto = workspaceBusiness.getWorkspacesByOperator(operatorCode);
+            httpStatus = HttpStatus.OK;
+
+        } catch (Exception e) {
+            log.error("Error WorkspaceV1Controller@getWorkspacesByOperator#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+        }
+
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
+
 }

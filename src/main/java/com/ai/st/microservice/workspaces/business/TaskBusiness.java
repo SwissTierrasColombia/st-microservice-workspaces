@@ -104,10 +104,13 @@ public class TaskBusiness {
 
     public MicroserviceTaskDto extendTask(MicroserviceTaskDto taskDto) {
 
-        List<MicroserviceTaskMemberDto> members = new ArrayList<MicroserviceTaskMemberDto>();
+        List<MicroserviceTaskMemberDto> members = new ArrayList<>();
         for (MicroserviceTaskMemberDto member : taskDto.getMembers()) {
             try {
                 MicroserviceUserDto userDto = userClient.findById(member.getMemberCode());
+                userDto.setEmail("");
+                userDto.setFirstName("");
+                userDto.setLastName("");
                 member.setUser(userDto);
             } catch (Exception e) {
                 member.setUser(null);
