@@ -17,6 +17,7 @@ public class MicroserviceValidationDto implements Serializable {
     private Boolean isGeometryValidated;
     private Boolean skipErrors;
     private String log;
+    private String referenceId;
 
     public Boolean getIsValid() {
         return isValid;
@@ -96,5 +97,13 @@ public class MicroserviceValidationDto implements Serializable {
 
     public void setLog(String log) {
         this.log = log;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 }

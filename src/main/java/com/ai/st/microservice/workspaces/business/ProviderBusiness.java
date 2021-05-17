@@ -368,8 +368,8 @@ public class ProviderBusiness {
 
                         // validate xtf with ilivalidator
                         iliBusiness.startValidation(requestId, observations, urlDocumentaryRepository,
-                                urlDocumentaryRepository, supplyRequested.getId(), userCode,
-                                supplyRequested.getModelVersion(), false, skipErrors);
+                                supplyRequested.getId(), userCode, supplyRequested.getModelVersion(),
+                                false, skipErrors);
 
                         updateSupply.setUrl(null);
                         updateSupply.setFtp(null);

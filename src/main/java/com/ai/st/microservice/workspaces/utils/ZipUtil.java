@@ -20,7 +20,7 @@ public class ZipUtil {
 
     public static boolean zipContainsFile(String filePathZip, List<String> extensionsToSearch) {
 
-        Boolean fileFound = false;
+        boolean fileFound = false;
 
         try {
 
@@ -118,7 +118,7 @@ public class ZipUtil {
 
             for (String extension : extensionsToSearch) {
 
-                Boolean fileFound = false;
+                boolean fileFound = false;
 
                 Enumeration<? extends ZipEntry> entries = zipFile.entries();
                 while (entries.hasMoreElements()) {

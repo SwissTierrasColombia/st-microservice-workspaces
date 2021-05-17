@@ -93,7 +93,7 @@ public class IliBusiness {
 
     }
 
-    public void startValidation(Long requestId, String observations, String pathFile, String filenameTemporal,
+    public void startValidation(Long requestId, String observations, String pathFile,
                                 Long supplyRequestedId, Long userCode, String modelVersion, Boolean skipGeometryValidation,
                                 Boolean skipErrors) throws BusinessException {
 
@@ -104,7 +104,6 @@ public class IliBusiness {
             ilivalidatorDto.setRequestId(requestId);
             ilivalidatorDto.setObservations(observations);
             ilivalidatorDto.setPathFile(pathFile);
-            ilivalidatorDto.setFilenameTemporal(filenameTemporal);
             ilivalidatorDto.setSupplyRequestedId(supplyRequestedId);
             ilivalidatorDto.setUserCode(userCode);
             ilivalidatorDto.setVersionModel(modelVersion);

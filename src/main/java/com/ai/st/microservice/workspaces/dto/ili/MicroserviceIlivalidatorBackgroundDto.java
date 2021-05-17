@@ -9,12 +9,12 @@ public class MicroserviceIlivalidatorBackgroundDto implements Serializable {
     private String pathFile;
     private Long requestId;
     private Long supplyRequestedId;
-    private String filenameTemporal;
     private Long userCode;
     private String observations;
     private String versionModel;
     private Boolean hasGeometryValidation;
     private Boolean skipErrors;
+    private String referenceId;
 
     public MicroserviceIlivalidatorBackgroundDto() {
 
@@ -42,14 +42,6 @@ public class MicroserviceIlivalidatorBackgroundDto implements Serializable {
 
     public void setSupplyRequestedId(Long supplyRequestedId) {
         this.supplyRequestedId = supplyRequestedId;
-    }
-
-    public String getFilenameTemporal() {
-        return filenameTemporal;
-    }
-
-    public void setFilenameTemporal(String filenameTemporal) {
-        this.filenameTemporal = filenameTemporal;
     }
 
     public Long getUserCode() {
@@ -90,5 +82,13 @@ public class MicroserviceIlivalidatorBackgroundDto implements Serializable {
 
     public void setSkipErrors(Boolean skipErrors) {
         this.skipErrors = skipErrors;
+    }
+
+    public String getReferenceId() {
+        return referenceId;
+    }
+
+    public void setReferenceId(String referenceId) {
+        this.referenceId = referenceId;
     }
 }
