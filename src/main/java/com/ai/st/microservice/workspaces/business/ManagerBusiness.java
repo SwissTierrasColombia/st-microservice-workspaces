@@ -2,9 +2,12 @@ package com.ai.st.microservice.workspaces.business;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
+import com.ai.st.microservice.workspaces.repositories.WorkspaceOperatorRepository;
+import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +27,12 @@ public class ManagerBusiness {
 
     @Autowired
     private ManagerFeignClient managerClient;
+
+    @Autowired
+    private IWorkspaceOperatorService workspaceOperatorService;
+
+    @Autowired
+    private OperatorBusiness operatorBusiness;
 
     public MicroserviceManagerDto getManagerById(Long managerId) {
 
@@ -87,6 +96,24 @@ public class ManagerBusiness {
         }
 
         return isDirector;
+    }
+
+    public List<MicroserviceOperatorDto> getOperatorsByManager(Long managerCode) {
+
+        List<WorkspaceOperatorEntity> workspacesOperators =
+                workspaceOperatorService.getWorkspacesOperatorsByManagerCode(managerCode);
+
+        List<Long> operatorsId = new ArrayList<>();
+
+        for (WorkspaceOperatorEntity workspaceOperatorEntity : workspacesOperators) {
+            Long operatorId = workspaceOperatorEntity.getOperatorCode();
+            if (!operatorsId.contains(operatorId)) {
+                operatorsId.add(operatorId);
+            }
+        }
+
+        return operatorsId.stream()
+                .map(operatorId -> operatorBusiness.getOperatorById(operatorId)).collect(Collectors.toList());
     }
 
 }

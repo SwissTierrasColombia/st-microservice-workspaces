@@ -44,4 +44,9 @@ public class WorkspaceOperatorService implements IWorkspaceOperatorService {
         return workspaceOperatorRepository.findByOperatorCode(operatorCode);
     }
 
+    @Override
+    public List<WorkspaceOperatorEntity> getWorkspacesOperatorsByManagerCode(Long managerCode) {
+        return workspaceOperatorRepository.findByManagerCode(managerCode);
+    }
+
 }

@@ -1,17 +1,13 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.ai.st.microservice.workspaces.business.ManagerBusiness;
 import com.ai.st.microservice.workspaces.business.OperatorBusiness;
@@ -140,6 +136,43 @@ public class ManagerV1Controller {
             log.error("Error ManagerV1Controller@getDeliveriesById#General ---> " + e.getMessage());
             responseDto = new BasicResponseDto(e.getMessage(), 3);
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
+
+    @GetMapping(value = "/operators", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get operators by manager session")
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Operators got", response = MicroserviceOperatorDto.class, responseContainer = "List"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getOperatorsByManager(@RequestHeader("authorization") String headerAuthorization) {
+
+        HttpStatus httpStatus;
+        Object responseDto;
+
+        try {
+
+            // user session
+            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            if (userDtoSession == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
+            }
+
+            // get manager
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
+            if (managerDto == null) {
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
+            }
+
+            responseDto = managerBusiness.getOperatorsByManager(managerDto.getId());
+            httpStatus = HttpStatus.OK;
+
+        } catch (Exception e) {
+            log.error("Error ManagerV1Controller@getOperatorsByManager#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

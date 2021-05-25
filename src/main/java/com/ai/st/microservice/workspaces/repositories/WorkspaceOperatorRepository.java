@@ -10,4 +10,6 @@ public interface WorkspaceOperatorRepository extends CrudRepository<WorkspaceOpe
 
     List<WorkspaceOperatorEntity> findByOperatorCode(Long operatorCode);
 
+    List<WorkspaceOperatorEntity> findByManagerCode(Long managerCode);
+
 }

@@ -16,4 +16,6 @@ public interface IWorkspaceOperatorService {
 
     List<WorkspaceOperatorEntity> getWorkspacesOperatorsByOperatorCode(Long operatorCode);
 
+    List<WorkspaceOperatorEntity> getWorkspacesOperatorsByManagerCode(Long managerCode);
+
 }
