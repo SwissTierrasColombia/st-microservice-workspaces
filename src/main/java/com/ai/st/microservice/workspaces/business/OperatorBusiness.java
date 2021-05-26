@@ -42,13 +42,13 @@ public class OperatorBusiness {
     private ManagerFeignClient managerClient;
 
     @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
     private UserBusiness userBusiness;
 
     @Autowired
     private IMunicipalityService municipalityService;
+
+    @Autowired
+    private SupplyBusiness supplyBusiness;
 
     public MicroserviceDeliveryDto createDelivery(Long operatorId, Long managerCode, String municipalityCode,
                                                   String observations, List<MicroserviceCreateDeliverySupplyDto> supplies)
@@ -343,7 +343,7 @@ public class OperatorBusiness {
 
     public MicroserviceDeliveryDto getDeliveryIdAndManager(Long deliveryId, Long managerCode) throws BusinessException {
 
-        MicroserviceDeliveryDto deliveryDto = null;
+        MicroserviceDeliveryDto deliveryDto;
 
         try {
             deliveryDto = operatorClient.findDeliveryById(deliveryId);
@@ -425,5 +425,4 @@ public class OperatorBusiness {
         }
         return operatorDto;
     }
-
 }

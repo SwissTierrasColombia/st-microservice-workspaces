@@ -3,7 +3,6 @@ package com.ai.st.microservice.workspaces.business;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
@@ -16,8 +15,11 @@ import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 @Component
 public class MunicipalityBusiness {
 
-    @Autowired
-    private IMunicipalityService municipalityService;
+    private final IMunicipalityService municipalityService;
+
+    public MunicipalityBusiness(IMunicipalityService municipalityService) {
+        this.municipalityService = municipalityService;
+    }
 
     public List<MunicipalityDto> getMunicipalitiesByDepartmentId(Long departmentId) throws BusinessException {
 

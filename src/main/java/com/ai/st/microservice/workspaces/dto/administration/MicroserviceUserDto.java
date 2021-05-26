@@ -28,7 +28,7 @@ public class MicroserviceUserDto implements Serializable {
 	private Object entity;
 
 	public MicroserviceUserDto() {
-		this.roles = new ArrayList<MicroserviceRoleDto>();
+		this.roles = new ArrayList<>();
 		this.profilesManager = new ArrayList<>();
 		this.profilesProvider = new ArrayList<>();
 		this.rolesProvider = new ArrayList<>();

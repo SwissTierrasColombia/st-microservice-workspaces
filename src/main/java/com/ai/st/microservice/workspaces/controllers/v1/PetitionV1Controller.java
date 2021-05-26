@@ -2,7 +2,6 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,14 +40,15 @@ public class PetitionV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(PetitionV1Controller.class);
 
-    @Autowired
-    private UserBusiness userBusiness;
+    private final UserBusiness userBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final ProviderBusiness providerBusiness;
 
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private ProviderBusiness providerBusiness;
+    public PetitionV1Controller(UserBusiness userBusiness, ManagerBusiness managerBusiness, ProviderBusiness providerBusiness) {
+        this.userBusiness = userBusiness;
+        this.managerBusiness = managerBusiness;
+        this.providerBusiness = providerBusiness;
+    }
 
     @RequestMapping(value = "", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create petition")
@@ -118,7 +118,7 @@ public class PetitionV1Controller {
     @RequestMapping(value = "/manager", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for manager")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions getted", response = MicroservicePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = MicroservicePetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForManager(@RequestHeader("authorization") String headerAuthorization,
@@ -168,7 +168,7 @@ public class PetitionV1Controller {
     @RequestMapping(value = "/provider/open", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for provider (open)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions getted", response = MicroservicePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = MicroservicePetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForProviderOpen(@RequestHeader("authorization") String headerAuthorization) {
@@ -216,7 +216,7 @@ public class PetitionV1Controller {
     @RequestMapping(value = "/provider/close", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for provider (close)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions getted", response = MicroservicePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = MicroservicePetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForProviderClose(

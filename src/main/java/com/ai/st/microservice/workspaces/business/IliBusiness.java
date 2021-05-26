@@ -5,19 +5,16 @@ import java.io.File;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.IliFeignClient;
-import com.ai.st.microservice.workspaces.drivers.PostgresDriver;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceExecuteQueryUpdateToRevisionDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgImportReferenceDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationStatDto;
 import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
@@ -35,8 +32,11 @@ public class IliBusiness {
     public static final Long ILI_CONCEPT_OPERATION = (long) 1;
     public static final Long ILI_CONCEPT_INTEGRATION = (long) 2;
 
-    @Autowired
-    private IliFeignClient iliClient;
+    private final IliFeignClient iliClient;
+
+    public IliBusiness(IliFeignClient iliClient) {
+        this.iliClient = iliClient;
+    }
 
     public void startExport(String hostname, String database, String password, String port, String schema,
                             String username, Long integrationId, Boolean withStats, String modelVersion, String namespace)
@@ -118,42 +118,6 @@ public class IliBusiness {
 
     }
 
-    public MicroserviceIntegrationStatDto getIntegrationStats(String databaseHost, String databasePort,
-                                                              String databaseName, String databaseUsername, String databasePassword, String databaseSchema) {
-
-        PostgresDriver connection = new PostgresDriver();
-
-        String urlConnection = "jdbc:postgresql://" + databaseHost + ":" + databasePort + "/" + databaseName;
-        connection.connect(urlConnection, databaseUsername, databasePassword, "org.postgresql.Driver");
-
-        String sqlCountSNR = "SELECT count(*) FROM " + databaseSchema + ".snr_predio_juridico;";
-        long countSNR = connection.count(sqlCountSNR);
-
-        String sqlCountGC = "SELECT count(*) FROM " + databaseSchema + ".gc_predio_catastro;";
-        long countGC = connection.count(sqlCountGC);
-
-        String sqlCountMatch = "SELECT count(*) FROM " + databaseSchema + ".ini_predio_insumos;";
-        long countMatch = connection.count(sqlCountMatch);
-
-        double percentage;
-
-        if (countSNR >= countGC) {
-            percentage = (double) (countMatch * 100) / countSNR;
-        } else {
-            percentage = (double) (countMatch * 100) / countGC;
-        }
-
-        connection.disconnect();
-
-        MicroserviceIntegrationStatDto integrationStat = new MicroserviceIntegrationStatDto();
-        integrationStat.setCountGC(countGC);
-        integrationStat.setCountSNR(countSNR);
-        integrationStat.setCountMatch(countMatch);
-        integrationStat.setPercentage(percentage);
-
-        return integrationStat;
-    }
-
     public void startImport(String pathFile, String hostname, String database, String password, String port,
                             String schema, String username, String reference, String versionModel, Long conceptId)
             throws BusinessException {
@@ -175,7 +139,7 @@ public class IliBusiness {
             iliClient.startImport(importDto);
 
         } catch (Exception e) {
-            throw new BusinessException("No se ha podido iniciar la impotación.");
+            throw new BusinessException("No se ha podido iniciar la importación.");
         }
 
     }
@@ -217,7 +181,7 @@ public class IliBusiness {
 
             iliClient.updateRecordFromRevision(data);
         } catch (Exception e) {
-            log.error("No se ha podido realizar la actualizacion del registro: " + e.getMessage());
+            log.error("No se ha podido realizar la actualización del registro: " + e.getMessage());
         }
     }
 
@@ -242,7 +206,7 @@ public class IliBusiness {
             iliClient.startExportReference(exportDto);
 
         } catch (Exception e) {
-            log.error("No se ha podido iniciar la exportacion de la base de datos: " + e.getMessage());
+            log.error("No se ha podido iniciar la exportación de la base de datos: " + e.getMessage());
             throw new BusinessException("No se ha podido iniciar la exportación.");
         }
 

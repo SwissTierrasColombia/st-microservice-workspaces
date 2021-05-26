@@ -7,7 +7,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
@@ -31,23 +30,23 @@ public class RabbitMQUpdateIntegrationListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
-    private IntegrationBusiness integrationBusiness;
+    private final IntegrationBusiness integrationBusiness;
+    private final NotificationBusiness notificationBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final UserBusiness userBusiness;
+    private final IIntegrationService integrationService;
+    private final IIntegrationStateService integrationStateService;
 
-    @Autowired
-    private NotificationBusiness notificationBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private IIntegrationService integrationService;
-
-    @Autowired
-    private IIntegrationStateService integrationStateService;
+    public RabbitMQUpdateIntegrationListener(IntegrationBusiness integrationBusiness, NotificationBusiness notificationBusiness,
+                                             ManagerBusiness managerBusiness, UserBusiness userBusiness, IIntegrationService integrationService,
+                                             IIntegrationStateService integrationStateService) {
+        this.integrationBusiness = integrationBusiness;
+        this.notificationBusiness = notificationBusiness;
+        this.managerBusiness = managerBusiness;
+        this.userBusiness = userBusiness;
+        this.integrationService = integrationService;
+        this.integrationStateService = integrationStateService;
+    }
 
     @RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}", concurrency = "${st.rabbitmq.queueUpdateIntegration.concurrency}")
     public void updateIntegration(MicroserviceIntegrationStatDto integrationStats) {

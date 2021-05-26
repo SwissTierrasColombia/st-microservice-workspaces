@@ -30,42 +30,39 @@ import feign.form.spring.SpringFormEncoder;
 @FeignClient(name = "st-microservice-managers", configuration = ManagerFeignClient.Configuration.class)
 public interface ManagerFeignClient {
 
-	@GetMapping("/api/managers/v1/managers/{managerId}")
-	public MicroserviceManagerDto findById(@PathVariable Long managerId);
+    @GetMapping("/api/managers/v1/managers/{managerId}")
+    MicroserviceManagerDto findById(@PathVariable Long managerId);
 
-	@GetMapping("/api/managers/v1/users/{userCode}/managers")
-	public MicroserviceManagerDto findByUserCode(@PathVariable Long userCode);
+    @GetMapping("/api/managers/v1/users/{userCode}/managers")
+    MicroserviceManagerDto findByUserCode(@PathVariable Long userCode);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/users", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceManagerUserDto addUserToManager(@RequestBody MicroserviceAddUserToManagerDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/users", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceManagerUserDto addUserToManager(@RequestBody MicroserviceAddUserToManagerDto data);
 
-	@GetMapping("/api/managers/v1/users/{userCode}/profiles")
-	public List<MicroserviceManagerProfileDto> findProfilesByUser(@PathVariable Long userCode);
+    @GetMapping("/api/managers/v1/users/{userCode}/profiles")
+    List<MicroserviceManagerProfileDto> findProfilesByUser(@PathVariable Long userCode);
 
-	@GetMapping("/api/managers/v1/managers/{managerId}/users")
-	public List<MicroserviceManagerUserDto> findUsersByManager(@PathVariable Long managerId,
-			@RequestParam(required = false, name = "profiles") List<Long> profiles);
+    @GetMapping("/api/managers/v1/managers/{managerId}/users")
+    List<MicroserviceManagerUserDto> findUsersByManager(@PathVariable Long managerId,
+                                                        @RequestParam(required = false, name = "profiles") List<Long> profiles);
 
-	@RequestMapping(method = RequestMethod.DELETE, value = "/api/managers/v1/users", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceManagerUserDto removeUserToManager(@RequestBody MicroserviceAddUserToManagerDto data)
-			throws BusinessException;
+    @RequestMapping(method = RequestMethod.DELETE, value = "/api/managers/v1/users", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceManagerUserDto removeUserToManager(@RequestBody MicroserviceAddUserToManagerDto data)
+            throws BusinessException;
 
-	@RequestMapping(method = RequestMethod.GET, value = "/api/managers/v1/profiles", consumes = APPLICATION_JSON_VALUE)
-	public List<MicroserviceManagerProfileDto> getManagerProfiles();
+    class Configuration {
 
-	class Configuration {
+        @Bean
+        Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
+            return new SpringFormEncoder(new SpringEncoder(converters));
+        }
 
-		@Bean
-		Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
-			return new SpringFormEncoder(new SpringEncoder(converters));
-		}
+        @Bean
+        @Scope("prototype")
+        public Feign.Builder feignBuilder() {
+            return Feign.builder();
+        }
 
-		@Bean
-		@Scope("prototype")
-		public Feign.Builder feignBuilder() {
-			return Feign.builder();
-		}
-
-	}
+    }
 
 }

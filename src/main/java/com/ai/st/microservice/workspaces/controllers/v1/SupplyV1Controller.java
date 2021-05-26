@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,8 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ai.st.microservice.workspaces.business.ManagerBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
@@ -41,20 +38,15 @@ public class SupplyV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(SupplyV1Controller.class);
 
-    @Autowired
-    private UserFeignClient userClient;
+    private final SupplyBusiness supplyBusiness;
+    private final UserBusiness userBusiness;
+    private final ManagerBusiness managerBusiness;
 
-    @Autowired
-    private ManagerFeignClient managerClient;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
+    public SupplyV1Controller(SupplyBusiness supplyBusiness, UserBusiness userBusiness, ManagerBusiness managerBusiness) {
+        this.supplyBusiness = supplyBusiness;
+        this.userBusiness = userBusiness;
+        this.managerBusiness = managerBusiness;
+    }
 
     @RequestMapping(value = "/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get supplies by municipality")
@@ -68,7 +60,7 @@ public class SupplyV1Controller {
                                                        @RequestParam(name = "page", required = false) Integer page,
                                                        @RequestParam(name = "manager", required = false) Long managerCode,
                                                        @RequestParam(name = "operator", required = false) Long operatorCode,
-                                                       @RequestParam(name = "active", required = true, defaultValue = "true") boolean active,
+                                                       @RequestParam(name = "active", defaultValue = "true") boolean active,
                                                        @RequestParam(name = "requests", required = false) List<Long> requests) {
 
         HttpStatus httpStatus;

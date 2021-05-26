@@ -16,7 +16,6 @@ import com.ai.st.microservice.workspaces.services.WorkspaceService;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,26 +30,25 @@ public class CadastralAuthorityBusiness {
     @Value("${st.filesDirectory}")
     private String stFilesDirectory;
 
-    @Autowired
-    private MunicipalityBusiness municipalityBusiness;
+    private final MunicipalityBusiness municipalityBusiness;
+    private final WorkspaceService workspaceService;
+    private final FileBusiness fileBusiness;
+    private final SupplyBusiness supplyBusiness;
+    private final MunicipalityService municipalityService;
+    private final ReportBusiness reportBusiness;
+    private final ManagerBusiness managerBusiness;
 
-    @Autowired
-    private WorkspaceService workspaceService;
-
-    @Autowired
-    private FileBusiness fileBusiness;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private MunicipalityService municipalityService;
-
-    @Autowired
-    private ReportBusiness reportBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
+    public CadastralAuthorityBusiness(MunicipalityBusiness municipalityBusiness, WorkspaceService workspaceService, FileBusiness fileBusiness,
+                                      SupplyBusiness supplyBusiness, MunicipalityService municipalityService,
+                                      ReportBusiness reportBusiness, ManagerBusiness managerBusiness) {
+        this.municipalityBusiness = municipalityBusiness;
+        this.workspaceService = workspaceService;
+        this.fileBusiness = fileBusiness;
+        this.supplyBusiness = supplyBusiness;
+        this.municipalityService = municipalityService;
+        this.reportBusiness = reportBusiness;
+        this.managerBusiness = managerBusiness;
+    }
 
     public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId, String name,
                                                                 String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
@@ -58,7 +56,7 @@ public class CadastralAuthorityBusiness {
         MicroserviceSupplyDto supplyDto;
 
         if (ftp == null && file == null) {
-            throw new BusinessException("Se debe cargar algun tipo de adjunto");
+            throw new BusinessException("Se debe cargar algún tipo de adjunto");
         }
 
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -81,15 +79,15 @@ public class CadastralAuthorityBusiness {
 
         if (file != null) {
 
-            if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE
-                    && attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY) {
+            if (!attachmentTypeId.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE)
+                    && !attachmentTypeId.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY)) {
                 throw new BusinessException("No se puede cargar un archivo para el tipo de insumo seleccionado.");
             }
 
             String loadedFileName = file.getOriginalFilename();
             String loadedFileExtension = FilenameUtils.getExtension(loadedFileName);
 
-            Boolean zipFile = true;
+            boolean zipFile = true;
             if (loadedFileExtension.equalsIgnoreCase("zip")) {
                 zipFile = false;
             }
@@ -103,7 +101,7 @@ public class CadastralAuthorityBusiness {
 
         } else if (ftp != null) {
 
-            if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP) {
+            if (!attachmentTypeId.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP)) {
                 throw new BusinessException("No se puede cargar FTP para el tipo de insumo seleccionado.");
             }
 

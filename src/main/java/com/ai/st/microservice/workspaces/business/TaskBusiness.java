@@ -10,7 +10,6 @@ import java.util.Map;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -72,35 +71,32 @@ public class TaskBusiness {
     public static final Long TASK_STATE_CANCELLED = (long) 3;
     public static final Long TASK_STATE_STARTED = (long) 4;
 
-    @Autowired
-    private TaskFeignClient taskClient;
+    private final TaskFeignClient taskClient;
+    private final UserFeignClient userClient;
+    private final SupplyFeignClient supplyClient;
+    private final ProviderFeignClient providerClient;
+    private final IliBusiness iliBusiness;
+    private final CrytpoBusiness cryptoBusiness;
+    private final IntegrationBusiness integrationBusiness;
+    private final ProviderBusiness providerBusiness;
+    private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
+    private final IIntegrationService integrationService;
 
-    @Autowired
-    private UserFeignClient userClient;
-
-    @Autowired
-    private SupplyFeignClient supplyClient;
-
-    @Autowired
-    private ProviderFeignClient providerClient;
-
-    @Autowired
-    private IliBusiness iliBusiness;
-
-    @Autowired
-    private CrytpoBusiness cryptoBusiness;
-
-    @Autowired
-    private IntegrationBusiness integrationBusiness;
-
-    @Autowired
-    private DatabaseIntegrationBusiness databaseIntegrationBusiness;
-
-    @Autowired
-    private ProviderBusiness providerBusiness;
-
-    @Autowired
-    private IIntegrationService integrationService;
+    public TaskBusiness(TaskFeignClient taskClient, UserFeignClient userClient, SupplyFeignClient supplyClient,
+                        ProviderFeignClient providerClient, IliBusiness iliBusiness, CrytpoBusiness cryptoBusiness,
+                        IntegrationBusiness integrationBusiness, DatabaseIntegrationBusiness databaseIntegrationBusiness,
+                        ProviderBusiness providerBusiness, IIntegrationService integrationService) {
+        this.taskClient = taskClient;
+        this.userClient = userClient;
+        this.supplyClient = supplyClient;
+        this.providerClient = providerClient;
+        this.iliBusiness = iliBusiness;
+        this.cryptoBusiness = cryptoBusiness;
+        this.integrationBusiness = integrationBusiness;
+        this.databaseIntegrationBusiness = databaseIntegrationBusiness;
+        this.providerBusiness = providerBusiness;
+        this.integrationService = integrationService;
+    }
 
     public MicroserviceTaskDto extendTask(MicroserviceTaskDto taskDto) {
 
@@ -351,7 +347,7 @@ public class TaskBusiness {
 
                             // modify integration state to generating product
                             integrationBusiness.updateStateToIntegration(integrationId,
-                                    IntegrationStateBusiness.STATE_GENERATING_PRODUCT, null,null, null, "SISTEMA");
+                                    IntegrationStateBusiness.STATE_GENERATING_PRODUCT, null, null, null, "SISTEMA");
 
                         }
                     }
@@ -383,13 +379,13 @@ public class TaskBusiness {
                 if (propertyRequest != null && propertyTypeSupply != null) {
 
                     Long requestId = Long.parseLong(propertyRequest.getValue());
-                    Long typeSuppyId = Long.parseLong(propertyTypeSupply.getValue());
+                    Long typeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
 
                     MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
                     if (requestDto != null) {
 
                         MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
-                                .filter(sR -> sR.getTypeSupply().getId().equals(typeSuppyId)).findAny().orElse(null);
+                                .filter(sR -> sR.getTypeSupply().getId().equals(typeSupplyId)).findAny().orElse(null);
                         if (supplyRequestedDto instanceof MicroserviceSupplyRequestedDto) {
 
                             Long supplyStateId = supplyRequestedDto.getState().getId();
@@ -535,7 +531,7 @@ public class TaskBusiness {
                             // modify integration state to finish assisted
                             String textHistory = userDto.getFirstName() + " " + userDto.getLastName();
                             integrationBusiness.updateStateToIntegration(integrationId,
-                                    IntegrationStateBusiness.STATE_STARTED_AUTOMATIC, null,userDto.getId(), null,
+                                    IntegrationStateBusiness.STATE_STARTED_AUTOMATIC, null, userDto.getId(), null,
                                     textHistory);
 
                         }
@@ -577,7 +573,7 @@ public class TaskBusiness {
                             && propertyModelVersion != null) {
 
                         Long requestId = Long.parseLong(propertyRequest.getValue());
-                        Long typeSuppyId = Long.parseLong(propertyTypeSupply.getValue());
+                        Long typeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
                         String municipality = propertyMunicipality.getValue();
 
                         MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
@@ -593,7 +589,7 @@ public class TaskBusiness {
                                 users.add(providerUserDto.getUserCode());
                             }
 
-                            this.createTaskForGenerationSupply(users, municipality, requestId, typeSuppyId,
+                            this.createTaskForGenerationSupply(users, municipality, requestId, typeSupplyId,
                                     taskDto.getDeadline(), propertyModelVersion.getValue());
                         }
 

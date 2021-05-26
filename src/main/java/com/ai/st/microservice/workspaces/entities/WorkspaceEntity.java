@@ -33,7 +33,7 @@ public class WorkspaceEntity {
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date createdAt;
 
-	@Column(name = "updated_at", nullable = true)
+	@Column(name = "updated_at")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date updatedAt;
 
@@ -42,7 +42,7 @@ public class WorkspaceEntity {
 	private MunicipalityEntity municipality;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "workspace_id", referencedColumnName = "id", nullable = true)
+	@JoinColumn(name = "workspace_id", referencedColumnName = "id")
 	private WorkspaceEntity workspace;
 
 	@OneToMany(mappedBy = "workspace", fetch = FetchType.LAZY)

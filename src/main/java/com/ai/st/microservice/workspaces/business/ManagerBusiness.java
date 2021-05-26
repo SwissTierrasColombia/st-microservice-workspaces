@@ -6,11 +6,9 @@ import java.util.stream.Collectors;
 
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
-import com.ai.st.microservice.workspaces.repositories.WorkspaceOperatorRepository;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
@@ -25,14 +23,15 @@ public class ManagerBusiness {
 
     private final Logger log = LoggerFactory.getLogger(ManagerBusiness.class);
 
-    @Autowired
-    private ManagerFeignClient managerClient;
+    private final ManagerFeignClient managerClient;
+    private final IWorkspaceOperatorService workspaceOperatorService;
+    private final OperatorBusiness operatorBusiness;
 
-    @Autowired
-    private IWorkspaceOperatorService workspaceOperatorService;
-
-    @Autowired
-    private OperatorBusiness operatorBusiness;
+    public ManagerBusiness(ManagerFeignClient managerClient, IWorkspaceOperatorService workspaceOperatorService, OperatorBusiness operatorBusiness) {
+        this.managerClient = managerClient;
+        this.workspaceOperatorService = workspaceOperatorService;
+        this.operatorBusiness = operatorBusiness;
+    }
 
     public MicroserviceManagerDto getManagerById(Long managerId) {
 
@@ -112,8 +111,7 @@ public class ManagerBusiness {
             }
         }
 
-        return operatorsId.stream()
-                .map(operatorId -> operatorBusiness.getOperatorById(operatorId)).collect(Collectors.toList());
+        return operatorsId.stream().map(operatorBusiness::getOperatorById).collect(Collectors.toList());
     }
 
 }

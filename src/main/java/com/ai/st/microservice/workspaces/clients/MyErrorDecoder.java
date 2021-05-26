@@ -15,8 +15,7 @@ import feign.codec.ErrorDecoder;
 public class MyErrorDecoder implements ErrorDecoder {
 
 	private final ErrorDecoder defaultErrorDecoder = new Default();
-
-	private ObjectMapper mapper = new ObjectMapper();
+	private final ObjectMapper mapper = new ObjectMapper();
 
 	@Override
 	public Exception decode(String methodKey, Response response) {

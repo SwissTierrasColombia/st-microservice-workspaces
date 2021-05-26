@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
@@ -42,29 +41,27 @@ public class AdministrationBusiness {
 
     private final Logger log = LoggerFactory.getLogger(AdministrationBusiness.class);
 
-    @Autowired
-    private UserFeignClient userClient;
+    private final UserFeignClient userClient;
+    private final ProviderFeignClient providerClient;
+    private final ManagerFeignClient managerClient;
+    private final OperatorFeignClient operatorClient;
+    private final NotificationBusiness notificationBusiness;
+    private final ProviderBusiness providerBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final OperatorBusiness operatorBusiness;
 
-    @Autowired
-    private ProviderFeignClient providerClient;
-
-    @Autowired
-    private ManagerFeignClient managerClient;
-
-    @Autowired
-    private OperatorFeignClient operatorClient;
-
-    @Autowired
-    private NotificationBusiness notificationBusiness;
-
-    @Autowired
-    private ProviderBusiness providerBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private OperatorBusiness operatorBusiness;
+    public AdministrationBusiness(UserFeignClient userClient, ProviderFeignClient providerClient, ManagerFeignClient managerClient,
+                                  OperatorFeignClient operatorClient, NotificationBusiness notificationBusiness,
+                                  ProviderBusiness providerBusiness, ManagerBusiness managerBusiness, OperatorBusiness operatorBusiness) {
+        this.userClient = userClient;
+        this.providerClient = providerClient;
+        this.managerClient = managerClient;
+        this.operatorClient = operatorClient;
+        this.notificationBusiness = notificationBusiness;
+        this.providerBusiness = providerBusiness;
+        this.managerBusiness = managerBusiness;
+        this.operatorBusiness = operatorBusiness;
+    }
 
     public MicroserviceUserDto createUserFromAdministrator(String firstName, String lastName, String email,
                                                            String username, String password, CreateUserRoleProviderDto roleProvider,

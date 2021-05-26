@@ -2,7 +2,6 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,14 +36,15 @@ public class IntegrationV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(IntegrationV1Controller.class);
 
-    @Autowired
-    private ManagerBusiness managerBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final UserBusiness userBusiness;
+    private final IntegrationBusiness integrationBusiness;
 
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private IntegrationBusiness integrationBusiness;
+    public IntegrationV1Controller(ManagerBusiness managerBusiness, UserBusiness userBusiness, IntegrationBusiness integrationBusiness) {
+        this.managerBusiness = managerBusiness;
+        this.userBusiness = userBusiness;
+        this.integrationBusiness = integrationBusiness;
+    }
 
     @RequestMapping(value = "/running", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get integrations")
@@ -88,55 +88,6 @@ public class IntegrationV1Controller {
             responseDto = new BasicResponseDto(e.getMessage(), 2);
         } catch (Exception e) {
             log.error("Error IntegrationV1Controller@getIntegrationsRunning#General ---> " + e.getMessage());
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
-        }
-
-        return new ResponseEntity<>(responseDto, httpStatus);
-    }
-
-    @RequestMapping(value = "/pending", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Get integrations")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get integrations", response = PossibleIntegrationDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
-    @ResponseBody
-    public ResponseEntity<Object> getIntegrationsPending(@RequestHeader("authorization") String headerAuthorization) {
-
-        HttpStatus httpStatus;
-        Object responseDto;
-
-        try {
-
-            // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
-            if (userDtoSession == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-            }
-
-            // get manager
-            MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
-            if (managerDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
-            }
-
-            if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-                throw new InputValidationException("El usuario no tiene permisos para consultar las integraciones.");
-            }
-
-            responseDto = integrationBusiness.getPossiblesIntegrations(managerDto);
-            httpStatus = HttpStatus.OK;
-
-        } catch (DisconnectedMicroserviceException e) {
-            log.error("Error IntegrationV1Controller@getIntegrationsPending#Microservice ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
-        } catch (BusinessException e) {
-            log.error("Error IntegrationV1Controller@getIntegrationsPending#Business ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
-        } catch (Exception e) {
-            log.error("Error IntegrationV1Controller@getIntegrationsPending#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 3);
         }

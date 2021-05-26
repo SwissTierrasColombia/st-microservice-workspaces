@@ -26,15 +26,15 @@ import feign.form.spring.SpringFormEncoder;
 public interface ReportFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/download-supplies", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceReportInformationDto createReportDownloadSuppliesTotal(
+	MicroserviceReportInformationDto createReportDownloadSuppliesTotal(
 			@RequestBody MicroserviceRequestReportDownloadSupplyDto data);
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/delivery-au", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceReportInformationDto createReportDeliverySuppliesAC(
+	MicroserviceReportInformationDto createReportDeliverySuppliesAC(
 			@RequestBody MicroserviceRequestReportDeliveryACDto data);
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/reports/v1/reports/delivery-manager", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceReportInformationDto createReportDeliveryManager(
+	MicroserviceReportInformationDto createReportDeliveryManager(
 			@RequestBody MicroserviceRequestReportDeliveryManagerDto data);
 
 	class Configuration {

@@ -8,7 +8,6 @@ import java.util.List;
 import com.ai.st.microservice.workspaces.business.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +22,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CreateProviderProfileDto;
@@ -56,26 +52,18 @@ public class ProviderV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(ProviderV1Controller.class);
 
-    @Autowired
-    private WorkspaceBusiness workspaceBusiness;
+    private final WorkspaceBusiness workspaceBusiness;
+    private final ProviderBusiness providerBusiness;
+    private final UserBusiness userBusiness;
+    private final ManagerBusiness managerBusiness;
 
-    @Autowired
-    private UserFeignClient userClient;
-
-    @Autowired
-    private ManagerFeignClient managerClient;
-
-    @Autowired
-    private ProviderFeignClient providerClient;
-
-    @Autowired
-    private ProviderBusiness providerBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
+    public ProviderV1Controller(WorkspaceBusiness workspaceBusiness, ProviderBusiness providerBusiness,
+                                UserBusiness userBusiness, ManagerBusiness managerBusiness) {
+        this.workspaceBusiness = workspaceBusiness;
+        this.providerBusiness = providerBusiness;
+        this.userBusiness = userBusiness;
+        this.managerBusiness = managerBusiness;
+    }
 
     @RequestMapping(value = "/municipalities/{municipalityId}/requests", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create request")
@@ -369,7 +357,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Close request", response = MicroserviceRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
-    public ResponseEntity<Object> getRequestsByEmmiters(@RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<Object> getRequestsByEmitters(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -388,7 +376,7 @@ public class ProviderV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
 
-            responseDto = providerBusiness.getRequestsByEmmitersManager(managerDto.getId());
+            responseDto = providerBusiness.getRequestsByEmittersManager(managerDto.getId());
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
@@ -912,8 +900,8 @@ public class ProviderV1Controller {
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsByMunicipality(@RequestHeader("authorization") String headerAuthorization,
-                                                            @RequestParam(name = "page", required = true) Integer page,
-                                                            @RequestParam(name = "municipality", required = true) String municipalityCode) {
+                                                            @RequestParam(name = "page") Integer page,
+                                                            @RequestParam(name = "municipality") String municipalityCode) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -961,8 +949,8 @@ public class ProviderV1Controller {
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsByProvider(@RequestHeader("authorization") String headerAuthorization,
-                                                        @RequestParam(name = "page", required = true) Integer page,
-                                                        @RequestParam(name = "provider", required = true) Long providerId) {
+                                                        @RequestParam(name = "page") Integer page,
+                                                        @RequestParam(name = "provider") Long providerId) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -1151,8 +1139,8 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Start revision", response = MicroserviceQueryResultRegistralRevisionDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
-    public ResponseEntity<Object> getRercodsFromRevision(@RequestHeader("authorization") String headerAuthorization,
-                                                         @PathVariable Long supplyRequestedId, @RequestParam(name = "page", required = true) int page) {
+    public ResponseEntity<Object> getRecordsFromRevision(@RequestHeader("authorization") String headerAuthorization,
+                                                         @PathVariable Long supplyRequestedId, @RequestParam(name = "page") int page) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -1202,7 +1190,7 @@ public class ProviderV1Controller {
     @ResponseBody
     public ResponseEntity<Object> updateRecordBoundarySpace(@RequestHeader("authorization") String headerAuthorization,
                                                             @PathVariable Long supplyRequestedId, @PathVariable Long boundarySpaceId,
-                                                            @RequestParam(name = "file", required = true) MultipartFile file) {
+                                                            @RequestParam(name = "file") MultipartFile file) {
 
         HttpStatus httpStatus;
         Object responseDto;

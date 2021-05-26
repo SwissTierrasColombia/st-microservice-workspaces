@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ai.st.microservice.workspaces.clients.ReportFeignClient;
@@ -21,8 +20,11 @@ public class ReportBusiness {
 
     private final Logger log = LoggerFactory.getLogger(ReportBusiness.class);
 
-    @Autowired
-    private ReportFeignClient reportClient;
+    private final ReportFeignClient reportClient;
+
+    public ReportBusiness(ReportFeignClient reportClient) {
+        this.reportClient = reportClient;
+    }
 
     public MicroserviceReportInformationDto generateReportDownloadSupply(String namespace, String dateCreation,
                                                                          String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,

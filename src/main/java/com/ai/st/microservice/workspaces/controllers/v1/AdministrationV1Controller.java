@@ -4,7 +4,6 @@ import com.ai.st.microservice.workspaces.business.*;
 import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +15,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.AddProfileToUserDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.ChangePasswordDto;
@@ -42,26 +38,18 @@ public class AdministrationV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(AdministrationV1Controller.class);
 
-    @Autowired
-    private AdministrationBusiness administrationBusiness;
+    private final AdministrationBusiness administrationBusiness;
+    private final UserBusiness userBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final ProviderBusiness providerBusiness;
 
-    @Autowired
-    private UserFeignClient userClient;
-
-    @Autowired
-    private ProviderFeignClient providerClient;
-
-    @Autowired
-    private ManagerFeignClient managerClient;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private ProviderBusiness providerBusiness;
+    public AdministrationV1Controller(AdministrationBusiness administrationBusiness, UserBusiness userBusiness,
+                                      ManagerBusiness managerBusiness, ProviderBusiness providerBusiness) {
+        this.administrationBusiness = administrationBusiness;
+        this.userBusiness = userBusiness;
+        this.managerBusiness = managerBusiness;
+        this.providerBusiness = providerBusiness;
+    }
 
     @RequestMapping(value = "/users", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create user")

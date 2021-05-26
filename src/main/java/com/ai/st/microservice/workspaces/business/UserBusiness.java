@@ -2,7 +2,6 @@ package com.ai.st.microservice.workspaces.business;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
@@ -14,8 +13,11 @@ public class UserBusiness {
 
     private final Logger log = LoggerFactory.getLogger(UserBusiness.class);
 
-    @Autowired
-    private UserFeignClient userClient;
+    private final UserFeignClient userClient;
+
+    public UserBusiness(UserFeignClient userClient) {
+        this.userClient = userClient;
+    }
 
     public MicroserviceUserDto getUserById(Long userId) {
         MicroserviceUserDto userDto = null;

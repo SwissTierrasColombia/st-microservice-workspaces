@@ -7,7 +7,6 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.business.NotificationBusiness;
@@ -27,17 +26,18 @@ public class RabbitMQUpdateStateSupplyListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
-    private ProviderFeignClient providerClient;
+    private final ProviderFeignClient providerClient;
+    private final UserBusiness userBusiness;
+    private final NotificationBusiness notificationBusiness;
+    private final IMunicipalityService municipalityService;
 
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private NotificationBusiness notificationBusiness;
-
-    @Autowired
-    private IMunicipalityService municipalityService;
+    public RabbitMQUpdateStateSupplyListener(ProviderFeignClient providerClient, UserBusiness userBusiness,
+                                             NotificationBusiness notificationBusiness, IMunicipalityService municipalityService) {
+        this.providerClient = providerClient;
+        this.userBusiness = userBusiness;
+        this.notificationBusiness = notificationBusiness;
+        this.municipalityService = municipalityService;
+    }
 
     @RabbitListener(queues = "${st.rabbitmq.queueUpdateStateSupply.queue}", concurrency = "${st.rabbitmq.queueUpdateStateSupply.concurrency}")
     public void updateIntegration(MicroserviceValidationDto validationDto) {

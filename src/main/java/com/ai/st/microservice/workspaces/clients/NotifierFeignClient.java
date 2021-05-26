@@ -30,46 +30,46 @@ import feign.form.spring.SpringFormEncoder;
 @FeignClient(name = "st-microservice-notifier", configuration = NotifierFeignClient.Configuration.class)
 public interface NotifierFeignClient {
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/new_user", consumes = APPLICATION_JSON_VALUE)
-	public void creationUser(@RequestBody MicroserviceNotificationNewUserDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/new_user", consumes = APPLICATION_JSON_VALUE)
+    void creationUser(@RequestBody MicroserviceNotificationNewUserDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/municipality_management_assignment", consumes = APPLICATION_JSON_VALUE)
-	public void municipalityManagement(@RequestBody MicroserviceNotificationMunicipalityManagementDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/municipality_management_assignment", consumes = APPLICATION_JSON_VALUE)
+    void municipalityManagement(@RequestBody MicroserviceNotificationMunicipalityManagementDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/assignment_operation_municipality", consumes = APPLICATION_JSON_VALUE)
-	public void assignmentOperation(@RequestBody MicroserviceNotificationAssignmentOperationMunicipalityDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/assignment_operation_municipality", consumes = APPLICATION_JSON_VALUE)
+    void assignmentOperation(@RequestBody MicroserviceNotificationAssignmentOperationMunicipalityDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/input_request", consumes = APPLICATION_JSON_VALUE)
-	public void inputRequest(@RequestBody MicroserviceNotificationInputRequestDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/input_request", consumes = APPLICATION_JSON_VALUE)
+    void inputRequest(@RequestBody MicroserviceNotificationInputRequestDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/load_of_inputs", consumes = APPLICATION_JSON_VALUE)
-	public void loadOfInputs(@RequestBody MicroserviceNotificationLoadOfInputsDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/load_of_inputs", consumes = APPLICATION_JSON_VALUE)
+    void loadOfInputs(@RequestBody MicroserviceNotificationLoadOfInputsDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/input_integrations", consumes = APPLICATION_JSON_VALUE)
-	public void inputIntegration(@RequestBody MicroserviceNotificationInputIntegrationsDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/input_integrations", consumes = APPLICATION_JSON_VALUE)
+    void inputIntegration(@RequestBody MicroserviceNotificationInputIntegrationsDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/task_assignment", consumes = APPLICATION_JSON_VALUE)
-	public void taskAssignment(@RequestBody MicroserviceNotificationTaskAssignmentDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/task_assignment", consumes = APPLICATION_JSON_VALUE)
+    void taskAssignment(@RequestBody MicroserviceNotificationTaskAssignmentDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/integration_file_generation", consumes = APPLICATION_JSON_VALUE)
-	public void productGenerated(@RequestBody MicroserviceNotificationIntegrationFileGenerationDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/integration_file_generation", consumes = APPLICATION_JSON_VALUE)
+    void productGenerated(@RequestBody MicroserviceNotificationIntegrationFileGenerationDto data);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/delivery_of_inputs", consumes = APPLICATION_JSON_VALUE)
-	public void deliverySupplies(@RequestBody MicroserviceNotificationDeliveryOfInputsDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/notifier/v1/notify/delivery_of_inputs", consumes = APPLICATION_JSON_VALUE)
+    void deliverySupplies(@RequestBody MicroserviceNotificationDeliveryOfInputsDto data);
 
-	class Configuration {
+    class Configuration {
 
-		@Bean
-		Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
-			return new SpringFormEncoder(new SpringEncoder(converters));
-		}
+        @Bean
+        Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
+            return new SpringFormEncoder(new SpringEncoder(converters));
+        }
 
-		@Bean
-		@Scope("prototype")
-		public Feign.Builder feignBuilder() {
-			return Feign.builder();
-		}
+        @Bean
+        @Scope("prototype")
+        public Feign.Builder feignBuilder() {
+            return Feign.builder();
+        }
 
-	}
+    }
 
 }

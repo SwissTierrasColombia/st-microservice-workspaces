@@ -4,7 +4,6 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.clients.GeovisorFeignClient;
@@ -15,7 +14,6 @@ import com.ai.st.microservice.workspaces.dto.IntegrationHistoryDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStatDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStateDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.PossibleIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.geovisor.MicroserviceDataMapDto;
 import com.ai.st.microservice.workspaces.dto.geovisor.MicroserviceSetupMapDto;
 import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
@@ -35,40 +33,37 @@ import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 @Component
 public class IntegrationBusiness {
 
-    @Autowired
-    private SupplyFeignClient supplyClient;
-
-    @Autowired
-    private ProviderFeignClient providerClient;
-
-    @Autowired
-    private GeovisorFeignClient geovisorClient;
-
-    @Autowired
-    private IIntegrationService integrationService;
-
-    @Autowired
-    private IIntegrationStatService integrationStatService;
-
-    @Autowired
-    private IIntegrationStateService integrationStateService;
-
-    @Autowired
-    private IWorkspaceService workspaceService;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private MunicipalityBusiness municipalityBusiness;
-
-    @Autowired
-    private DatabaseIntegrationBusiness databaseBusiness;
-
-    @Autowired
-    private CrytpoBusiness cryptoBusiness;
+    private final SupplyFeignClient supplyClient;
+    private final ProviderFeignClient providerClient;
+    private final GeovisorFeignClient geovisorClient;
+    private final IIntegrationService integrationService;
+    private final IIntegrationStatService integrationStatService;
+    private final IIntegrationStateService integrationStateService;
+    private final IWorkspaceService workspaceService;
+    private final SupplyBusiness supplyBusiness;
+    private final MunicipalityBusiness municipalityBusiness;
+    private final DatabaseIntegrationBusiness databaseBusiness;
+    private final CrytpoBusiness cryptoBusiness;
 
     private final Logger log = LoggerFactory.getLogger(IntegrationBusiness.class);
+
+    public IntegrationBusiness(SupplyFeignClient supplyClient, ProviderFeignClient providerClient, GeovisorFeignClient geovisorClient,
+                               IIntegrationService integrationService, IIntegrationStatService integrationStatService,
+                               IIntegrationStateService integrationStateService, IWorkspaceService workspaceService,
+                               SupplyBusiness supplyBusiness, MunicipalityBusiness municipalityBusiness,
+                               DatabaseIntegrationBusiness databaseBusiness, CrytpoBusiness cryptoBusiness) {
+        this.supplyClient = supplyClient;
+        this.providerClient = providerClient;
+        this.geovisorClient = geovisorClient;
+        this.integrationService = integrationService;
+        this.integrationStatService = integrationStatService;
+        this.integrationStateService = integrationStateService;
+        this.workspaceService = workspaceService;
+        this.supplyBusiness = supplyBusiness;
+        this.municipalityBusiness = municipalityBusiness;
+        this.databaseBusiness = databaseBusiness;
+        this.cryptoBusiness = cryptoBusiness;
+    }
 
     public IntegrationDto createIntegration(String hostname, String port, String database, String schema,
                                             String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
@@ -223,7 +218,7 @@ public class IntegrationBusiness {
                 supplySnrDto.setTypeSupply(providerClient.findTypeSuppleById(supplySnrDto.getTypeSupplyCode()));
                 integrationDto.setSupplySnr(supplySnrDto);
 
-            } catch (Exception e) {
+            } catch (Exception ignored) {
 
             }
 
@@ -346,61 +341,6 @@ public class IntegrationBusiness {
         }
 
         return listIntegrationsDto;
-    }
-
-    public List<PossibleIntegrationDto> getPossiblesIntegrations(MicroserviceManagerDto managerDto)
-            throws BusinessException {
-
-        /*
-         * List<WorkspaceEntity> workspacesEntity =
-         * workspaceService.getWorkspacesByManagerAndIsActive(managerDto.getId(), true);
-         *
-         * for (WorkspaceEntity workspaceEntity : workspacesEntity) {
-         *
-         * MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
-         *
-         * @SuppressWarnings("unchecked") List<MicroserviceSupplyDto> suppliesDto =
-         * (List<MicroserviceSupplyDto>) supplyBusiness
-         * .getSuppliesByMunicipalityManager(municipalityEntity.getId(),
-         * managerDto.getId(), null, null, null, true);
-         *
-         * MicroserviceSupplyDto supplyCadastralDto = null; try { supplyCadastralDto =
-         * suppliesDto.stream() .filter(s ->
-         * s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long)
-         * 1)) .findAny().orElse(null); } catch (Exception e) {
-         *
-         * }
-         *
-         * if (supplyCadastralDto != null) {
-         *
-         * MicroserviceSupplyDto supplyRegistralDto = null; try { supplyRegistralDto =
-         * suppliesDto.stream() .filter(s ->
-         * s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long)
-         * 2)) .findAny().orElse(null); } catch (Exception e) {
-         *
-         * }
-         *
-         * MicroserviceSupplyDto supplyAntDto = null; try { supplyAntDto =
-         * suppliesDto.stream() .filter(s ->
-         * s.getTypeSupply().getProvider().getProviderCategory().getId().equals((long)
-         * 3)) .findAny().orElse(null); } catch (Exception e) {
-         *
-         * }
-         *
-         * if (supplyRegistralDto != null || supplyAntDto != null) {
-         *
-         * MunicipalityDto municipalityDto = municipalityBusiness
-         * .getMunicipalityByCode(municipalityEntity.getCode());
-         *
-         * listIntegrationsDto.add(new PossibleIntegrationDto(municipalityDto)); }
-         *
-         * }
-         *
-         * }
-         *
-         */
-
-        return new ArrayList<>();
     }
 
     public IntegrationDto updateURLMap(Long integrationId, String url) throws BusinessException {

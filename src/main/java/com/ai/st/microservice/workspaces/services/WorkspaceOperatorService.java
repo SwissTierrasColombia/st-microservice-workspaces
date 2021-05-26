@@ -2,7 +2,6 @@ package com.ai.st.microservice.workspaces.services;
 
 import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
@@ -13,8 +12,11 @@ import java.util.List;
 @Service
 public class WorkspaceOperatorService implements IWorkspaceOperatorService {
 
-    @Autowired
-    private WorkspaceOperatorRepository workspaceOperatorRepository;
+    private final WorkspaceOperatorRepository workspaceOperatorRepository;
+
+    public WorkspaceOperatorService(WorkspaceOperatorRepository workspaceOperatorRepository) {
+        this.workspaceOperatorRepository = workspaceOperatorRepository;
+    }
 
     @Override
     @Transactional

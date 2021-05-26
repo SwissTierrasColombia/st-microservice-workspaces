@@ -9,7 +9,6 @@ import javax.servlet.ServletContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -48,14 +47,16 @@ public class CadastralAuthorityV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(CadastralAuthorityV1Controller.class);
 
-    @Autowired
-    private CadastralAuthorityBusiness cadastralAuthorityBusiness;
+    private final CadastralAuthorityBusiness cadastralAuthorityBusiness;
+    private final UserBusiness userBusiness;
+    private final ServletContext servletContext;
 
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private ServletContext servletContext;
+    public CadastralAuthorityV1Controller(CadastralAuthorityBusiness cadastralAuthorityBusiness, UserBusiness userBusiness,
+                                          ServletContext servletContext) {
+        this.cadastralAuthorityBusiness = cadastralAuthorityBusiness;
+        this.userBusiness = userBusiness;
+        this.servletContext = servletContext;
+    }
 
     @RequestMapping(value = "/supplies/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create supply (cadastral authority)")
@@ -135,7 +136,7 @@ public class CadastralAuthorityV1Controller {
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> downloadReport(@PathVariable Long municipalityId,
-                                                 @RequestParam(name = "manager", required = true) Long managerCode) {
+                                                 @RequestParam(name = "manager") Long managerCode) {
 
         MediaType mediaType;
         File file;

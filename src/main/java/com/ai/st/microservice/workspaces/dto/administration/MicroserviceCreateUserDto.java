@@ -16,7 +16,7 @@ public class MicroserviceCreateUserDto implements Serializable {
 	private List<Long> roles;
 
 	public MicroserviceCreateUserDto() {
-		this.roles = new ArrayList<Long>();
+		this.roles = new ArrayList<>();
 	}
 
 	public String getFirstName() {

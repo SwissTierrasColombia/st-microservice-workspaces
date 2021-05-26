@@ -30,45 +30,45 @@ import feign.form.spring.SpringFormEncoder;
 @FeignClient(name = "st-microservice-administration", configuration = UserFeignClient.Configuration.class)
 public interface UserFeignClient {
 
-	@GetMapping("/api/administration/v1/users/{id}")
-	public MicroserviceUserDto findById(@PathVariable Long id);
+    @GetMapping("/api/administration/v1/users/{id}")
+    MicroserviceUserDto findById(@PathVariable Long id);
 
-	@GetMapping("/api/administration/v1/users/token")
-	public MicroserviceUserDto findByToken(@RequestParam(name = "token") String token);
+    @GetMapping("/api/administration/v1/users/token")
+    MicroserviceUserDto findByToken(@RequestParam(name = "token") String token);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/administration/v1/users", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceUserDto createUser(@RequestBody MicroserviceCreateUserDto user) throws BusinessException;
+    @RequestMapping(method = RequestMethod.POST, value = "/api/administration/v1/users", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceUserDto createUser(@RequestBody MicroserviceCreateUserDto user) throws BusinessException;
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/administration/v1/users/{id}/reset-password", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceUserDto changeUserPassword(@PathVariable(required = true, name = "id") Long userId,
-			@RequestBody MicroserviceChangePasswordDto requestChangePassword) throws BusinessException;
+    @RequestMapping(method = RequestMethod.POST, value = "/api/administration/v1/users/{id}/reset-password", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceUserDto changeUserPassword(@PathVariable(name = "id") Long userId,
+                                           @RequestBody MicroserviceChangePasswordDto requestChangePassword) throws BusinessException;
 
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{id}", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceUserDto updateUser(@PathVariable Long id, @RequestBody MicroserviceUpdateUserDto updateUser)
-			throws BusinessException;
+    @RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{id}", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceUserDto updateUser(@PathVariable Long id, @RequestBody MicroserviceUpdateUserDto updateUser)
+            throws BusinessException;
 
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{userId}/disable", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceUserDto disableUser(@PathVariable Long userId) throws BusinessException;
+    @RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{userId}/disable", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceUserDto disableUser(@PathVariable Long userId) throws BusinessException;
 
-	@RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{userId}/enable", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceUserDto enableUser(@PathVariable Long userId) throws BusinessException;
+    @RequestMapping(method = RequestMethod.PUT, value = "/api/administration/v1/users/{userId}/enable", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceUserDto enableUser(@PathVariable Long userId) throws BusinessException;
 
-	@GetMapping("/api/administration/v1/users")
-	public List<MicroserviceUserDto> findUsersByRoles(@RequestParam(name = "roles", required = false) List<Long> roles);
+    @GetMapping("/api/administration/v1/users")
+    List<MicroserviceUserDto> findUsersByRoles(@RequestParam(name = "roles", required = false) List<Long> roles);
 
-	class Configuration {
+    class Configuration {
 
-		@Bean
-		Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
-			return new SpringFormEncoder(new SpringEncoder(converters));
-		}
+        @Bean
+        Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
+            return new SpringFormEncoder(new SpringEncoder(converters));
+        }
 
-		@Bean
-		@Scope("prototype")
-		public Feign.Builder feignBuilder() {
-			return Feign.builder();
-		}
+        @Bean
+        @Scope("prototype")
+        public Feign.Builder feignBuilder() {
+            return Feign.builder();
+        }
 
-	}
+    }
 
 }

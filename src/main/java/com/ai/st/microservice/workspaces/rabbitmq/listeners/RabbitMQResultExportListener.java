@@ -7,7 +7,6 @@ import com.ai.st.microservice.workspaces.dto.providers.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -32,17 +31,18 @@ public class RabbitMQResultExportListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
-    private ProviderBusiness providerBusiness;
+    private final ProviderBusiness providerBusiness;
+    private final DatabaseIntegrationBusiness databaseIntegration;
+    private final CrytpoBusiness cryptoBusiness;
+    private final SupplyBusiness supplyBusiness;
 
-    @Autowired
-    private DatabaseIntegrationBusiness databaseIntegration;
-
-    @Autowired
-    private CrytpoBusiness cryptoBusiness;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
+    public RabbitMQResultExportListener(ProviderBusiness providerBusiness, DatabaseIntegrationBusiness databaseIntegration,
+                                        CrytpoBusiness cryptoBusiness, SupplyBusiness supplyBusiness) {
+        this.providerBusiness = providerBusiness;
+        this.databaseIntegration = databaseIntegration;
+        this.cryptoBusiness = cryptoBusiness;
+        this.supplyBusiness = supplyBusiness;
+    }
 
     @RabbitListener(queues = "${st.rabbitmq.queueResultExport.queue}", concurrency = "${st.rabbitmq.queueResultExport.concurrency}")
     public void updateIntegration(MicroserviceResultExportDto resultDto) {

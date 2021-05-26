@@ -13,7 +13,6 @@ import org.apache.commons.lang.RandomStringUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -116,44 +115,39 @@ public class ProviderBusiness {
 
     private final Logger log = LoggerFactory.getLogger(ProviderBusiness.class);
 
-    @Autowired
-    private ProviderFeignClient providerClient;
+    private final ProviderFeignClient providerClient;
+    private final TaskFeignClient taskClient;
+    private final SupplyBusiness supplyBusiness;
+    private final IliBusiness iliBusiness;
+    private final FileBusiness fileBusiness;
+    private final UserFeignClient userClient;
+    private final ManagerBusiness managerBusiness;
+    private final UserBusiness userBusiness;
+    private final IMunicipalityService municipalityService;
+    private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
+    private final CrytpoBusiness cryptoBusiness;
+    private final FTPBusiness ftpBusiness;
+    private final MunicipalityBusiness municipalityBusiness;
 
-    @Autowired
-    private TaskFeignClient taskClient;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private IliBusiness iliBusiness;
-
-    @Autowired
-    private FileBusiness fileBusiness;
-
-    @Autowired
-    private UserFeignClient userClient;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private IMunicipalityService municipalityService;
-
-    @Autowired
-    private DatabaseIntegrationBusiness databaseIntegrationBusiness;
-
-    @Autowired
-    private CrytpoBusiness cryptoBusiness;
-
-    @Autowired
-    private FTPBusiness ftpBusiness;
-
-    @Autowired
-    private MunicipalityBusiness municipalityBusiness;
+    public ProviderBusiness(ProviderFeignClient providerClient, TaskFeignClient taskClient, SupplyBusiness supplyBusiness,
+                            IliBusiness iliBusiness, FileBusiness fileBusiness, UserFeignClient userClient,
+                            ManagerBusiness managerBusiness, UserBusiness userBusiness, IMunicipalityService municipalityService,
+                            DatabaseIntegrationBusiness databaseIntegrationBusiness, CrytpoBusiness cryptoBusiness, FTPBusiness ftpBusiness,
+                            MunicipalityBusiness municipalityBusiness) {
+        this.providerClient = providerClient;
+        this.taskClient = taskClient;
+        this.supplyBusiness = supplyBusiness;
+        this.iliBusiness = iliBusiness;
+        this.fileBusiness = fileBusiness;
+        this.userClient = userClient;
+        this.managerBusiness = managerBusiness;
+        this.userBusiness = userBusiness;
+        this.municipalityService = municipalityService;
+        this.databaseIntegrationBusiness = databaseIntegrationBusiness;
+        this.cryptoBusiness = cryptoBusiness;
+        this.ftpBusiness = ftpBusiness;
+        this.municipalityBusiness = municipalityBusiness;
+    }
 
     public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipErrors, String justification,
                                                 MultipartFile[] files, MultipartFile extraFile, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
@@ -161,9 +155,8 @@ public class ProviderBusiness {
 
         MicroserviceRequestDto requestUpdatedDto;
 
-        if (files.length == 0 && (url == null || url.isEmpty()) && (justification == null || justification.isEmpty())) {
+        if (files.length == 0 && (url == null || url.isEmpty()) && (justification == null || justification.isEmpty()))
             throw new BusinessException("Se debe justificar porque no se cargará el insumo.");
-        }
 
         MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
 
@@ -320,7 +313,6 @@ public class ProviderBusiness {
                         if (loadedFileExtension.equalsIgnoreCase("zip")) {
                             isLoadGdb = ZipUtil.hasGDBDatabase(filePathTemporal);
                             if (isLoadGdb) {
-                                zipFile = false;
                                 fileAllowed = true;
                             }
                         }
@@ -661,7 +653,7 @@ public class ProviderBusiness {
         return usersDto;
     }
 
-    public List<MicroserviceRequestDto> getRequestsByEmmitersManager(Long managerCode) throws BusinessException {
+    public List<MicroserviceRequestDto> getRequestsByEmittersManager(Long managerCode) throws BusinessException {
 
         List<MicroserviceRequestDto> listRequestsDto = new ArrayList<>();
 
@@ -1237,7 +1229,7 @@ public class ProviderBusiness {
         return requestDto;
     }
 
-    public void startRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+    public void startRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto providerDto)
             throws BusinessException {
 
         MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
@@ -1245,7 +1237,7 @@ public class ProviderBusiness {
             throw new BusinessException("El insumo solicitado no existe");
         }
 
-        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(providerDto.getId())) {
             throw new BusinessException("El insumo solicitado no pertenece al proveedor");
         }
 
@@ -1330,7 +1322,7 @@ public class ProviderBusiness {
         }
     }
 
-    public MicroserviceQueryResultRegistralRevisionDto getRecordsFromRevision(MicroserviceProviderDto prodiverDto,
+    public MicroserviceQueryResultRegistralRevisionDto getRecordsFromRevision(MicroserviceProviderDto providerDto,
                                                                               Long supplyRequestedId, int page) throws BusinessException {
 
         if (page <= 0) {
@@ -1342,7 +1334,7 @@ public class ProviderBusiness {
             throw new BusinessException("El insumo solicitado no existe");
         }
 
-        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(providerDto.getId())) {
             throw new BusinessException("El insumo solicitado no pertenece al proveedor");
         }
 
@@ -1383,7 +1375,7 @@ public class ProviderBusiness {
         return resultDto;
     }
 
-    public void uploadAttachmentToRevision(MicroserviceProviderDto prodiverDto, MultipartFile fileUploaded,
+    public void uploadAttachmentToRevision(MicroserviceProviderDto providerDto, MultipartFile fileUploaded,
                                            Long supplyRequestedId, Long boundaryId, Long userCode) throws BusinessException {
 
         MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
@@ -1391,7 +1383,7 @@ public class ProviderBusiness {
             throw new BusinessException("El insumo solicitado no existe");
         }
 
-        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(providerDto.getId())) {
             throw new BusinessException("El insumo solicitado no pertenece al proveedor");
         }
 
@@ -1455,7 +1447,7 @@ public class ProviderBusiness {
 
     }
 
-    public void closeRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+    public void closeRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto providerDto)
             throws BusinessException {
 
         MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
@@ -1463,7 +1455,7 @@ public class ProviderBusiness {
             throw new BusinessException("El insumo solicitado no existe");
         }
 
-        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(providerDto.getId())) {
             throw new BusinessException("El insumo solicitado no pertenece al proveedor");
         }
 
@@ -1535,7 +1527,7 @@ public class ProviderBusiness {
         return supplyRevisionDto;
     }
 
-    public void skipRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto prodiverDto)
+    public void skipRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto providerDto)
             throws BusinessException {
 
         MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
@@ -1543,7 +1535,7 @@ public class ProviderBusiness {
             throw new BusinessException("El insumo solicitado no existe");
         }
 
-        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(prodiverDto.getId())) {
+        if (!supplyRequestedDto.getTypeSupply().getProvider().getId().equals(providerDto.getId())) {
             throw new BusinessException("El insumo solicitado no pertenece al proveedor");
         }
 

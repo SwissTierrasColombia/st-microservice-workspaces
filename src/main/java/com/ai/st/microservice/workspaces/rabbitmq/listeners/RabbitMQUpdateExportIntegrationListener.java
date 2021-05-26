@@ -6,7 +6,6 @@ import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -37,29 +36,28 @@ public class RabbitMQUpdateExportIntegrationListener {
     @Value("${st.filesDirectory}")
     private String stFilesDirectory;
 
-    @Autowired
-    private IntegrationBusiness integrationBusiness;
+    private final IntegrationBusiness integrationBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final UserBusiness userBusiness;
+    private final NotificationBusiness notificationBusiness;
+    private final DatabaseIntegrationBusiness databaseIntegration;
+    private final CrytpoBusiness cryptoBusiness;
+    private final SupplyBusiness supplyBusiness;
+    private final IntegrationService integrationService;
 
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private NotificationBusiness notificationBusiness;
-
-    @Autowired
-    private DatabaseIntegrationBusiness databaseIntegration;
-
-    @Autowired
-    private CrytpoBusiness cryptoBusiness;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private IntegrationService integrationService;
+    public RabbitMQUpdateExportIntegrationListener(IntegrationBusiness integrationBusiness, ManagerBusiness managerBusiness,
+                                                   UserBusiness userBusiness, NotificationBusiness notificationBusiness,
+                                                   DatabaseIntegrationBusiness databaseIntegration, CrytpoBusiness cryptoBusiness,
+                                                   SupplyBusiness supplyBusiness, IntegrationService integrationService) {
+        this.integrationBusiness = integrationBusiness;
+        this.managerBusiness = managerBusiness;
+        this.userBusiness = userBusiness;
+        this.notificationBusiness = notificationBusiness;
+        this.databaseIntegration = databaseIntegration;
+        this.cryptoBusiness = cryptoBusiness;
+        this.supplyBusiness = supplyBusiness;
+        this.integrationService = integrationService;
+    }
 
     @RabbitListener(queues = "${st.rabbitmq.queueUpdateExport.queue}", concurrency = "${st.rabbitmq.queueUpdateExport.concurrency}")
     public void updateExport(MicroserviceIliExportResultDto resultExportDto) {

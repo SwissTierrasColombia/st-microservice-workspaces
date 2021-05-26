@@ -14,7 +14,7 @@ public class MicroserviceCreateDeliveryDto implements Serializable {
 	private List<MicroserviceCreateDeliverySupplyDto> supplies;
 
 	public MicroserviceCreateDeliveryDto() {
-		this.supplies = new ArrayList<MicroserviceCreateDeliverySupplyDto>();
+		this.supplies = new ArrayList<>();
 	}
 
 	public Long getManagerCode() {

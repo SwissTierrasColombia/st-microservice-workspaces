@@ -38,10 +38,10 @@ public class IntegrationHistoryEntity {
 	@Column(name = "user_name", nullable = false, length = 300)
 	private String userName;
 
-	@Column(name = "user_code", nullable = true)
+	@Column(name = "user_code")
 	private Long userCode;
 
-	@Column(name = "manager_code", nullable = true)
+	@Column(name = "manager_code")
 	private Long managerCode;
 
 	public IntegrationHistoryEntity() {

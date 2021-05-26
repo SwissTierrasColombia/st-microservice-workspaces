@@ -3,7 +3,6 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,14 +32,15 @@ public class ManagerV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(ManagerV1Controller.class);
 
-    @Autowired
-    private UserBusiness userBusiness;
+    private final UserBusiness userBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final OperatorBusiness operatorBusiness;
 
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private OperatorBusiness operatorBusiness;
+    public ManagerV1Controller(UserBusiness userBusiness, ManagerBusiness managerBusiness, OperatorBusiness operatorBusiness) {
+        this.userBusiness = userBusiness;
+        this.managerBusiness = managerBusiness;
+        this.operatorBusiness = operatorBusiness;
+    }
 
     @RequestMapping(value = "/deliveries", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get deliveries by manager")

@@ -3,7 +3,6 @@ package com.ai.st.microservice.workspaces.business;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
@@ -14,8 +13,11 @@ import com.ai.st.microservice.workspaces.services.IDepartmentService;
 @Component
 public class DepartmentBusiness {
 
-    @Autowired
-    private IDepartmentService departmentService;
+    private final IDepartmentService departmentService;
+
+    public DepartmentBusiness(IDepartmentService departmentService) {
+        this.departmentService = departmentService;
+    }
 
     public List<DepartmentDto> getDepartments() throws BusinessException {
 

@@ -6,7 +6,6 @@ import java.util.List;
 import com.ai.st.microservice.workspaces.business.UserBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +18,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.workspaces.business.TaskBusiness;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CancelTaskDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
@@ -40,14 +38,13 @@ public class TaskV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(TaskV1Controller.class);
 
-    @Autowired
-    private UserFeignClient userClient;
+    private final TaskBusiness taskBusiness;
+    private final UserBusiness userBusiness;
 
-    @Autowired
-    private TaskBusiness taskBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
+    public TaskV1Controller(TaskBusiness taskBusiness, UserBusiness userBusiness) {
+        this.taskBusiness = taskBusiness;
+        this.userBusiness = userBusiness;
+    }
 
     @RequestMapping(value = "/pending", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get pending tasks")
@@ -177,7 +174,8 @@ public class TaskV1Controller {
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> cancelTask(@RequestHeader("authorization") String headerAuthorization,
-                                        @PathVariable Long taskId, @RequestBody(required = true) CancelTaskDto cancelTaskRequest) {
+                                        @PathVariable Long taskId,
+                                        @RequestBody CancelTaskDto cancelTaskRequest) {
 
         HttpStatus httpStatus;
         Object responseDto;

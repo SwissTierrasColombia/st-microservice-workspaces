@@ -11,7 +11,6 @@ import com.ai.st.microservice.workspaces.business.OperatorBusiness;
 import com.ai.st.microservice.workspaces.business.UserBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,8 +24,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
-import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
@@ -47,23 +44,18 @@ public class OperatorV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(OperatorV1Controller.class);
 
-    @Autowired
-    private WorkspaceOperatorBusiness workspaceOperatorBusiness;
+    private final WorkspaceOperatorBusiness workspaceOperatorBusiness;
+    private final ServletContext servletContext;
+    private final UserBusiness userBusiness;
+    private final OperatorBusiness operatorBusiness;
 
-    @Autowired
-    private UserFeignClient userClient;
-
-    @Autowired
-    private OperatorFeignClient operatorClient;
-
-    @Autowired
-    private ServletContext servletContext;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private OperatorBusiness operatorBusiness;
+    public OperatorV1Controller(WorkspaceOperatorBusiness workspaceOperatorBusiness, ServletContext servletContext,
+                                UserBusiness userBusiness, OperatorBusiness operatorBusiness) {
+        this.workspaceOperatorBusiness = workspaceOperatorBusiness;
+        this.servletContext = servletContext;
+        this.userBusiness = userBusiness;
+        this.operatorBusiness = operatorBusiness;
+    }
 
     @RequestMapping(value = "/deliveries/{deliveryId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable delivery")
@@ -88,7 +80,7 @@ public class OperatorV1Controller {
             // get operator
             MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
             if (operatorDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultado el operador.");
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
             }
 
             responseDto = workspaceOperatorBusiness.disableDelivery(operatorDto.getId(), deliveryId);

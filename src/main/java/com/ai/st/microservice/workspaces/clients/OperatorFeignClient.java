@@ -33,50 +33,50 @@ import feign.form.spring.SpringFormEncoder;
 public interface OperatorFeignClient {
 
 	@GetMapping("/api/operators/v1/operators/{operatorId}")
-	public MicroserviceOperatorDto findById(@PathVariable Long operatorId);
+	MicroserviceOperatorDto findById(@PathVariable Long operatorId);
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/operators/v1/operators/{operatorId}/deliveries", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceDeliveryDto createDelivery(@PathVariable Long operatorId,
-			@RequestBody MicroserviceCreateDeliveryDto data);
+	MicroserviceDeliveryDto createDelivery(@PathVariable Long operatorId,
+										   @RequestBody MicroserviceCreateDeliveryDto data);
 
 	@GetMapping("/api/operators/v1/operators/{operatorId}/deliveries")
-	public List<MicroserviceDeliveryDto> findDeliveriesByOperator(@PathVariable Long operatorId,
-			@RequestParam(name = "municipality", required = false) String municipalityCode);
+	List<MicroserviceDeliveryDto> findDeliveriesByOperator(@PathVariable Long operatorId,
+														   @RequestParam(name = "municipality", required = false) String municipalityCode);
 
 	@GetMapping("api/operators/v1/users/{userCode}/operators")
-	public MicroserviceOperatorDto findByUserCode(@PathVariable Long userCode);
+	MicroserviceOperatorDto findByUserCode(@PathVariable Long userCode);
 
 	@GetMapping("/api/operators/v1/operators/{operatorId}/deliveries")
-	public List<MicroserviceDeliveryDto> findDeliveriesActivesByOperator(@PathVariable Long operatorId,
-			@RequestParam(name = "active", required = false) Boolean isActive);
+	List<MicroserviceDeliveryDto> findDeliveriesActivesByOperator(@PathVariable Long operatorId,
+																  @RequestParam(name = "active", required = false) Boolean isActive);
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/deliveries/{deliveryId}/supplies/{supplyId}", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceDeliveryDto updateSupplyDelivered(@PathVariable Long deliveryId, @PathVariable Long supplyId,
-			@RequestBody MicroserviceUpdateDeliveredSupplyDto updateSupply);
+	MicroserviceDeliveryDto updateSupplyDelivered(@PathVariable Long deliveryId, @PathVariable Long supplyId,
+												  @RequestBody MicroserviceUpdateDeliveredSupplyDto updateSupply);
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/deliveries/{deliveryId}/disable", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceDeliveryDto disableDelivery(@PathVariable Long deliveryId);
+	MicroserviceDeliveryDto disableDelivery(@PathVariable Long deliveryId);
 
 	@GetMapping("/api/operators/v1/deliveries/{deliveryId}")
-	public MicroserviceDeliveryDto findDeliveryById(@PathVariable Long deliveryId);
+	MicroserviceDeliveryDto findDeliveryById(@PathVariable Long deliveryId);
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/operators/v1/users", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceOperatorDto addUserToOperator(@RequestBody MicroserviceAddUserToOperatorDto requestAddUser);
+	MicroserviceOperatorDto addUserToOperator(@RequestBody MicroserviceAddUserToOperatorDto requestAddUser);
 
 	@GetMapping("/api/operators/v1/operators/{operatorId}/users")
-	public List<MicroserviceOperatorUserDto> getUsersByOperator(@PathVariable Long operatorId);
+	List<MicroserviceOperatorUserDto> getUsersByOperator(@PathVariable Long operatorId);
 
 	@RequestMapping(method = RequestMethod.PUT, value = "/api/operators/v1/deliveries/{deliveryId}", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceDeliveryDto updateDelivery(@PathVariable Long deliveryId,
-			@RequestBody MicroserviceUpdateDeliveryDto data);
+	MicroserviceDeliveryDto updateDelivery(@PathVariable Long deliveryId,
+										   @RequestBody MicroserviceUpdateDeliveryDto data);
 
 	@GetMapping("/api/operators/v1/operators/{operatorId}/deliveries")
-	public List<MicroserviceDeliveryDto> findDeliveriesByOperator(@PathVariable Long operatorId,
-			@RequestParam(name = "municipality", required = false) String municipalityCode,
-			@RequestParam(name = "active", required = false) Boolean active);
+	List<MicroserviceDeliveryDto> findDeliveriesByOperator(@PathVariable Long operatorId,
+														   @RequestParam(name = "municipality", required = false) String municipalityCode,
+														   @RequestParam(name = "active", required = false) Boolean active);
 
 	@GetMapping("/api/operators/v1/deliveries/managers/{managerId}")
-	public List<MicroserviceDeliveryDto> findDeliveriesByManager(@PathVariable Long managerId);
+	List<MicroserviceDeliveryDto> findDeliveriesByManager(@PathVariable Long managerId);
 
 	class Configuration {
 

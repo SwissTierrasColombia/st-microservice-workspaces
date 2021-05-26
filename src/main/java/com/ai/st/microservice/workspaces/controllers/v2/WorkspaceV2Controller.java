@@ -13,7 +13,6 @@ import javax.servlet.ServletContext;
 import com.ai.st.microservice.workspaces.dto.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -52,17 +51,18 @@ public class WorkspaceV2Controller {
 
     private final Logger log = LoggerFactory.getLogger(WorkspaceV2Controller.class);
 
-    @Autowired
-    private WorkspaceBusiness workspaceBusiness;
+    private final WorkspaceBusiness workspaceBusiness;
+    private final UserBusiness userBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final ServletContext servletContext;
 
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private ServletContext servletContext;
+    public WorkspaceV2Controller(WorkspaceBusiness workspaceBusiness, UserBusiness userBusiness,
+                                 ManagerBusiness managerBusiness, ServletContext servletContext) {
+        this.workspaceBusiness = workspaceBusiness;
+        this.userBusiness = userBusiness;
+        this.managerBusiness = managerBusiness;
+        this.servletContext = servletContext;
+    }
 
     @RequestMapping(value = "validate-municipalities-to-assign", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipalities where manager does not belong in")
@@ -241,7 +241,7 @@ public class WorkspaceV2Controller {
     @ResponseBody
     public ResponseEntity<Object> updateManagerFromWorkspace(
             @RequestBody UpdateManagerFromWorkspaceDto requestUpdateWorkspace, @PathVariable Long workspaceId,
-            @PathVariable Long managerCode, @RequestHeader("authorization") String headerAuthorization) {
+            @PathVariable Long managerCode) {
 
         HttpStatus httpStatus;
         Object responseDto;

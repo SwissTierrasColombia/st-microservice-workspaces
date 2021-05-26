@@ -6,7 +6,6 @@ import java.util.List;
 import com.ai.st.microservice.workspaces.business.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
@@ -38,23 +35,18 @@ public class DepartmentV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(DepartmentV1Controller.class);
 
-    @Autowired
-    private UserFeignClient userClient;
+    private final DepartmentBusiness departmentBusiness;
+    private final MunicipalityBusiness municipalityBusiness;
+    private final UserBusiness userBusiness;
+    private final ManagerBusiness managerBusiness;
 
-    @Autowired
-    private ManagerFeignClient managerClient;
-
-    @Autowired
-    private DepartmentBusiness departmentBusiness;
-
-    @Autowired
-    private MunicipalityBusiness municipalityBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
+    public DepartmentV1Controller(DepartmentBusiness departmentBusiness,
+                                  MunicipalityBusiness municipalityBusiness, UserBusiness userBusiness, ManagerBusiness managerBusiness) {
+        this.departmentBusiness = departmentBusiness;
+        this.municipalityBusiness = municipalityBusiness;
+        this.userBusiness = userBusiness;
+        this.managerBusiness = managerBusiness;
+    }
 
     @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get departments")

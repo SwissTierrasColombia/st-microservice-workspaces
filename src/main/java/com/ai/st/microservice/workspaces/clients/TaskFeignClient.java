@@ -30,49 +30,49 @@ import feign.form.spring.SpringFormEncoder;
 @FeignClient(name = "st-microservice-tasks", configuration = TaskFeignClient.Configuration.class)
 public interface TaskFeignClient {
 
-	@GetMapping("/api/tasks/v1/tasks")
-	public List<MicroserviceTaskDto> findByUserAndState(
-			@RequestParam(required = false, name = "member") Long memberCode,
-			@RequestParam(required = false, name = "states") List<Long> taskStates);
+    @GetMapping("/api/tasks/v1/tasks")
+    List<MicroserviceTaskDto> findByUserAndState(
+            @RequestParam(required = false, name = "member") Long memberCode,
+            @RequestParam(required = false, name = "states") List<Long> taskStates);
 
-	@GetMapping("/api/tasks/v1/tasks")
-	public List<MicroserviceTaskDto> findByStateAndCategory(
-			@RequestParam(required = false, name = "states") List<Long> taskStates,
-			@RequestParam(required = false, name = "categories") List<Long> categories);
+    @GetMapping("/api/tasks/v1/tasks")
+    List<MicroserviceTaskDto> findByStateAndCategory(
+            @RequestParam(required = false, name = "states") List<Long> taskStates,
+            @RequestParam(required = false, name = "categories") List<Long> categories);
 
-	@RequestMapping(method = RequestMethod.POST, value = "/api/tasks/v1/tasks", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceTaskDto createTask(@RequestBody MicroserviceCreateTaskDto createtaskDto);
+    @RequestMapping(method = RequestMethod.POST, value = "/api/tasks/v1/tasks", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceTaskDto createTask(@RequestBody MicroserviceCreateTaskDto createTaskDto);
 
-	@DeleteMapping("/api/tasks/v1/tasks/{taskId}/members/{memberId}/")
-	public void removeMemberFromTask(@PathVariable(required = true) Long taskId,
-			@PathVariable(required = true) Long memberId);
+    @DeleteMapping("/api/tasks/v1/tasks/{taskId}/members/{memberId}/")
+    void removeMemberFromTask(@PathVariable() Long taskId,
+                              @PathVariable() Long memberId);
 
-	@GetMapping("/api/tasks/v1/tasks/{id}")
-	public MicroserviceTaskDto findTaskById(@PathVariable(required = true, name = "id") Long id);
+    @GetMapping("/api/tasks/v1/tasks/{id}")
+    MicroserviceTaskDto findTaskById(@PathVariable(name = "id") Long id);
 
-	@PutMapping("/api/tasks/v1/tasks/{id}/start")
-	public MicroserviceTaskDto startTask(@PathVariable(required = true) Long id);
+    @PutMapping("/api/tasks/v1/tasks/{id}/start")
+    MicroserviceTaskDto startTask(@PathVariable() Long id);
 
-	@PutMapping("/api/tasks/v1/tasks/{id}/close")
-	public MicroserviceTaskDto closeTask(@PathVariable(required = true) Long id);
+    @PutMapping("/api/tasks/v1/tasks/{id}/close")
+    MicroserviceTaskDto closeTask(@PathVariable() Long id);
 
-	@PutMapping("/api/tasks/v1/tasks/{id}/cancel")
-	public MicroserviceTaskDto cancelTask(@PathVariable(required = true) Long id,
-			@RequestBody(required = true) MicroserviceCancelTaskDto cancelTaskRequest);
+    @PutMapping("/api/tasks/v1/tasks/{id}/cancel")
+    MicroserviceTaskDto cancelTask(@PathVariable() Long id,
+                                   @RequestBody() MicroserviceCancelTaskDto cancelTaskRequest);
 
-	class Configuration {
+    class Configuration {
 
-		@Bean
-		Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
-			return new SpringFormEncoder(new SpringEncoder(converters));
-		}
+        @Bean
+        Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
+            return new SpringFormEncoder(new SpringEncoder(converters));
+        }
 
-		@Bean
-		@Scope("prototype")
-		public Feign.Builder feignBuilder() {
-			return Feign.builder();
-		}
+        @Bean
+        @Scope("prototype")
+        public Feign.Builder feignBuilder() {
+            return Feign.builder();
+        }
 
-	}
+    }
 
 }

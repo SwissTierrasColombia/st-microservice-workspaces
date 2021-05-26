@@ -11,7 +11,6 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
@@ -35,32 +34,30 @@ public class WorkspaceOperatorBusiness {
 
     private final Logger log = LoggerFactory.getLogger(WorkspaceOperatorBusiness.class);
 
-    @Autowired
-    private IWorkspaceOperatorService operatorService;
+    private final IWorkspaceOperatorService operatorService;
+    private final IWorkspaceService workspaceService;
+    private final IWorkspaceOperatorService workspaceOperatorService;
+    private final OperatorBusiness operatorBusiness;
+    private final ReportBusiness reportBusiness;
+    private final MunicipalityBusiness municipalityBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final SupplyBusiness supplyBusiness;
+    private final UserBusiness userBusiness;
 
-    @Autowired
-    private IWorkspaceService workspaceService;
-
-    @Autowired
-    private IWorkspaceOperatorService workspaceOperatorService;
-
-    @Autowired
-    private OperatorBusiness operatorBusiness;
-
-    @Autowired
-    private ReportBusiness reportBusiness;
-
-    @Autowired
-    private MunicipalityBusiness municipalityBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
+    public WorkspaceOperatorBusiness(IWorkspaceOperatorService operatorService, IWorkspaceService workspaceService,
+                                     IWorkspaceOperatorService workspaceOperatorService, OperatorBusiness operatorBusiness,
+                                     ReportBusiness reportBusiness, MunicipalityBusiness municipalityBusiness,
+                                     ManagerBusiness managerBusiness, SupplyBusiness supplyBusiness, UserBusiness userBusiness) {
+        this.operatorService = operatorService;
+        this.workspaceService = workspaceService;
+        this.workspaceOperatorService = workspaceOperatorService;
+        this.operatorBusiness = operatorBusiness;
+        this.reportBusiness = reportBusiness;
+        this.municipalityBusiness = municipalityBusiness;
+        this.managerBusiness = managerBusiness;
+        this.supplyBusiness = supplyBusiness;
+        this.userBusiness = userBusiness;
+    }
 
     public MicroserviceDeliveryDto getDeliveryFromSupply(Long operatorCode, Long supplyCode) throws BusinessException {
 
@@ -220,9 +217,11 @@ public class WorkspaceOperatorBusiness {
 
                 MicroserviceSupplyOwnerDto owner = supplyDto.getOwners().stream()
                         .filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny().orElse(null);
+                supplyName = supplyDto.getName();
                 if (owner != null) {
-                    supplyName = supplyDto.getName();
                     providerName = "Autoridad Catastral";
+                } else {
+                    providerName = "Gestor";
                 }
 
             }
@@ -236,7 +235,7 @@ public class WorkspaceOperatorBusiness {
         }
 
         supplies.add(new MicroserviceDownloadedSupplyDto(supplyName,
-                DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName));
+                DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName.toUpperCase()));
 
         MicroserviceReportInformationDto report = reportBusiness.generateReportDownloadSupply(namespace, dateCreation,
                 dateDelivery, deliveryId.toString(), departmentName, managerName, municipalityCode, municipalityName,
@@ -328,9 +327,11 @@ public class WorkspaceOperatorBusiness {
                     MicroserviceSupplyOwnerDto owner = supplyDto.getOwners().stream()
                             .filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny()
                             .orElse(null);
+                    supplyName = supplyDto.getName();
                     if (owner != null) {
-                        supplyName = supplyDto.getName();
                         providerName = "Autoridad Catastral";
+                    } else {
+                        providerName = "Gestor";
                     }
 
                 }
@@ -344,7 +345,7 @@ public class WorkspaceOperatorBusiness {
             }
 
             supplies.add(new MicroserviceDownloadedSupplyDto(supplyName,
-                    DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName));
+                    DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName.toUpperCase()));
         }
 
         MicroserviceReportInformationDto report = reportBusiness.generateReportDownloadSupply(namespace, dateCreation,
@@ -427,16 +428,18 @@ public class WorkspaceOperatorBusiness {
                     MicroserviceSupplyOwnerDto owner = supplyDto.getOwners().stream()
                             .filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny()
                             .orElse(null);
+                    supplyName = supplyDto.getName();
                     if (owner != null) {
-                        supplyName = supplyDto.getName();
                         providerName = "Autoridad Catastral";
+                    } else {
+                        providerName = "Gestor";
                     }
 
                 }
 
             }
 
-            supplies.add(new MicroserviceDownloadedSupplyDto(supplyName, null, null, providerName));
+            supplies.add(new MicroserviceDownloadedSupplyDto(supplyName, null, null, providerName.toUpperCase()));
         }
 
         MicroserviceReportInformationDto report = reportBusiness.generateReportDeliveryManager(namespace, dateCreation,

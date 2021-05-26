@@ -9,13 +9,11 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.clients.UserFeignClient;
@@ -24,7 +22,6 @@ import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityToAssignDto;
-import com.ai.st.microservice.workspaces.dto.SupportDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.ValidationMunicipalitiesDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
@@ -88,205 +85,62 @@ public class WorkspaceBusiness {
     @Value("${integrations.database.password}")
     private String databaseIntegrationPassword;
 
-    public static final Long WORKSPACE_CLONE_FROM_CHANGE_MANAGER = (long) 1;
-    public static final Long WORKSPACE_CLONE_FROM_CHANGE_OPERATOR = (long) 2;
+    private final ManagerFeignClient managerClient;
+    private final ProviderFeignClient providerClient;
+    private final UserFeignClient userClient;
+    private final SupplyFeignClient supplyClient;
+    private final IMunicipalityService municipalityService;
+    private final IWorkspaceService workspaceService;
+    private final IIntegrationService integrationService;
+    private final IIntegrationStateService integrationStateService;
+    private final IWorkspaceOperatorService workspaceOperatorService;
+    private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
+    private final CrytpoBusiness cryptoBusiness;
+    private final IntegrationBusiness integrationBusiness;
+    private final TaskBusiness taskBusiness;
+    private final IliBusiness iliBusiness;
+    private final ProviderBusiness providerBusiness;
+    private final FileBusiness fileBusiness;
+    private final SupplyBusiness supplyBusiness;
+    private final OperatorBusiness operatorBusiness;
+    private final NotificationBusiness notificationBusiness;
+    private final ManagerBusiness managerBusiness;
+    private final UserBusiness userBusiness;
+    private final WorkspaceManagerBusiness workspaceManagerBusiness;
+    private final WorkspaceOperatorBusiness workspaceOperatorBusiness;
 
-    @Autowired
-    private ManagerFeignClient managerClient;
-
-    @Autowired
-    private OperatorFeignClient operatorClient;
-
-    @Autowired
-    private ProviderFeignClient providerClient;
-
-    @Autowired
-    private UserFeignClient userClient;
-
-    @Autowired
-    private SupplyFeignClient supplyClient;
-
-    @Autowired
-    private IMunicipalityService municipalityService;
-
-    @Autowired
-    private IWorkspaceService workspaceService;
-
-    @Autowired
-    private IIntegrationService integrationService;
-
-    @Autowired
-    private IIntegrationStateService integrationStateService;
-
-    @Autowired
-    private IWorkspaceOperatorService workspaceOperatorService;
-
-    @Autowired
-    private DatabaseIntegrationBusiness databaseIntegrationBusiness;
-
-    @Autowired
-    private CrytpoBusiness cryptoBusiness;
-
-    @Autowired
-    private IntegrationBusiness integrationBusiness;
-
-    @Autowired
-    private TaskBusiness taskBusiness;
-
-    @Autowired
-    private IliBusiness iliBusiness;
-
-    @Autowired
-    private ProviderBusiness providerBusiness;
-
-    @Autowired
-    private FileBusiness fileBusiness;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private OperatorBusiness operatorBusiness;
-
-    @Autowired
-    private NotificationBusiness notificationBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private WorkspaceManagerBusiness workspaceManagerBusiness;
-
-    @Autowired
-    private WorkspaceOperatorBusiness workspaceOperatorBusiness;
-
-    public List<WorkspaceDto> createWorkspace(Date startDate, Long managerCode, List<Long> municipalities,
-                                              String observations, MultipartFile supportFile) throws BusinessException {
-
-        /*
-         *
-         * // validate if the manager exists MicroserviceManagerDto managerDto =
-         * managerBusiness.getManagerById(managerCode); if (managerDto == null) { throw
-         * new BusinessException("El gestor no existe"); }
-         *
-         * String extension =
-         * FilenameUtils.getExtension(supportFile.getOriginalFilename()); if
-         * (!extension.equalsIgnoreCase("pdf")) { throw new
-         * BusinessException("El formato del soporte es inválido, se deben cargar archivos en formato pdf."
-         * ); }
-         *
-         * for (Long municipalityId : municipalities) {
-         *
-         * // validate if the municipality exists MunicipalityEntity municipalityEntity
-         * = municipalityService.getMunicipalityById(municipalityId); if
-         * (!(municipalityEntity instanceof MunicipalityEntity)) { throw new
-         * BusinessException("No se ha encontrado el municipio."); }
-         *
-         * // validate if workspace is active for municipality Long countWorkspaces =
-         * workspaceService.getCountByMunicipality(municipalityEntity); if
-         * (countWorkspaces > 0) { throw new
-         * BusinessException("Ya se ha creado un espacio de trabajo para el municipio."
-         * ); }
-         *
-         * }
-         *
-         * for (Long municipalityId : municipalities) {
-         *
-         * MunicipalityEntity municipalityEntity =
-         * municipalityService.getMunicipalityById(municipalityId);
-         *
-         * String urlDocumentaryRepository = null; try {
-         *
-         * String urlBase = "/" + municipalityEntity.getCode() + "/soportes/gestores";
-         * urlBase = FileTool.removeAccents(urlBase); urlDocumentaryRepository =
-         * fileBusiness.saveFileToSystem(supportFile, urlBase, false);
-         *
-         * } catch (Exception e) {
-         * log.error("No se ha podido cargar el soporte gestor: " + e.getMessage());
-         * throw new BusinessException("No se ha podido cargar el soporte."); }
-         *
-         * MilestoneEntity milestoneNewWorkspace = milestoneService
-         * .getMilestoneById(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
-         *
-         * StateEntity stateStart =
-         * stateService.getStateById(StateBusiness.STATE_START);
-         *
-         * WorkspaceEntity workspaceEntity = new WorkspaceEntity();
-         * workspaceEntity.setCreatedAt(new Date()); workspaceEntity.setIsActive(true);
-         * workspaceEntity.setManagerCode(managerCode);
-         * workspaceEntity.setObservations(observations);
-         * workspaceEntity.setNumberAlphanumericParcels(null);
-         * workspaceEntity.setMunicipalityArea(null);
-         * workspaceEntity.setStartDate(startDate); workspaceEntity.setVersion((long)
-         * 1); workspaceEntity.setMunicipality(municipalityEntity);
-         * workspaceEntity.setState(stateStart);
-         *
-         * workspaceEntity.setSupports(new ArrayList<SupportEntity>());
-         *
-         * // states history WorkspaceStateEntity workspaceState = new
-         * WorkspaceStateEntity(); workspaceState.setCreatedAt(new Date());
-         * workspaceState.setState(stateStart);
-         * workspaceState.setWorkspace(workspaceEntity); List<WorkspaceStateEntity>
-         * listStates = workspaceEntity.getStatesHistory();
-         * listStates.add(workspaceState); workspaceEntity.setStatesHistory(listStates);
-         *
-         * workspaceEntity = workspaceService.createWorkspace(workspaceEntity);
-         *
-         * // support SupportEntity supporEntity = new SupportEntity();
-         * supporEntity.setCreatedAt(new Date());
-         * supporEntity.setUrlDocumentaryRepository(urlDocumentaryRepository);
-         * supporEntity.setWorkspace(workspaceEntity);
-         * supporEntity.setMilestone(milestoneNewWorkspace);
-         * supportService.createSupport(supporEntity);
-         *
-         * // send notification try {
-         *
-         * List<MicroserviceManagerUserDto> directors =
-         * managerBusiness.getUserByManager(managerDto.getId(), new
-         * ArrayList<Long>(Arrays.asList(RoleBusiness.SUB_ROLE_DIRECTOR)));
-         *
-         * for (MicroserviceManagerUserDto directorDto : directors) {
-         *
-         * MicroserviceUserDto userDto =
-         * userBusiness.getUserById(directorDto.getUserCode()); if (userDto instanceof
-         * MicroserviceUserDto) {
-         * notificationBusiness.sendNotificationMunicipalityManagementDto(userDto.
-         * getEmail(), municipalityEntity.getDepartment().getName(),
-         * municipalityEntity.getName(), startDate, userDto.getId(), ""); }
-         *
-         * }
-         *
-         * } catch (Exception e) {
-         * log.error("Error enviando notificación al asignar gestor: " +
-         * e.getMessage()); }
-         *
-         * WorkspaceDto workspaceDto = new WorkspaceDto();
-         * workspaceDto.setId(workspaceEntity.getId());
-         * workspaceDto.setCreatedAt(workspaceEntity.getCreatedAt());
-         * workspaceDto.setUpdatedAt(workspaceEntity.getUdpatedAt());
-         * workspaceDto.setIsActive(workspaceEntity.getIsActive());
-         * workspaceDto.setManagerCode(workspaceEntity.getManagerCode());
-         * workspaceDto.setMunicipalityArea(workspaceEntity.getMunicipalityArea());
-         * workspaceDto.setNumberAlphanumericParcels(workspaceEntity.
-         * getNumberAlphanumericParcels());
-         * workspaceDto.setObservations(workspaceEntity.getObservations());
-         * workspaceDto.setStartDate(workspaceEntity.getStartDate());
-         * workspaceDto.setVersion(workspaceEntity.getVersion());
-         * workspaceDto.setManager(managerDto); workspaceDto.setState(new
-         * StateDto(workspaceEntity.getState().getId(),
-         * workspaceEntity.getState().getName(),
-         * workspaceEntity.getState().getDescription()));
-         *
-         * workspacesDto.add(workspaceDto);
-         *
-         * }
-         *
-         */
-
-        return new ArrayList<>();
+    public WorkspaceBusiness(ManagerFeignClient managerClient, ProviderFeignClient providerClient,
+                             UserFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
+                             IWorkspaceService workspaceService, IIntegrationService integrationService, IIntegrationStateService integrationStateService,
+                             IWorkspaceOperatorService workspaceOperatorService, DatabaseIntegrationBusiness databaseIntegrationBusiness,
+                             CrytpoBusiness cryptoBusiness, IntegrationBusiness integrationBusiness, TaskBusiness taskBusiness,
+                             IliBusiness iliBusiness, ProviderBusiness providerBusiness, FileBusiness fileBusiness,
+                             SupplyBusiness supplyBusiness, OperatorBusiness operatorBusiness, NotificationBusiness notificationBusiness,
+                             ManagerBusiness managerBusiness, UserBusiness userBusiness, WorkspaceManagerBusiness workspaceManagerBusiness,
+                             WorkspaceOperatorBusiness workspaceOperatorBusiness) {
+        this.managerClient = managerClient;
+        this.providerClient = providerClient;
+        this.userClient = userClient;
+        this.supplyClient = supplyClient;
+        this.municipalityService = municipalityService;
+        this.workspaceService = workspaceService;
+        this.integrationService = integrationService;
+        this.integrationStateService = integrationStateService;
+        this.workspaceOperatorService = workspaceOperatorService;
+        this.databaseIntegrationBusiness = databaseIntegrationBusiness;
+        this.cryptoBusiness = cryptoBusiness;
+        this.integrationBusiness = integrationBusiness;
+        this.taskBusiness = taskBusiness;
+        this.iliBusiness = iliBusiness;
+        this.providerBusiness = providerBusiness;
+        this.fileBusiness = fileBusiness;
+        this.supplyBusiness = supplyBusiness;
+        this.operatorBusiness = operatorBusiness;
+        this.notificationBusiness = notificationBusiness;
+        this.managerBusiness = managerBusiness;
+        this.userBusiness = userBusiness;
+        this.workspaceManagerBusiness = workspaceManagerBusiness;
+        this.workspaceOperatorBusiness = workspaceOperatorBusiness;
     }
 
     public List<WorkspaceDto> getWorkspacesByMunicipality(Long municipalityId, Long managerCode)
@@ -395,7 +249,7 @@ public class WorkspaceBusiness {
             for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
                 MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
                 if (userDto != null && userDto.getEnabled()) {
-                    notificationBusiness.sendNotificationAssignamentOperation(userDto.getEmail(), userDto.getId(),
+                    notificationBusiness.sendNotificationAssignmentOperation(userDto.getEmail(), userDto.getId(),
                             managerDto.getName(), municipalityEntity.getName(),
                             municipalityEntity.getDepartment().getName(), startDate, endDate, "");
                 }
@@ -441,123 +295,6 @@ public class WorkspaceBusiness {
         return workspaceDto;
     }
 
-    public WorkspaceEntity cloneWorkspace(Long workspaceId, Long fromClone) throws BusinessException {
-
-        /*
-         * List<Long> supportsToSkip = new ArrayList<Long>(); if
-         * (fromClone.equals(WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_MANAGER)) {
-         * supportsToSkip.add(MilestoneBusiness.MILESTONE_NEW_WORKSPACE);
-         * supportsToSkip.add(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT); } else
-         * if (fromClone.equals(WorkspaceBusiness.WORKSPACE_CLONE_FROM_CHANGE_OPERATOR))
-         * { supportsToSkip.add(MilestoneBusiness.MILESTONE_OPERATOR_ASSIGNMENT); }
-         *
-         * WorkspaceEntity workspaceEntityFound =
-         * workspaceService.getWorkspaceById(workspaceId); if (workspaceEntityFound
-         * instanceof WorkspaceEntity) {
-         *
-         * Long countWorkspaces =
-         * workspaceService.getCountByMunicipality(workspaceEntityFound.getMunicipality(
-         * ));
-         *
-         * cloneWorkspaceEntity = new WorkspaceEntity();
-         * cloneWorkspaceEntity.setCreatedAt(new Date());
-         * cloneWorkspaceEntity.setIsActive(true);
-         * cloneWorkspaceEntity.setManagerCode(workspaceEntityFound.getManagerCode());
-         * cloneWorkspaceEntity.setObservations(workspaceEntityFound.getObservations());
-         * cloneWorkspaceEntity.setNumberAlphanumericParcels(workspaceEntityFound.
-         * getNumberAlphanumericParcels());
-         * cloneWorkspaceEntity.setMunicipalityArea(workspaceEntityFound.
-         * getMunicipalityArea());
-         * cloneWorkspaceEntity.setStartDate(workspaceEntityFound.getStartDate());
-         * cloneWorkspaceEntity.setVersion(countWorkspaces + 1);
-         * cloneWorkspaceEntity.setMunicipality(workspaceEntityFound.getMunicipality());
-         * cloneWorkspaceEntity.setState(workspaceEntityFound.getState());
-         * cloneWorkspaceEntity.setWorkspace(workspaceEntityFound);
-         *
-         * // clone states history List<WorkspaceStateEntity> statesHistory = new
-         * ArrayList<WorkspaceStateEntity>(); List<WorkspaceStateEntity> listStates =
-         * workspaceEntityFound.getStatesHistory(); for (WorkspaceStateEntity
-         * wStateEntity : listStates) { WorkspaceStateEntity stateNewEntity = new
-         * WorkspaceStateEntity();
-         * stateNewEntity.setCreatedAt(wStateEntity.getCreatedAt());
-         * stateNewEntity.setState(wStateEntity.getState());
-         * stateNewEntity.setWorkspace(cloneWorkspaceEntity);
-         * statesHistory.add(stateNewEntity); }
-         *
-         * cloneWorkspaceEntity.setStatesHistory(statesHistory);
-         *
-         * // clone supports List<SupportEntity> supports = new
-         * ArrayList<SupportEntity>(); List<SupportEntity> supportsFound =
-         * workspaceEntityFound.getSupports(); for (SupportEntity supportEntity :
-         * supportsFound) { if
-         * (!supportsToSkip.contains(supportEntity.getMilestone().getId())) {
-         * SupportEntity supportNewEntity = new SupportEntity();
-         * supportNewEntity.setCreatedAt(supportEntity.getCreatedAt());
-         * supportNewEntity.setUrlDocumentaryRepository(supportEntity.
-         * getUrlDocumentaryRepository());
-         * supportNewEntity.setWorkspace(cloneWorkspaceEntity);
-         * supportNewEntity.setMilestone(supportEntity.getMilestone());
-         * supports.add(supportNewEntity); } }
-         * cloneWorkspaceEntity.setSupports(supports);
-         *
-         * cloneWorkspaceEntity =
-         * workspaceService.createWorkspace(cloneWorkspaceEntity);
-         *
-         * // set workspace old to inactive workspaceEntityFound.setIsActive(false);
-         * workspaceEntityFound =
-         * workspaceService.updateWorkspace(workspaceEntityFound); }
-         */
-
-        return null;
-    }
-
-    public List<SupportDto> getSupportsByWorkspaceId(Long workspaceId, Long managerCode) throws BusinessException {
-
-        /*
-         * // validate if the workspace exists WorkspaceEntity workspaceEntity =
-         * workspaceService.getWorkspaceById(workspaceId); if (!(workspaceEntity
-         * instanceof WorkspaceEntity)) { throw new
-         * BusinessException("No se ha encontrado el espacio de trabajo."); }
-         *
-         * // validate access if (managerCode != null) { if
-         * (!managerCode.equals(workspaceEntity.getManagerCode())) { throw new
-         * BusinessException("El usuario no tiene acceso al espacio de trabajo."); } }
-         *
-         * List<SupportEntity> listSupportsEntity = workspaceEntity.getSupports();
-         *
-         * for (SupportEntity supportEntity : listSupportsEntity) { SupportDto
-         * supportDto = new SupportDto(); supportDto.setId(supportEntity.getId());
-         * supportDto.setCreatedAt(supportEntity.getCreatedAt());
-         * supportDto.setUrlDocumentaryRepository(supportEntity.
-         * getUrlDocumentaryRepository());
-         *
-         * WorkspaceDto workspaceDto = new WorkspaceDto();
-         * workspaceDto.setId(workspaceEntity.getId());
-         * workspaceDto.setCreatedAt(workspaceEntity.getCreatedAt());
-         * workspaceDto.setUpdatedAt(workspaceEntity.getUdpatedAt());
-         * workspaceDto.setIsActive(workspaceEntity.getIsActive());
-         * workspaceDto.setManagerCode(workspaceEntity.getManagerCode());
-         * workspaceDto.setMunicipalityArea(workspaceEntity.getMunicipalityArea());
-         * workspaceDto.setNumberAlphanumericParcels(workspaceEntity.
-         * getNumberAlphanumericParcels());
-         * workspaceDto.setObservations(workspaceEntity.getObservations());
-         * workspaceDto.setStartDate(workspaceEntity.getStartDate());
-         * workspaceDto.setVersion(workspaceEntity.getVersion());
-         * workspaceDto.setState(new StateDto(workspaceEntity.getState().getId(),
-         * workspaceEntity.getState().getName(),
-         * workspaceEntity.getState().getDescription()));
-         *
-         * supportDto.setMilestone( new
-         * MilestoneDto(supportEntity.getMilestone().getId(),
-         * supportEntity.getMilestone().getName()));
-         * supportDto.setWorkspace(workspaceDto);
-         *
-         * listSupportsDto.add(supportDto); }
-         */
-
-        return new ArrayList<>();
-    }
-
     public WorkspaceDto getWorkspaceById(Long workspaceId, Long managerCode) throws BusinessException {
 
         // validate if the workspace exists
@@ -599,12 +336,12 @@ public class WorkspaceBusiness {
             }
 
             listOperatorsDto = workspaceEntity.getOperators().stream().filter(o -> o.getManagerCode().equals(managerCode))
-                    .map(wOEntity -> workspaceOperatorBusiness.entityParseToDto(wOEntity)).collect(Collectors.toList());
+                    .map(workspaceOperatorBusiness::entityParseToDto).collect(Collectors.toList());
 
         } else {
 
             listOperatorsDto = workspaceEntity.getOperators().stream()
-                    .map(wOEntity -> workspaceOperatorBusiness.entityParseToDto(wOEntity)).collect(Collectors.toList());
+                    .map(workspaceOperatorBusiness::entityParseToDto).collect(Collectors.toList());
 
         }
 
@@ -719,11 +456,11 @@ public class WorkspaceBusiness {
                                     "El tipo de insumo solicita que se especifique una versión del modelo.");
                         }
 
-                        MicroserviceTypeSupplyRequestedDto mtsr = new MicroserviceTypeSupplyRequestedDto();
-                        mtsr.setObservation(supplyDto2.getObservation());
-                        mtsr.setTypeSupplyId(supplyDto2.getTypeSupplyId());
-                        mtsr.setModelVersion(supplyDto2.getModelVersion());
-                        listSuppliesByProfile.add(mtsr);
+                        MicroserviceTypeSupplyRequestedDto typeSupplyRequestedDto = new MicroserviceTypeSupplyRequestedDto();
+                        typeSupplyRequestedDto.setObservation(supplyDto2.getObservation());
+                        typeSupplyRequestedDto.setTypeSupplyId(supplyDto2.getTypeSupplyId());
+                        typeSupplyRequestedDto.setModelVersion(supplyDto2.getModelVersion());
+                        listSuppliesByProfile.add(typeSupplyRequestedDto);
                     }
                 }
 
@@ -1673,7 +1410,7 @@ public class WorkspaceBusiness {
         return supportURL;
     }
 
-    public List<WorkspaceDto> getWorskpacesByLocation(Long departmentId, Long municipalityId, Long managerCode)
+    public List<WorkspaceDto> getWorkspacesByLocation(Long departmentId, Long municipalityId, Long managerCode)
             throws BusinessException {
 
         List<WorkspaceEntity> workspacesEntity = new ArrayList<>();
@@ -1744,7 +1481,7 @@ public class WorkspaceBusiness {
         return workspaceDto;
     }
 
-    public void unassignManagerFromMunicipality(Long municipalityId, Long managerCode) throws BusinessException {
+    public void unassignedManagerFromMunicipality(Long municipalityId, Long managerCode) throws BusinessException {
 
         // check if the municipality exists
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -1763,7 +1500,7 @@ public class WorkspaceBusiness {
             throw new BusinessException("El gestor no tiene asignado el municipio.");
         }
 
-        List<MicroserviceRequestDto> requestsDto = providerBusiness.getRequestsByEmmitersManager(managerCode);
+        List<MicroserviceRequestDto> requestsDto = providerBusiness.getRequestsByEmittersManager(managerCode);
         for (MicroserviceRequestDto requestDto : requestsDto) {
             if (requestDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
                 if (requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
@@ -1825,18 +1562,18 @@ public class WorkspaceBusiness {
                     if (countManagers > 0) {
 
                         for (WorkspaceManagerEntity workspaceManager : workspaceManagers) {
-                            WorkspaceManagerDto worskpaceManagerDto = new WorkspaceManagerDto();
+                            WorkspaceManagerDto workspaceManagerDto = new WorkspaceManagerDto();
 
                             MicroserviceManagerDto managerDto = managerBusiness
                                     .getManagerById(workspaceManager.getManagerCode());
                             if (managerDto != null) {
-                                worskpaceManagerDto.setManager(managerDto);
+                                workspaceManagerDto.setManager(managerDto);
                             }
 
-                            worskpaceManagerDto.setManagerCode(workspaceManager.getManagerCode());
-                            worskpaceManagerDto.setObservations(workspaceManager.getObservations());
-                            worskpaceManagerDto.setStartDate(workspaceManager.getStartDate());
-                            validation.getManagers().add(worskpaceManagerDto);
+                            workspaceManagerDto.setManagerCode(workspaceManager.getManagerCode());
+                            workspaceManagerDto.setObservations(workspaceManager.getObservations());
+                            workspaceManagerDto.setStartDate(workspaceManager.getStartDate());
+                            validation.getManagers().add(workspaceManagerDto);
                         }
 
                     }
@@ -1910,7 +1647,7 @@ public class WorkspaceBusiness {
             List<WorkspaceManagerEntity> managers = workspaceEntity.getManagers();
             for (WorkspaceManagerEntity manager : managers) {
                 if (manager.getManagerCode().equals(managerCode)) {
-                    throw new BusinessException("El gestor ya se encuentra asigando al municipio.");
+                    throw new BusinessException("El gestor ya se encuentra asignado al municipio.");
                 }
             }
 
