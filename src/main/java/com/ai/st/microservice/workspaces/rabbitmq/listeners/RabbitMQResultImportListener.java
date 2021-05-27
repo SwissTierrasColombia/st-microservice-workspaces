@@ -1,13 +1,14 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
+import com.ai.st.microservice.common.dto.ili.MicroserviceResultImportDto;
+
+import com.ai.st.microservice.workspaces.business.ProviderBusiness;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
-
-import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceResultImportDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 
 @Component
 public class RabbitMQResultImportListener {

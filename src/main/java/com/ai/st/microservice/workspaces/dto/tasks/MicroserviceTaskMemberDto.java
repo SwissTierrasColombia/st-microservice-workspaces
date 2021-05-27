@@ -3,62 +3,52 @@ package com.ai.st.microservice.workspaces.dto.tasks;
 import java.io.Serializable;
 import java.util.Date;
 
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
-@ApiModel(value = "TaskMemberDto", description = "Task Member")
 public class MicroserviceTaskMemberDto implements Serializable {
 
-	private static final long serialVersionUID = 7581006574042957605L;
+    private static final long serialVersionUID = 7581006574042957605L;
 
-	@ApiModelProperty(required = true, notes = "Task member ID")
-	private Long id;
+    private Long id;
+    private Long memberCode;
+    private Date createdAt;
 
-	@ApiModelProperty(required = true, notes = "Member code")
-	private Long memberCode;
+    private MicroserviceUserDto user;
 
-	@ApiModelProperty(required = true, notes = "Date creation")
-	private Date createdAt;
+    public MicroserviceTaskMemberDto() {
 
-	@ApiModelProperty(required = true, notes = "User")
-	private MicroserviceUserDto user;
+    }
 
-	public MicroserviceTaskMemberDto() {
+    public Long getId() {
+        return id;
+    }
 
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public Long getId() {
-		return id;
-	}
+    public Long getMemberCode() {
+        return memberCode;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setMemberCode(Long memberCode) {
+        this.memberCode = memberCode;
+    }
 
-	public Long getMemberCode() {
-		return memberCode;
-	}
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-	public void setMemberCode(Long memberCode) {
-		this.memberCode = memberCode;
-	}
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-	public Date getCreatedAt() {
-		return createdAt;
-	}
+    public MicroserviceUserDto getUser() {
+        return user;
+    }
 
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public MicroserviceUserDto getUser() {
-		return user;
-	}
-
-	public void setUser(MicroserviceUserDto user) {
-		this.user = user;
-	}
+    public void setUser(MicroserviceUserDto user) {
+        this.user = user;
+    }
 
 }

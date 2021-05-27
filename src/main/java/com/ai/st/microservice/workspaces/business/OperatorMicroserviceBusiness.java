@@ -1,39 +1,35 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.clients.ManagerFeignClient;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.operators.*;
+import com.ai.st.microservice.common.exceptions.BusinessException;
+import com.ai.st.microservice.common.exceptions.DisconnectedMicroserviceException;
+
+import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
+import com.ai.st.microservice.workspaces.dto.DepartmentDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
-import com.ai.st.microservice.workspaces.dto.DepartmentDto;
-import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceAddUserToOperatorDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveredSupplyDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceUpdateDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
-import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
-public class OperatorBusiness {
+public class OperatorMicroserviceBusiness {
 
-    private final Logger log = LoggerFactory.getLogger(OperatorBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(OperatorMicroserviceBusiness.class);
 
     @Autowired
     private OperatorFeignClient operatorClient;
@@ -42,7 +38,7 @@ public class OperatorBusiness {
     private ManagerFeignClient managerClient;
 
     @Autowired
-    private UserBusiness userBusiness;
+    private AdministrationBusiness administrationBusiness;
 
     @Autowired
     private IMunicipalityService municipalityService;
@@ -132,7 +128,7 @@ public class OperatorBusiness {
 
                     if (supplyDeliveryDto.getDownloadedBy() != null) {
                         try {
-                            MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+                            MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
                             supplyDeliveryDto.setUserDownloaded(userDto);
                         } catch (Exception e) {
                             log.error("Error consultando usuario: " + e.getMessage());
@@ -404,7 +400,7 @@ public class OperatorBusiness {
 
             if (supplyDeliveryDto.getDownloadedBy() != null) {
                 try {
-                    MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+                    MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
                     supplyDeliveryDto.setUserDownloaded(userDto);
                 } catch (Exception e) {
                     log.error("Error consultando usuario: " + e.getMessage());

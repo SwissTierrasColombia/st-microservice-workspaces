@@ -1,58 +1,53 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.clients.ManagerFeignClient;
+import com.ai.st.microservice.common.dto.administration.*;
+import com.ai.st.microservice.common.dto.managers.MicroserviceAddUserToManagerDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.dto.providers.*;
+import com.ai.st.microservice.common.business.RoleBusiness;
+import com.ai.st.microservice.common.exceptions.BusinessException;
+
+import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
+import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
+import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
+import com.ai.st.microservice.workspaces.dto.CreateUserRoleManagerDto;
+import com.ai.st.microservice.workspaces.dto.CreateUserRoleOperatorDto;
+import com.ai.st.microservice.workspaces.dto.CreateUserRoleProviderDto;
+import com.ai.st.microservice.workspaces.dto.administration.WorkspaceUserDto;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
-import com.ai.st.microservice.workspaces.dto.CreateUserRoleManagerDto;
-import com.ai.st.microservice.workspaces.dto.CreateUserRoleOperatorDto;
-import com.ai.st.microservice.workspaces.dto.CreateUserRoleProviderDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceChangePasswordDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceCreateUserDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceRoleDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUpdateUserDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceAddUserToManagerDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddAdministratorToProviderDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceAddUserToProviderDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderAdministratorDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-
 @Component
-public class AdministrationBusiness {
+public class AdministratorMicroserviceBusiness {
 
-    private final Logger log = LoggerFactory.getLogger(AdministrationBusiness.class);
+    private final Logger log = LoggerFactory.getLogger(AdministratorMicroserviceBusiness.class);
 
-    private final UserFeignClient userClient;
+    private final AdministrationFeignClient userClient;
     private final ProviderFeignClient providerClient;
     private final ManagerFeignClient managerClient;
     private final OperatorFeignClient operatorClient;
     private final NotificationBusiness notificationBusiness;
     private final ProviderBusiness providerBusiness;
-    private final ManagerBusiness managerBusiness;
-    private final OperatorBusiness operatorBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final OperatorMicroserviceBusiness operatorBusiness;
 
-    public AdministrationBusiness(UserFeignClient userClient, ProviderFeignClient providerClient, ManagerFeignClient managerClient,
-                                  OperatorFeignClient operatorClient, NotificationBusiness notificationBusiness,
-                                  ProviderBusiness providerBusiness, ManagerBusiness managerBusiness, OperatorBusiness operatorBusiness) {
+    public AdministratorMicroserviceBusiness(AdministrationFeignClient userClient, ProviderFeignClient providerClient,
+                                             ManagerFeignClient managerClient, OperatorFeignClient operatorClient,
+                                             NotificationBusiness notificationBusiness, ProviderBusiness providerBusiness,
+                                             ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness) {
         this.userClient = userClient;
         this.providerClient = providerClient;
         this.managerClient = managerClient;
@@ -311,7 +306,7 @@ public class AdministrationBusiness {
         MicroserviceRoleDto roleDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
 
-        if (!(roleDto instanceof MicroserviceRoleDto)) {
+        if (roleDto == null) {
             throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
         }
 
@@ -338,8 +333,7 @@ public class AdministrationBusiness {
         MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-        if (!(roleManagerDto instanceof MicroserviceRoleDto) && !(roleOperatorDto instanceof MicroserviceRoleDto)
-                && !(roleProviderDto instanceof MicroserviceRoleDto)) {
+        if (roleManagerDto == null && roleOperatorDto == null && roleProviderDto == null) {
             throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
         }
 
@@ -356,15 +350,15 @@ public class AdministrationBusiness {
             MicroserviceManagerProfileDto profileDto = profiles.stream()
                     .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
 
-            if (!(profileDto instanceof MicroserviceManagerProfileDto)) {
+            if (profileDto == null) {
                 throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
             }
 
         }
 
-        if (roleProviderDto instanceof MicroserviceRoleDto) {
+        if (roleProviderDto != null) {
 
-            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = new ArrayList<>();
+            List<MicroserviceProviderRoleDto> roles = new ArrayList<>();
 
             try {
                 roles = providerClient.findRolesByUser(userId);
@@ -372,7 +366,7 @@ public class AdministrationBusiness {
                 log.error("Error consultando los roles de un usuario proveedor: " + e.getMessage());
             }
 
-            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDto = roles.stream()
+            MicroserviceProviderRoleDto roleDto = roles.stream()
                     .filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
 
             if (roleDto == null) {
@@ -399,7 +393,7 @@ public class AdministrationBusiness {
         MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-        if (!(roleManagerDto instanceof MicroserviceRoleDto)) {
+        if (roleManagerDto == null) {
             throw new BusinessException("No se puede editar usuarios que no son gestores");
         }
 
@@ -434,7 +428,7 @@ public class AdministrationBusiness {
         MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-        if (!(roleProviderDto instanceof MicroserviceRoleDto)) {
+        if (roleProviderDto == null) {
             throw new BusinessException("No se puede editar usuarios que no son proveedores");
         }
 
@@ -501,7 +495,7 @@ public class AdministrationBusiness {
 
         MicroserviceRoleDto roleDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_ADMINISTRATOR)).findAny().orElse(null);
-        if (!(roleDto instanceof MicroserviceRoleDto)) {
+        if (roleDto == null) {
             throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
         }
 
@@ -527,8 +521,7 @@ public class AdministrationBusiness {
         MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-        if (!(roleManagerDto instanceof MicroserviceRoleDto) && !(roleOperatorDto instanceof MicroserviceRoleDto)
-                && !(roleProviderDto instanceof MicroserviceRoleDto)) {
+        if (roleManagerDto == null && roleOperatorDto == null && roleProviderDto == null) {
             throw new BusinessException("No cuenta con los permisos necesarios para editar el usuario");
         }
 
@@ -545,15 +538,15 @@ public class AdministrationBusiness {
             MicroserviceManagerProfileDto profileDto = profiles.stream()
                     .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
 
-            if (!(profileDto instanceof MicroserviceManagerProfileDto)) {
+            if (profileDto == null) {
                 throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
             }
 
         }
 
-        if (roleProviderDto instanceof MicroserviceRoleDto) {
+        if (roleProviderDto != null) {
 
-            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = new ArrayList<>();
+            List<MicroserviceProviderRoleDto> roles = new ArrayList<>();
 
             try {
                 roles = providerClient.findRolesByUser(userId);
@@ -561,7 +554,7 @@ public class AdministrationBusiness {
                 log.error("Error consultando los roles de un usuario proveedor: " + e.getMessage());
             }
 
-            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDto = roles.stream()
+            MicroserviceProviderRoleDto roleDto = roles.stream()
                     .filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
 
             if (roleDto == null) {
@@ -588,7 +581,7 @@ public class AdministrationBusiness {
         MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
 
-        if (!(roleManagerDto instanceof MicroserviceRoleDto)) {
+        if (roleManagerDto == null) {
             throw new BusinessException("No se puede editar usuarios que no son gestores");
         }
 
@@ -623,7 +616,7 @@ public class AdministrationBusiness {
         MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
                 .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-        if (!(roleProviderDto instanceof MicroserviceRoleDto)) {
+        if (roleProviderDto == null) {
             throw new BusinessException("No se puede editar usuarios que no son proveedores");
         }
 
@@ -660,7 +653,7 @@ public class AdministrationBusiness {
 
     public MicroserviceUserDto changeStatusUser(Long userId, Boolean status) throws BusinessException {
 
-        MicroserviceUserDto userDto;
+        WorkspaceUserDto userDto;
 
         try {
 
@@ -676,13 +669,12 @@ public class AdministrationBusiness {
             MicroserviceRoleDto roleProviderDto = userDto.getRoles().stream()
                     .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-            if (roleManagerDto instanceof MicroserviceRoleDto) {
+            if (roleManagerDto != null) {
                 List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
                 userDto.setProfilesManager(profiles);
-            } else if (roleProviderDto instanceof MicroserviceRoleDto) {
+            } else if (roleProviderDto != null) {
 
-                List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> roles = providerClient
-                        .findRolesByUser(userDto.getId());
+                List<MicroserviceProviderRoleDto> roles = providerClient.findRolesByUser(userDto.getId());
                 userDto.setRolesProvider(roles);
 
                 List<MicroserviceProviderProfileDto> profiles = providerClient.findProfilesByUser(userDto.getId());
@@ -697,7 +689,7 @@ public class AdministrationBusiness {
         return userDto;
     }
 
-    public List<MicroserviceUserDto> getUsersFromSuperAdmin() throws BusinessException {
+    public List<WorkspaceUserDto> getUsersFromSuperAdmin() throws BusinessException {
 
         List<Long> roles = new ArrayList<>(Collections.singletonList(RoleBusiness.ROLE_ADMINISTRATOR));
 
@@ -709,11 +701,11 @@ public class AdministrationBusiness {
         List<Long> roles = new ArrayList<>(Arrays.asList(RoleBusiness.ROLE_MANAGER, RoleBusiness.ROLE_SUPPLY_SUPPLIER,
                 RoleBusiness.ROLE_OPERATOR));
 
-        List<MicroserviceUserDto> users = this.getUsers(roles);
+        List<WorkspaceUserDto> users = this.getUsers(roles);
 
         List<MicroserviceUserDto> listUsersResponse = new ArrayList<>();
 
-        for (MicroserviceUserDto userDto : users) {
+        for (WorkspaceUserDto userDto : users) {
 
             MicroserviceRoleDto roleManager = userDto.getRoles().stream()
                     .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
@@ -734,8 +726,7 @@ public class AdministrationBusiness {
             } else if (roleProvider instanceof MicroserviceRoleDto) {
 
                 try {
-                    List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> profiles = providerClient
-                            .findRolesByUser(userDto.getId());
+                    List<MicroserviceProviderRoleDto> profiles = providerClient.findRolesByUser(userDto.getId());
                     userDto.setRolesProvider(profiles);
 
                     MicroserviceProviderDto providerDto = providerClient.findProviderByAdministrator(userDto.getId());
@@ -784,7 +775,7 @@ public class AdministrationBusiness {
 
         for (MicroserviceManagerUserDto userManagerDto : usersManagerDto) {
             try {
-                MicroserviceUserDto userDto = userClient.findById(userManagerDto.getUserCode());
+                WorkspaceUserDto userDto = userClient.findById(userManagerDto.getUserCode());
                 userDto.setProfilesManager(userManagerDto.getProfiles());
                 users.add(userDto);
             } catch (Exception e) {
@@ -809,7 +800,7 @@ public class AdministrationBusiness {
 
         for (MicroserviceProviderUserDto userProviderDto : usersProviderDto) {
             try {
-                MicroserviceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
+                WorkspaceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
                 userDto.setProfilesProvider(userProviderDto.getProfiles());
                 users.add(userDto);
             } catch (Exception e) {
@@ -827,12 +818,11 @@ public class AdministrationBusiness {
 
         for (MicroserviceProviderAdministratorDto userProviderDto : adminsProviderDto) {
 
-            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = userProviderDto
-                    .getRoles().stream().filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER))
-                    .findAny().orElse(null);
+            MicroserviceProviderRoleDto roleDirector = userProviderDto.getRoles().stream()
+                    .filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
             if (roleDirector == null) {
                 try {
-                    MicroserviceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
+                    WorkspaceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
                     userDto.setRolesProvider(userProviderDto.getRoles());
                     users.add(userDto);
                 } catch (Exception e) {
@@ -845,8 +835,8 @@ public class AdministrationBusiness {
         return users;
     }
 
-    public List<MicroserviceUserDto> getUsers(List<Long> roles) throws BusinessException {
-        List<MicroserviceUserDto> users;
+    public List<WorkspaceUserDto> getUsers(List<Long> roles) throws BusinessException {
+        List<WorkspaceUserDto> users;
         try {
             users = userClient.findUsersByRoles(roles);
         } catch (Exception e) {
@@ -858,7 +848,7 @@ public class AdministrationBusiness {
     public MicroserviceUserDto addProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
             throws BusinessException {
 
-        MicroserviceUserDto userDto;
+        WorkspaceUserDto userDto;
 
         MicroserviceManagerDto managerDto;
         try {
@@ -895,7 +885,7 @@ public class AdministrationBusiness {
     public MicroserviceUserDto addProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
             throws BusinessException {
 
-        MicroserviceUserDto userDto;
+        WorkspaceUserDto userDto;
         MicroserviceProviderDto providerDto;
 
         try {
@@ -934,7 +924,7 @@ public class AdministrationBusiness {
     public MicroserviceUserDto removeProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
             throws BusinessException {
 
-        MicroserviceUserDto userDto;
+        WorkspaceUserDto userDto;
         MicroserviceManagerDto managerDto;
 
         try {
@@ -971,7 +961,7 @@ public class AdministrationBusiness {
     public MicroserviceUserDto removeProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
             throws BusinessException {
 
-        MicroserviceUserDto userDto;
+        WorkspaceUserDto userDto;
         MicroserviceProviderDto providerDto;
 
         try {

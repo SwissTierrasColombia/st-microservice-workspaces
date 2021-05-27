@@ -1,5 +1,10 @@
 package com.ai.st.microservice.workspaces.dto.tasks;
 
+import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskCategoryDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskMetadataDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskStateDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskStepDto;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
@@ -8,131 +13,132 @@ import java.util.Map;
 
 public class MicroserviceTaskDto implements Serializable {
 
-	private static final long serialVersionUID = -572797587427843121L;
+    private static final long serialVersionUID = -572797587427843121L;
 
-	private Long id;
-	private String name;
-	private String description;
-	private Date deadline;
-	private String reason;
-	private Date createdAt;
-	private Date closingDate;
-	private MicroserviceTaskStateDto taskState;
-	private List<MicroserviceTaskMemberDto> members;
-	private List<MicroserviceTaskCategoryDto> categories;
-	private List<MicroserviceTaskMetadataDto> metadata;
-	private List<MicroserviceTaskStepDto> steps;
-	private Map<String, Object> data;
+    private Long id;
+    private String name;
+    private String description;
+    private String reason;
+    private Date deadline;
+    private Date createdAt;
+    private Date closingDate;
+    private MicroserviceTaskStateDto taskState;
+    private List<MicroserviceTaskMemberDto> members;
+    private List<MicroserviceTaskCategoryDto> categories;
+    private List<MicroserviceTaskMetadataDto> metadata;
+    private List<MicroserviceTaskStepDto> steps;
 
-	public MicroserviceTaskDto() {
-		this.members = new ArrayList<MicroserviceTaskMemberDto>();
-		this.categories = new ArrayList<MicroserviceTaskCategoryDto>();
-		this.metadata = new ArrayList<MicroserviceTaskMetadataDto>();
-		this.steps = new ArrayList<MicroserviceTaskStepDto>();
-	}
+    private Map<String, Object> data;
 
-	public Long getId() {
-		return id;
-	}
+    public MicroserviceTaskDto() {
+        this.members = new ArrayList<>();
+        this.categories = new ArrayList<>();
+        this.metadata = new ArrayList<>();
+        this.steps = new ArrayList<>();
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public Date getDeadline() {
-		return deadline;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public void setDeadline(Date deadline) {
-		this.deadline = deadline;
-	}
+    public Date getDeadline() {
+        return deadline;
+    }
 
-	public Date getCreatedAt() {
-		return createdAt;
-	}
+    public void setDeadline(Date deadline) {
+        this.deadline = deadline;
+    }
 
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-	public Date getClosingDate() {
-		return closingDate;
-	}
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-	public void setClosingDate(Date closingDate) {
-		this.closingDate = closingDate;
-	}
+    public Date getClosingDate() {
+        return closingDate;
+    }
 
-	public MicroserviceTaskStateDto getTaskState() {
-		return taskState;
-	}
+    public void setClosingDate(Date closingDate) {
+        this.closingDate = closingDate;
+    }
 
-	public void setTaskState(MicroserviceTaskStateDto taskState) {
-		this.taskState = taskState;
-	}
+    public MicroserviceTaskStateDto getTaskState() {
+        return taskState;
+    }
 
-	public List<MicroserviceTaskMemberDto> getMembers() {
-		return members;
-	}
+    public void setTaskState(MicroserviceTaskStateDto taskState) {
+        this.taskState = taskState;
+    }
 
-	public void setMembers(List<MicroserviceTaskMemberDto> members) {
-		this.members = members;
-	}
+    public List<MicroserviceTaskMemberDto> getMembers() {
+        return members;
+    }
 
-	public List<MicroserviceTaskCategoryDto> getCategories() {
-		return categories;
-	}
+    public void setMembers(List<MicroserviceTaskMemberDto> members) {
+        this.members = members;
+    }
 
-	public void setCategories(List<MicroserviceTaskCategoryDto> categories) {
-		this.categories = categories;
-	}
+    public List<MicroserviceTaskCategoryDto> getCategories() {
+        return categories;
+    }
 
-	public List<MicroserviceTaskMetadataDto> getMetadata() {
-		return metadata;
-	}
+    public void setCategories(List<MicroserviceTaskCategoryDto> categories) {
+        this.categories = categories;
+    }
 
-	public void setMetadata(List<MicroserviceTaskMetadataDto> metadata) {
-		this.metadata = metadata;
-	}
+    public List<MicroserviceTaskMetadataDto> getMetadata() {
+        return metadata;
+    }
 
-	public List<MicroserviceTaskStepDto> getSteps() {
-		return steps;
-	}
+    public void setMetadata(List<MicroserviceTaskMetadataDto> metadata) {
+        this.metadata = metadata;
+    }
 
-	public void setSteps(List<MicroserviceTaskStepDto> steps) {
-		this.steps = steps;
-	}
+    public List<MicroserviceTaskStepDto> getSteps() {
+        return steps;
+    }
 
-	public Map<String, Object> getData() {
-		return data;
-	}
+    public void setSteps(List<MicroserviceTaskStepDto> steps) {
+        this.steps = steps;
+    }
 
-	public void setData(Map<String, Object> data) {
-		this.data = data;
-	}
+    public Map<String, Object> getData() {
+        return data;
+    }
 
-	public String getReason() {
-		return reason;
-	}
+    public void setData(Map<String, Object> data) {
+        this.data = data;
+    }
 
-	public void setReason(String reason) {
-		this.reason = reason;
-	}
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
 
 }

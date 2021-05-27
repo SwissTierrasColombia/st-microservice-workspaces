@@ -1,16 +1,17 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import com.ai.st.microservice.common.exceptions.*;
+
+import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -30,7 +31,7 @@ public class MunicipalityV1Controller {
         this.municipalityBusiness = municipalityBusiness;
     }
 
-    @RequestMapping(value = "/by-manager/{managerId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/by-manager/{managerId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipalities by manager")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities by manager", response = MunicipalityDto.class, responseContainer = "List"),
@@ -59,7 +60,7 @@ public class MunicipalityV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/not-workspace/departments/{departmentId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/not-workspace/departments/{departmentId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipalities by department")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities not workspaces", response = MunicipalityDto.class, responseContainer = "List"),
@@ -96,7 +97,7 @@ public class MunicipalityV1Controller {
             @ApiResponse(code = 200, message = "Municipality got", response = MunicipalityDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
-    public ResponseEntity<?> getMunicipalityById(@PathVariable String municipalityCode) {
+    public ResponseEntity<?> getMunicipalityByCode(@PathVariable String municipalityCode) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -108,7 +109,7 @@ public class MunicipalityV1Controller {
 
         } catch (Exception e) {
             responseDto = new BasicResponseDto(e.getMessage(), 5);
-            log.error("Error MunicipalityV1Controller@getMunicipalityById#General ---> " + e.getMessage());
+            log.error("Error MunicipalityV1Controller@getMunicipalityByCode#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         }
 

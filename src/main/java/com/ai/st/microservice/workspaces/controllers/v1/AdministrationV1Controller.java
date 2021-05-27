@@ -1,30 +1,26 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import com.ai.st.microservice.workspaces.business.*;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.common.exceptions.*;
 
+import com.ai.st.microservice.workspaces.business.AdministratorMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.ProviderBusiness;
 import com.ai.st.microservice.workspaces.dto.AddProfileToUserDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.ChangePasswordDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserDto;
 import com.ai.st.microservice.workspaces.dto.UpdateUserDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -38,20 +34,21 @@ public class AdministrationV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(AdministrationV1Controller.class);
 
-    private final AdministrationBusiness administrationBusiness;
-    private final UserBusiness userBusiness;
-    private final ManagerBusiness managerBusiness;
+    private final AdministratorMicroserviceBusiness administrationMicroserviceBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
     private final ProviderBusiness providerBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
-    public AdministrationV1Controller(AdministrationBusiness administrationBusiness, UserBusiness userBusiness,
-                                      ManagerBusiness managerBusiness, ProviderBusiness providerBusiness) {
-        this.administrationBusiness = administrationBusiness;
-        this.userBusiness = userBusiness;
+    public AdministrationV1Controller(AdministratorMicroserviceBusiness administrationBusiness,
+                                      ManagerMicroserviceBusiness managerBusiness, ProviderBusiness providerBusiness,
+                                      AdministrationBusiness administrationBusiness1) {
+        this.administrationMicroserviceBusiness = administrationBusiness;
         this.managerBusiness = managerBusiness;
         this.providerBusiness = providerBusiness;
+        this.administrationBusiness = administrationBusiness1;
     }
 
-    @RequestMapping(value = "/users", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create user")
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -65,31 +62,31 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isSuperAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.createUser(requestCreateUser.getFirstName(),
+            if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.createUser(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
                         requestCreateUser.getPassword(), null, requestCreateUser.getRoleAdministrator(), null, null);
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 if (requestCreateUser.getRoleProvider() != null) {
                     requestCreateUser.getRoleProvider().setFromAdministrator(true);
                 }
 
-                responseDto = administrationBusiness.createUserFromAdministrator(requestCreateUser.getFirstName(),
+                responseDto = administrationMicroserviceBusiness.createUserFromAdministrator(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
                         requestCreateUser.getPassword(), requestCreateUser.getRoleProvider(),
                         requestCreateUser.getRoleAdministrator(), requestCreateUser.getRoleManager(),
                         requestCreateUser.getRoleOperator());
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -102,13 +99,13 @@ public class AdministrationV1Controller {
 
                 requestCreateUser.getRoleManager().setManagerId(managerDto.getId());
 
-                responseDto = administrationBusiness.createUserFromManager(requestCreateUser.getFirstName(),
+                responseDto = administrationMicroserviceBusiness.createUserFromManager(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
                         requestCreateUser.getPassword(), requestCreateUser.getRoleManager());
 
             }
 
-            if (userBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isProvider(userDtoSession)) {
 
                 requestCreateUser.getRoleProvider().setFromAdministrator(false);
 
@@ -122,7 +119,7 @@ public class AdministrationV1Controller {
 
                 requestCreateUser.getRoleProvider().setProviderId(providerDto.getId());
 
-                responseDto = administrationBusiness.createUserFromProvider(requestCreateUser.getFirstName(),
+                responseDto = administrationMicroserviceBusiness.createUserFromProvider(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
                         requestCreateUser.getPassword(), requestCreateUser.getRoleProvider());
 
@@ -143,7 +140,7 @@ public class AdministrationV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/users/reset-password", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/users/reset-password", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Change password user")
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -157,12 +154,12 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            responseDto = administrationBusiness.changeUserPassword(userDtoSession.getId(),
+            responseDto = administrationMicroserviceBusiness.changeUserPassword(userDtoSession.getId(),
                     requestChangePassword.getPassword());
             httpStatus = HttpStatus.OK;
 
@@ -183,7 +180,7 @@ public class AdministrationV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/users/{userId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update user")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Update user", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -198,22 +195,22 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isSuperAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.updateUserFromSuperAdmin(userId, requestUpdateUser.getFirstName(),
+            if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.updateUserFromSuperAdmin(userId, requestUpdateUser.getFirstName(),
                         requestUpdateUser.getLastName(), requestUpdateUser.getEmail());
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.updateUserFromAdministrator(userId,
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.updateUserFromAdministrator(userId,
                         requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail());
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -224,12 +221,12 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
 
-                responseDto = administrationBusiness.updateUserFromManager(userId, requestUpdateUser.getFirstName(),
+                responseDto = administrationMicroserviceBusiness.updateUserFromManager(userId, requestUpdateUser.getFirstName(),
                         requestUpdateUser.getLastName(), requestUpdateUser.getEmail(), managerDto.getId());
 
             }
 
-            if (userBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get providers
                 MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
@@ -240,7 +237,7 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
 
-                responseDto = administrationBusiness.updateUserFromProvider(userId, requestUpdateUser.getFirstName(),
+                responseDto = administrationMicroserviceBusiness.updateUserFromProvider(userId, requestUpdateUser.getFirstName(),
                         requestUpdateUser.getLastName(), requestUpdateUser.getEmail(), providerDto.getId());
 
             }
@@ -268,7 +265,7 @@ public class AdministrationV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/users/{userId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/users/{userId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable user")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "User disabled", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -282,20 +279,20 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isSuperAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.changeStatusUserFromSuperAdmin(userId, false);
+            if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromSuperAdmin(userId, false);
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.changeStatusUserFromAdministrator(userId, false);
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromAdministrator(userId, false);
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
@@ -305,10 +302,10 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar el soporte.");
                 }
 
-                responseDto = administrationBusiness.changeStatusUserFromManager(userId, false, managerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, false, managerDto.getId());
             }
 
-            if (userBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
                 MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
@@ -319,7 +316,7 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar usuarios.");
                 }
 
-                responseDto = administrationBusiness.changeStatusUserFromProvider(userId, false, providerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, false, providerDto.getId());
 
             }
 
@@ -346,7 +343,7 @@ public class AdministrationV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/users/{userId}/enable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/users/{userId}/enable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Enable user")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "User enabled", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -360,20 +357,20 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isSuperAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.changeStatusUserFromSuperAdmin(userId, true);
+            if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromSuperAdmin(userId, true);
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.changeStatusUserFromAdministrator(userId, true);
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromAdministrator(userId, true);
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -384,10 +381,10 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
 
-                responseDto = administrationBusiness.changeStatusUserFromManager(userId, true, managerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, true, managerDto.getId());
             }
 
-            if (userBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
                 MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
@@ -398,7 +395,7 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
 
-                responseDto = administrationBusiness.changeStatusUserFromProvider(userId, true, providerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, true, providerDto.getId());
 
             }
 
@@ -425,7 +422,7 @@ public class AdministrationV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/users", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get users")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Get users", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -438,20 +435,20 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isSuperAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.getUsersFromSuperAdmin();
+            if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.getUsersFromSuperAdmin();
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
-                responseDto = administrationBusiness.getUsersFromAdministrator();
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
+                responseDto = administrationMicroserviceBusiness.getUsersFromAdministrator();
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -462,11 +459,11 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para consultar usuarios.");
                 }
 
-                responseDto = administrationBusiness.getUsersFromManager(managerDto.getId());
+                responseDto = administrationMicroserviceBusiness.getUsersFromManager(managerDto.getId());
 
             }
 
-            if (userBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
                 MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
@@ -477,7 +474,7 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para consultar usuarios.");
                 }
 
-                responseDto = administrationBusiness.getUsersFromProvider(providerDto.getId());
+                responseDto = administrationMicroserviceBusiness.getUsersFromProvider(providerDto.getId());
 
             }
 
@@ -504,7 +501,7 @@ public class AdministrationV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/users/{userId}/profiles", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/users/{userId}/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Add profile to user")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -518,12 +515,12 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -534,12 +531,12 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
 
-                responseDto = administrationBusiness.addProfileToUserFromManager(userId, addProfileUser.getProfileId(),
+                responseDto = administrationMicroserviceBusiness.addProfileToUserFromManager(userId, addProfileUser.getProfileId(),
                         managerDto.getId());
 
             }
 
-            if (userBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
                 MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
@@ -550,7 +547,7 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
 
-                responseDto = administrationBusiness.addProfileToUserFromProvider(userId, addProfileUser.getProfileId(),
+                responseDto = administrationMicroserviceBusiness.addProfileToUserFromProvider(userId, addProfileUser.getProfileId(),
                         providerDto.getId());
 
             }
@@ -578,7 +575,7 @@ public class AdministrationV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/users/{userId}/profiles", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/users/{userId}/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Remove profile to user")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -592,12 +589,12 @@ public class AdministrationV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -608,12 +605,12 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
 
-                responseDto = administrationBusiness.removeProfileToUserFromManager(userId,
+                responseDto = administrationMicroserviceBusiness.removeProfileToUserFromManager(userId,
                         addProfileUser.getProfileId(), managerDto.getId());
 
             }
 
-            if (userBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
                 MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
@@ -624,7 +621,7 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
 
-                responseDto = administrationBusiness.removeProfileToUserFromProvider(userId,
+                responseDto = administrationMicroserviceBusiness.removeProfileToUserFromProvider(userId,
                         addProfileUser.getProfileId(), providerDto.getId());
 
             }

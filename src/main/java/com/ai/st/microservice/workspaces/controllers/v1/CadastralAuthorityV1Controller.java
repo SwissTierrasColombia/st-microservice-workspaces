@@ -1,11 +1,22 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.exceptions.*;
+
+import com.ai.st.microservice.workspaces.business.CadastralAuthorityBusiness;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.CreateSupplyCadastralAuthorityDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.servlet.ServletContext;
+
+import com.google.common.io.Files;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,26 +25,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import com.ai.st.microservice.workspaces.business.CadastralAuthorityBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.CreateSupplyCadastralAuthorityDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
-import com.google.common.io.Files;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -48,17 +41,17 @@ public class CadastralAuthorityV1Controller {
     private final Logger log = LoggerFactory.getLogger(CadastralAuthorityV1Controller.class);
 
     private final CadastralAuthorityBusiness cadastralAuthorityBusiness;
-    private final UserBusiness userBusiness;
     private final ServletContext servletContext;
+    private final AdministrationBusiness administrationBusiness;
 
-    public CadastralAuthorityV1Controller(CadastralAuthorityBusiness cadastralAuthorityBusiness, UserBusiness userBusiness,
-                                          ServletContext servletContext) {
+    public CadastralAuthorityV1Controller(CadastralAuthorityBusiness cadastralAuthorityBusiness, ServletContext servletContext,
+                                          AdministrationBusiness administrationBusiness) {
         this.cadastralAuthorityBusiness = cadastralAuthorityBusiness;
-        this.userBusiness = userBusiness;
         this.servletContext = servletContext;
+        this.administrationBusiness = administrationBusiness;
     }
 
-    @RequestMapping(value = "/supplies/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/supplies/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create supply (cadastral authority)")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
@@ -75,7 +68,7 @@ public class CadastralAuthorityV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -129,7 +122,7 @@ public class CadastralAuthorityV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/report/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/report/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create report (cadastral authority)")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),

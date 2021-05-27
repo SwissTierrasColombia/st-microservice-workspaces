@@ -1,19 +1,14 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.List;
+import com.ai.st.microservice.common.clients.ReportFeignClient;
+import com.ai.st.microservice.common.dto.reports.*;
+import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.ai.st.microservice.workspaces.clients.ReportFeignClient;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceDownloadedSupplyDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDeliveryACDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDeliveryManagerDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceRequestReportDownloadSupplyDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceSupplyACDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+import java.util.List;
 
 @Service
 public class ReportBusiness {

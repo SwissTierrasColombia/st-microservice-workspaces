@@ -1,20 +1,22 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.reports.MicroserviceReportInformationDto;
+import com.ai.st.microservice.common.dto.reports.MicroserviceSupplyACDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyOwnerDto;
+import com.ai.st.microservice.common.exceptions.BusinessException;
+
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceSupplyACDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyOwnerDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.MunicipalityService;
 import com.ai.st.microservice.workspaces.services.WorkspaceService;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
+
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -36,11 +38,11 @@ public class CadastralAuthorityBusiness {
     private final SupplyBusiness supplyBusiness;
     private final MunicipalityService municipalityService;
     private final ReportBusiness reportBusiness;
-    private final ManagerBusiness managerBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
 
     public CadastralAuthorityBusiness(MunicipalityBusiness municipalityBusiness, WorkspaceService workspaceService, FileBusiness fileBusiness,
                                       SupplyBusiness supplyBusiness, MunicipalityService municipalityService,
-                                      ReportBusiness reportBusiness, ManagerBusiness managerBusiness) {
+                                      ReportBusiness reportBusiness, ManagerMicroserviceBusiness managerBusiness) {
         this.municipalityBusiness = municipalityBusiness;
         this.workspaceService = workspaceService;
         this.fileBusiness = fileBusiness;

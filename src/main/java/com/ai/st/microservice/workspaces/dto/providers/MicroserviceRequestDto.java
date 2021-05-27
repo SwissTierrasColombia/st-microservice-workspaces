@@ -5,143 +5,147 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceRequestStateDto;
+
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 
 public class MicroserviceRequestDto implements Serializable {
 
-	private static final long serialVersionUID = 18861947628131335L;
+    private static final long serialVersionUID = 18861947628131335L;
 
-	private Long id;
-	private Date createdAt;
-	private Date deadline;
-	private String observations;
-	private MicroserviceRequestStateDto requestState;
-	private List<MicroserviceSupplyRequestedDto> suppliesRequested;
-	private List<MicroserviceEmitterDto> emitters;
-	private MicroserviceProviderDto provider;
-	private String municipalityCode;
-	private MunicipalityDto municipality;
-	private String packageLabel;
-	private Date closedAt;
-	private Long closedBy;
-	private MicroserviceUserDto userClosedBy;
+    private Long id;
+    private Date createdAt;
+    private Date deadline;
+    private String observations;
+    private MicroserviceRequestStateDto requestState;
+    private List<MicroserviceSupplyRequestedDto> suppliesRequested;
+    private List<MicroserviceEmitterDto> emitters;
+    private MicroserviceProviderDto provider;
+    private String municipalityCode;
+    private String packageLabel;
+    private Date closedAt;
+    private Long closedBy;
 
-	public MicroserviceRequestDto() {
-		suppliesRequested = new ArrayList<>();
-		emitters = new ArrayList<>();
-	}
+    private MunicipalityDto municipality;
+    private MicroserviceUserDto userClosedBy;
 
-	public Long getId() {
-		return id;
-	}
+    public MicroserviceRequestDto() {
+        suppliesRequested = new ArrayList<>();
+        emitters = new ArrayList<>();
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public Date getCreatedAt() {
-		return createdAt;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-	public Date getDeadline() {
-		return deadline;
-	}
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-	public void setDeadline(Date deadline) {
-		this.deadline = deadline;
-	}
+    public Date getDeadline() {
+        return deadline;
+    }
 
-	public String getObservations() {
-		return observations;
-	}
+    public void setDeadline(Date deadline) {
+        this.deadline = deadline;
+    }
 
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
+    public String getObservations() {
+        return observations;
+    }
 
-	public MicroserviceRequestStateDto getRequestState() {
-		return requestState;
-	}
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
-	public void setRequestState(MicroserviceRequestStateDto requestState) {
-		this.requestState = requestState;
-	}
+    public MicroserviceRequestStateDto getRequestState() {
+        return requestState;
+    }
 
-	public List<MicroserviceSupplyRequestedDto> getSuppliesRequested() {
-		return suppliesRequested;
-	}
+    public void setRequestState(MicroserviceRequestStateDto requestState) {
+        this.requestState = requestState;
+    }
 
-	public void setSuppliesRequested(List<MicroserviceSupplyRequestedDto> suppliesRequested) {
-		this.suppliesRequested = suppliesRequested;
-	}
+    public List<MicroserviceSupplyRequestedDto> getSuppliesRequested() {
+        return suppliesRequested;
+    }
 
-	public List<MicroserviceEmitterDto> getEmitters() {
-		return emitters;
-	}
+    public void setSuppliesRequested(List<MicroserviceSupplyRequestedDto> suppliesRequested) {
+        this.suppliesRequested = suppliesRequested;
+    }
 
-	public void setEmitters(List<MicroserviceEmitterDto> emitters) {
-		this.emitters = emitters;
-	}
+    public List<MicroserviceEmitterDto> getEmitters() {
+        return emitters;
+    }
 
-	public MicroserviceProviderDto getProvider() {
-		return provider;
-	}
+    public void setEmitters(List<MicroserviceEmitterDto> emitters) {
+        this.emitters = emitters;
+    }
 
-	public void setProvider(MicroserviceProviderDto provider) {
-		this.provider = provider;
-	}
+    public MicroserviceProviderDto getProvider() {
+        return provider;
+    }
 
-	public String getMunicipalityCode() {
-		return municipalityCode;
-	}
+    public void setProvider(MicroserviceProviderDto provider) {
+        this.provider = provider;
+    }
 
-	public void setMunicipalityCode(String municipalityCode) {
-		this.municipalityCode = municipalityCode;
-	}
+    public String getMunicipalityCode() {
+        return municipalityCode;
+    }
 
-	public MunicipalityDto getMunicipality() {
-		return municipality;
-	}
+    public void setMunicipalityCode(String municipalityCode) {
+        this.municipalityCode = municipalityCode;
+    }
 
-	public void setMunicipality(MunicipalityDto municipality) {
-		this.municipality = municipality;
-	}
+    public MunicipalityDto getMunicipality() {
+        return municipality;
+    }
 
-	public String getPackageLabel() {
-		return packageLabel;
-	}
+    public void setMunicipality(MunicipalityDto municipality) {
+        this.municipality = municipality;
+    }
 
-	public void setPackageLabel(String packageLabel) {
-		this.packageLabel = packageLabel;
-	}
+    public String getPackageLabel() {
+        return packageLabel;
+    }
 
-	public Date getClosedAt() {
-		return closedAt;
-	}
+    public void setPackageLabel(String packageLabel) {
+        this.packageLabel = packageLabel;
+    }
 
-	public void setClosedAt(Date closedAt) {
-		this.closedAt = closedAt;
-	}
+    public Date getClosedAt() {
+        return closedAt;
+    }
 
-	public Long getClosedBy() {
-		return closedBy;
-	}
+    public void setClosedAt(Date closedAt) {
+        this.closedAt = closedAt;
+    }
 
-	public void setClosedBy(Long closedBy) {
-		this.closedBy = closedBy;
-	}
+    public Long getClosedBy() {
+        return closedBy;
+    }
 
-	public MicroserviceUserDto getUserClosedBy() {
-		return userClosedBy;
-	}
+    public void setClosedBy(Long closedBy) {
+        this.closedBy = closedBy;
+    }
 
-	public void setUserClosedBy(MicroserviceUserDto userClosedBy) {
-		this.userClosedBy = userClosedBy;
-	}
+    public MicroserviceUserDto getUserClosedBy() {
+        return userClosedBy;
+    }
+
+    public void setUserClosedBy(MicroserviceUserDto userClosedBy) {
+        this.userClosedBy = userClosedBy;
+    }
 
 }

@@ -1,22 +1,24 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.text.SimpleDateFormat;
+import com.ai.st.microservice.common.clients.ManagerFeignClient;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceCreateDeliverySupplyDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorUserDto;
+import com.ai.st.microservice.common.dto.providers.*;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceCreateTaskMetadataDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceCreateTaskPropertyDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceCreateTaskStepDto;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.business.RoleBusiness;
+import com.ai.st.microservice.common.exceptions.BusinessException;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
+import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
@@ -27,28 +29,12 @@ import com.ai.st.microservice.workspaces.dto.ValidationMunicipalitiesDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceManagerDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskMetadataDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskPropertyDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskStepDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
@@ -56,14 +42,24 @@ import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
-
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
 import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import com.ai.st.microservice.workspaces.utils.FileTool;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.text.SimpleDateFormat;
 
 @Component
 public class WorkspaceBusiness {
@@ -87,7 +83,7 @@ public class WorkspaceBusiness {
 
     private final ManagerFeignClient managerClient;
     private final ProviderFeignClient providerClient;
-    private final UserFeignClient userClient;
+    private final AdministrationFeignClient userClient;
     private final SupplyFeignClient supplyClient;
     private final IMunicipalityService municipalityService;
     private final IWorkspaceService workspaceService;
@@ -102,22 +98,22 @@ public class WorkspaceBusiness {
     private final ProviderBusiness providerBusiness;
     private final FileBusiness fileBusiness;
     private final SupplyBusiness supplyBusiness;
-    private final OperatorBusiness operatorBusiness;
+    private final OperatorMicroserviceBusiness operatorBusiness;
     private final NotificationBusiness notificationBusiness;
-    private final ManagerBusiness managerBusiness;
-    private final UserBusiness userBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
     private final WorkspaceManagerBusiness workspaceManagerBusiness;
     private final WorkspaceOperatorBusiness workspaceOperatorBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceBusiness(ManagerFeignClient managerClient, ProviderFeignClient providerClient,
-                             UserFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
+                             AdministrationFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
                              IWorkspaceService workspaceService, IIntegrationService integrationService, IIntegrationStateService integrationStateService,
                              IWorkspaceOperatorService workspaceOperatorService, DatabaseIntegrationBusiness databaseIntegrationBusiness,
                              CrytpoBusiness cryptoBusiness, IntegrationBusiness integrationBusiness, TaskBusiness taskBusiness,
                              IliBusiness iliBusiness, ProviderBusiness providerBusiness, FileBusiness fileBusiness,
-                             SupplyBusiness supplyBusiness, OperatorBusiness operatorBusiness, NotificationBusiness notificationBusiness,
-                             ManagerBusiness managerBusiness, UserBusiness userBusiness, WorkspaceManagerBusiness workspaceManagerBusiness,
-                             WorkspaceOperatorBusiness workspaceOperatorBusiness) {
+                             SupplyBusiness supplyBusiness, OperatorMicroserviceBusiness operatorBusiness, NotificationBusiness notificationBusiness,
+                             ManagerMicroserviceBusiness managerBusiness, WorkspaceManagerBusiness workspaceManagerBusiness,
+                             WorkspaceOperatorBusiness workspaceOperatorBusiness, AdministrationBusiness administrationBusiness) {
         this.managerClient = managerClient;
         this.providerClient = providerClient;
         this.userClient = userClient;
@@ -138,7 +134,7 @@ public class WorkspaceBusiness {
         this.operatorBusiness = operatorBusiness;
         this.notificationBusiness = notificationBusiness;
         this.managerBusiness = managerBusiness;
-        this.userBusiness = userBusiness;
+        this.administrationBusiness = administrationBusiness;
         this.workspaceManagerBusiness = workspaceManagerBusiness;
         this.workspaceOperatorBusiness = workspaceOperatorBusiness;
     }
@@ -247,7 +243,7 @@ public class WorkspaceBusiness {
 
             List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorDto.getId());
             for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
-                MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
+                MicroserviceUserDto userDto = administrationBusiness.getUserById(operatorUser.getUserCode());
                 if (userDto != null && userDto.getEnabled()) {
                     notificationBusiness.sendNotificationAssignmentOperation(userDto.getEmail(), userDto.getId(),
                             managerDto.getName(), municipalityEntity.getName(),
@@ -505,7 +501,7 @@ public class WorkspaceBusiness {
 
                     for (MicroserviceProviderUserDto providerUser : providerUsers) {
 
-                        MicroserviceUserDto userDto = userBusiness.getUserById(providerUser.getUserCode());
+                        MicroserviceUserDto userDto = administrationBusiness.getUserById(providerUser.getUserCode());
                         if (userDto.getEnabled()) {
                             providerUser.getProfiles().stream()
                                     .filter(p -> p.getId().equals(providerProfileId)).findAny()
@@ -743,8 +739,6 @@ public class WorkspaceBusiness {
                 }
 
                 for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
-
-                    log.info("description: " + supply.getDescription());
 
                     if (supply.getDeliveredBy() != null) {
 
@@ -1051,7 +1045,7 @@ public class WorkspaceBusiness {
 
                 for (MicroserviceManagerUserDto managerUserDto : listUsersIntegrators) {
 
-                    MicroserviceUserDto userIntegratorDto = userBusiness.getUserById(managerUserDto.getUserCode());
+                    MicroserviceUserDto userIntegratorDto = administrationBusiness.getUserById(managerUserDto.getUserCode());
                     if (userIntegratorDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationTaskAssignment(userIntegratorDto.getEmail(),
                                 userIntegratorDto.getId(), name, municipalityEntity.getName(),
@@ -1358,7 +1352,7 @@ public class WorkspaceBusiness {
 
                 List<MicroserviceOperatorUserDto> operatorUsers = operatorBusiness.getUsersByOperator(operatorCode);
                 for (MicroserviceOperatorUserDto operatorUser : operatorUsers) {
-                    MicroserviceUserDto userDto = userBusiness.getUserById(operatorUser.getUserCode());
+                    MicroserviceUserDto userDto = administrationBusiness.getUserById(operatorUser.getUserCode());
                     if (userDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationDeliverySupplies(userDto.getEmail(), userDto.getId(),
                                 managerDto.getName(), municipalityEntity.getName(),
@@ -1663,7 +1657,7 @@ public class WorkspaceBusiness {
 
                 for (MicroserviceManagerUserDto directorDto : directors) {
 
-                    MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+                    MicroserviceUserDto userDto = administrationBusiness.getUserById(directorDto.getUserCode());
                     if (userDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationMunicipalityManagementDto(userDto.getEmail(), municipalityEntity.getDepartment().getName(),
                                 municipalityEntity.getName(), startDate, userDto.getId(), "");

@@ -1,25 +1,26 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.Date;
-
-import org.springframework.stereotype.Component;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 
 import com.ai.st.microservice.workspaces.dto.WorkspaceManagerDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceManagerService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 @Component
 public class WorkspaceManagerBusiness {
 
     private final IWorkspaceManagerService workspaceManagerService;
     private final IWorkspaceService workspaceService;
-    private final ManagerBusiness managerBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
 
     public WorkspaceManagerBusiness(IWorkspaceManagerService workspaceManagerService, IWorkspaceService workspaceService,
-                                    ManagerBusiness managerBusiness) {
+                                    ManagerMicroserviceBusiness managerBusiness) {
         this.workspaceManagerService = workspaceManagerService;
         this.workspaceService = workspaceService;
         this.managerBusiness = managerBusiness;

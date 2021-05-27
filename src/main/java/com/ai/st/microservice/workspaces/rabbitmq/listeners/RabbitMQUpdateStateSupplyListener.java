@@ -1,7 +1,17 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import java.io.File;
-import java.util.Date;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.ili.MicroserviceValidationDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceUpdateSupplyRequestedDto;
+
+import com.ai.st.microservice.workspaces.business.NotificationBusiness;
+import com.ai.st.microservice.workspaces.business.ProviderBusiness;
+import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -9,17 +19,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.business.NotificationBusiness;
-import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceValidationDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
-import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import java.io.File;
+import java.util.Date;
 
 @Component
 public class RabbitMQUpdateStateSupplyListener {
@@ -27,16 +28,16 @@ public class RabbitMQUpdateStateSupplyListener {
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final ProviderFeignClient providerClient;
-    private final UserBusiness userBusiness;
     private final NotificationBusiness notificationBusiness;
     private final IMunicipalityService municipalityService;
+    private final AdministrationBusiness administrationBusiness;
 
-    public RabbitMQUpdateStateSupplyListener(ProviderFeignClient providerClient, UserBusiness userBusiness,
-                                             NotificationBusiness notificationBusiness, IMunicipalityService municipalityService) {
+    public RabbitMQUpdateStateSupplyListener(ProviderFeignClient providerClient, NotificationBusiness notificationBusiness,
+                                             IMunicipalityService municipalityService, AdministrationBusiness administrationBusiness) {
         this.providerClient = providerClient;
-        this.userBusiness = userBusiness;
         this.notificationBusiness = notificationBusiness;
         this.municipalityService = municipalityService;
+        this.administrationBusiness = administrationBusiness;
     }
 
     @RabbitListener(queues = "${st.rabbitmq.queueUpdateStateSupply.queue}", concurrency = "${st.rabbitmq.queueUpdateStateSupply.concurrency}")
@@ -80,7 +81,7 @@ public class RabbitMQUpdateStateSupplyListener {
                 MunicipalityEntity municipalityEntity = municipalityService
                         .getMunicipalityByCode(requestDto.getMunicipalityCode());
 
-                MicroserviceUserDto userDto = userBusiness.getUserById(supplyRequestedDto.getDeliveredBy());
+                MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyRequestedDto.getDeliveredBy());
                 if (userDto != null && userDto.getEnabled()) {
                     notificationBusiness.sendNotificationLoadOfInputs(userDto.getEmail(), userDto.getId(),
                             xtfAccept, municipalityEntity.getName(),

@@ -1,21 +1,13 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.Date;
+import com.ai.st.microservice.common.clients.NotifierFeignClient;
+import com.ai.st.microservice.common.dto.notifier.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.clients.NotifierFeignClient;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationAssignmentOperationMunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationDeliveryOfInputsDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationInputIntegrationsDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationInputRequestDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationIntegrationFileGenerationDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationLoadOfInputsDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationMunicipalityManagementDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationNewUserDto;
-import com.ai.st.microservice.workspaces.dto.notifications.MicroserviceNotificationTaskAssignmentDto;
+import java.util.Date;
 
 @Component
 public class NotificationBusiness {

@@ -1,6 +1,8 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.io.File;
+import com.ai.st.microservice.common.clients.IliFeignClient;
+import com.ai.st.microservice.common.dto.ili.*;
+import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
@@ -8,15 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.clients.IliFeignClient;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceExecuteQueryUpdateToRevisionDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgExportReferenceDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIli2pgImportReferenceDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIlivalidatorBackgroundDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationCadastreRegistrationDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+import java.io.File;
 
 @Component
 public class IliBusiness {
@@ -107,8 +101,10 @@ public class IliBusiness {
             ilivalidatorDto.setSupplyRequestedId(supplyRequestedId);
             ilivalidatorDto.setUserCode(userCode);
             ilivalidatorDto.setVersionModel(modelVersion);
-            ilivalidatorDto.setHasGeometryValidation(skipGeometryValidation);
+            ilivalidatorDto.setSkipGeometryValidation(skipGeometryValidation);
             ilivalidatorDto.setSkipErrors(skipErrors);
+            ilivalidatorDto.setConceptId(IliBusiness.ILI_CONCEPT_OPERATION);
+            ilivalidatorDto.setQueueResponse("QUEUE_UPDATE_STATE_XTF_SUPPLIES");
 
             iliClient.startValidation(ilivalidatorDto);
 

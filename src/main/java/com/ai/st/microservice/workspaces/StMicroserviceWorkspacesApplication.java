@@ -7,19 +7,22 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 
 import com.ai.st.microservice.workspaces.clients.MyErrorDecoder;
+import org.springframework.context.annotation.ComponentScan;
 
-@EnableFeignClients
+
 @SpringBootApplication
+@EnableFeignClients(basePackages = {"com.ai.st.microservice.common.clients", "com.ai.st.microservice.workspaces.clients"})
 @EnableEurekaClient
+@ComponentScan(value = {"com.ai.st.microservice.common.business", "com.ai.st.microservice.workspaces"})
 public class StMicroserviceWorkspacesApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(StMicroserviceWorkspacesApplication.class, args);
-	}
-	
-	@Bean
-	public MyErrorDecoder myErrorDecoder() {
-	  return new MyErrorDecoder();
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(StMicroserviceWorkspacesApplication.class, args);
+    }
+
+    @Bean
+    public MyErrorDecoder myErrorDecoder() {
+        return new MyErrorDecoder();
+    }
 
 }

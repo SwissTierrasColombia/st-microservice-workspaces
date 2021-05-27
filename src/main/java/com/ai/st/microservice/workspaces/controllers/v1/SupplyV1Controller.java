@@ -1,35 +1,28 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import java.util.List;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.exceptions.*;
+
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.SupplyBusiness;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.ai.st.microservice.workspaces.business.ManagerBusiness;
-import com.ai.st.microservice.workspaces.business.SupplyBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.util.List;
 
 @Api(value = "Manage Supplies", tags = {"Supplies"})
 @RestController
@@ -39,16 +32,17 @@ public class SupplyV1Controller {
     private final Logger log = LoggerFactory.getLogger(SupplyV1Controller.class);
 
     private final SupplyBusiness supplyBusiness;
-    private final UserBusiness userBusiness;
-    private final ManagerBusiness managerBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
-    public SupplyV1Controller(SupplyBusiness supplyBusiness, UserBusiness userBusiness, ManagerBusiness managerBusiness) {
+    public SupplyV1Controller(SupplyBusiness supplyBusiness, ManagerMicroserviceBusiness managerBusiness,
+                              AdministrationBusiness administrationBusiness) {
         this.supplyBusiness = supplyBusiness;
-        this.userBusiness = userBusiness;
         this.managerBusiness = managerBusiness;
+        this.administrationBusiness = administrationBusiness;
     }
 
-    @RequestMapping(value = "/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get supplies by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get supplies", response = MicroserviceSupplyDto.class, responseContainer = "List"),
@@ -69,17 +63,17 @@ public class SupplyV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions, page, requests,
                         active, managerCode);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -107,7 +101,7 @@ public class SupplyV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{supplyId}/active", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{supplyId}/active", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Active supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
@@ -122,7 +116,7 @@ public class SupplyV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -157,7 +151,7 @@ public class SupplyV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{supplyId}/inactive", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{supplyId}/inactive", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Inactive supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
@@ -172,7 +166,7 @@ public class SupplyV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }

@@ -1,24 +1,22 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.exceptions.*;
+
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import com.ai.st.microservice.workspaces.business.ManagerBusiness;
-import com.ai.st.microservice.workspaces.business.OperatorBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,17 +30,18 @@ public class ManagerV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(ManagerV1Controller.class);
 
-    private final UserBusiness userBusiness;
-    private final ManagerBusiness managerBusiness;
-    private final OperatorBusiness operatorBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final OperatorMicroserviceBusiness operatorBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
-    public ManagerV1Controller(UserBusiness userBusiness, ManagerBusiness managerBusiness, OperatorBusiness operatorBusiness) {
-        this.userBusiness = userBusiness;
+    public ManagerV1Controller(ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness,
+                               AdministrationBusiness administrationBusiness) {
         this.managerBusiness = managerBusiness;
         this.operatorBusiness = operatorBusiness;
+        this.administrationBusiness = administrationBusiness;
     }
 
-    @RequestMapping(value = "/deliveries", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/deliveries", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get deliveries by manager")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class, responseContainer = "List"),
@@ -56,7 +55,7 @@ public class ManagerV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -91,7 +90,7 @@ public class ManagerV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/deliveries/{deliveryId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/deliveries/{deliveryId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get delivery by id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class),
@@ -106,7 +105,7 @@ public class ManagerV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -155,7 +154,7 @@ public class ManagerV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }

@@ -1,40 +1,17 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import javax.servlet.ServletContext;
-
-import org.apache.commons.lang.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
-import com.ai.st.microservice.workspaces.business.ManagerBusiness;
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
-import com.ai.st.microservice.workspaces.business.OperatorBusiness;
+import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
 import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
@@ -46,22 +23,37 @@ import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
+
+import org.apache.commons.lang.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.google.common.io.Files;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.*;
+
+import javax.servlet.ServletContext;
 
 @Api(value = "Manage Workspaces", tags = {"Workspaces"})
 @RestController
@@ -75,30 +67,31 @@ public class WorkspaceV1Controller {
 
     private final WorkspaceBusiness workspaceBusiness;
     private final IntegrationBusiness integrationBusiness;
-    private final UserBusiness userBusiness;
     private final SupplyBusiness supplyBusiness;
-    private final OperatorBusiness operatorBusiness;
-    private final ManagerBusiness managerBusiness;
+    private final OperatorMicroserviceBusiness operatorBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
     private final MunicipalityBusiness municipalityBusiness;
     private final WorkspaceOperatorBusiness workspaceOperatorBusiness;
     private final ServletContext servletContext;
+    private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceV1Controller(WorkspaceBusiness workspaceBusiness, IntegrationBusiness integrationBusiness,
-                                 UserBusiness userBusiness, SupplyBusiness supplyBusiness, OperatorBusiness operatorBusiness,
-                                 ManagerBusiness managerBusiness, MunicipalityBusiness municipalityBusiness,
-                                 WorkspaceOperatorBusiness workspaceOperatorBusiness, ServletContext servletContext) {
+                                 SupplyBusiness supplyBusiness, OperatorMicroserviceBusiness operatorBusiness,
+                                 ManagerMicroserviceBusiness managerBusiness, MunicipalityBusiness municipalityBusiness,
+                                 WorkspaceOperatorBusiness workspaceOperatorBusiness, ServletContext servletContext,
+                                 AdministrationBusiness administrationBusiness) {
         this.workspaceBusiness = workspaceBusiness;
         this.integrationBusiness = integrationBusiness;
-        this.userBusiness = userBusiness;
         this.supplyBusiness = supplyBusiness;
         this.operatorBusiness = operatorBusiness;
         this.managerBusiness = managerBusiness;
         this.municipalityBusiness = municipalityBusiness;
         this.workspaceOperatorBusiness = workspaceOperatorBusiness;
         this.servletContext = servletContext;
+        this.administrationBusiness = administrationBusiness;
     }
 
-    @RequestMapping(value = "/municipalities/{municipalityId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/municipalities/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspaces by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get workspaces by municipality", response = WorkspaceDto.class, responseContainer = "List"),
@@ -113,16 +106,16 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 listWorkspaces = workspaceBusiness.getWorkspacesByMunicipality(municipalityId, null);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -151,7 +144,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(listWorkspaces, httpStatus);
     }
 
-    @RequestMapping(value = "/{workspaceId}/operators", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{workspaceId}/operators", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Assign operator to workspace (municipality)")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Assign operator to workspace", response = WorkspaceDto.class),
@@ -167,7 +160,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -262,7 +255,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{workspaceId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{workspaceId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspace by id")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Get workspace by id", response = WorkspaceDto.class),
             @ApiResponse(code = 404, message = "Workspace not found", response = String.class),
@@ -277,16 +270,16 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = workspaceBusiness.getWorkspaceById(workspaceId, null);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -316,7 +309,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{workspaceId}/operators", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{workspaceId}/operators", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get operators by workspace")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get operators by workspace", response = WorkspaceDto.class, responseContainer = "List"),
@@ -332,16 +325,16 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 listOperators = workspaceBusiness.getOperatorsByWorkspaceId(workspaceId, null);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -372,7 +365,7 @@ public class WorkspaceV1Controller {
                 : new ResponseEntity<>(listOperators, httpStatus);
     }
 
-    @RequestMapping(value = "/municipalities/{municipalityId}/active", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/municipalities/{municipalityId}/active", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspace active by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get workspace active by municipality", response = WorkspaceDto.class),
@@ -387,16 +380,16 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = workspaceBusiness.getWorkspaceActiveByMunicipality(municipalityId, null);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // verify that you have access to the municipality
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -430,7 +423,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/integration/{municipalityId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/integration/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Make integration")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Integration done", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -445,7 +438,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -493,7 +486,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "{workspaceId}/integrations", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{workspaceId}/integrations", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get integrations by workspace")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get integrations", response = IntegrationDto.class, responseContainer = "List"),
@@ -508,16 +501,16 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = integrationBusiness.getIntegrationsByWorkspace(workspaceId, null);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -547,7 +540,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "{workspaceId}/integrations/{integrationId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{workspaceId}/integrations/{integrationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start integration assisted")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Get integrations", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -561,7 +554,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -596,7 +589,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "{workspaceId}/integrations/{integrationId}/export", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{workspaceId}/integrations/{integrationId}/export", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Generate supply from integration")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Supply generated", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -610,7 +603,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -644,7 +637,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "{workspaceId}/integrations/{integrationId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "{workspaceId}/integrations/{integrationId}")
     @ApiOperation(value = "Remove integration from workspace")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Integration deleted", response = BasicResponseDto.class),
@@ -660,7 +653,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -695,7 +688,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "download-supply/{supplyId}", method = RequestMethod.GET)
+    @GetMapping(value = "download-supply/{supplyId}")
     @ApiOperation(value = "Download file")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -711,7 +704,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -721,7 +714,7 @@ public class WorkspaceV1Controller {
                 throw new BusinessException("No se ha encontrado el insumo.");
             }
 
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -740,7 +733,7 @@ public class WorkspaceV1Controller {
                     throw new BusinessException("No tiene acceso al insumo");
                 }
 
-            } else if (userBusiness.isOperator(userDtoSession)) {
+            } else if (administrationBusiness.isOperator(userDtoSession)) {
 
                 // get operator
                 MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
@@ -826,7 +819,7 @@ public class WorkspaceV1Controller {
 
     }
 
-    @RequestMapping(value = "{workspaceId}/supplies/{supplyId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "{workspaceId}/supplies/{supplyId}")
     @ApiOperation(value = "Delete supply")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Supply Deleted", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -840,16 +833,16 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 workspaceBusiness.removeSupply(workspaceId, supplyId, null);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -883,7 +876,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "{workspaceId}/operators/deliveries", method = RequestMethod.POST)
+    @PostMapping(value = "{workspaceId}/operators/deliveries")
     @ApiOperation(value = "Create delivery")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -898,7 +891,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -960,7 +953,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "operators/deliveries", method = RequestMethod.GET)
+    @GetMapping(value = "operators/deliveries")
     @ApiOperation(value = "Get deliveries")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Get deliveries", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -973,7 +966,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1004,7 +997,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "operators/deliveries/closed", method = RequestMethod.GET)
+    @GetMapping(value = "operators/deliveries/closed")
     @ApiOperation(value = "Get deliveries closed")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries closed", response = BasicResponseDto.class),
@@ -1019,7 +1012,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1050,7 +1043,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/location", method = RequestMethod.GET)
+    @GetMapping(value = "/location")
     @ApiOperation(value = "Get workspaces by location")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get workspaces", response = BasicResponseDto.class),
@@ -1066,16 +1059,16 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)) {
 
                 responseDto = workspaceBusiness.getWorkspacesByLocation(departmentId, municipalityId, null);
 
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -1105,7 +1098,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/report-delivery/{deliveryId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/report-delivery/{deliveryId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Download report delivery")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Download report delivery"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -1120,7 +1113,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1167,7 +1160,7 @@ public class WorkspaceV1Controller {
                 .header("filename", "reporte_entrega." + Files.getFileExtension(file.getName())).body(resource);
     }
 
-    @RequestMapping(value = "/unassign/{municipalityId}/managers/{managerCode}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/unassign/{municipalityId}/managers/{managerCode}")
     @ApiOperation(value = "Unassigned manager from municipality")
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Unassigned manager", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -1197,7 +1190,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/operators", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/operators", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspaces by operator")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -1210,7 +1203,7 @@ public class WorkspaceV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1237,7 +1230,7 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/operators/{operatorCode}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/operators/{operatorCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspaces by operator")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})

@@ -1,32 +1,33 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import java.util.*;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.ili.MicroserviceIliExportResultDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.business.RoleBusiness;
+import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
+import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
+import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
+import com.ai.st.microservice.workspaces.business.IntegrationStateBusiness;
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.NotificationBusiness;
+import com.ai.st.microservice.workspaces.business.SupplyBusiness;
+import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
+import com.ai.st.microservice.workspaces.services.IntegrationService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
-import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
-import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
-import com.ai.st.microservice.workspaces.business.IntegrationStateBusiness;
-import com.ai.st.microservice.workspaces.business.ManagerBusiness;
-import com.ai.st.microservice.workspaces.business.NotificationBusiness;
-import com.ai.st.microservice.workspaces.business.RoleBusiness;
-import com.ai.st.microservice.workspaces.business.SupplyBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIliExportResultDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
-import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
-import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
-import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.services.IntegrationService;
+import java.util.*;
 
 @Component
 public class RabbitMQUpdateExportIntegrationListener {
@@ -37,26 +38,26 @@ public class RabbitMQUpdateExportIntegrationListener {
     private String stFilesDirectory;
 
     private final IntegrationBusiness integrationBusiness;
-    private final ManagerBusiness managerBusiness;
-    private final UserBusiness userBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
     private final NotificationBusiness notificationBusiness;
     private final DatabaseIntegrationBusiness databaseIntegration;
     private final CrytpoBusiness cryptoBusiness;
     private final SupplyBusiness supplyBusiness;
     private final IntegrationService integrationService;
+    private final AdministrationBusiness administrationBusiness;
 
-    public RabbitMQUpdateExportIntegrationListener(IntegrationBusiness integrationBusiness, ManagerBusiness managerBusiness,
-                                                   UserBusiness userBusiness, NotificationBusiness notificationBusiness,
-                                                   DatabaseIntegrationBusiness databaseIntegration, CrytpoBusiness cryptoBusiness,
-                                                   SupplyBusiness supplyBusiness, IntegrationService integrationService) {
+    public RabbitMQUpdateExportIntegrationListener(IntegrationBusiness integrationBusiness, ManagerMicroserviceBusiness managerBusiness,
+                                                   NotificationBusiness notificationBusiness, DatabaseIntegrationBusiness databaseIntegration,
+                                                   CrytpoBusiness cryptoBusiness, SupplyBusiness supplyBusiness, IntegrationService integrationService,
+                                                   AdministrationBusiness administrationBusiness) {
         this.integrationBusiness = integrationBusiness;
         this.managerBusiness = managerBusiness;
-        this.userBusiness = userBusiness;
         this.notificationBusiness = notificationBusiness;
         this.databaseIntegration = databaseIntegration;
         this.cryptoBusiness = cryptoBusiness;
         this.supplyBusiness = supplyBusiness;
         this.integrationService = integrationService;
+        this.administrationBusiness = administrationBusiness;
     }
 
     @RabbitListener(queues = "${st.rabbitmq.queueUpdateExport.queue}", concurrency = "${st.rabbitmq.queueUpdateExport.concurrency}")
@@ -125,7 +126,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 
                         for (MicroserviceManagerUserDto directorDto : directors) {
 
-                            MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+                            MicroserviceUserDto userDto = administrationBusiness.getUserById(directorDto.getUserCode());
                             if (userDto != null && userDto.getEnabled()) {
                                 notificationBusiness.sendNotificationProductGenerated(userDto.getEmail(),
                                         userDto.getId(), municipalityEntity.getName(),

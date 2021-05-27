@@ -1,12 +1,16 @@
 package com.ai.st.microservice.workspaces.dto.supplies;
 
+import com.ai.st.microservice.common.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyOwnerDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyStateDto;
+
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
 
 public class MicroserviceSupplyDto implements Serializable {
 
@@ -16,17 +20,19 @@ public class MicroserviceSupplyDto implements Serializable {
     private Date createdAt;
     private MicroserviceSupplyStateDto state;
     private String municipalityCode;
-    private String observations;
     private String name;
+    private String observations;
     private Long typeSupplyCode;
-    private String modelVersion;
+    private Long requestCode;
     private Long managerCode;
+    private String modelVersion;
     private List<MicroserviceSupplyOwnerDto> owners;
     private List<MicroserviceSupplyAttachmentDto> attachments;
-    private MicroserviceTypeSupplyDto typeSupply;
-    private Boolean delivered;
-    private MicroserviceDeliveryDto delivery;
     private Boolean isValid;
+
+    private Boolean delivered;
+    private MicroserviceTypeSupplyDto typeSupply;
+    private MicroserviceDeliveryDto delivery;
 
     public MicroserviceSupplyDto() {
         this.owners = new ArrayList<>();
@@ -153,4 +159,13 @@ public class MicroserviceSupplyDto implements Serializable {
     public void setValid(Boolean valid) {
         isValid = valid;
     }
+
+    public Long getRequestCode() {
+        return requestCode;
+    }
+
+    public void setRequestCode(Long requestCode) {
+        this.requestCode = requestCode;
+    }
+
 }

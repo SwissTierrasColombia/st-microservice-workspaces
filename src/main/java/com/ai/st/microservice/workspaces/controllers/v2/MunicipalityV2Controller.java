@@ -1,20 +1,17 @@
 package com.ai.st.microservice.workspaces.controllers.v2;
 
+import com.ai.st.microservice.common.exceptions.*;
+
+import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
+import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -34,14 +31,14 @@ public class MunicipalityV2Controller {
         this.municipalityBusiness = municipalityBusiness;
     }
 
-    @RequestMapping(value = "/{managerCode}/not-belong/departments/{departmentId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{managerCode}/not-belong/departments/{departmentId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipalities where manager does not belong in")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities", response = MunicipalityDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> getMunicipalitiesWhereManagerDoesNotBelongIn(@PathVariable Long managerCode,
-                                                                         @PathVariable Long departmentId) {
+                                                                          @PathVariable Long departmentId) {
 
         HttpStatus httpStatus;
         Object responseDto;

@@ -1,49 +1,41 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceProviderProfileDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Api(value = "Manage Providers", tags = {"Providers"})
 @RestController
@@ -54,18 +46,18 @@ public class ProviderV1Controller {
 
     private final WorkspaceBusiness workspaceBusiness;
     private final ProviderBusiness providerBusiness;
-    private final UserBusiness userBusiness;
-    private final ManagerBusiness managerBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
     public ProviderV1Controller(WorkspaceBusiness workspaceBusiness, ProviderBusiness providerBusiness,
-                                UserBusiness userBusiness, ManagerBusiness managerBusiness) {
+                                ManagerMicroserviceBusiness managerBusiness, AdministrationBusiness administrationBusiness) {
         this.workspaceBusiness = workspaceBusiness;
         this.providerBusiness = providerBusiness;
-        this.userBusiness = userBusiness;
         this.managerBusiness = managerBusiness;
+        this.administrationBusiness = administrationBusiness;
     }
 
-    @RequestMapping(value = "/municipalities/{municipalityId}/requests", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/municipalities/{municipalityId}/requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create request")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Create request", response = MicroserviceRequestDto.class),
@@ -81,7 +73,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -150,7 +142,7 @@ public class ProviderV1Controller {
                 : new ResponseEntity<>(listRequests, httpStatus);
     }
 
-    @RequestMapping(value = "/pending-requests", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/pending-requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get pending requests by provider")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get pending requests by provider", response = MicroserviceRequestDto.class, responseContainer = "List"),
@@ -165,7 +157,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -197,7 +189,7 @@ public class ProviderV1Controller {
                 : new ResponseEntity<>(listRequests, httpStatus);
     }
 
-    @RequestMapping(value = "/closed-requests", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/closed-requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get closed-requests")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get closed requests by provider", response = MicroserviceRequestDto.class, responseContainer = "List"),
@@ -212,7 +204,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -244,7 +236,7 @@ public class ProviderV1Controller {
                 : new ResponseEntity<>(listRequests, httpStatus);
     }
 
-    @RequestMapping(value = "/requests/{requestId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/requests/{requestId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Answer request")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Answer request", response = MicroserviceRequestDto.class),
@@ -262,7 +254,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -305,7 +297,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/requests/{requestId}/close", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/requests/{requestId}/close", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Close request")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Close request", response = MicroserviceRequestDto.class),
@@ -320,7 +312,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -351,7 +343,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/requests/emmiters", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/requests/emmiters", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Close request")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Close request", response = MicroserviceRequestDto.class),
@@ -365,7 +357,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -396,7 +388,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/types-supplies", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/types-supplies", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Create type supply", response = MicroserviceTypeSupplyDto.class),
@@ -411,7 +403,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -448,7 +440,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/types-supplies", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/types-supplies", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get types supplies")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get types supplies", response = MicroserviceTypeSupplyDto.class, responseContainer = "List"),
@@ -462,7 +454,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -496,7 +488,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/types-supplies/{typeSupplyId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/types-supplies/{typeSupplyId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Update type supply", response = MicroserviceTypeSupplyDto.class),
@@ -512,7 +504,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -549,7 +541,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/types-supplies/{typeSupplyId}/enable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/types-supplies/{typeSupplyId}/enable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Enable type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Type supply enabled", response = MicroserviceTypeSupplyDto.class),
@@ -564,7 +556,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -598,7 +590,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/types-supplies/{typeSupplyId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/types-supplies/{typeSupplyId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Type supply disabled", response = MicroserviceTypeSupplyDto.class),
@@ -613,7 +605,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -647,7 +639,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/types-supplies/{typeSupplyId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/types-supplies/{typeSupplyId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Delete type supply")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Delete type supply"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -661,7 +653,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -695,7 +687,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/profiles", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create profile")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Create profile", response = MicroserviceProviderProfileDto.class),
@@ -710,7 +702,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -746,7 +738,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/profiles", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get profiles")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get profiles", response = MicroserviceProviderProfileDto.class, responseContainer = "List"),
@@ -760,7 +752,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -794,7 +786,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/profiles/{profileId}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/profiles/{profileId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update profile")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Update profile", response = MicroserviceProviderProfileDto.class),
@@ -810,7 +802,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -845,7 +837,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/profiles/{profileId}", method = RequestMethod.DELETE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/profiles/{profileId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Delete profile")
     @ApiResponses(value = {@ApiResponse(code = 204, message = "Delete profile"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -859,7 +851,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -893,7 +885,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/requests/municipality", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/requests/municipality", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get requests by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
@@ -909,7 +901,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -942,7 +934,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/requests/provider", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/requests/provider", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get requests by provider")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
@@ -958,7 +950,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -989,7 +981,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/requests/package", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/requests/package", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get requests by package")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
@@ -1004,7 +996,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1035,7 +1027,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/supplies-review", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/supplies-review", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get supplies requested to review")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get supplies requested to review", response = MicroserviceSupplyRequestedDto.class, responseContainer = "List"),
@@ -1049,7 +1041,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1084,7 +1076,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/supplies-review/{supplyRequestedId}/start", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/supplies-review/{supplyRequestedId}/start", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start revision")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -1098,7 +1090,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1133,7 +1125,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/supplies-review/{supplyRequestedId}/records", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/supplies-review/{supplyRequestedId}/records", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start revision")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Start revision", response = MicroserviceQueryResultRegistralRevisionDto.class),
@@ -1148,7 +1140,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1182,7 +1174,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/supplies-review/{supplyRequestedId}/update/{boundarySpaceId}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/supplies-review/{supplyRequestedId}/update/{boundarySpaceId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start revision")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Start revision", response = MicroserviceQueryResultRegistralRevisionDto.class),
@@ -1198,7 +1190,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1234,7 +1226,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/supplies-review/{supplyRequestedId}/close", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/supplies-review/{supplyRequestedId}/close", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start revision")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -1248,7 +1240,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -1283,7 +1275,7 @@ public class ProviderV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/supplies-review/{supplyRequestedId}/skip", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/supplies-review/{supplyRequestedId}/skip", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start revision")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -1297,7 +1289,7 @@ public class ProviderV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }

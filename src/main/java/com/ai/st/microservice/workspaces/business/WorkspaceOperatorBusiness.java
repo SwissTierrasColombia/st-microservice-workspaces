@@ -1,33 +1,35 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.dto.reports.MicroserviceDownloadedSupplyDto;
+import com.ai.st.microservice.common.dto.reports.MicroserviceReportInformationDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyOwnerDto;
+import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
+import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
+import com.ai.st.microservice.workspaces.utils.DateTool;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceDownloadedSupplyDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyOwnerDto;
-import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
-import com.ai.st.microservice.workspaces.utils.DateTool;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Component
 public class WorkspaceOperatorBusiness {
@@ -37,17 +39,18 @@ public class WorkspaceOperatorBusiness {
     private final IWorkspaceOperatorService operatorService;
     private final IWorkspaceService workspaceService;
     private final IWorkspaceOperatorService workspaceOperatorService;
-    private final OperatorBusiness operatorBusiness;
+    private final OperatorMicroserviceBusiness operatorBusiness;
     private final ReportBusiness reportBusiness;
     private final MunicipalityBusiness municipalityBusiness;
-    private final ManagerBusiness managerBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
     private final SupplyBusiness supplyBusiness;
-    private final UserBusiness userBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceOperatorBusiness(IWorkspaceOperatorService operatorService, IWorkspaceService workspaceService,
-                                     IWorkspaceOperatorService workspaceOperatorService, OperatorBusiness operatorBusiness,
+                                     IWorkspaceOperatorService workspaceOperatorService, OperatorMicroserviceBusiness operatorBusiness,
                                      ReportBusiness reportBusiness, MunicipalityBusiness municipalityBusiness,
-                                     ManagerBusiness managerBusiness, SupplyBusiness supplyBusiness, UserBusiness userBusiness) {
+                                     ManagerMicroserviceBusiness managerBusiness, SupplyBusiness supplyBusiness,
+                                     AdministrationBusiness administrationBusiness) {
         this.operatorService = operatorService;
         this.workspaceService = workspaceService;
         this.workspaceOperatorService = workspaceOperatorService;
@@ -56,7 +59,7 @@ public class WorkspaceOperatorBusiness {
         this.municipalityBusiness = municipalityBusiness;
         this.managerBusiness = managerBusiness;
         this.supplyBusiness = supplyBusiness;
-        this.userBusiness = userBusiness;
+        this.administrationBusiness = administrationBusiness;
     }
 
     public MicroserviceDeliveryDto getDeliveryFromSupply(Long operatorCode, Long supplyCode) throws BusinessException {
@@ -229,7 +232,7 @@ public class WorkspaceOperatorBusiness {
         }
 
         String downloadedBy = "";
-        MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+        MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
         if (userDto != null) {
             downloadedBy = userDto.getFirstName() + " " + userDto.getLastName();
         }
@@ -339,7 +342,7 @@ public class WorkspaceOperatorBusiness {
             }
 
             String downloadedBy = "";
-            MicroserviceUserDto userDto = userBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+            MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
             if (userDto != null) {
                 downloadedBy = userDto.getFirstName() + " " + userDto.getLastName();
             }

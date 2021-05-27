@@ -1,11 +1,26 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.ai.st.microservice.common.dto.providers.MicroserviceExtensionDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceTypeSupplyDto;
+import com.ai.st.microservice.common.dto.supplies.*;
+import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
+import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
+import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.utils.DateTool;
+import com.ai.st.microservice.workspaces.utils.FileTool;
+
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,28 +28,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
-import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyOwnerDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceUpdateSupplyDto;
-import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
-import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
-import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.services.IMunicipalityService;
-import com.ai.st.microservice.workspaces.services.IWorkspaceService;
-import com.ai.st.microservice.workspaces.utils.DateTool;
-import com.ai.st.microservice.workspaces.utils.FileTool;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class SupplyBusiness {
@@ -67,7 +64,7 @@ public class SupplyBusiness {
     private ProviderFeignClient providerClient;
 
     @Autowired
-    private OperatorBusiness operatorBusiness;
+    private OperatorMicroserviceBusiness operatorBusiness;
 
     public Object getSuppliesByMunicipalityAdmin(Long municipalityId, List<String> extensions, Integer page,
                                                  List<Long> requests, boolean active, Long managerCode) throws BusinessException {
@@ -142,8 +139,7 @@ public class SupplyBusiness {
                 if (supplyDto.getTypeSupplyCode() != null) {
 
                     try {
-                        MicroserviceTypeSupplyDto typeSupplyDto = providerClient
-                                .findTypeSuppleById(supplyDto.getTypeSupplyCode());
+                        MicroserviceTypeSupplyDto typeSupplyDto = providerClient.findTypeSuppleById(supplyDto.getTypeSupplyCode());
 
                         supplyDto.setTypeSupply(typeSupplyDto);
 

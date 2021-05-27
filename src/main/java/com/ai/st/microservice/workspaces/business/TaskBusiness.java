@@ -1,11 +1,23 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceProviderUserDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.common.dto.tasks.*;
+import com.ai.st.microservice.common.exceptions.BusinessException;
+
+import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
+import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
+import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
+import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
+import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
+import com.ai.st.microservice.workspaces.services.IIntegrationService;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
@@ -13,32 +25,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
-import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyAttachmentDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskMetadataDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskPropertyDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCreateTaskStepDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskCategoryDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataPropertyDto;
-import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
-import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.services.IIntegrationService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class TaskBusiness {
@@ -72,7 +67,7 @@ public class TaskBusiness {
     public static final Long TASK_STATE_STARTED = (long) 4;
 
     private final TaskFeignClient taskClient;
-    private final UserFeignClient userClient;
+    private final AdministrationFeignClient userClient;
     private final SupplyFeignClient supplyClient;
     private final ProviderFeignClient providerClient;
     private final IliBusiness iliBusiness;
@@ -82,7 +77,7 @@ public class TaskBusiness {
     private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
     private final IIntegrationService integrationService;
 
-    public TaskBusiness(TaskFeignClient taskClient, UserFeignClient userClient, SupplyFeignClient supplyClient,
+    public TaskBusiness(TaskFeignClient taskClient, AdministrationFeignClient userClient, SupplyFeignClient supplyClient,
                         ProviderFeignClient providerClient, IliBusiness iliBusiness, CrytpoBusiness cryptoBusiness,
                         IntegrationBusiness integrationBusiness, DatabaseIntegrationBusiness databaseIntegrationBusiness,
                         ProviderBusiness providerBusiness, IIntegrationService integrationService) {

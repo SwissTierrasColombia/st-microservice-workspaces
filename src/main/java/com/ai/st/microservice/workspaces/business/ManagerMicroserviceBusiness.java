@@ -1,33 +1,36 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.ai.st.microservice.common.clients.ManagerFeignClient;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerProfileDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.common.business.RoleBusiness;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
 
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerProfileDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
-
 import feign.FeignException;
 
-@Component
-public class ManagerBusiness {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-    private final Logger log = LoggerFactory.getLogger(ManagerBusiness.class);
+@Component
+public class ManagerMicroserviceBusiness {
+
+    private final Logger log = LoggerFactory.getLogger(ManagerMicroserviceBusiness.class);
 
     private final ManagerFeignClient managerClient;
     private final IWorkspaceOperatorService workspaceOperatorService;
-    private final OperatorBusiness operatorBusiness;
+    private final OperatorMicroserviceBusiness operatorBusiness;
 
-    public ManagerBusiness(ManagerFeignClient managerClient, IWorkspaceOperatorService workspaceOperatorService, OperatorBusiness operatorBusiness) {
+    public ManagerMicroserviceBusiness(ManagerFeignClient managerClient, IWorkspaceOperatorService workspaceOperatorService,
+                                       OperatorMicroserviceBusiness operatorBusiness) {
         this.managerClient = managerClient;
         this.workspaceOperatorService = workspaceOperatorService;
         this.operatorBusiness = operatorBusiness;
@@ -86,7 +89,7 @@ public class ManagerBusiness {
                     .filter(profileDto -> profileDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny()
                     .orElse(null);
 
-            if (profileDirector instanceof MicroserviceManagerProfileDto) {
+            if (profileDirector != null) {
                 isDirector = true;
             }
 

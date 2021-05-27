@@ -1,61 +1,52 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.ai.st.microservice.common.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.providers.*;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.business.RoleBusiness;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceCancelTaskDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskMetadataDto;
+import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskMetadataPropertyDto;
+import com.ai.st.microservice.common.exceptions.BusinessException;
+
+import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
+import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
+import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
+import com.ai.st.microservice.workspaces.dto.DepartmentDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+import com.ai.st.microservice.workspaces.dto.providers.WorkspacePetitionDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPackageDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPaginatedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
+import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
+import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
+import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
+import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import com.ai.st.microservice.workspaces.utils.FileTool;
+import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.RandomStringUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.DepartmentDto;
-import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateProviderProfileDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateSupplyRevisionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceCreateTypeSupplyDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceExtensionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroservicePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderProfileDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderUserDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPackageDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPaginatedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceTypeSupplyDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceUpdateSupplyRevisionDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceCancelTaskDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMetadataPropertyDto;
-import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
-import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.services.IMunicipalityService;
-import com.ai.st.microservice.workspaces.utils.FileTool;
-import com.ai.st.microservice.workspaces.utils.ZipUtil;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ProviderBusiness {
@@ -120,20 +111,20 @@ public class ProviderBusiness {
     private final SupplyBusiness supplyBusiness;
     private final IliBusiness iliBusiness;
     private final FileBusiness fileBusiness;
-    private final UserFeignClient userClient;
-    private final ManagerBusiness managerBusiness;
-    private final UserBusiness userBusiness;
+    private final AdministrationFeignClient userClient;
+    private final ManagerMicroserviceBusiness managerBusiness;
     private final IMunicipalityService municipalityService;
     private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
     private final CrytpoBusiness cryptoBusiness;
     private final FTPBusiness ftpBusiness;
     private final MunicipalityBusiness municipalityBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
     public ProviderBusiness(ProviderFeignClient providerClient, TaskFeignClient taskClient, SupplyBusiness supplyBusiness,
-                            IliBusiness iliBusiness, FileBusiness fileBusiness, UserFeignClient userClient,
-                            ManagerBusiness managerBusiness, UserBusiness userBusiness, IMunicipalityService municipalityService,
+                            IliBusiness iliBusiness, FileBusiness fileBusiness, AdministrationFeignClient userClient,
+                            ManagerMicroserviceBusiness managerBusiness, IMunicipalityService municipalityService,
                             DatabaseIntegrationBusiness databaseIntegrationBusiness, CrytpoBusiness cryptoBusiness, FTPBusiness ftpBusiness,
-                            MunicipalityBusiness municipalityBusiness) {
+                            MunicipalityBusiness municipalityBusiness, AdministrationBusiness administrationBusiness) {
         this.providerClient = providerClient;
         this.taskClient = taskClient;
         this.supplyBusiness = supplyBusiness;
@@ -141,12 +132,12 @@ public class ProviderBusiness {
         this.fileBusiness = fileBusiness;
         this.userClient = userClient;
         this.managerBusiness = managerBusiness;
-        this.userBusiness = userBusiness;
         this.municipalityService = municipalityService;
         this.databaseIntegrationBusiness = databaseIntegrationBusiness;
         this.cryptoBusiness = cryptoBusiness;
         this.ftpBusiness = ftpBusiness;
         this.municipalityBusiness = municipalityBusiness;
+        this.administrationBusiness = administrationBusiness;
     }
 
     public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipErrors, String justification,
@@ -801,7 +792,7 @@ public class ProviderBusiness {
                 }
             } else {
                 try {
-                    MicroserviceUserDto userDto = userBusiness.getUserById(emitterDto.getEmitterCode());
+                    MicroserviceUserDto userDto = administrationBusiness.getUserById(emitterDto.getEmitterCode());
                     emitterDto.setUser(userDto);
                 } catch (Exception e) {
                     emitterDto.setUser(null);
@@ -833,7 +824,7 @@ public class ProviderBusiness {
 
                 try {
 
-                    MicroserviceUserDto userDto = userBusiness.getUserById(supply.getDeliveredBy());
+                    MicroserviceUserDto userDto = administrationBusiness.getUserById(supply.getDeliveredBy());
                     supply.setUserDeliveryBy(userDto);
                 } catch (Exception e) {
                     supply.setUserDeliveryBy(null);
@@ -1077,10 +1068,9 @@ public class ProviderBusiness {
 
         try {
 
-            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
-                    .findRolesByUser(userCode);
+            List<MicroserviceProviderRoleDto> providerRoles = providerClient.findRolesByUser(userCode);
 
-            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = providerRoles.stream()
+            MicroserviceProviderRoleDto roleDirector = providerRoles.stream()
                     .filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny()
                     .orElse(null);
 
@@ -1101,10 +1091,9 @@ public class ProviderBusiness {
 
         try {
 
-            List<com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto> providerRoles = providerClient
-                    .findRolesByUser(userCode);
+            List<MicroserviceProviderRoleDto> providerRoles = providerClient.findRolesByUser(userCode);
 
-            com.ai.st.microservice.workspaces.dto.providers.MicroserviceRoleDto roleDirector = providerRoles.stream()
+            MicroserviceProviderRoleDto roleDirector = providerRoles.stream()
                     .filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DELEGATE_PROVIDER)).findAny()
                     .orElse(null);
 
@@ -1572,7 +1561,7 @@ public class ProviderBusiness {
     public MicroservicePetitionDto createPetition(Long providerId, Long managerId, String description)
             throws BusinessException {
 
-        MicroservicePetitionDto petitionDto;
+        WorkspacePetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1602,10 +1591,10 @@ public class ProviderBusiness {
         return petitionDto;
     }
 
-    public List<MicroservicePetitionDto> getPetitionsForManager(Long providerId, Long managerId)
+    public List<WorkspacePetitionDto> getPetitionsForManager(Long providerId, Long managerId)
             throws BusinessException {
 
-        List<MicroservicePetitionDto> listPetitionsDto;
+        List<WorkspacePetitionDto> listPetitionsDto;
 
         if (providerId == null) {
 
@@ -1630,7 +1619,7 @@ public class ProviderBusiness {
 
         try {
 
-            for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+            for (WorkspacePetitionDto petitionDto : listPetitionsDto) {
                 petitionDto = addAdditionalDataToPetition(petitionDto);
             }
 
@@ -1642,9 +1631,9 @@ public class ProviderBusiness {
         return listPetitionsDto;
     }
 
-    public List<MicroservicePetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
+    public List<WorkspacePetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
 
-        List<MicroservicePetitionDto> listPetitionsDto;
+        List<WorkspacePetitionDto> listPetitionsDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1663,7 +1652,7 @@ public class ProviderBusiness {
 
             listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
 
-            for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+            for (WorkspacePetitionDto petitionDto : listPetitionsDto) {
                 petitionDto = addAdditionalDataToPetition(petitionDto);
             }
 
@@ -1675,9 +1664,9 @@ public class ProviderBusiness {
         return listPetitionsDto;
     }
 
-    public List<MicroservicePetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
+    public List<WorkspacePetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
 
-        List<MicroservicePetitionDto> listPetitionsDto;
+        List<WorkspacePetitionDto> listPetitionsDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1697,7 +1686,7 @@ public class ProviderBusiness {
 
             listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
 
-            for (MicroservicePetitionDto petitionDto : listPetitionsDto) {
+            for (WorkspacePetitionDto petitionDto : listPetitionsDto) {
                 petitionDto = addAdditionalDataToPetition(petitionDto);
             }
 
@@ -1712,7 +1701,7 @@ public class ProviderBusiness {
     public MicroservicePetitionDto acceptPetition(Long providerId, Long petitionId, String justification)
             throws BusinessException {
 
-        MicroservicePetitionDto petitionDto;
+        WorkspacePetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1748,7 +1737,7 @@ public class ProviderBusiness {
     public MicroservicePetitionDto rejectPetition(Long providerId, Long petitionId, String justification)
             throws BusinessException {
 
-        MicroservicePetitionDto petitionDto;
+        WorkspacePetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1781,7 +1770,7 @@ public class ProviderBusiness {
         return petitionDto;
     }
 
-    private MicroservicePetitionDto addAdditionalDataToPetition(MicroservicePetitionDto petitionDto) {
+    private WorkspacePetitionDto addAdditionalDataToPetition(WorkspacePetitionDto petitionDto) {
 
         try {
 

@@ -1,9 +1,11 @@
 package com.ai.st.microservice.workspaces.dto.providers;
 
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceSupplyRequestedStateDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceTypeSupplyDto;
+
 import java.io.Serializable;
 import java.util.Date;
-
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
 
 public class MicroserviceSupplyRequestedDto implements Serializable {
 
@@ -11,24 +13,25 @@ public class MicroserviceSupplyRequestedDto implements Serializable {
 
     private Long id;
     private String description;
+    private String errors;
+    private MicroserviceRequestDto request;
     private MicroserviceTypeSupplyDto typeSupply;
     private Date createdAt;
     private Boolean delivered;
+    private MicroserviceSupplyRequestedStateDto state;
     private Date deliveredAt;
     private String justification;
-    private MicroserviceSupplyRequestedStateDto state;
     private String modelVersion;
-    private Boolean canUpload;
     private Long deliveredBy;
-    private MicroserviceUserDto userDeliveryBy;
     private String url;
     private String observations;
     private String ftp;
-    private MicroserviceRequestDto request;
-    private String errors;
     private Boolean isValid;
     private String log;
     private String extraFile;
+
+    private MicroserviceUserDto userDeliveryBy;
+    private Boolean canUpload;
 
     public Long getId() {
         return id;
