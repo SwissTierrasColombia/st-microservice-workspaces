@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.clients.UserFeignClient;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
@@ -9,7 +10,6 @@ import com.ai.st.microservice.common.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
-import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
@@ -67,7 +67,7 @@ public class TaskBusiness {
     public static final Long TASK_STATE_STARTED = (long) 4;
 
     private final TaskFeignClient taskClient;
-    private final AdministrationFeignClient userClient;
+    private final UserFeignClient userClient;
     private final SupplyFeignClient supplyClient;
     private final ProviderFeignClient providerClient;
     private final IliBusiness iliBusiness;
@@ -77,7 +77,7 @@ public class TaskBusiness {
     private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
     private final IIntegrationService integrationService;
 
-    public TaskBusiness(TaskFeignClient taskClient, AdministrationFeignClient userClient, SupplyFeignClient supplyClient,
+    public TaskBusiness(TaskFeignClient taskClient, UserFeignClient userClient, SupplyFeignClient supplyClient,
                         ProviderFeignClient providerClient, IliBusiness iliBusiness, CrytpoBusiness cryptoBusiness,
                         IntegrationBusiness integrationBusiness, DatabaseIntegrationBusiness databaseIntegrationBusiness,
                         ProviderBusiness providerBusiness, IIntegrationService integrationService) {

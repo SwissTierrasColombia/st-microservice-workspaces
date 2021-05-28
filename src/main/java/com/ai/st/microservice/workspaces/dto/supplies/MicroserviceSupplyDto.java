@@ -5,7 +5,7 @@ import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDt
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyOwnerDto;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyStateDto;
 
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class MicroserviceSupplyDto implements Serializable {
 
     private Boolean delivered;
     private MicroserviceTypeSupplyDto typeSupply;
-    private MicroserviceDeliveryDto delivery;
+    private CustomDeliveryDto delivery;
 
     public MicroserviceSupplyDto() {
         this.owners = new ArrayList<>();
@@ -128,11 +128,11 @@ public class MicroserviceSupplyDto implements Serializable {
         this.delivered = delivered;
     }
 
-    public MicroserviceDeliveryDto getDelivery() {
+    public CustomDeliveryDto getDelivery() {
         return delivery;
     }
 
-    public void setDelivery(MicroserviceDeliveryDto delivery) {
+    public void setDelivery(CustomDeliveryDto delivery) {
         this.delivery = delivery;
     }
 

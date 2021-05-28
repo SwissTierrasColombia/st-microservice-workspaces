@@ -1,20 +1,20 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.clients.UserFeignClient;
 import com.ai.st.microservice.common.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.common.business.AdministrationBusiness;
-import com.ai.st.microservice.common.business.RoleBusiness;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 import com.ai.st.microservice.common.dto.tasks.MicroserviceCancelTaskDto;
 import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskMetadataDto;
 import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskMetadataPropertyDto;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.business.RoleBusiness;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
-import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.providers.WorkspacePetitionDto;
@@ -111,7 +111,7 @@ public class ProviderBusiness {
     private final SupplyBusiness supplyBusiness;
     private final IliBusiness iliBusiness;
     private final FileBusiness fileBusiness;
-    private final AdministrationFeignClient userClient;
+    private final UserFeignClient userClient;
     private final ManagerMicroserviceBusiness managerBusiness;
     private final IMunicipalityService municipalityService;
     private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
@@ -121,7 +121,7 @@ public class ProviderBusiness {
     private final AdministrationBusiness administrationBusiness;
 
     public ProviderBusiness(ProviderFeignClient providerClient, TaskFeignClient taskClient, SupplyBusiness supplyBusiness,
-                            IliBusiness iliBusiness, FileBusiness fileBusiness, AdministrationFeignClient userClient,
+                            IliBusiness iliBusiness, FileBusiness fileBusiness, UserFeignClient userClient,
                             ManagerMicroserviceBusiness managerBusiness, IMunicipalityService municipalityService,
                             DatabaseIntegrationBusiness databaseIntegrationBusiness, CrytpoBusiness cryptoBusiness, FTPBusiness ftpBusiness,
                             MunicipalityBusiness municipalityBusiness, AdministrationBusiness administrationBusiness) {

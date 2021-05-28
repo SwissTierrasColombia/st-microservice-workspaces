@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceTypeSupplyDto;
 import com.ai.st.microservice.common.dto.supplies.*;
@@ -9,8 +10,8 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
@@ -160,12 +161,16 @@ public class SupplyBusiness {
 
                         if (workspaceOperatorEntity != null) {
 
-                            List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
+                            List<CustomDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(
                                     operatorCode, municipality.getCode());
 
-                            for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
+                            for (CustomDeliveryDto deliveryFoundDto : deliveriesDto) {
 
-                                MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
+                                List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryFoundDto.getSupplies();
+                                List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
+                                        suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+                                CustomSupplyDeliveryDto supplyFound = suppliesDeliveryDto.stream()
                                         .filter(sDto -> sDto.getSupplyCode().equals(supplyDto.getId())).findAny()
                                         .orElse(null);
 

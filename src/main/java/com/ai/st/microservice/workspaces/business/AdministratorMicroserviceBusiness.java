@@ -1,6 +1,8 @@
 package com.ai.st.microservice.workspaces.business;
 
 import com.ai.st.microservice.common.clients.ManagerFeignClient;
+import com.ai.st.microservice.common.clients.OperatorFeignClient;
+import com.ai.st.microservice.common.clients.UserFeignClient;
 import com.ai.st.microservice.common.dto.administration.*;
 import com.ai.st.microservice.common.dto.managers.MicroserviceAddUserToManagerDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
@@ -11,14 +13,12 @@ import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.business.RoleBusiness;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
-import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleManagerDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleOperatorDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleProviderDto;
-import com.ai.st.microservice.workspaces.dto.administration.WorkspaceUserDto;
+import com.ai.st.microservice.workspaces.dto.administration.CustomUserDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +35,7 @@ public class AdministratorMicroserviceBusiness {
 
     private final Logger log = LoggerFactory.getLogger(AdministratorMicroserviceBusiness.class);
 
-    private final AdministrationFeignClient userClient;
+    private final UserFeignClient userClient;
     private final ProviderFeignClient providerClient;
     private final ManagerFeignClient managerClient;
     private final OperatorFeignClient operatorClient;
@@ -44,7 +44,7 @@ public class AdministratorMicroserviceBusiness {
     private final ManagerMicroserviceBusiness managerBusiness;
     private final OperatorMicroserviceBusiness operatorBusiness;
 
-    public AdministratorMicroserviceBusiness(AdministrationFeignClient userClient, ProviderFeignClient providerClient,
+    public AdministratorMicroserviceBusiness(UserFeignClient userClient, ProviderFeignClient providerClient,
                                              ManagerFeignClient managerClient, OperatorFeignClient operatorClient,
                                              NotificationBusiness notificationBusiness, ProviderBusiness providerBusiness,
                                              ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness) {
@@ -58,10 +58,10 @@ public class AdministratorMicroserviceBusiness {
         this.operatorBusiness = operatorBusiness;
     }
 
-    public MicroserviceUserDto createUserFromAdministrator(String firstName, String lastName, String email,
-                                                           String username, String password, CreateUserRoleProviderDto roleProvider,
-                                                           CreateUserRoleAdministratorDto roleAdmin, CreateUserRoleManagerDto roleManager,
-                                                           CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+    public CustomUserDto createUserFromAdministrator(String firstName, String lastName, String email,
+                                                     String username, String password, CreateUserRoleProviderDto roleProvider,
+                                                     CreateUserRoleAdministratorDto roleAdmin, CreateUserRoleManagerDto roleManager,
+                                                     CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
         if (roleManager != null) {
 
@@ -94,8 +94,8 @@ public class AdministratorMicroserviceBusiness {
                 roleOperator);
     }
 
-    public MicroserviceUserDto createUserFromManager(String firstName, String lastName, String email, String username,
-                                                     String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
+    public CustomUserDto createUserFromManager(String firstName, String lastName, String email, String username,
+                                               String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
 
         if (roleManager.getProfiles().size() == 0) {
             throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
@@ -111,8 +111,8 @@ public class AdministratorMicroserviceBusiness {
         return this.createUser(firstName, lastName, email, username, password, null, null, roleManager, null);
     }
 
-    public MicroserviceUserDto createUserFromProvider(String firstName, String lastName, String email, String username,
-                                                      String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
+    public CustomUserDto createUserFromProvider(String firstName, String lastName, String email, String username,
+                                                String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
 
         if (roleProvider.getProfiles().size() == 0) {
             throw new BusinessException("Se debe especificar al menos un perfil para el usuario.");
@@ -130,9 +130,9 @@ public class AdministratorMicroserviceBusiness {
         return this.createUser(firstName, lastName, email, username, password, roleProvider, null, null, null);
     }
 
-    public MicroserviceUserDto createUser(String firstName, String lastName, String email, String username,
-                                          String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
-                                          CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+    public CustomUserDto createUser(String firstName, String lastName, String email, String username,
+                                    String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+                                    CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
         MicroserviceUserDto userResponseDto;
 
@@ -271,28 +271,24 @@ public class AdministratorMicroserviceBusiness {
             log.error(String.format("Error enviando notificación de la creación del usuario: %s", e.getMessage()));
         }
 
-        return userResponseDto;
+        return new CustomUserDto(userResponseDto);
     }
 
-    public MicroserviceUserDto changeUserPassword(Long userId, String password) throws BusinessException {
-
-        MicroserviceUserDto userDto;
-
+    public CustomUserDto changeUserPassword(Long userId, String password) throws BusinessException {
         try {
 
             MicroserviceChangePasswordDto requestChangePassword = new MicroserviceChangePasswordDto();
             requestChangePassword.setPassword(password);
 
-            userDto = userClient.changeUserPassword(userId, requestChangePassword);
+            MicroserviceUserDto response = userClient.changeUserPassword(userId, requestChangePassword);
+            return new CustomUserDto(response);
 
         } catch (BusinessException e) {
             throw new BusinessException(e.getMessage());
         }
-
-        return userDto;
     }
 
-    public MicroserviceUserDto updateUserFromSuperAdmin(Long userId, String firstName, String lastName, String email)
+    public CustomUserDto updateUserFromSuperAdmin(Long userId, String firstName, String lastName, String email)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -313,7 +309,7 @@ public class AdministratorMicroserviceBusiness {
         return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUserFromAdministrator(Long userId, String firstName, String lastName, String email)
+    public CustomUserDto updateUserFromAdministrator(Long userId, String firstName, String lastName, String email)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -379,7 +375,7 @@ public class AdministratorMicroserviceBusiness {
         return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUserFromManager(Long userId, String firstName, String lastName, String email, Long managerCode)
+    public CustomUserDto updateUserFromManager(Long userId, String firstName, String lastName, String email, Long managerCode)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -414,7 +410,7 @@ public class AdministratorMicroserviceBusiness {
         return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUserFromProvider(Long userId, String firstName, String lastName, String email, Long providerCode)
+    public CustomUserDto updateUserFromProvider(Long userId, String firstName, String lastName, String email, Long providerCode)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -463,10 +459,7 @@ public class AdministratorMicroserviceBusiness {
         return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public MicroserviceUserDto updateUser(Long userId, String firstName, String lastName, String email) throws BusinessException {
-
-        MicroserviceUserDto userDto;
-
+    public CustomUserDto updateUser(Long userId, String firstName, String lastName, String email) throws BusinessException {
         try {
 
             MicroserviceUpdateUserDto updateUser = new MicroserviceUpdateUserDto();
@@ -474,16 +467,15 @@ public class AdministratorMicroserviceBusiness {
             updateUser.setLastName(lastName);
             updateUser.setEmail(email);
 
-            userDto = userClient.updateUser(userId, updateUser);
+            MicroserviceUserDto response = userClient.updateUser(userId, updateUser);
+            return new CustomUserDto(response);
 
         } catch (BusinessException e) {
             throw new BusinessException(e.getMessage());
         }
-
-        return userDto;
     }
 
-    public MicroserviceUserDto changeStatusUserFromSuperAdmin(Long userId, Boolean status) throws BusinessException {
+    public CustomUserDto changeStatusUserFromSuperAdmin(Long userId, Boolean status) throws BusinessException {
 
         MicroserviceUserDto userDto;
         try {
@@ -502,7 +494,7 @@ public class AdministratorMicroserviceBusiness {
         return this.changeStatusUser(userId, status);
     }
 
-    public MicroserviceUserDto changeStatusUserFromAdministrator(Long userId, Boolean status) throws BusinessException {
+    public CustomUserDto changeStatusUserFromAdministrator(Long userId, Boolean status) throws BusinessException {
 
         MicroserviceUserDto userDto;
         try {
@@ -567,7 +559,7 @@ public class AdministratorMicroserviceBusiness {
         return this.changeStatusUser(userId, status);
     }
 
-    public MicroserviceUserDto changeStatusUserFromManager(Long userId, Boolean status, Long managerCode)
+    public CustomUserDto changeStatusUserFromManager(Long userId, Boolean status, Long managerCode)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -602,7 +594,7 @@ public class AdministratorMicroserviceBusiness {
         return this.changeStatusUser(userId, status);
     }
 
-    public MicroserviceUserDto changeStatusUserFromProvider(Long userId, Boolean status, Long providerCode)
+    public CustomUserDto changeStatusUserFromProvider(Long userId, Boolean status, Long providerCode)
             throws BusinessException {
 
         MicroserviceUserDto userDto;
@@ -651,17 +643,20 @@ public class AdministratorMicroserviceBusiness {
         return this.changeStatusUser(userId, status);
     }
 
-    public MicroserviceUserDto changeStatusUser(Long userId, Boolean status) throws BusinessException {
+    public CustomUserDto changeStatusUser(Long userId, Boolean status) throws BusinessException {
 
-        WorkspaceUserDto userDto;
+        CustomUserDto userDto;
 
         try {
 
+            MicroserviceUserDto response;
             if (status) {
-                userDto = userClient.enableUser(userId);
+                response = userClient.enableUser(userId);
             } else {
-                userDto = userClient.disableUser(userId);
+                response = userClient.disableUser(userId);
             }
+
+            userDto = new CustomUserDto(response);
 
             MicroserviceRoleDto roleManagerDto = userDto.getRoles().stream()
                     .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
@@ -689,7 +684,7 @@ public class AdministratorMicroserviceBusiness {
         return userDto;
     }
 
-    public List<WorkspaceUserDto> getUsersFromSuperAdmin() throws BusinessException {
+    public List<CustomUserDto> getUsersFromSuperAdmin() throws BusinessException {
 
         List<Long> roles = new ArrayList<>(Collections.singletonList(RoleBusiness.ROLE_ADMINISTRATOR));
 
@@ -701,11 +696,11 @@ public class AdministratorMicroserviceBusiness {
         List<Long> roles = new ArrayList<>(Arrays.asList(RoleBusiness.ROLE_MANAGER, RoleBusiness.ROLE_SUPPLY_SUPPLIER,
                 RoleBusiness.ROLE_OPERATOR));
 
-        List<WorkspaceUserDto> users = this.getUsers(roles);
+        List<CustomUserDto> users = this.getUsers(roles);
 
         List<MicroserviceUserDto> listUsersResponse = new ArrayList<>();
 
-        for (WorkspaceUserDto userDto : users) {
+        for (CustomUserDto userDto : users) {
 
             MicroserviceRoleDto roleManager = userDto.getRoles().stream()
                     .filter(r -> r.getId().equals(RoleBusiness.ROLE_MANAGER)).findAny().orElse(null);
@@ -761,7 +756,7 @@ public class AdministratorMicroserviceBusiness {
         return listUsersResponse;
     }
 
-    public List<MicroserviceUserDto> getUsersFromManager(Long managerCode) throws BusinessException {
+    public List<CustomUserDto> getUsersFromManager(Long managerCode) throws BusinessException {
 
         List<MicroserviceManagerUserDto> usersManagerDto = new ArrayList<>();
 
@@ -771,11 +766,13 @@ public class AdministratorMicroserviceBusiness {
             log.error("Error consultando usuarios de un gestor: " + e.getMessage());
         }
 
-        List<MicroserviceUserDto> users = new ArrayList<>();
+        List<CustomUserDto> users = new ArrayList<>();
 
         for (MicroserviceManagerUserDto userManagerDto : usersManagerDto) {
             try {
-                WorkspaceUserDto userDto = userClient.findById(userManagerDto.getUserCode());
+                MicroserviceUserDto response = userClient.findById(userManagerDto.getUserCode());
+                CustomUserDto userDto = new CustomUserDto(response);
+
                 userDto.setProfilesManager(userManagerDto.getProfiles());
                 users.add(userDto);
             } catch (Exception e) {
@@ -786,7 +783,7 @@ public class AdministratorMicroserviceBusiness {
         return users;
     }
 
-    public List<MicroserviceUserDto> getUsersFromProvider(Long providerCode) throws BusinessException {
+    public List<CustomUserDto> getUsersFromProvider(Long providerCode) throws BusinessException {
 
         List<MicroserviceProviderUserDto> usersProviderDto = new ArrayList<>();
 
@@ -796,11 +793,13 @@ public class AdministratorMicroserviceBusiness {
             log.error("Error consultando usuarios de un proveedor: " + e.getMessage());
         }
 
-        List<MicroserviceUserDto> users = new ArrayList<>();
+        List<CustomUserDto> users = new ArrayList<>();
 
         for (MicroserviceProviderUserDto userProviderDto : usersProviderDto) {
             try {
-                WorkspaceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
+                MicroserviceUserDto response = userClient.findById(userProviderDto.getUserCode());
+                CustomUserDto userDto = new CustomUserDto(response);
+
                 userDto.setProfilesProvider(userProviderDto.getProfiles());
                 users.add(userDto);
             } catch (Exception e) {
@@ -822,7 +821,9 @@ public class AdministratorMicroserviceBusiness {
                     .filter(r -> r.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)).findAny().orElse(null);
             if (roleDirector == null) {
                 try {
-                    WorkspaceUserDto userDto = userClient.findById(userProviderDto.getUserCode());
+                    MicroserviceUserDto response = userClient.findById(userProviderDto.getUserCode());
+                    CustomUserDto userDto = new CustomUserDto(response);
+
                     userDto.setRolesProvider(userProviderDto.getRoles());
                     users.add(userDto);
                 } catch (Exception e) {
@@ -835,20 +836,19 @@ public class AdministratorMicroserviceBusiness {
         return users;
     }
 
-    public List<WorkspaceUserDto> getUsers(List<Long> roles) throws BusinessException {
-        List<WorkspaceUserDto> users;
+    public List<CustomUserDto> getUsers(List<Long> roles) throws BusinessException {
         try {
-            users = userClient.findUsersByRoles(roles);
+            List<MicroserviceUserDto> usersResponse = userClient.findUsersByRoles(roles);
+            return usersResponse.stream().map(CustomUserDto::new).collect(Collectors.toList());
         } catch (Exception e) {
             throw new BusinessException("Error consultando los usuarios: " + e.getMessage());
         }
-        return users;
     }
 
-    public MicroserviceUserDto addProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
+    public CustomUserDto addProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
             throws BusinessException {
 
-        WorkspaceUserDto userDto;
+        CustomUserDto userDto;
 
         MicroserviceManagerDto managerDto;
         try {
@@ -871,7 +871,8 @@ public class AdministratorMicroserviceBusiness {
 
             MicroserviceManagerUserDto managerUser = managerClient.addUserToManager(addUser);
 
-            userDto = userClient.findById(userId);
+            MicroserviceUserDto response = userClient.findById(userId);
+            userDto = new CustomUserDto(response);
             userDto.setProfilesManager(managerUser.getProfiles());
 
         } catch (Exception e) {
@@ -882,10 +883,10 @@ public class AdministratorMicroserviceBusiness {
         return userDto;
     }
 
-    public MicroserviceUserDto addProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
+    public CustomUserDto addProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
             throws BusinessException {
 
-        WorkspaceUserDto userDto;
+        CustomUserDto userDto;
         MicroserviceProviderDto providerDto;
 
         try {
@@ -908,7 +909,8 @@ public class AdministratorMicroserviceBusiness {
 
             List<MicroserviceProviderUserDto> usersProvider = providerClient.addUserToProvide(addUser);
 
-            userDto = userClient.findById(userId);
+            MicroserviceUserDto response = userClient.findById(userId);
+            userDto = new CustomUserDto(response);
 
             usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
                     .findAny().ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
@@ -921,10 +923,10 @@ public class AdministratorMicroserviceBusiness {
         return userDto;
     }
 
-    public MicroserviceUserDto removeProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
+    public CustomUserDto removeProfileToUserFromManager(Long userId, Long profileId, Long managerCode)
             throws BusinessException {
 
-        WorkspaceUserDto userDto;
+        CustomUserDto userDto;
         MicroserviceManagerDto managerDto;
 
         try {
@@ -947,7 +949,9 @@ public class AdministratorMicroserviceBusiness {
 
             MicroserviceManagerUserDto managerUser = managerClient.removeUserToManager(removeUser);
 
-            userDto = userClient.findById(userId);
+            MicroserviceUserDto response = userClient.findById(userId);
+            userDto = new CustomUserDto(response);
+
             userDto.setProfilesManager(managerUser.getProfiles());
 
         } catch (BusinessException e) {
@@ -958,10 +962,10 @@ public class AdministratorMicroserviceBusiness {
         return userDto;
     }
 
-    public MicroserviceUserDto removeProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
+    public CustomUserDto removeProfileToUserFromProvider(Long userId, Long profileId, Long providerCode)
             throws BusinessException {
 
-        WorkspaceUserDto userDto;
+        CustomUserDto userDto;
         MicroserviceProviderDto providerDto;
 
         try {
@@ -984,7 +988,8 @@ public class AdministratorMicroserviceBusiness {
 
             List<MicroserviceProviderUserDto> usersProvider = providerClient.removeUserToProvider(removeUser);
 
-            userDto = userClient.findById(userId);
+            MicroserviceUserDto response = userClient.findById(userId);
+            userDto = new CustomUserDto(response);
 
             usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
                     .findAny().ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));

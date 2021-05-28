@@ -23,7 +23,7 @@ import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
@@ -738,7 +738,7 @@ public class WorkspaceV1Controller {
                 // get operator
                 MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
 
-                MicroserviceDeliveryDto deliveryDto = workspaceOperatorBusiness.getDeliveryFromSupply(operatorDto.getId(), supplyDto.getId());
+                CustomDeliveryDto deliveryDto = workspaceOperatorBusiness.getDeliveryFromSupply(operatorDto.getId(), supplyDto.getId());
                 if (deliveryDto == null) {
                     throw new InputValidationException("El operador no tiene acceso al insumo.");
                 }

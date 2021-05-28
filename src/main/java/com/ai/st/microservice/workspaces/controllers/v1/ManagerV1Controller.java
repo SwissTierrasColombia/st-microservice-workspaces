@@ -9,7 +9,7 @@ import com.ai.st.microservice.common.exceptions.*;
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class ManagerV1Controller {
     @GetMapping(value = "/deliveries", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get deliveries by manager")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get deliveries by manager", response = CustomDeliveryDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> getDeliveriesByManager(@RequestHeader("authorization") String headerAuthorization) {
@@ -93,7 +93,7 @@ public class ManagerV1Controller {
     @GetMapping(value = "/deliveries/{deliveryId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get delivery by id")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get deliveries by manager", response = MicroserviceDeliveryDto.class),
+            @ApiResponse(code = 200, message = "Get deliveries by manager", response = CustomDeliveryDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> getDeliveriesById(@RequestHeader("authorization") String headerAuthorization,

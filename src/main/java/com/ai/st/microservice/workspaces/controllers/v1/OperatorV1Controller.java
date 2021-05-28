@@ -8,7 +8,7 @@ import com.ai.st.microservice.common.exceptions.*;
 import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
 import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,7 @@ public class OperatorV1Controller {
     @PutMapping(value = "/deliveries/{deliveryId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable delivery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Delivery disabled", response = MicroserviceDeliveryDto.class),
+            @ApiResponse(code = 200, message = "Delivery disabled", response = CustomDeliveryDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> disableDelivery(@PathVariable Long deliveryId,

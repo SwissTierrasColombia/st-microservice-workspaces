@@ -4,6 +4,7 @@ import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.common.dto.reports.MicroserviceDownloadedSupplyDto;
 import com.ai.st.microservice.common.dto.reports.MicroserviceReportInformationDto;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyOwnerDto;
@@ -16,8 +17,8 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class WorkspaceOperatorBusiness {
@@ -62,15 +64,19 @@ public class WorkspaceOperatorBusiness {
         this.administrationBusiness = administrationBusiness;
     }
 
-    public MicroserviceDeliveryDto getDeliveryFromSupply(Long operatorCode, Long supplyCode) throws BusinessException {
+    public CustomDeliveryDto getDeliveryFromSupply(Long operatorCode, Long supplyCode) throws BusinessException {
 
         try {
 
-            List<MicroserviceDeliveryDto> deliveries = operatorBusiness.getDeliveriesActivesByOperator(operatorCode);
+            List<CustomDeliveryDto> deliveries = operatorBusiness.getDeliveriesActivesByOperator(operatorCode);
 
-            for (MicroserviceDeliveryDto delivery : deliveries) {
+            for (CustomDeliveryDto delivery : deliveries) {
 
-                MicroserviceSupplyDeliveryDto supplyDto = delivery.getSupplies().stream()
+                List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = delivery.getSupplies();
+                List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
+                        suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+                CustomSupplyDeliveryDto supplyDto = suppliesDeliveryDto.stream()
                         .filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
 
                 if (supplyDto != null) {
@@ -87,12 +93,16 @@ public class WorkspaceOperatorBusiness {
         return null;
     }
 
-    public MicroserviceDeliveryDto registerDownloadSupply(MicroserviceDeliveryDto deliveryDto, Long supplyCode,
-                                                          Long userCode) {
+    public CustomDeliveryDto registerDownloadSupply(CustomDeliveryDto deliveryDto, Long supplyCode,
+                                                    Long userCode) {
 
         try {
 
-            MicroserviceSupplyDeliveryDto supplyDto = deliveryDto.getSupplies().stream()
+            List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
+            List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
+                    suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+            CustomSupplyDeliveryDto supplyDto = suppliesDeliveryDto.stream()
                     .filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
 
             if (supplyDto != null && !supplyDto.getDownloaded()) {
@@ -107,9 +117,9 @@ public class WorkspaceOperatorBusiness {
         return deliveryDto;
     }
 
-    public MicroserviceDeliveryDto disableDelivery(Long operatorId, Long deliveryId) throws BusinessException {
+    public CustomDeliveryDto disableDelivery(Long operatorId, Long deliveryId) throws BusinessException {
 
-        MicroserviceDeliveryDto deliveryDto = null;
+        CustomDeliveryDto deliveryDto = null;
 
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
@@ -137,7 +147,7 @@ public class WorkspaceOperatorBusiness {
     public String generateReportDownloadSupplyIndividual(Long operatorId, Long deliveryId, Long supplyId)
             throws BusinessException {
 
-        MicroserviceDeliveryDto deliveryDto = null;
+        CustomDeliveryDto deliveryDto = null;
         MicroserviceOperatorDto operatorDto = null;
 
         try {
@@ -168,7 +178,11 @@ public class WorkspaceOperatorBusiness {
             throw new BusinessException("La entrega no se encuentra activa para generar el reporte solicitado.");
         }
 
-        MicroserviceSupplyDeliveryDto supplyDeliveryDto = deliveryDto.getSupplies().stream()
+        List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
+        List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
+                suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+        CustomSupplyDeliveryDto supplyDeliveryDto = suppliesDeliveryDto.stream()
                 .filter(s -> s.getSupplyCode().equals(supplyId)).findAny().orElse(null);
         if (supplyDeliveryDto == null) {
             throw new BusinessException("El insumo no pertenece a la entrega.");
@@ -252,7 +266,7 @@ public class WorkspaceOperatorBusiness {
 
     public String generateReportDownloadSupplyTotal(Long operatorId, Long deliveryId) throws BusinessException {
 
-        MicroserviceDeliveryDto deliveryDto = null;
+        CustomDeliveryDto deliveryDto = null;
         MicroserviceOperatorDto operatorDto = null;
 
         try {
@@ -279,7 +293,11 @@ public class WorkspaceOperatorBusiness {
             throw new BusinessException("La entrega no pertenece al operador.");
         }
 
-        for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : deliveryDto.getSupplies()) {
+        List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
+        List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
+                suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+        for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveryDto) {
             if (!supplyDeliveryDto.getDownloaded()) {
                 throw new BusinessException(
                         "No se puede generar el reporte, porque no se han descargado todo los insumos de la entrega.");
@@ -314,7 +332,12 @@ public class WorkspaceOperatorBusiness {
         String operatorName = operatorDto.getName();
 
         List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
-        for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : deliveryDto.getSupplies()) {
+
+        List<? extends MicroserviceSupplyDeliveryDto> response = deliveryDto.getSupplies();
+        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto =
+                response.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+        for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
             String providerName = "";
             MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
@@ -363,7 +386,7 @@ public class WorkspaceOperatorBusiness {
 
     public String generateReportDeliveryManager(Long managerId, Long deliveryId) throws BusinessException {
 
-        MicroserviceDeliveryDto deliveryDto = null;
+        CustomDeliveryDto deliveryDto = null;
         MicroserviceOperatorDto operatorDto = null;
 
         try {
@@ -415,7 +438,12 @@ public class WorkspaceOperatorBusiness {
         String operatorName = operatorDto.getName();
 
         List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
-        for (MicroserviceSupplyDeliveryDto supplyDeliveryDto : deliveryDto.getSupplies()) {
+
+        List<? extends MicroserviceSupplyDeliveryDto> response = deliveryDto.getSupplies();
+        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto =
+                response.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+        for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
             String providerName = "";
             MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());

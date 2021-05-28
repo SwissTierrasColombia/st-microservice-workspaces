@@ -1,12 +1,14 @@
 package com.ai.st.microservice.workspaces.business;
 
 import com.ai.st.microservice.common.clients.ManagerFeignClient;
+import com.ai.st.microservice.common.clients.UserFeignClient;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerUserDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceCreateDeliverySupplyDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorUserDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.common.dto.tasks.MicroserviceCreateTaskMetadataDto;
@@ -18,7 +20,6 @@ import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
-import com.ai.st.microservice.workspaces.clients.AdministrationFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
@@ -29,8 +30,8 @@ import com.ai.st.microservice.workspaces.dto.ValidationMunicipalitiesDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceManagerDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceSupplyDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
+import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
@@ -83,7 +84,7 @@ public class WorkspaceBusiness {
 
     private final ManagerFeignClient managerClient;
     private final ProviderFeignClient providerClient;
-    private final AdministrationFeignClient userClient;
+    private final UserFeignClient userClient;
     private final SupplyFeignClient supplyClient;
     private final IMunicipalityService municipalityService;
     private final IWorkspaceService workspaceService;
@@ -106,7 +107,7 @@ public class WorkspaceBusiness {
     private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceBusiness(ManagerFeignClient managerClient, ProviderFeignClient providerClient,
-                             AdministrationFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
+                             UserFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
                              IWorkspaceService workspaceService, IIntegrationService integrationService, IIntegrationStateService integrationStateService,
                              IWorkspaceOperatorService workspaceOperatorService, DatabaseIntegrationBusiness databaseIntegrationBusiness,
                              CrytpoBusiness cryptoBusiness, IntegrationBusiness integrationBusiness, TaskBusiness taskBusiness,
@@ -1267,10 +1268,10 @@ public class WorkspaceBusiness {
 
     }
 
-    public MicroserviceDeliveryDto createDelivery(Long workspaceId, Long managerCode, Long operatorCode, String observations,
-                                                  List<CreateSupplyDeliveryDto> suppliesDto) throws BusinessException {
+    public CustomDeliveryDto createDelivery(Long workspaceId, Long managerCode, Long operatorCode, String observations,
+                                            List<CreateSupplyDeliveryDto> suppliesDto) throws BusinessException {
 
-        MicroserviceDeliveryDto deliveryDto;
+        CustomDeliveryDto deliveryDto;
 
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
         if (workspaceEntity == null) {
@@ -1306,7 +1307,7 @@ public class WorkspaceBusiness {
         List<MicroserviceCreateDeliverySupplyDto> microserviceSupplies = new ArrayList<>();
 
         // verify if the supplies exists
-        List<MicroserviceDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(operatorCode,
+        List<CustomDeliveryDto> deliveriesDto = operatorBusiness.getDeliveriesByOperator(operatorCode,
                 municipalityEntity.getCode());
 
         for (CreateSupplyDeliveryDto deliverySupplyDto : suppliesDto) {
@@ -1322,9 +1323,13 @@ public class WorkspaceBusiness {
             }
 
             // verify if the supply has already delivered to operator
-            for (MicroserviceDeliveryDto deliveryFoundDto : deliveriesDto) {
+            for (CustomDeliveryDto deliveryFoundDto : deliveriesDto) {
 
-                MicroserviceSupplyDeliveryDto supplyFound = deliveryFoundDto.getSupplies().stream()
+                List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryFoundDto.getSupplies();
+                List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
+                        suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+
+                CustomSupplyDeliveryDto supplyFound = suppliesDeliveryDto.stream()
                         .filter(supplyDto -> supplyDto.getSupplyCode().equals(deliverySupplyDto.getSupplyId()))
                         .findAny().orElse(null);
 
