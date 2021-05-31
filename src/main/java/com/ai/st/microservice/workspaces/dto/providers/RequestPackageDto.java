@@ -4,22 +4,22 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MicroserviceRequestPackageDto implements Serializable {
+public class RequestPackageDto implements Serializable {
 
 	private static final long serialVersionUID = -181941292488270615L;
 
 	private String packageLabel;
-	private List<MicroserviceRequestDto> requests;
+	private List<CustomRequestDto> requests;
 
-	public MicroserviceRequestPackageDto() {
+	public RequestPackageDto() {
 		this.requests = new ArrayList<>();
 	}
 
-	public List<MicroserviceRequestDto> getRequests() {
+	public List<CustomRequestDto> getRequests() {
 		return requests;
 	}
 
-	public void setRequests(List<MicroserviceRequestDto> requests) {
+	public void setRequests(List<CustomRequestDto> requests) {
 		this.requests = requests;
 	}
 

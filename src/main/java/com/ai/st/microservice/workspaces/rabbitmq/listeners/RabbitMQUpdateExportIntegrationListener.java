@@ -8,7 +8,7 @@ import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.business.RoleBusiness;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
 import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
@@ -99,8 +99,8 @@ public class RabbitMQUpdateExportIntegrationListener {
                     // load supply to municipality
                     String observations = "Archivo XTF generado para el modelo de insumos";
 
-                    MicroserviceSupplyDto supplyCadastralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplyCadastreId());
-                    MicroserviceSupplyDto supplyRegistralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplySnrId());
+                    CustomSupplyDto supplyCadastralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplyCadastreId());
+                    CustomSupplyDto supplyRegistralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplySnrId());
                     boolean isValid = supplyCadastralDto.getValid() && supplyRegistralDto.getValid();
 
                     supplyBusiness.createSupply(municipalityCode, observations, null, integrationEntity.getManagerCode(), attachments, null,

@@ -2,12 +2,12 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.CadastralAuthorityBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CreateSupplyCadastralAuthorityDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -54,7 +54,7 @@ public class CadastralAuthorityV1Controller {
     @PostMapping(value = "/supplies/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create supply (cadastral authority)")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 201, message = "Supply created", response = CustomSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> createSupply(@PathVariable Long municipalityId,
@@ -125,7 +125,7 @@ public class CadastralAuthorityV1Controller {
     @GetMapping(value = "/report/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create report (cadastral authority)")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Supply created", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 201, message = "Supply created", response = CustomSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> downloadReport(@PathVariable Long municipalityId,

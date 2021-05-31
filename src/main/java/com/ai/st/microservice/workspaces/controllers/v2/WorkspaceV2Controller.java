@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.controllers.v2;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.exceptions.*;
 

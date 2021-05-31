@@ -19,7 +19,7 @@ import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
 import com.ai.st.microservice.workspaces.utils.DateTool;
@@ -222,7 +222,7 @@ public class WorkspaceOperatorBusiness {
         List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
         String supplyName = "";
         String providerName = "";
-        MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
+        CustomSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
         if (supplyDto != null) {
 
             if (supplyDto.getTypeSupply() != null) {
@@ -340,7 +340,7 @@ public class WorkspaceOperatorBusiness {
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
             String providerName = "";
-            MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
+            CustomSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
             if (supplyDto != null) {
 
                 if (supplyDto.getTypeSupply() != null) {
@@ -446,7 +446,7 @@ public class WorkspaceOperatorBusiness {
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
             String providerName = "";
-            MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
+            CustomSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
             if (supplyDto != null) {
 
                 if (supplyDto.getTypeSupply() != null) {

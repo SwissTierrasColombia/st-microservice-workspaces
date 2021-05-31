@@ -2,16 +2,16 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CreatePetitionDto;
 import com.ai.st.microservice.workspaces.dto.UpdatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.WorkspacePetitionDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomPetitionDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class PetitionV1Controller {
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create petition")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Petition created", response = WorkspacePetitionDto.class),
+            @ApiResponse(code = 201, message = "Petition created", response = CustomPetitionDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> createPetition(@RequestBody CreatePetitionDto requestCreatePetition,
@@ -111,7 +111,7 @@ public class PetitionV1Controller {
     @GetMapping(value = "/manager", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for manager")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions got", response = WorkspacePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForManager(@RequestHeader("authorization") String headerAuthorization,
@@ -161,7 +161,7 @@ public class PetitionV1Controller {
     @GetMapping(value = "/provider/open", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for provider (open)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions got", response = WorkspacePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForProviderOpen(@RequestHeader("authorization") String headerAuthorization) {
@@ -209,7 +209,7 @@ public class PetitionV1Controller {
     @GetMapping(value = "/provider/close", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for provider (close)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions got", response = WorkspacePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForProviderClose(
@@ -259,7 +259,7 @@ public class PetitionV1Controller {
     @PutMapping(value = "/{petitionId}/accept", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update petition")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petition updated", response = WorkspacePetitionDto.class),
+            @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> acceptPetition(@RequestBody UpdatePetitionDto requestUpdatePetition,
@@ -318,7 +318,7 @@ public class PetitionV1Controller {
     @PutMapping(value = "/{petitionId}/reject", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update petition")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petition updated", response = WorkspacePetitionDto.class),
+            @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> rejectPetition(@RequestBody UpdatePetitionDto requestUpdatePetition,

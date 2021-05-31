@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.common.exceptions.*;
@@ -10,7 +11,6 @@ import com.ai.st.microservice.workspaces.business.AdministratorMicroserviceBusin
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
 import com.ai.st.microservice.workspaces.dto.AddProfileToUserDto;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.ChangePasswordDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserDto;
 import com.ai.st.microservice.workspaces.dto.UpdateUserDto;

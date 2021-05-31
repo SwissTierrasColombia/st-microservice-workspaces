@@ -1,9 +1,9 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
 import com.ai.st.microservice.common.dto.ili.MicroserviceResultImportDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceSupplyRevisionDto;
 
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +43,6 @@ public class RabbitMQResultImportListener {
                 if (supplyRevisionDto == null || !resultDto.getResult()) {
                     providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
                             ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
-
                 }
 
                 if (resultDto.getResult()) {

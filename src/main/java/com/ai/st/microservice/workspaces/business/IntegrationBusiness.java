@@ -1,11 +1,12 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.clients.ProviderFeignClient;
+import com.ai.st.microservice.common.clients.SupplyFeignClient;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.clients.GeovisorFeignClient;
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationHistoryDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationStatDto;
@@ -13,7 +14,7 @@ import com.ai.st.microservice.workspaces.dto.IntegrationStateDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.geovisor.MicroserviceDataMapDto;
 import com.ai.st.microservice.workspaces.dto.geovisor.MicroserviceSetupMapDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationHistoryEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStatEntity;
@@ -209,13 +210,16 @@ public class IntegrationBusiness {
         for (IntegrationDto integrationDto : listIntegrationsDto) {
 
             try {
-                MicroserviceSupplyDto supplyCadastreDto = supplyClient
-                        .findSupplyById(integrationDto.getSupplyCadastreId());
-                supplyCadastreDto
-                        .setTypeSupply(providerClient.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode()));
+
+                MicroserviceSupplyDto responseCadastre = supplyClient.findSupplyById(integrationDto.getSupplyCadastreId());
+                CustomSupplyDto supplyCadastreDto = new CustomSupplyDto(responseCadastre);
+
+                supplyCadastreDto.setTypeSupply(providerClient.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode()));
                 integrationDto.setSupplyCadastre(supplyCadastreDto);
 
-                MicroserviceSupplyDto supplySnrDto = supplyClient.findSupplyById(integrationDto.getSupplySnrId());
+                MicroserviceSupplyDto responseSnr = supplyClient.findSupplyById(integrationDto.getSupplySnrId());
+                CustomSupplyDto supplySnrDto = new CustomSupplyDto(responseSnr);
+
                 supplySnrDto.setTypeSupply(providerClient.findTypeSuppleById(supplySnrDto.getTypeSupplyCode()));
                 integrationDto.setSupplySnr(supplySnrDto);
 
@@ -328,11 +332,11 @@ public class IntegrationBusiness {
 
             try {
 
-                MicroserviceSupplyDto supplyCadastreDto = supplyBusiness
+                CustomSupplyDto supplyCadastreDto = supplyBusiness
                         .getSupplyById(integrationDto.getSupplyCadastreId());
                 integrationDto.setSupplyCadastre(supplyCadastreDto);
 
-                MicroserviceSupplyDto supplySnrDto = supplyBusiness.getSupplyById(integrationDto.getSupplySnrId());
+                CustomSupplyDto supplySnrDto = supplyBusiness.getSupplyById(integrationDto.getSupplySnrId());
                 integrationDto.setSupplySnr(supplySnrDto);
 
             } catch (Exception e) {

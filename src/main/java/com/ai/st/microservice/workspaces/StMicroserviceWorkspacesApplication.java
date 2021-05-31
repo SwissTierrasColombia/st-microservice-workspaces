@@ -1,14 +1,13 @@
 package com.ai.st.microservice.workspaces;
 
+import com.ai.st.microservice.common.clients.ErrorDecoder;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
-
-import com.ai.st.microservice.workspaces.clients.MyErrorDecoder;
 import org.springframework.context.annotation.ComponentScan;
-
 
 @SpringBootApplication
 @EnableFeignClients(basePackages = {"com.ai.st.microservice.common.clients", "com.ai.st.microservice.workspaces.clients"})
@@ -21,8 +20,8 @@ public class StMicroserviceWorkspacesApplication {
     }
 
     @Bean
-    public MyErrorDecoder myErrorDecoder() {
-        return new MyErrorDecoder();
+    public ErrorDecoder errorDecoder() {
+        return new ErrorDecoder();
     }
 
 }

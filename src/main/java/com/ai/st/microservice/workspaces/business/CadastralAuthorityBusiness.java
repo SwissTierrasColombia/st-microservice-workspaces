@@ -8,7 +8,7 @@ import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyOwnerDto;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
@@ -52,10 +52,10 @@ public class CadastralAuthorityBusiness {
         this.managerBusiness = managerBusiness;
     }
 
-    public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId, String name,
-                                                                String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
+    public CustomSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId, String name,
+                                                          String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
 
-        MicroserviceSupplyDto supplyDto;
+        CustomSupplyDto supplyDto;
 
         if (ftp == null && file == null) {
             throw new BusinessException("Se debe cargar algún tipo de adjunto");
@@ -158,10 +158,10 @@ public class CadastralAuthorityBusiness {
 
         List<MicroserviceSupplyACDto> suppliesReport = new ArrayList<>();
 
-        List<MicroserviceSupplyDto> supplies = (List<MicroserviceSupplyDto>) supplyBusiness
+        List<CustomSupplyDto> supplies = (List<CustomSupplyDto>) supplyBusiness
                 .getSuppliesByMunicipalityAdmin(municipalityId, new ArrayList<>(), null, null, false, workspaceManagerEntity.getManagerCode());
 
-        for (MicroserviceSupplyDto supply : supplies) {
+        for (CustomSupplyDto supply : supplies) {
 
             MicroserviceSupplyOwnerDto owner = supply.getOwners().stream()
                     .filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny().orElse(null);

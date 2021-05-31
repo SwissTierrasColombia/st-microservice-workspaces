@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.business;
 
 import com.ai.st.microservice.common.clients.ManagerFeignClient;
 import com.ai.st.microservice.common.clients.OperatorFeignClient;
+import com.ai.st.microservice.common.clients.ProviderFeignClient;
 import com.ai.st.microservice.common.clients.UserFeignClient;
 import com.ai.st.microservice.common.dto.administration.*;
 import com.ai.st.microservice.common.dto.managers.MicroserviceAddUserToManagerDto;
@@ -13,7 +14,6 @@ import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.business.RoleBusiness;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleAdministratorDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleManagerDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserRoleOperatorDto;

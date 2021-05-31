@@ -3,11 +3,11 @@ package com.ai.st.microservice.workspaces.dto.operators;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceSupplyDeliveryDto;
 
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 
 public class CustomSupplyDeliveryDto extends MicroserviceSupplyDeliveryDto {
 
-    private MicroserviceSupplyDto supply;
+    private CustomSupplyDto supply;
     private MicroserviceUserDto userDownloaded;
 
     public CustomSupplyDeliveryDto() {
@@ -27,11 +27,11 @@ public class CustomSupplyDeliveryDto extends MicroserviceSupplyDeliveryDto {
     }
 
 
-    public MicroserviceSupplyDto getSupply() {
+    public CustomSupplyDto getSupply() {
         return supply;
     }
 
-    public void setSupply(MicroserviceSupplyDto supply) {
+    public void setSupply(CustomSupplyDto supply) {
         this.supply = supply;
     }
 

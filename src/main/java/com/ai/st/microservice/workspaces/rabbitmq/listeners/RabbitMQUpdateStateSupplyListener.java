@@ -1,15 +1,17 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.clients.ProviderFeignClient;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.ili.MicroserviceValidationDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceRequestDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceSupplyRequestedDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceUpdateSupplyRequestedDto;
 
 import com.ai.st.microservice.workspaces.business.NotificationBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class RabbitMQUpdateStateSupplyListener {
@@ -51,7 +55,8 @@ public class RabbitMQUpdateStateSupplyListener {
 
             Long supplyRequestedStateId;
 
-            MicroserviceRequestDto requestDto = providerClient.findRequestById(validationDto.getRequestId());
+            MicroserviceRequestDto response = providerClient.findRequestById(validationDto.getRequestId());
+            CustomRequestDto requestDto = new CustomRequestDto(response);
 
             boolean xtfAccept = validationDto.getIsValid() || validationDto.getSkipErrors();
             if (xtfAccept) {
@@ -74,7 +79,11 @@ public class RabbitMQUpdateStateSupplyListener {
 
             try {
 
-                MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
+                List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+                List<CustomSupplyRequestedDto> suppliesRequestDto =
+                        suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                CustomSupplyRequestedDto supplyRequestedDto = suppliesRequestDto.stream()
                         .filter(supply -> supply.getId().equals(validationDto.getSupplyRequestedId())).findAny()
                         .orElse(null);
 

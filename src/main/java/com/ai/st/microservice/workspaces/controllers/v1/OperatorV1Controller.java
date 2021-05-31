@@ -2,12 +2,12 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 
 import org.slf4j.Logger;

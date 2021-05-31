@@ -1,6 +1,8 @@
 package com.ai.st.microservice.workspaces.business;
 
 import com.ai.st.microservice.common.clients.ManagerFeignClient;
+import com.ai.st.microservice.common.clients.ProviderFeignClient;
+import com.ai.st.microservice.common.clients.SupplyFeignClient;
 import com.ai.st.microservice.common.clients.UserFeignClient;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
@@ -11,6 +13,7 @@ import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorUserDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.common.dto.tasks.MicroserviceCreateTaskMetadataDto;
 import com.ai.st.microservice.common.dto.tasks.MicroserviceCreateTaskPropertyDto;
 import com.ai.st.microservice.common.dto.tasks.MicroserviceCreateTaskStepDto;
@@ -18,8 +21,6 @@ import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.business.RoleBusiness;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
@@ -32,10 +33,10 @@ import com.ai.st.microservice.workspaces.dto.WorkspaceManagerDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomEmitterDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
@@ -374,8 +375,8 @@ public class WorkspaceBusiness {
         return entityParseToDto(workspaceEntity);
     }
 
-    public List<MicroserviceRequestDto> createRequest(Date deadline, List<TypeSupplyRequestedDto> supplies,
-                                                      Long userCode, Long managerCode, Long municipalityId) throws BusinessException {
+    public List<CustomRequestDto> createRequest(Date deadline, List<TypeSupplyRequestedDto> supplies,
+                                                Long userCode, Long managerCode, Long municipalityId) throws BusinessException {
 
         // validate if the municipality exists
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -483,12 +484,13 @@ public class WorkspaceBusiness {
 
         MicroserviceManagerDto managerDto = managerBusiness.getManagerById(managerCode);
 
-        List<MicroserviceRequestDto> requests = new ArrayList<>();
+        List<CustomRequestDto> requests = new ArrayList<>();
         for (MicroserviceCreateRequestDto request : groupRequests) {
 
             try {
 
-                MicroserviceRequestDto responseRequest = providerClient.createRequest(request);
+                MicroserviceRequestDto response = providerClient.createRequest(request);
+                CustomRequestDto responseRequest = new CustomRequestDto(response);
                 requests.add(responseRequest);
 
                 // send notification
@@ -521,11 +523,15 @@ public class WorkspaceBusiness {
 
                 if (responseRequest.getProvider().getId().equals(ProviderBusiness.PROVIDER_IGAC_ID)) {
 
-                    MicroserviceSupplyRequestedDto supplyRequested = responseRequest.getSuppliesRequested().stream()
+                    List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = responseRequest.getSuppliesRequested();
+                    List<CustomSupplyRequestedDto> suppliesRequestDto =
+                            suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                    CustomSupplyRequestedDto supplyRequested = suppliesRequestDto.stream()
                             .filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL))
                             .findAny().orElse(null);
 
-                    if (supplyRequested instanceof MicroserviceSupplyRequestedDto) {
+                    if (supplyRequested instanceof CustomSupplyRequestedDto) {
                         // new task
 
                         List<Long> profiles = new ArrayList<>();
@@ -561,10 +567,10 @@ public class WorkspaceBusiness {
         return requests;
     }
 
-    public List<MicroserviceRequestDto> getPendingRequestByProvider(Long userCode, Long providerId)
+    public List<CustomRequestDto> getPendingRequestByProvider(Long userCode, Long providerId)
             throws BusinessException {
 
-        List<MicroserviceRequestDto> listPendingRequestsDto = new ArrayList<>();
+        List<CustomRequestDto> listPendingRequestsDto = new ArrayList<>();
 
         try {
 
@@ -575,13 +581,20 @@ public class WorkspaceBusiness {
                 throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
             }
 
-            List<MicroserviceRequestDto> responseRequestsDto = providerClient.getRequestsByProvider(providerId,
-                    ProviderBusiness.REQUEST_STATE_REQUESTED);
+            List<MicroserviceRequestDto> response = providerClient.getRequestsByProvider(providerId, ProviderBusiness.REQUEST_STATE_REQUESTED);
 
-            for (MicroserviceRequestDto requestDto : responseRequestsDto) {
+            List<CustomRequestDto> responseRequestsDto = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
 
-                List<MicroserviceEmitterDto> emittersDto = new ArrayList<>();
-                for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
+            for (CustomRequestDto requestDto : responseRequestsDto) {
+
+                List<CustomEmitterDto> emittersDto = new ArrayList<>();
+
+                List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
+                List<CustomEmitterDto> emitterDtoList =
+                        emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+
+                for (CustomEmitterDto emitterDto : emitterDtoList) {
+
                     if (emitterDto.getEmitterType().equals("ENTITY")) {
                         try {
                             MicroserviceManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
@@ -615,7 +628,11 @@ public class WorkspaceBusiness {
                 requestDto.setEmitters(emittersDto);
                 requestDto.setMunicipality(municipalityDto);
 
-                for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+                List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+                List<CustomSupplyRequestedDto> suppliesRequestDto =
+                        suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                for (CustomSupplyRequestedDto supply : suppliesRequestDto) {
 
                     if (supply.getDeliveredBy() != null) {
 
@@ -632,11 +649,15 @@ public class WorkspaceBusiness {
                 }
 
                 // verify profiles user
-                List<MicroserviceSupplyRequestedDto> suppliesRequested = new ArrayList<>();
+                List<CustomSupplyRequestedDto> suppliesRequested = new ArrayList<>();
 
                 int countNot = 0;
 
-                for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+                List<? extends MicroserviceSupplyRequestedDto> suppliesResponseDto = requestDto.getSuppliesRequested();
+                List<CustomSupplyRequestedDto> suppliesRequestedDto =
+                        suppliesResponseDto.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                for (CustomSupplyRequestedDto supply : suppliesRequestedDto) {
 
                     MicroserviceProviderProfileDto profileSupply = supply.getTypeSupply().getProviderProfile();
 
@@ -683,20 +704,25 @@ public class WorkspaceBusiness {
         return listPendingRequestsDto;
     }
 
-    public List<MicroserviceRequestDto> getClosedRequestByProvider(Long userCode, Long providerId)
+    public List<CustomRequestDto> getClosedRequestByProvider(Long userCode, Long providerId)
             throws BusinessException {
 
-        List<MicroserviceRequestDto> listClosedRequestsDto = new ArrayList<>();
+        List<CustomRequestDto> listClosedRequestsDto = new ArrayList<>();
 
         try {
 
-            List<MicroserviceRequestDto> responseRequestsDto = providerClient.getRequestsByProviderClosed(providerId,
-                    userCode);
+            List<MicroserviceRequestDto> response = providerClient.getRequestsByProviderClosed(providerId, userCode);
+            List<CustomRequestDto> responseRequestsDto = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
 
-            for (MicroserviceRequestDto requestDto : responseRequestsDto) {
+            for (CustomRequestDto requestDto : responseRequestsDto) {
 
-                List<MicroserviceEmitterDto> emittersDto = new ArrayList<>();
-                for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
+                List<CustomEmitterDto> emittersDto = new ArrayList<>();
+
+                List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
+                List<CustomEmitterDto> emittersRequestDto =
+                        emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+
+                for (CustomEmitterDto emitterDto : emittersRequestDto) {
                     if (emitterDto.getEmitterType().equals("ENTITY")) {
                         try {
                             MicroserviceManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
@@ -739,7 +765,11 @@ public class WorkspaceBusiness {
                     requestDto.setUserClosedBy(null);
                 }
 
-                for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+                List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+                List<CustomSupplyRequestedDto> suppliesRequestDto =
+                        suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                for (CustomSupplyRequestedDto supply : suppliesRequestDto) {
 
                     if (supply.getDeliveredBy() != null) {
 
@@ -806,11 +836,12 @@ public class WorkspaceBusiness {
         }
 
         // validate cadastre
-        MicroserviceSupplyDto supplyCadastreDto;
+        CustomSupplyDto supplyCadastreDto;
         String pathFileCadastre;
         try {
 
-            supplyCadastreDto = supplyClient.findSupplyById(supplyIdCadastre);
+            MicroserviceSupplyDto response = supplyClient.findSupplyById(supplyIdCadastre);
+            supplyCadastreDto = new CustomSupplyDto(response);
 
             MicroserviceTypeSupplyDto typeSupplyDto = providerClient
                     .findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode());
@@ -833,11 +864,12 @@ public class WorkspaceBusiness {
         }
 
         // validate register
-        MicroserviceSupplyDto supplyRegisteredDto;
+        CustomSupplyDto supplyRegisteredDto;
         String pathFileRegistration;
         try {
 
-            supplyRegisteredDto = supplyClient.findSupplyById(supplyIdRegistration);
+            MicroserviceSupplyDto response = supplyClient.findSupplyById(supplyIdRegistration);
+            supplyRegisteredDto = new CustomSupplyDto(response);
 
             MicroserviceTypeSupplyDto typeSupplyDto = providerClient
                     .findTypeSuppleById(supplyRegisteredDto.getTypeSupplyCode());
@@ -1114,8 +1146,8 @@ public class WorkspaceBusiness {
             String schemaDecrypt = cryptoBusiness.decrypt(integrationEntity.getSchema());
 
             // supply cadastre
-            MicroserviceSupplyDto supplyCadastreDto = supplyClient
-                    .findSupplyById(integrationEntity.getSupplyCadastreId());
+            MicroserviceSupplyDto response = supplyClient.findSupplyById(integrationEntity.getSupplyCadastreId());
+            CustomSupplyDto supplyCadastreDto = new CustomSupplyDto(response);
 
             String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace(" ", "_")
                     + "/insumos/gestores/" + managerDto.getId();
@@ -1211,11 +1243,12 @@ public class WorkspaceBusiness {
 
     public void removeSupply(Long workspaceId, Long supplyId, Long managerCode) throws BusinessException {
 
-        MicroserviceSupplyDto supplyDto;
+        CustomSupplyDto supplyDto;
         List<String> pathsFile = new ArrayList<>();
         try {
 
-            supplyDto = supplyClient.findSupplyById(supplyId);
+            MicroserviceSupplyDto response = supplyClient.findSupplyById(supplyId);
+            supplyDto = new CustomSupplyDto(response);
 
             for (MicroserviceSupplyAttachmentDto attachment : supplyDto.getAttachments()) {
                 if (attachment.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY)
@@ -1312,7 +1345,7 @@ public class WorkspaceBusiness {
 
         for (CreateSupplyDeliveryDto deliverySupplyDto : suppliesDto) {
 
-            MicroserviceSupplyDto supply = supplyBusiness.getSupplyById(deliverySupplyDto.getSupplyId());
+            CustomSupplyDto supply = supplyBusiness.getSupplyById(deliverySupplyDto.getSupplyId());
 
             if (supply == null) {
                 throw new BusinessException("No se ha encontrado el insumo.");
@@ -1499,8 +1532,8 @@ public class WorkspaceBusiness {
             throw new BusinessException("El gestor no tiene asignado el municipio.");
         }
 
-        List<MicroserviceRequestDto> requestsDto = providerBusiness.getRequestsByEmittersManager(managerCode);
-        for (MicroserviceRequestDto requestDto : requestsDto) {
+        List<CustomRequestDto> requestsDto = providerBusiness.getRequestsByEmittersManager(managerCode);
+        for (CustomRequestDto requestDto : requestsDto) {
             if (requestDto.getMunicipalityCode().equals(municipalityEntity.getCode())) {
                 if (requestDto.getRequestState().getId().equals(ProviderBusiness.REQUEST_STATE_REQUESTED)) {
                     throw new BusinessException(

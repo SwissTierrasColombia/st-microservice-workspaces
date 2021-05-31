@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
@@ -11,13 +12,12 @@ import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.*;
 import com.ai.st.microservice.workspaces.dto.AnswerRequestDto;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CreateProviderProfileDto;
 import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomSupplyRequestedDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,14 +60,14 @@ public class ProviderV1Controller {
     @PostMapping(value = "/municipalities/{municipalityId}/requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create request")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Create request", response = MicroserviceRequestDto.class),
+            @ApiResponse(code = 201, message = "Create request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> createRequest(@RequestBody CreateRequestDto createRequestDto,
                                                 @RequestHeader("authorization") String headerAuthorization, @PathVariable Long municipalityId) {
 
         HttpStatus httpStatus;
-        List<MicroserviceRequestDto> listRequests = new ArrayList<>();
+        List<CustomRequestDto> listRequests = new ArrayList<>();
         Object responseDto = null;
 
         try {
@@ -145,13 +145,13 @@ public class ProviderV1Controller {
     @GetMapping(value = "/pending-requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get pending requests by provider")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get pending requests by provider", response = MicroserviceRequestDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get pending requests by provider", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsPendingByProveedor(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
-        List<MicroserviceRequestDto> listRequests = new ArrayList<>();
+        List<CustomRequestDto> listRequests = new ArrayList<>();
         Object responseDto = null;
 
         try {
@@ -192,13 +192,13 @@ public class ProviderV1Controller {
     @GetMapping(value = "/closed-requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get closed-requests")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get closed requests by provider", response = MicroserviceRequestDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get closed requests by provider", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsClosedByProveedor(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
-        List<MicroserviceRequestDto> listRequests = new ArrayList<>();
+        List<CustomRequestDto> listRequests = new ArrayList<>();
         Object responseDto = null;
 
         try {
@@ -239,7 +239,7 @@ public class ProviderV1Controller {
     @PutMapping(value = "/requests/{requestId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Answer request")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Answer request", response = MicroserviceRequestDto.class),
+            @ApiResponse(code = 200, message = "Answer request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> answerRequest(@PathVariable Long requestId,
@@ -300,7 +300,7 @@ public class ProviderV1Controller {
     @PutMapping(value = "/requests/{requestId}/close", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Close request")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Close request", response = MicroserviceRequestDto.class),
+            @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> closeRequest(@PathVariable Long requestId,
@@ -346,7 +346,7 @@ public class ProviderV1Controller {
     @GetMapping(value = "/requests/emmiters", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Close request")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Close request", response = MicroserviceRequestDto.class),
+            @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsByEmitters(@RequestHeader("authorization") String headerAuthorization) {
@@ -888,7 +888,7 @@ public class ProviderV1Controller {
     @GetMapping(value = "/requests/municipality", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get requests by municipality")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsByMunicipality(@RequestHeader("authorization") String headerAuthorization,
@@ -937,7 +937,7 @@ public class ProviderV1Controller {
     @GetMapping(value = "/requests/provider", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get requests by provider")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsByProvider(@RequestHeader("authorization") String headerAuthorization,
@@ -984,7 +984,7 @@ public class ProviderV1Controller {
     @GetMapping(value = "/requests/package", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get requests by package")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get requests", response = MicroserviceRequestDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getRequestsByPackage(@RequestHeader("authorization") String headerAuthorization,
@@ -1030,7 +1030,7 @@ public class ProviderV1Controller {
     @GetMapping(value = "/supplies-review", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get supplies requested to review")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get supplies requested to review", response = MicroserviceSupplyRequestedDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get supplies requested to review", response = CustomSupplyRequestedDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getSuppliesRequestedToReview(@RequestHeader("authorization") String headerAuthorization) {

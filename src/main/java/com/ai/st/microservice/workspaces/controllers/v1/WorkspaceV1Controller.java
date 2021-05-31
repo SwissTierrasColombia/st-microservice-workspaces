@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
@@ -16,7 +17,6 @@ import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
 import com.ai.st.microservice.workspaces.dto.AssignOperatorWorkpaceDto;
 import com.ai.st.microservice.workspaces.dto.IntegrationDto;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CreateDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.CreateSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.MakeIntegrationDto;
@@ -24,7 +24,7 @@ import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceDto;
 import com.ai.st.microservice.workspaces.dto.WorkspaceOperatorDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -699,7 +699,7 @@ public class WorkspaceV1Controller {
         MediaType mediaType;
         File file;
         InputStreamResource resource;
-        MicroserviceSupplyDto supplyDto;
+        CustomSupplyDto supplyDto;
 
         try {
 

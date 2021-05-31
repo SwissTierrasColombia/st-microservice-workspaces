@@ -5,8 +5,6 @@ import com.ai.st.microservice.common.dto.operators.MicroserviceDeliveryDto;
 
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 
-import java.util.List;
-
 public class CustomDeliveryDto extends MicroserviceDeliveryDto {
 
     private MicroserviceManagerDto manager;
@@ -28,20 +26,6 @@ public class CustomDeliveryDto extends MicroserviceDeliveryDto {
         this.setDownloadReportUrl(response.getDownloadReportUrl());
         this.setSupplies(response.getSupplies());
     }
-
-    public CustomDeliveryDto(MicroserviceDeliveryDto response, List<CustomSupplyDeliveryDto> supplies) {
-        super();
-        this.setId(response.getId());
-        this.setCreatedAt(response.getCreatedAt());
-        this.setManagerCode(response.getManagerCode());
-        this.setMunicipalityCode(response.getMunicipalityCode());
-        this.setIsActive(response.getIsActive());
-        this.setObservations(response.getObservations());
-        this.setOperator(response.getOperator());
-        this.setDownloadReportUrl(response.getDownloadReportUrl());
-        this.setSupplies(supplies);
-    }
-
 
     public MicroserviceManagerDto getManager() {
         return manager;

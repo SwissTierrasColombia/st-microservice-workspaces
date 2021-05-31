@@ -2,13 +2,13 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +45,7 @@ public class SupplyV1Controller {
     @GetMapping(value = "/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get supplies by municipality")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get supplies", response = MicroserviceSupplyDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get supplies", response = CustomSupplyDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> getSuppliesByMunicipality(@PathVariable Long municipalityId,
@@ -104,7 +104,7 @@ public class SupplyV1Controller {
     @PutMapping(value = "/{supplyId}/active", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Active supply")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> activeSupply(@PathVariable Long supplyId,
@@ -154,7 +154,7 @@ public class SupplyV1Controller {
     @PutMapping(value = "/{supplyId}/inactive", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Inactive supply")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Supply updated", response = MicroserviceSupplyDto.class),
+            @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> inactiveSupply(@PathVariable Long supplyId,

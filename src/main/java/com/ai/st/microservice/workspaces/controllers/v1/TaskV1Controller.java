@@ -2,12 +2,12 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.TaskBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.CancelTaskDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.CustomTaskDto;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,13 +42,13 @@ public class TaskV1Controller {
     @GetMapping(value = "/pending", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get pending tasks")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get pending tasks", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get pending tasks", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPendingTasks(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
-        List<MicroserviceTaskDto> listTasks = new ArrayList<>();
+        List<CustomTaskDto> listTasks = new ArrayList<>();
         Object responseDto = null;
 
         try {
@@ -83,7 +83,7 @@ public class TaskV1Controller {
     @PutMapping(value = "/{taskId}/start", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start task")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Task started", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Task started", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> startTask(@RequestHeader("authorization") String headerAuthorization,
@@ -123,7 +123,7 @@ public class TaskV1Controller {
     @PutMapping(value = "/{taskId}/finish", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Finish task")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Task finished", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Task finished", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> finishTask(@RequestHeader("authorization") String headerAuthorization,
@@ -163,7 +163,7 @@ public class TaskV1Controller {
     @PutMapping(value = "/{taskId}/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Cancel task")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Task cancelled", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Task cancelled", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> cancelTask(@RequestHeader("authorization") String headerAuthorization,

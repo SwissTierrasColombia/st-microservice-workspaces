@@ -13,7 +13,7 @@ import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
@@ -119,7 +119,7 @@ public class OperatorMicroserviceBusiness {
 
                     try {
 
-                        MicroserviceSupplyDto supplyDto = supplyBusiness
+                        CustomSupplyDto supplyDto = supplyBusiness
                                 .getSupplyById(supplyDeliveryDto.getSupplyCode());
                         supplyDeliveryDto.setSupply(supplyDto);
 
@@ -371,7 +371,7 @@ public class OperatorMicroserviceBusiness {
 
             try {
 
-                MicroserviceSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
+                CustomSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
                 supplyDeliveryDto.setSupply(supplyDto);
 
             } catch (Exception e) {

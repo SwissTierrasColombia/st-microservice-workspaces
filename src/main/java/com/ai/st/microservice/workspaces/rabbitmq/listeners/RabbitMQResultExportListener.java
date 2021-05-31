@@ -1,8 +1,7 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
 import com.ai.st.microservice.common.dto.ili.MicroserviceResultExportDto;
-import com.ai.st.microservice.common.dto.providers.MicroserviceUpdateSupplyRequestedDto;
-import com.ai.st.microservice.common.dto.providers.MicroserviceUpdateSupplyRevisionDto;
+import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 
 import com.ai.st.microservice.workspaces.dto.providers.*;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class RabbitMQResultExportListener {
@@ -71,9 +71,13 @@ public class RabbitMQResultExportListener {
 
                     // save zip file
 
-                    MicroserviceRequestDto requestDto = providerBusiness.getRequestById(requestId);
+                    CustomRequestDto requestDto = providerBusiness.getRequestById(requestId);
 
-                    MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
+                    List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+                    List<CustomSupplyRequestedDto> suppliesRequestDto =
+                            suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                    CustomSupplyRequestedDto supplyRequestedDto = suppliesRequestDto.stream()
                             .filter(sR -> sR.getId().equals(supplyRequestedId)).findAny().orElse(null);
 
                     String urlDocumentaryRepository = resultDto.getPathFile();
@@ -114,8 +118,11 @@ public class RabbitMQResultExportListener {
                     attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftpData,
                             SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 
+                    List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
+                    List<CustomEmitterDto> emittersRequestDto =
+                            emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
 
-                    MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
+                    CustomEmitterDto emitterDto = emittersRequestDto.stream().
                             filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
                     supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),

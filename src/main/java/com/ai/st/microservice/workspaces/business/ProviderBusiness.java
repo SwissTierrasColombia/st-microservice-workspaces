@@ -1,31 +1,27 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.clients.ProviderFeignClient;
+import com.ai.st.microservice.common.clients.TaskFeignClient;
 import com.ai.st.microservice.common.clients.UserFeignClient;
 import com.ai.st.microservice.common.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
-import com.ai.st.microservice.common.dto.tasks.MicroserviceCancelTaskDto;
-import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskMetadataDto;
-import com.ai.st.microservice.common.dto.tasks.MicroserviceTaskMetadataPropertyDto;
+import com.ai.st.microservice.common.dto.tasks.*;
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.business.RoleBusiness;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.TaskFeignClient;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.providers.WorkspacePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPackageDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceRequestPaginatedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRequestedDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceEmitterDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskMemberDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomPetitionDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomRequestDto;
+import com.ai.st.microservice.workspaces.dto.providers.RequestPackageDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomSupplyRequestedDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomEmitterDto;
+import com.ai.st.microservice.workspaces.dto.tasks.CustomTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.CustomTaskMemberDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
@@ -140,16 +136,17 @@ public class ProviderBusiness {
         this.administrationBusiness = administrationBusiness;
     }
 
-    public MicroserviceRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipErrors, String justification,
-                                                MultipartFile[] files, MultipartFile extraFile, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
+    public CustomRequestDto answerRequest(Long requestId, Long typeSupplyId, Boolean skipErrors, String justification,
+                                          MultipartFile[] files, MultipartFile extraFile, String url, MicroserviceProviderDto providerDto, Long userCode, String observations)
             throws BusinessException {
 
-        MicroserviceRequestDto requestUpdatedDto;
+        CustomRequestDto requestUpdatedDto;
 
         if (files.length == 0 && (url == null || url.isEmpty()) && (justification == null || justification.isEmpty()))
             throw new BusinessException("Se debe justificar porque no se cargará el insumo.");
 
-        MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
+        MicroserviceRequestDto response = providerClient.findRequestById(requestId);
+        CustomRequestDto requestDto = new CustomRequestDto(response);
 
         if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
             throw new BusinessException("No tiene acceso a la solicitud.");
@@ -171,7 +168,11 @@ public class ProviderBusiness {
             throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
         }
 
-        MicroserviceSupplyRequestedDto supplyRequested = requestDto.getSuppliesRequested().stream()
+        List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+        List<CustomSupplyRequestedDto> suppliesRequestDto =
+                suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+        CustomSupplyRequestedDto supplyRequested = suppliesRequestDto.stream()
                 .filter(sR -> sR.getTypeSupply().getId().equals(typeSupplyId)).findAny().orElse(null);
 
         if (supplyRequested == null) {
@@ -193,8 +194,11 @@ public class ProviderBusiness {
             List<Long> taskStates = new ArrayList<>(Collections.singletonList(TaskBusiness.TASK_STATE_STARTED));
             List<Long> taskCategories = new ArrayList<>(
                     Collections.singletonList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
-            List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
-            for (MicroserviceTaskDto taskDto : tasksDto) {
+
+            List<MicroserviceTaskDto> responseTasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+            List<CustomTaskDto> tasksDto = responseTasksDto.stream().map(CustomTaskDto::new).collect(Collectors.toList());
+
+            for (CustomTaskDto taskDto : tasksDto) {
                 MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
                         .filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
                 if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
@@ -212,9 +216,13 @@ public class ProviderBusiness {
 
                         if (metaRequestId.equals(requestId) && metaTypeSupplyId.equals(typeSupplyId)) {
 
-                            MicroserviceTaskMemberDto memberDto = taskDto.getMembers().stream()
+                            List<? extends MicroserviceTaskMemberDto> responseMembers = taskDto.getMembers();
+                            List<CustomTaskMemberDto> membersDto =
+                                    responseMembers.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
+
+                            CustomTaskMemberDto memberDto = membersDto.stream()
                                     .filter(m -> m.getMemberCode().equals(userCode)).findAny().orElse(null);
-                            if (!(memberDto instanceof MicroserviceTaskMemberDto)) {
+                            if (!(memberDto instanceof CustomTaskMemberDto)) {
                                 throw new BusinessException(
                                         "No es posible cargar el insumo, la tarea está asignada a otro usuario.");
                             }
@@ -386,9 +394,15 @@ public class ProviderBusiness {
             updateSupply.setSupplyRequestedStateId(supplyRequestedStateId);
             updateSupply.setJustification(justification);
             updateSupply.setExtraFile(urlExtraFileSaved);
-            requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(), updateSupply);
 
-            for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
+            MicroserviceRequestDto responseRequestDto = providerClient.updateSupplyRequested(requestId, supplyRequested.getId(), updateSupply);
+            requestUpdatedDto = new CustomRequestDto(responseRequestDto);
+
+            List<? extends MicroserviceSupplyRequestedDto> suppliesResponseDto = requestUpdatedDto.getSuppliesRequested();
+            List<CustomSupplyRequestedDto> suppliesRequestedDto =
+                    suppliesResponseDto.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+            for (CustomSupplyRequestedDto supply : suppliesRequestedDto) {
                 if (supply.getDeliveredBy() != null) {
                     try {
                         MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
@@ -406,10 +420,12 @@ public class ProviderBusiness {
         return requestUpdatedDto;
     }
 
-    public MicroserviceRequestDto closeRequest(Long requestId, MicroserviceProviderDto providerDto, Long userCode)
+    public CustomRequestDto closeRequest(Long requestId, MicroserviceProviderDto providerDto, Long userCode)
             throws BusinessException {
 
-        MicroserviceRequestDto requestDto = providerClient.findRequestById(requestId);
+
+        MicroserviceRequestDto response = providerClient.findRequestById(requestId);
+        CustomRequestDto requestDto = new CustomRequestDto(response);
 
         if (!providerDto.getId().equals(requestDto.getProvider().getId())) {
             throw new BusinessException("No tiene acceso a la solicitud.");
@@ -426,8 +442,12 @@ public class ProviderBusiness {
             throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
         }
 
+        List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+        List<CustomSupplyRequestedDto> suppliesRequestDto =
+                suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
         boolean canClose = false;
-        for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+        for (CustomSupplyRequestedDto supplyRequested : suppliesRequestDto) {
             if (!supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)
                     && !supplyRequested.getState().getId()
                     .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
@@ -446,16 +466,20 @@ public class ProviderBusiness {
         }
 
         boolean sendToReview = false;
-        MicroserviceSupplyRequestedDto supplyRegistral = null;
+        CustomSupplyRequestedDto supplyRegistral = null;
         if (requestDto.getProvider().getId().equals(ProviderBusiness.PROVIDER_SNR_ID)) {
 
-            supplyRegistral = requestDto.getSuppliesRequested().stream()
+            List<? extends MicroserviceSupplyRequestedDto> suppliesResponseDto = requestDto.getSuppliesRequested();
+            List<CustomSupplyRequestedDto> suppliesRequestedDto =
+                    suppliesResponseDto.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+            supplyRegistral = suppliesRequestedDto.stream()
                     .filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SNR_SUPPLY_REGISTRAL))
                     .findAny().orElse(null);
             sendToReview = (supplyRegistral != null);
         }
 
-        MicroserviceRequestDto requestUpdatedDto;
+        CustomRequestDto requestUpdatedDto;
 
         if (sendToReview) {
 
@@ -467,10 +491,15 @@ public class ProviderBusiness {
                 updateSupply.setDeliveryBy(null);
                 updateSupply.setSupplyRequestedStateId(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
                 updateSupply.setJustification(null);
-                requestUpdatedDto = providerClient.updateSupplyRequested(requestId, supplyRegistral.getId(),
-                        updateSupply);
 
-                for (MicroserviceSupplyRequestedDto supply : requestUpdatedDto.getSuppliesRequested()) {
+                MicroserviceRequestDto updateResponseDto = providerClient.updateSupplyRequested(requestId, supplyRegistral.getId(), updateSupply);
+                requestUpdatedDto = new CustomRequestDto(updateResponseDto);
+
+                List<? extends MicroserviceSupplyRequestedDto> suppliesUpdateResponse = requestUpdatedDto.getSuppliesRequested();
+                List<CustomSupplyRequestedDto> suppliesRequestedUpdateDto =
+                        suppliesUpdateResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                for (CustomSupplyRequestedDto supply : suppliesRequestedUpdateDto) {
                     if (supply.getDeliveredBy() != null) {
                         try {
                             MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
@@ -489,7 +518,11 @@ public class ProviderBusiness {
 
             try {
 
-                for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+                List<? extends MicroserviceSupplyRequestedDto> suppliesResponseDto = requestDto.getSuppliesRequested();
+                List<CustomSupplyRequestedDto> suppliesRequestedDto =
+                        suppliesResponseDto.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                for (CustomSupplyRequestedDto supplyRequested : suppliesRequestedDto) {
 
                     // verify if the supply is assigned to a task
                     List<Long> taskStates = new ArrayList<>(
@@ -497,9 +530,10 @@ public class ProviderBusiness {
                     List<Long> taskCategories = new ArrayList<>(
                             Collections.singletonList(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION));
 
-                    List<MicroserviceTaskDto> tasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+                    List<MicroserviceTaskDto> responseTasksDto = taskClient.findByStateAndCategory(taskStates, taskCategories);
+                    List<CustomTaskDto> tasksDto = responseTasksDto.stream().map(CustomTaskDto::new).collect(Collectors.toList());
 
-                    for (MicroserviceTaskDto taskDto : tasksDto) {
+                    for (CustomTaskDto taskDto : tasksDto) {
                         MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
                                 .filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
                         if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
@@ -545,7 +579,11 @@ public class ProviderBusiness {
 
             try {
 
-                for (MicroserviceSupplyRequestedDto supplyRequested : requestDto.getSuppliesRequested()) {
+                List<? extends MicroserviceSupplyRequestedDto> suppliesResponseDto = requestDto.getSuppliesRequested();
+                List<CustomSupplyRequestedDto> suppliesRequestedDto =
+                        suppliesResponseDto.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                for (CustomSupplyRequestedDto supplyRequested : suppliesRequestedDto) {
 
                     if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED)) {
 
@@ -582,7 +620,11 @@ public class ProviderBusiness {
 
                         }
 
-                        MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
+                        List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
+                        List<CustomEmitterDto> emittersDto =
+                                emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+
+                        CustomEmitterDto emitterDto = emittersDto.stream().
                                 filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
                         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequested.getObservations(),
@@ -599,7 +641,8 @@ public class ProviderBusiness {
             }
 
             try {
-                requestUpdatedDto = providerClient.closeRequest(requestId, userCode);
+                MicroserviceRequestDto responseUpdateDto = providerClient.closeRequest(requestId, userCode);
+                requestUpdatedDto = new CustomRequestDto(responseUpdateDto);
             } catch (Exception e) {
                 throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
             }
@@ -609,17 +652,14 @@ public class ProviderBusiness {
         return requestUpdatedDto;
     }
 
-    public MicroserviceRequestDto closeRequest(Long requestId, Long userCode) {
-
-        MicroserviceRequestDto requestDto = null;
-
+    public CustomRequestDto closeRequest(Long requestId, Long userCode) {
         try {
-            requestDto = providerClient.closeRequest(requestId, userCode);
+            MicroserviceRequestDto response = providerClient.closeRequest(requestId, userCode);
+            return new CustomRequestDto(response);
         } catch (Exception e) {
             log.error("Error cerrando solicitud: " + e.getMessage());
+            return null;
         }
-
-        return requestDto;
     }
 
     public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
@@ -644,19 +684,14 @@ public class ProviderBusiness {
         return usersDto;
     }
 
-    public List<MicroserviceRequestDto> getRequestsByEmittersManager(Long managerCode) throws BusinessException {
-
-        List<MicroserviceRequestDto> listRequestsDto = new ArrayList<>();
-
+    public List<CustomRequestDto> getRequestsByEmittersManager(Long managerCode) throws BusinessException {
         try {
-
-            listRequestsDto = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
-
+            List<MicroserviceRequestDto> response = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
+            return response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Error consultando solicitudes: " + e.getMessage());
+            return new ArrayList<>();
         }
-
-        return listRequestsDto;
     }
 
     public MicroserviceRequestPaginatedDto getRequestsByManagerAndMunicipality(int page, Long managerCode,
@@ -668,8 +703,10 @@ public class ProviderBusiness {
 
             data = providerClient.getRequestsByManagerAndMunicipality(managerCode, municipalityCode, page);
 
-            List<MicroserviceRequestDto> requests = data.getItems();
-            for (MicroserviceRequestDto requestDto : requests) {
+            List<? extends MicroserviceRequestDto> response = data.getItems();
+            List<CustomRequestDto> requests = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
+
+            for (CustomRequestDto requestDto : requests) {
                 requestDto = this.completeInformationRequest(requestDto);
             }
 
@@ -684,15 +721,16 @@ public class ProviderBusiness {
         return data;
     }
 
-    public List<MicroserviceRequestDto> getRequestsByPackage(String packageLabel) {
+    public List<CustomRequestDto> getRequestsByPackage(String packageLabel) {
 
-        List<MicroserviceRequestDto> requestsDto = new ArrayList<>();
+        List<CustomRequestDto> requestsDto = new ArrayList<>();
 
         try {
 
-            requestsDto = providerClient.getRequestsByPackage(packageLabel);
+            List<MicroserviceRequestDto> response = providerClient.getRequestsByPackage(packageLabel);
+            requestsDto = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
 
-            for (MicroserviceRequestDto requestDto : requestsDto) {
+            for (CustomRequestDto requestDto : requestsDto) {
                 requestDto = this.completeInformationRequest(requestDto);
             }
 
@@ -712,10 +750,17 @@ public class ProviderBusiness {
 
             data = providerClient.getRequestsByManagerAndProvider(managerCode, providerId, page);
 
-            List<MicroserviceRequestDto> requests = data.getItems();
-            for (MicroserviceRequestDto requestDto : requests) {
+            List<? extends MicroserviceRequestDto> response = data.getItems();
+            List<CustomRequestDto> requests = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
+
+            List<CustomRequestDto> all = new ArrayList<>();
+
+            for (CustomRequestDto requestDto : requests) {
                 requestDto = this.completeInformationRequest(requestDto);
+                all.add(requestDto);
             }
+
+            data.setItems(all);
 
         } catch (BusinessException e) {
             log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
@@ -728,39 +773,43 @@ public class ProviderBusiness {
         return data;
     }
 
-    public List<MicroserviceRequestPackageDto> getRequestsByManagerAndPackage(Long managerCode, String packageLabel)
+    public List<RequestPackageDto> getRequestsByManagerAndPackage(Long managerCode, String packageLabel)
             throws BusinessException {
 
-        List<MicroserviceRequestPackageDto> packages = new ArrayList<>();
-        List<MicroserviceRequestDto> requests;
+        List<RequestPackageDto> packages = new ArrayList<>();
+        List<CustomRequestDto> requests;
 
         List<String> labels = new ArrayList<>();
 
         try {
 
+            List<MicroserviceRequestDto> response;
+
             if (packageLabel != null) {
-                requests = providerClient.getRequestsByManagerAndPackage(managerCode, packageLabel);
+                response = providerClient.getRequestsByManagerAndPackage(managerCode, packageLabel);
             } else {
-                requests = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
+                response = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
             }
 
-            for (MicroserviceRequestDto requestDto : requests) {
+            requests = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
+
+            for (CustomRequestDto requestDto : requests) {
 
                 requestDto = this.completeInformationRequest(requestDto);
 
                 String packageRequest = requestDto.getPackageLabel();
 
                 if (!labels.contains(packageRequest)) {
-                    MicroserviceRequestPackageDto data = new MicroserviceRequestPackageDto();
+                    RequestPackageDto data = new RequestPackageDto();
                     data.setPackageLabel(packageRequest);
                     data.getRequests().add(requestDto);
                     packages.add(data);
                     labels.add(packageRequest);
                 } else {
 
-                    MicroserviceRequestPackageDto packageFound = packages.stream()
+                    RequestPackageDto packageFound = packages.stream()
                             .filter(p -> p.getPackageLabel().equals(packageRequest)).findAny().orElse(null);
-                    if (packageFound instanceof MicroserviceRequestPackageDto) {
+                    if (packageFound instanceof RequestPackageDto) {
                         packageFound.getRequests().add(requestDto);
                     }
 
@@ -779,10 +828,15 @@ public class ProviderBusiness {
         return packages;
     }
 
-    public MicroserviceRequestDto completeInformationRequest(MicroserviceRequestDto requestDto) {
+    public CustomRequestDto completeInformationRequest(CustomRequestDto requestDto) {
 
-        List<MicroserviceEmitterDto> emittersDto = new ArrayList<>();
-        for (MicroserviceEmitterDto emitterDto : requestDto.getEmitters()) {
+        List<CustomEmitterDto> emittersDto = new ArrayList<>();
+
+        List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
+        List<CustomEmitterDto> emitterListDto =
+                emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+
+        for (CustomEmitterDto emitterDto : emitterListDto) {
             if (emitterDto.getEmitterType().equals("ENTITY")) {
                 try {
                     MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
@@ -818,7 +872,11 @@ public class ProviderBusiness {
             requestDto.setMunicipality(municipalityDto);
         }
 
-        for (MicroserviceSupplyRequestedDto supply : requestDto.getSuppliesRequested()) {
+        List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+        List<CustomSupplyRequestedDto> suppliesRequestDto =
+                suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+        for (CustomSupplyRequestedDto supply : suppliesRequestDto) {
 
             if (supply.getDeliveredBy() != null) {
 
@@ -1108,56 +1166,66 @@ public class ProviderBusiness {
         return isDelegate;
     }
 
-    public List<MicroserviceSupplyRequestedDto> getSuppliesToReview(Long providerId) {
+    public List<CustomSupplyRequestedDto> getSuppliesToReview(Long providerId) {
 
-        List<MicroserviceSupplyRequestedDto> suppliesRequestedDto = new ArrayList<>();
+        List<CustomSupplyRequestedDto> all = new ArrayList<>();
 
         try {
+
+            List<CustomSupplyRequestedDto> suppliesRequestedDto = new ArrayList<>();
 
             List<Long> states = new ArrayList<>(Arrays.asList(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW,
                     ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW,
                     ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW,
                     ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW));
 
-            suppliesRequestedDto = providerClient.getSuppliesRequestedToReview(providerId, states);
+            List<MicroserviceSupplyRequestedDto> response = providerClient.getSuppliesRequestedToReview(providerId, states);
+            suppliesRequestedDto = response.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
-            for (MicroserviceSupplyRequestedDto sR : suppliesRequestedDto) {
+
+
+            for (CustomSupplyRequestedDto sR : suppliesRequestedDto) {
 
                 MunicipalityDto municipalityDto = municipalityBusiness
                         .getMunicipalityByCode(sR.getRequest().getMunicipalityCode());
 
                 if (sR.getRequest() != null) {
-                    MicroserviceEmitterDto emitterDto =
-                            sR.getRequest().getEmitters().stream().filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY"))
-                                    .findAny().orElse(null);
+
+                    List<? extends MicroserviceEmitterDto> emittersResponse = sR.getRequest().getEmitters();
+                    List<CustomEmitterDto> emitterDtoList =
+                            emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+
+                    CustomEmitterDto emitterDto = emitterDtoList.stream().filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY"))
+                            .findAny().orElse(null);
                     if (emitterDto != null) {
                         MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
                         emitterDto.setUser(managerDto);
                     }
-                    sR.getRequest().setMunicipality(municipalityDto);
+
+                    CustomRequestDto r = new CustomRequestDto(sR.getRequest());
+                    r.setEmitters(new ArrayList<>(Collections.singletonList(emitterDto)));
+                    r.setMunicipality(municipalityDto);
+                    sR.setRequest(r);
                 }
 
+                all.add(sR);
             }
 
         } catch (Exception e) {
             log.error("No se ha podido consultar los insumos pendiente de revisión: " + e.getMessage());
         }
 
-        return suppliesRequestedDto;
+        return all;
     }
 
-    public MicroserviceSupplyRequestedDto getSupplyRequestedById(Long supplyRequestedId) {
-
-        MicroserviceSupplyRequestedDto supplyRequestedDto = null;
-
+    public CustomSupplyRequestedDto getSupplyRequestedById(Long supplyRequestedId) {
+        CustomSupplyRequestedDto supplyRequestedDto = null;
         try {
-
-            supplyRequestedDto = providerClient.getSupplyRequested(supplyRequestedId);
-
+            MicroserviceSupplyRequestedDto response = providerClient.getSupplyRequested(supplyRequestedId);
+            supplyRequestedDto = new CustomSupplyRequestedDto(response);
         } catch (Exception e) {
             log.error("No se ha podido consultar el insumo solicitado: " + e.getMessage());
         }
-
         return supplyRequestedDto;
     }
 
@@ -1186,16 +1254,18 @@ public class ProviderBusiness {
         return supplyRevisionDto;
     }
 
-    public MicroserviceRequestDto updateStateToSupplyRequested(Long requestId, Long supplyRequestedId, Long stateId) {
+    public CustomRequestDto updateStateToSupplyRequested(Long requestId, Long supplyRequestedId, Long stateId) {
 
-        MicroserviceRequestDto requestDto = null;
+        CustomRequestDto requestDto = null;
 
         try {
 
             MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
             updateSupply.setSupplyRequestedStateId(stateId);
 
-            requestDto = providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupply);
+            MicroserviceRequestDto response = providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupply);
+
+            requestDto = new CustomRequestDto(response);
         } catch (Exception e) {
             log.error("No se ha podido actualizar el estado del insumo solicitado: " + e.getMessage());
         }
@@ -1203,14 +1273,14 @@ public class ProviderBusiness {
         return requestDto;
     }
 
-    public MicroserviceRequestDto updateSupplyRequested(Long requestId, Long supplyRequestedId,
-                                                        MicroserviceUpdateSupplyRequestedDto updateSupplyData) {
+    public CustomRequestDto updateSupplyRequested(Long requestId, Long supplyRequestedId,
+                                                  MicroserviceUpdateSupplyRequestedDto updateSupplyData) {
 
-        MicroserviceRequestDto requestDto = null;
+        CustomRequestDto requestDto = null;
 
         try {
-
-            requestDto = providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
+            MicroserviceRequestDto response = providerClient.updateSupplyRequested(requestId, supplyRequestedId, updateSupplyData);
+            requestDto = new CustomRequestDto(response);
         } catch (Exception e) {
             log.error("No se ha podido actualizar el insumo solicitado: " + e.getMessage());
         }
@@ -1221,7 +1291,7 @@ public class ProviderBusiness {
     public void startRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto providerDto)
             throws BusinessException {
 
-        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        CustomSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
         if (supplyRequestedDto == null) {
             throw new BusinessException("El insumo solicitado no existe");
         }
@@ -1318,7 +1388,7 @@ public class ProviderBusiness {
             page = 1;
         }
 
-        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        CustomSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
         if (supplyRequestedDto == null) {
             throw new BusinessException("El insumo solicitado no existe");
         }
@@ -1367,7 +1437,7 @@ public class ProviderBusiness {
     public void uploadAttachmentToRevision(MicroserviceProviderDto providerDto, MultipartFile fileUploaded,
                                            Long supplyRequestedId, Long boundaryId, Long userCode) throws BusinessException {
 
-        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        CustomSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
         if (supplyRequestedDto == null) {
             throw new BusinessException("El insumo solicitado no existe");
         }
@@ -1439,7 +1509,7 @@ public class ProviderBusiness {
     public void closeRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto providerDto)
             throws BusinessException {
 
-        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        CustomSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
         if (supplyRequestedDto == null) {
             throw new BusinessException("El insumo solicitado no existe");
         }
@@ -1487,12 +1557,13 @@ public class ProviderBusiness {
 
     }
 
-    public MicroserviceRequestDto getRequestById(Long requestId) {
+    public CustomRequestDto getRequestById(Long requestId) {
 
-        MicroserviceRequestDto requestDto = null;
+        CustomRequestDto requestDto = null;
 
         try {
-            requestDto = providerClient.findRequestById(requestId);
+            MicroserviceRequestDto response = providerClient.findRequestById(requestId);
+            requestDto = new CustomRequestDto(response);
         } catch (Exception e) {
             log.error("Error consultando solicitud por id: " + e.getMessage());
         }
@@ -1519,7 +1590,7 @@ public class ProviderBusiness {
     public void skipRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto providerDto)
             throws BusinessException {
 
-        MicroserviceSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
+        CustomSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
         if (supplyRequestedDto == null) {
             throw new BusinessException("El insumo solicitado no existe");
         }
@@ -1537,14 +1608,18 @@ public class ProviderBusiness {
         Long requestId = supplyRequestedDto.getRequest().getId();
         String urlDocumentaryRepository = supplyRequestedDto.getUrl();
 
-        MicroserviceRequestDto requestDto = this.getRequestById(requestId);
+        CustomRequestDto requestDto = this.getRequestById(requestId);
 
         List<MicroserviceCreateSupplyAttachmentDto> attachments = new ArrayList<>();
 
         attachments.add(new MicroserviceCreateSupplyAttachmentDto(urlDocumentaryRepository,
                 SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY));
 
-        MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
+        List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
+        List<CustomEmitterDto> emittersDto =
+                emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+
+        CustomEmitterDto emitterDto = emittersDto.stream().
                 filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
         supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
@@ -1558,10 +1633,10 @@ public class ProviderBusiness {
         closeRequest(requestId, userCode);
     }
 
-    public MicroservicePetitionDto createPetition(Long providerId, Long managerId, String description)
+    public CustomPetitionDto createPetition(Long providerId, Long managerId, String description)
             throws BusinessException {
 
-        WorkspacePetitionDto petitionDto;
+        CustomPetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1580,7 +1655,9 @@ public class ProviderBusiness {
             data.setManagerCode(managerId);
             data.setObservations(description);
 
-            petitionDto = providerClient.createPetition(providerId, data);
+            MicroservicePetitionDto response = providerClient.createPetition(providerId, data);
+            petitionDto = new CustomPetitionDto(response);
+
             petitionDto = addAdditionalDataToPetition(petitionDto);
 
         } catch (Exception e) {
@@ -1591,15 +1668,14 @@ public class ProviderBusiness {
         return petitionDto;
     }
 
-    public List<WorkspacePetitionDto> getPetitionsForManager(Long providerId, Long managerId)
+    public List<CustomPetitionDto> getPetitionsForManager(Long providerId, Long managerId)
             throws BusinessException {
 
-        List<WorkspacePetitionDto> listPetitionsDto;
+        List<CustomPetitionDto> listPetitionsDto;
+        List<MicroservicePetitionDto> response;
 
         if (providerId == null) {
-
-            listPetitionsDto = providerClient.getPetitionsByManager(managerId);
-
+            response = providerClient.getPetitionsByManager(managerId);
         } else {
 
             // validate provider
@@ -1613,13 +1689,14 @@ public class ProviderBusiness {
                 throw new BusinessException("El proveedor de insumo no existe.");
             }
 
-            listPetitionsDto = providerClient.getPetitionsForManager(providerId, managerId);
-
+            response = providerClient.getPetitionsForManager(providerId, managerId);
         }
+
+        listPetitionsDto = response.stream().map(CustomPetitionDto::new).collect(Collectors.toList());
 
         try {
 
-            for (WorkspacePetitionDto petitionDto : listPetitionsDto) {
+            for (CustomPetitionDto petitionDto : listPetitionsDto) {
                 petitionDto = addAdditionalDataToPetition(petitionDto);
             }
 
@@ -1631,9 +1708,9 @@ public class ProviderBusiness {
         return listPetitionsDto;
     }
 
-    public List<WorkspacePetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
+    public List<CustomPetitionDto> getPetitionsForProviderOpen(Long providerId) throws BusinessException {
 
-        List<WorkspacePetitionDto> listPetitionsDto;
+        List<CustomPetitionDto> listPetitionsDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1650,9 +1727,10 @@ public class ProviderBusiness {
 
             List<Long> states = new ArrayList<>(Collections.singletonList(ProviderBusiness.PETITION_STATE_PENDING));
 
-            listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
+            List<MicroservicePetitionDto> response = providerClient.getPetitionsForProvider(providerId, states);
+            listPetitionsDto = response.stream().map(CustomPetitionDto::new).collect(Collectors.toList());
 
-            for (WorkspacePetitionDto petitionDto : listPetitionsDto) {
+            for (CustomPetitionDto petitionDto : listPetitionsDto) {
                 petitionDto = addAdditionalDataToPetition(petitionDto);
             }
 
@@ -1664,9 +1742,9 @@ public class ProviderBusiness {
         return listPetitionsDto;
     }
 
-    public List<WorkspacePetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
+    public List<CustomPetitionDto> getPetitionsForProviderClose(Long providerId) throws BusinessException {
 
-        List<WorkspacePetitionDto> listPetitionsDto;
+        List<CustomPetitionDto> listPetitionsDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1684,9 +1762,10 @@ public class ProviderBusiness {
             List<Long> states = new ArrayList<>(
                     Arrays.asList(ProviderBusiness.PETITION_STATE_ACCEPT, ProviderBusiness.PETITION_STATE_REJECT));
 
-            listPetitionsDto = providerClient.getPetitionsForProvider(providerId, states);
+            List<MicroservicePetitionDto> response = providerClient.getPetitionsForProvider(providerId, states);
+            listPetitionsDto = response.stream().map(CustomPetitionDto::new).collect(Collectors.toList());
 
-            for (WorkspacePetitionDto petitionDto : listPetitionsDto) {
+            for (CustomPetitionDto petitionDto : listPetitionsDto) {
                 petitionDto = addAdditionalDataToPetition(petitionDto);
             }
 
@@ -1698,10 +1777,10 @@ public class ProviderBusiness {
         return listPetitionsDto;
     }
 
-    public MicroservicePetitionDto acceptPetition(Long providerId, Long petitionId, String justification)
+    public CustomPetitionDto acceptPetition(Long providerId, Long petitionId, String justification)
             throws BusinessException {
 
-        WorkspacePetitionDto petitionDto;
+        CustomPetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1720,7 +1799,9 @@ public class ProviderBusiness {
             data.setJustitication(justification);
             data.setPetitionStateId(ProviderBusiness.PETITION_STATE_ACCEPT);
 
-            petitionDto = providerClient.updatePetition(providerId, petitionId, data);
+            MicroservicePetitionDto response = providerClient.updatePetition(providerId, petitionId, data);
+            petitionDto = new CustomPetitionDto(response);
+
             petitionDto = addAdditionalDataToPetition(petitionDto);
 
         } catch (BusinessException e) {
@@ -1734,10 +1815,10 @@ public class ProviderBusiness {
         return petitionDto;
     }
 
-    public MicroservicePetitionDto rejectPetition(Long providerId, Long petitionId, String justification)
+    public CustomPetitionDto rejectPetition(Long providerId, Long petitionId, String justification)
             throws BusinessException {
 
-        WorkspacePetitionDto petitionDto;
+        CustomPetitionDto petitionDto;
 
         // validate provider
         MicroserviceProviderDto providerDto = null;
@@ -1756,7 +1837,9 @@ public class ProviderBusiness {
             data.setJustitication(justification);
             data.setPetitionStateId(ProviderBusiness.PETITION_STATE_REJECT);
 
-            petitionDto = providerClient.updatePetition(providerId, petitionId, data);
+            MicroservicePetitionDto response = providerClient.updatePetition(providerId, petitionId, data);
+            petitionDto = new CustomPetitionDto(response);
+
             petitionDto = addAdditionalDataToPetition(petitionDto);
 
         } catch (BusinessException e) {
@@ -1770,7 +1853,7 @@ public class ProviderBusiness {
         return petitionDto;
     }
 
-    private WorkspacePetitionDto addAdditionalDataToPetition(WorkspacePetitionDto petitionDto) {
+    private CustomPetitionDto addAdditionalDataToPetition(CustomPetitionDto petitionDto) {
 
         try {
 

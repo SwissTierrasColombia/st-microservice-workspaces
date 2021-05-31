@@ -1,5 +1,7 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.clients.ProviderFeignClient;
+import com.ai.st.microservice.common.clients.SupplyFeignClient;
 import com.ai.st.microservice.common.dto.operators.MicroserviceSupplyDeliveryDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceExtensionDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceTypeSupplyDto;
@@ -7,13 +9,10 @@ import com.ai.st.microservice.common.dto.supplies.*;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
-import com.ai.st.microservice.workspaces.clients.ProviderFeignClient;
-import com.ai.st.microservice.workspaces.clients.SupplyFeignClient;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceDataPaginatedDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
@@ -116,18 +115,24 @@ public class SupplyBusiness {
             states.add(SupplyBusiness.SUPPLY_STATE_REMOVED);
         }
 
-        List<MicroserviceSupplyDto> suppliesDto;
+
+        List<CustomSupplyDto> suppliesDto;
 
         try {
 
             MicroserviceDataPaginatedDto dataPaginated = null;
 
             if (page != null) {
-                dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipality.getCode(), page, managerCode,
-                        requests, states);
-                suppliesDto = dataPaginated.getItems();
+
+                dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipality.getCode(), page, managerCode, requests, states);
+
+                List<? extends MicroserviceSupplyDto> response = dataPaginated.getItems();
+                suppliesDto = response.stream().map(CustomSupplyDto::new).collect(Collectors.toList());
+
             } else {
-                suppliesDto = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode(), states);
+
+                List<MicroserviceSupplyDto> response = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode(), states);
+                suppliesDto = response.stream().map(CustomSupplyDto::new).collect(Collectors.toList());
 
                 if (managerCode != null) {
                     suppliesDto = suppliesDto.stream().filter(s -> s.getManagerCode().equals(managerCode)).collect(Collectors.toList());
@@ -135,7 +140,9 @@ public class SupplyBusiness {
 
             }
 
-            for (MicroserviceSupplyDto supplyDto : suppliesDto) {
+            List<CustomSupplyDto> all = new ArrayList<>();
+
+            for (CustomSupplyDto supplyDto : suppliesDto) {
 
                 if (supplyDto.getTypeSupplyCode() != null) {
 
@@ -191,10 +198,11 @@ public class SupplyBusiness {
                     }
                 }
 
-
+                all.add(supplyDto);
             }
 
             if (page != null) {
+                dataPaginated.setItems(all);
                 return dataPaginated;
             }
 
@@ -202,11 +210,11 @@ public class SupplyBusiness {
             throw new BusinessException("No se ha podido consultar los insumos del municipio.");
         }
 
-        List<MicroserviceSupplyDto> suppliesFinal = new ArrayList<>();
+        List<CustomSupplyDto> suppliesFinal = new ArrayList<>();
 
         if (extensions != null && extensions.size() > 0) {
 
-            for (MicroserviceSupplyDto supplyDto : suppliesDto) {
+            for (CustomSupplyDto supplyDto : suppliesDto) {
 
                 if (supplyDto.getTypeSupply() != null) {
                     List<MicroserviceExtensionDto> extensionsDto = supplyDto.getTypeSupply().getExtensions();
@@ -229,13 +237,13 @@ public class SupplyBusiness {
         return suppliesFinal;
     }
 
-    public MicroserviceSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode, Long toManagerCode,
-                                              List<MicroserviceCreateSupplyAttachmentDto> attachments, Long requestId, Long userCode, Long providerCode,
-                                              Long managerCode, Long cadastralAuthority, String modelVersion, Long stateSupplyId, String name,
-                                              Boolean isValid)
+    public CustomSupplyDto createSupply(String municipalityCode, String observations, Long typeSupplyCode, Long toManagerCode,
+                                        List<MicroserviceCreateSupplyAttachmentDto> attachments, Long requestId, Long userCode, Long providerCode,
+                                        Long managerCode, Long cadastralAuthority, String modelVersion, Long stateSupplyId, String name,
+                                        Boolean isValid)
             throws BusinessException {
 
-        MicroserviceSupplyDto supplyDto;
+        CustomSupplyDto supplyDto;
 
         try {
 
@@ -296,7 +304,8 @@ public class SupplyBusiness {
 
             createSupplyDto.setOwners(owners);
 
-            supplyDto = supplyClient.createSupply(createSupplyDto);
+            MicroserviceSupplyDto response = supplyClient.createSupply(createSupplyDto);
+            supplyDto = new CustomSupplyDto(response);
 
         } catch (Exception e) {
             log.error("No se ha podido crear el insumo: " + e.getMessage());
@@ -306,12 +315,13 @@ public class SupplyBusiness {
         return supplyDto;
     }
 
-    public MicroserviceSupplyDto getSupplyById(Long supplyId) throws BusinessException {
+    public CustomSupplyDto getSupplyById(Long supplyId) throws BusinessException {
 
-        MicroserviceSupplyDto supplyDto = null;
+        CustomSupplyDto supplyDto = null;
 
         try {
-            supplyDto = supplyClient.findSupplyById(supplyId);
+            MicroserviceSupplyDto response = supplyClient.findSupplyById(supplyId);
+            supplyDto = new CustomSupplyDto(response);
 
             if (supplyDto.getTypeSupplyCode() != null) {
 
@@ -340,7 +350,7 @@ public class SupplyBusiness {
 
     }
 
-    public File generateFTPFile(MicroserviceSupplyDto supplyDto, MunicipalityDto municipalityDto) {
+    public File generateFTPFile(CustomSupplyDto supplyDto, MunicipalityDto municipalityDto) {
 
         String randomCode = RandomStringUtils.random(10, false, true);
 
@@ -374,10 +384,10 @@ public class SupplyBusiness {
         return FileTool.createSimpleFile(content, filename);
     }
 
-    public MicroserviceSupplyDto changeStateSupply(Long supplyId, Long stateId, Long managerCode)
+    public CustomSupplyDto changeStateSupply(Long supplyId, Long stateId, Long managerCode)
             throws BusinessException {
 
-        MicroserviceSupplyDto supplyDto = getSupplyById(supplyId);
+        CustomSupplyDto supplyDto = getSupplyById(supplyId);
         if (supplyDto == null) {
             throw new BusinessException("No se ha encontrado el insumo");
         }
@@ -391,7 +401,8 @@ public class SupplyBusiness {
             MicroserviceUpdateSupplyDto data = new MicroserviceUpdateSupplyDto();
             data.setStateId(stateId);
 
-            supplyDto = supplyClient.updateSupply(supplyId, data);
+            MicroserviceSupplyDto response = supplyClient.updateSupply(supplyId, data);
+            supplyDto = new CustomSupplyDto(response);
 
         } catch (BusinessException e) {
             log.error("Error actualizando el estado del insumo: " + e.getMessage());

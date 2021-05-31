@@ -1,9 +1,9 @@
 package com.ai.st.microservice.workspaces.controllers.v2;
 
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 
 import org.slf4j.Logger;
