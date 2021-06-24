@@ -1,9 +1,7 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import com.ai.st.microservice.workspaces.clients.FTPFeignClient;
+import com.ai.st.microservice.workspaces.dto.ftp.MicroserviceCreateUserFTPDto;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
@@ -14,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.microservice.workspaces.clients.FTPFeignClient;
-import com.ai.st.microservice.workspaces.dto.ftp.MicroserviceCreateUserFTPDto;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 @Component
 public class FTPBusiness {

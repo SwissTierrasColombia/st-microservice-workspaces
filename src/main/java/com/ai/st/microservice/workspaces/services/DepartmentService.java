@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
@@ -13,8 +12,11 @@ import com.ai.st.microservice.workspaces.repositories.DepartmentRepository;
 @Service
 public class DepartmentService implements IDepartmentService {
 
-    @Autowired
-    private DepartmentRepository departmentRepository;
+    private final DepartmentRepository departmentRepository;
+
+    public DepartmentService(DepartmentRepository departmentRepository) {
+        this.departmentRepository = departmentRepository;
+    }
 
     @Override
     public Long getCount() {
@@ -34,7 +36,7 @@ public class DepartmentService implements IDepartmentService {
 
     @Override
     public List<DepartmentEntity> getDepartmentsByManagerCode(Long managerCode) {
-        return departmentRepository.getDeparmentsByManagerCode(managerCode);
+        return departmentRepository.getDepartmentsByManagerCode(managerCode);
     }
 
 }

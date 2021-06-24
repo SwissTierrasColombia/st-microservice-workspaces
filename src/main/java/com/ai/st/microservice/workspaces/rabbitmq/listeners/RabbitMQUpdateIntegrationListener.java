@@ -1,24 +1,15 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.ili.MicroserviceIntegrationStatDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerUserDto;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.business.RoleBusiness;
 
 import com.ai.st.microservice.workspaces.business.IntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.IntegrationStateBusiness;
-import com.ai.st.microservice.workspaces.business.ManagerBusiness;
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.NotificationBusiness;
-import com.ai.st.microservice.workspaces.business.RoleBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceIntegrationStatDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerUserDto;
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.IntegrationStateEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
@@ -26,28 +17,37 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
 import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 @Component
 public class RabbitMQUpdateIntegrationListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
-    private IntegrationBusiness integrationBusiness;
+    private final IntegrationBusiness integrationBusiness;
+    private final NotificationBusiness notificationBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final IIntegrationService integrationService;
+    private final IIntegrationStateService integrationStateService;
+    private final AdministrationBusiness administrationBusiness;
 
-    @Autowired
-    private NotificationBusiness notificationBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private IIntegrationService integrationService;
-
-    @Autowired
-    private IIntegrationStateService integrationStateService;
+    public RabbitMQUpdateIntegrationListener(IntegrationBusiness integrationBusiness, NotificationBusiness notificationBusiness,
+                                             ManagerMicroserviceBusiness managerBusiness, IIntegrationService integrationService,
+                                             IIntegrationStateService integrationStateService, AdministrationBusiness administrationBusiness) {
+        this.integrationBusiness = integrationBusiness;
+        this.notificationBusiness = notificationBusiness;
+        this.managerBusiness = managerBusiness;
+        this.integrationService = integrationService;
+        this.integrationStateService = integrationStateService;
+        this.administrationBusiness = administrationBusiness;
+    }
 
     @RabbitListener(queues = "${st.rabbitmq.queueUpdateIntegration.queue}", concurrency = "${st.rabbitmq.queueUpdateIntegration.concurrency}")
     public void updateIntegration(MicroserviceIntegrationStatDto integrationStats) {
@@ -83,7 +83,7 @@ public class RabbitMQUpdateIntegrationListener {
 
                 for (MicroserviceManagerUserDto directorDto : directors) {
 
-                    MicroserviceUserDto userDto = userBusiness.getUserById(directorDto.getUserCode());
+                    MicroserviceUserDto userDto = administrationBusiness.getUserById(directorDto.getUserCode());
                     if (userDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationInputIntegrations(userDto.getEmail(), userDto.getId(),
                                 integrationStatus.getName(), municipalityEntity.getName(),

@@ -18,10 +18,10 @@ public class IntegrationStateEntity {
 	@Column(name = "id", nullable = false)
 	private Long id;
 
-	@Column(name = "name", nullable = false, length = 255)
+	@Column(name = "name", nullable = false)
 	private String name;
 
-	@Column(name = "description", nullable = true, length = 255)
+	@Column(name = "description")
 	private String description;
 
 	public IntegrationStateEntity() {

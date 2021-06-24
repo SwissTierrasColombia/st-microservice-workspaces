@@ -33,8 +33,8 @@ public interface IntegrationRepository extends CrudRepository<IntegrationEntity,
             "\ti.integration_state_id in (:statesId)\n" +
             "\tand i.workspace_id = :workspaceId\n" +
             "\tand i.manager_code = :managerCode")
-    List<IntegrationEntity> findIntegrationsPendings(@Param("workspaceId") Long workspaceId,
-                                                     @Param("statesId") List<Long> statesId,
-                                                     @Param("managerCode") Long managerCode);
+    List<IntegrationEntity> findIntegrationsPending(@Param("workspaceId") Long workspaceId,
+                                                    @Param("statesId") List<Long> statesId,
+                                                    @Param("managerCode") Long managerCode);
 
 }

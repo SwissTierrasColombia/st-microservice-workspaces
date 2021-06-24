@@ -26,7 +26,7 @@ public class WorkspaceManagerEntity {
 	@Column(name = "manager_code", nullable = false)
 	private Long managerCode;
 
-	@Column(name = "observations", nullable = false, length = 255)
+	@Column(name = "observations", nullable = false, length = 500)
 	private String observations;
 
 	@Column(name = "start_date", nullable = false)

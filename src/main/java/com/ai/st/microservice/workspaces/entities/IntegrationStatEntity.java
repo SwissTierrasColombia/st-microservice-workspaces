@@ -33,7 +33,7 @@ public class IntegrationStatEntity {
 	@Column(name = "cadastre_records_number", nullable = false)
 	private Long cadastreRecordsNumber;
 
-	@Column(name = "ant_records_number", nullable = true)
+	@Column(name = "ant_records_number")
 	private Long antRecordsNumber;
 
 	@Column(name = "match_number", nullable = false)

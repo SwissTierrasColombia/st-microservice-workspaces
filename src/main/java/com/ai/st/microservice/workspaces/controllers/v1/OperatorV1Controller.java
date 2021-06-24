@@ -1,44 +1,37 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
+import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
+import com.ai.st.microservice.common.exceptions.*;
 
-import javax.servlet.ServletContext;
+import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
+import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 
-import com.ai.st.microservice.workspaces.business.OperatorBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
-import com.ai.st.microservice.workspaces.clients.OperatorFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceDeliveryDto;
-import com.ai.st.microservice.workspaces.dto.operators.MicroserviceOperatorDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
+import javax.servlet.ServletContext;
+
 import com.google.common.io.Files;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Api(value = "Manage Operators", tags = {"Operators"})
 @RestController
@@ -47,28 +40,23 @@ public class OperatorV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(OperatorV1Controller.class);
 
-    @Autowired
-    private WorkspaceOperatorBusiness workspaceOperatorBusiness;
+    private final WorkspaceOperatorBusiness workspaceOperatorBusiness;
+    private final ServletContext servletContext;
+    private final OperatorMicroserviceBusiness operatorBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
-    @Autowired
-    private UserFeignClient userClient;
+    public OperatorV1Controller(WorkspaceOperatorBusiness workspaceOperatorBusiness, ServletContext servletContext,
+                                OperatorMicroserviceBusiness operatorBusiness, AdministrationBusiness administrationBusiness) {
+        this.workspaceOperatorBusiness = workspaceOperatorBusiness;
+        this.servletContext = servletContext;
+        this.operatorBusiness = operatorBusiness;
+        this.administrationBusiness = administrationBusiness;
+    }
 
-    @Autowired
-    private OperatorFeignClient operatorClient;
-
-    @Autowired
-    private ServletContext servletContext;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private OperatorBusiness operatorBusiness;
-
-    @RequestMapping(value = "/deliveries/{deliveryId}/disable", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/deliveries/{deliveryId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable delivery")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Delivery disabled", response = MicroserviceDeliveryDto.class),
+            @ApiResponse(code = 200, message = "Delivery disabled", response = CustomDeliveryDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> disableDelivery(@PathVariable Long deliveryId,
@@ -80,7 +68,7 @@ public class OperatorV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -88,7 +76,7 @@ public class OperatorV1Controller {
             // get operator
             MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
             if (operatorDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultado el operador.");
+                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
             }
 
             responseDto = workspaceOperatorBusiness.disableDelivery(operatorDto.getId(), deliveryId);
@@ -111,7 +99,7 @@ public class OperatorV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/deliveries/{deliveryId}/reports-individual/{supplyId}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/deliveries/{deliveryId}/reports-individual/{supplyId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Download report individual")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Download report individual"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -126,7 +114,7 @@ public class OperatorV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -170,7 +158,7 @@ public class OperatorV1Controller {
                 .header("extension", Files.getFileExtension(file.getName())).body(resource);
     }
 
-    @RequestMapping(value = "/deliveries/{deliveryId}/reports-total", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/deliveries/{deliveryId}/reports-total", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Download report total")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Download report total"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -185,7 +173,7 @@ public class OperatorV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }

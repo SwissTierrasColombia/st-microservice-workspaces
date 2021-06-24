@@ -1,5 +1,32 @@
 package com.ai.st.microservice.workspaces.controllers.v2;
 
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.exceptions.*;
+
+import com.ai.st.microservice.workspaces.dto.*;
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.google.common.io.Files;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.file.Path;
@@ -10,41 +37,6 @@ import java.util.List;
 
 import javax.servlet.ServletContext;
 
-import com.ai.st.microservice.workspaces.dto.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.ai.st.microservice.workspaces.business.ManagerBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
-import com.google.common.io.Files;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-
 @Api(value = "Manage Workspaces", tags = {"Workspaces"})
 @RestController
 @RequestMapping("api/workspaces/v2/workspaces")
@@ -52,19 +44,20 @@ public class WorkspaceV2Controller {
 
     private final Logger log = LoggerFactory.getLogger(WorkspaceV2Controller.class);
 
-    @Autowired
-    private WorkspaceBusiness workspaceBusiness;
+    private final WorkspaceBusiness workspaceBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final ServletContext servletContext;
+    private final AdministrationBusiness administrationBusiness;
 
-    @Autowired
-    private UserBusiness userBusiness;
+    public WorkspaceV2Controller(WorkspaceBusiness workspaceBusiness, ManagerMicroserviceBusiness managerBusiness,
+                                 ServletContext servletContext, AdministrationBusiness administrationBusiness) {
+        this.workspaceBusiness = workspaceBusiness;
+        this.managerBusiness = managerBusiness;
+        this.servletContext = servletContext;
+        this.administrationBusiness = administrationBusiness;
+    }
 
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @Autowired
-    private ServletContext servletContext;
-
-    @RequestMapping(value = "validate-municipalities-to-assign", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "validate-municipalities-to-assign", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipalities where manager does not belong in")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Municipalities validated", response = ValidationMunicipalitiesDto.class, responseContainer = "List"),
@@ -94,7 +87,7 @@ public class WorkspaceV2Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/assign-manager", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/assign-manager", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Assign manager")
     @ApiResponses(value = {@ApiResponse(code = 201, message = "Manager assigned", response = WorkspaceDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -165,7 +158,7 @@ public class WorkspaceV2Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "{workspaceId}/download-support-manager/{managerCode}", method = RequestMethod.GET)
+    @GetMapping(value = "{workspaceId}/download-support-manager/{managerCode}")
     @ApiOperation(value = "Download file")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -180,13 +173,13 @@ public class WorkspaceV2Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             String pathFile;
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -234,14 +227,14 @@ public class WorkspaceV2Controller {
 
     }
 
-    @RequestMapping(value = "/{workspaceId}/managers/{managerCode}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{workspaceId}/managers/{managerCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update manager from workspace")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Manager updated", response = WorkspaceDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> updateManagerFromWorkspace(
             @RequestBody UpdateManagerFromWorkspaceDto requestUpdateWorkspace, @PathVariable Long workspaceId,
-            @PathVariable Long managerCode, @RequestHeader("authorization") String headerAuthorization) {
+            @PathVariable Long managerCode) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -289,7 +282,7 @@ public class WorkspaceV2Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{workspaceId}/operators/{operatorCode}", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{workspaceId}/operators/{operatorCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update operator from workspace")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "Operator updated", response = WorkspaceDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -304,7 +297,7 @@ public class WorkspaceV2Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -389,7 +382,7 @@ public class WorkspaceV2Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "{workspaceId}/download-support-operator/{operatorCode}", method = RequestMethod.GET)
+    @GetMapping(value = "{workspaceId}/download-support-operator/{operatorCode}")
     @ApiOperation(value = "Download file")
     @ApiResponses(value = {@ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
@@ -404,13 +397,13 @@ public class WorkspaceV2Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
             String pathFile;
-            if (userBusiness.isManager(userDtoSession)) {
+            if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());

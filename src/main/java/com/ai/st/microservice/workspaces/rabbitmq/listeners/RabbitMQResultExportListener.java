@@ -1,22 +1,24 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.ai.st.microservice.common.dto.ili.MicroserviceResultExportDto;
+import com.ai.st.microservice.common.dto.providers.*;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
 
 import com.ai.st.microservice.workspaces.dto.providers.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
 import com.ai.st.microservice.workspaces.business.CrytpoBusiness;
 import com.ai.st.microservice.workspaces.business.DatabaseIntegrationBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceResultExportDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class RabbitMQResultExportListener {
@@ -32,17 +34,18 @@ public class RabbitMQResultExportListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
-    private ProviderBusiness providerBusiness;
+    private final ProviderBusiness providerBusiness;
+    private final DatabaseIntegrationBusiness databaseIntegration;
+    private final CrytpoBusiness cryptoBusiness;
+    private final SupplyBusiness supplyBusiness;
 
-    @Autowired
-    private DatabaseIntegrationBusiness databaseIntegration;
-
-    @Autowired
-    private CrytpoBusiness cryptoBusiness;
-
-    @Autowired
-    private SupplyBusiness supplyBusiness;
+    public RabbitMQResultExportListener(ProviderBusiness providerBusiness, DatabaseIntegrationBusiness databaseIntegration,
+                                        CrytpoBusiness cryptoBusiness, SupplyBusiness supplyBusiness) {
+        this.providerBusiness = providerBusiness;
+        this.databaseIntegration = databaseIntegration;
+        this.cryptoBusiness = cryptoBusiness;
+        this.supplyBusiness = supplyBusiness;
+    }
 
     @RabbitListener(queues = "${st.rabbitmq.queueResultExport.queue}", concurrency = "${st.rabbitmq.queueResultExport.concurrency}")
     public void updateIntegration(MicroserviceResultExportDto resultDto) {
@@ -68,9 +71,13 @@ public class RabbitMQResultExportListener {
 
                     // save zip file
 
-                    MicroserviceRequestDto requestDto = providerBusiness.getRequestById(requestId);
+                    CustomRequestDto requestDto = providerBusiness.getRequestById(requestId);
 
-                    MicroserviceSupplyRequestedDto supplyRequestedDto = requestDto.getSuppliesRequested().stream()
+                    List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
+                    List<CustomSupplyRequestedDto> suppliesRequestDto =
+                            suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+
+                    CustomSupplyRequestedDto supplyRequestedDto = suppliesRequestDto.stream()
                             .filter(sR -> sR.getId().equals(supplyRequestedId)).findAny().orElse(null);
 
                     String urlDocumentaryRepository = resultDto.getPathFile();
@@ -111,8 +118,11 @@ public class RabbitMQResultExportListener {
                     attachments.add(new MicroserviceCreateSupplyAttachmentDto(ftpData,
                             SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 
+                    List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
+                    List<CustomEmitterDto> emittersRequestDto =
+                            emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
 
-                    MicroserviceEmitterDto emitterDto = requestDto.getEmitters().stream().
+                    CustomEmitterDto emitterDto = emittersRequestDto.stream().
                             filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
                     supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),

@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.transaction.Transactional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
@@ -15,8 +14,11 @@ import com.ai.st.microservice.workspaces.repositories.IntegrationRepository;
 @Service
 public class IntegrationService implements IIntegrationService {
 
-    @Autowired
-    private IntegrationRepository integrationRepository;
+    private final IntegrationRepository integrationRepository;
+
+    public IntegrationService(IntegrationRepository integrationRepository) {
+        this.integrationRepository = integrationRepository;
+    }
 
     @Override
     @Transactional
@@ -70,7 +72,7 @@ public class IntegrationService implements IIntegrationService {
 
     @Override
     public List<IntegrationEntity> getPendingIntegrations(Long workspaceId, List<Long> states, Long managerCode) {
-        return integrationRepository.findIntegrationsPendings(workspaceId, states, managerCode);
+        return integrationRepository.findIntegrationsPending(workspaceId, states, managerCode);
     }
 
 }

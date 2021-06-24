@@ -1,22 +1,23 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.reports.MicroserviceReportInformationDto;
+import com.ai.st.microservice.common.dto.reports.MicroserviceSupplyACDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
+import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyOwnerDto;
+import com.ai.st.microservice.common.exceptions.BusinessException;
+
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceReportInformationDto;
-import com.ai.st.microservice.workspaces.dto.reports.MicroserviceSupplyACDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceCreateSupplyAttachmentDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyOwnerDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
 import com.ai.st.microservice.workspaces.services.MunicipalityService;
 import com.ai.st.microservice.workspaces.services.WorkspaceService;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
+
 import org.apache.commons.io.FilenameUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,34 +32,33 @@ public class CadastralAuthorityBusiness {
     @Value("${st.filesDirectory}")
     private String stFilesDirectory;
 
-    @Autowired
-    private MunicipalityBusiness municipalityBusiness;
+    private final MunicipalityBusiness municipalityBusiness;
+    private final WorkspaceService workspaceService;
+    private final FileBusiness fileBusiness;
+    private final SupplyBusiness supplyBusiness;
+    private final MunicipalityService municipalityService;
+    private final ReportBusiness reportBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
 
-    @Autowired
-    private WorkspaceService workspaceService;
+    public CadastralAuthorityBusiness(MunicipalityBusiness municipalityBusiness, WorkspaceService workspaceService, FileBusiness fileBusiness,
+                                      SupplyBusiness supplyBusiness, MunicipalityService municipalityService,
+                                      ReportBusiness reportBusiness, ManagerMicroserviceBusiness managerBusiness) {
+        this.municipalityBusiness = municipalityBusiness;
+        this.workspaceService = workspaceService;
+        this.fileBusiness = fileBusiness;
+        this.supplyBusiness = supplyBusiness;
+        this.municipalityService = municipalityService;
+        this.reportBusiness = reportBusiness;
+        this.managerBusiness = managerBusiness;
+    }
 
-    @Autowired
-    private FileBusiness fileBusiness;
+    public CustomSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId, String name,
+                                                          String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
 
-    @Autowired
-    private SupplyBusiness supplyBusiness;
-
-    @Autowired
-    private MunicipalityService municipalityService;
-
-    @Autowired
-    private ReportBusiness reportBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    public MicroserviceSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId, String name,
-                                                                String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
-
-        MicroserviceSupplyDto supplyDto;
+        CustomSupplyDto supplyDto;
 
         if (ftp == null && file == null) {
-            throw new BusinessException("Se debe cargar algun tipo de adjunto");
+            throw new BusinessException("Se debe cargar algún tipo de adjunto");
         }
 
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -81,15 +81,15 @@ public class CadastralAuthorityBusiness {
 
         if (file != null) {
 
-            if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE
-                    && attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY) {
+            if (!attachmentTypeId.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE)
+                    && !attachmentTypeId.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY)) {
                 throw new BusinessException("No se puede cargar un archivo para el tipo de insumo seleccionado.");
             }
 
             String loadedFileName = file.getOriginalFilename();
             String loadedFileExtension = FilenameUtils.getExtension(loadedFileName);
 
-            Boolean zipFile = true;
+            boolean zipFile = true;
             if (loadedFileExtension.equalsIgnoreCase("zip")) {
                 zipFile = false;
             }
@@ -103,7 +103,7 @@ public class CadastralAuthorityBusiness {
 
         } else if (ftp != null) {
 
-            if (attachmentTypeId != SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP) {
+            if (!attachmentTypeId.equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP)) {
                 throw new BusinessException("No se puede cargar FTP para el tipo de insumo seleccionado.");
             }
 
@@ -158,10 +158,10 @@ public class CadastralAuthorityBusiness {
 
         List<MicroserviceSupplyACDto> suppliesReport = new ArrayList<>();
 
-        List<MicroserviceSupplyDto> supplies = (List<MicroserviceSupplyDto>) supplyBusiness
+        List<CustomSupplyDto> supplies = (List<CustomSupplyDto>) supplyBusiness
                 .getSuppliesByMunicipalityAdmin(municipalityId, new ArrayList<>(), null, null, false, workspaceManagerEntity.getManagerCode());
 
-        for (MicroserviceSupplyDto supply : supplies) {
+        for (CustomSupplyDto supply : supplies) {
 
             MicroserviceSupplyOwnerDto owner = supply.getOwners().stream()
                     .filter(o -> o.getOwnerType().equalsIgnoreCase("CADASTRAL_AUTHORITY")).findAny().orElse(null);

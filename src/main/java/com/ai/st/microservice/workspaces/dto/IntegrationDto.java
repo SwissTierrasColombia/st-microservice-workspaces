@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.ai.st.microservice.workspaces.dto.supplies.MicroserviceSupplyDto;
+import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -61,13 +61,13 @@ public class IntegrationDto implements Serializable {
     private Long supplyAntId;
 
     @ApiModelProperty(required = true, notes = "Supply Cadastre")
-    private MicroserviceSupplyDto supplyCadastre;
+    private CustomSupplyDto supplyCadastre;
 
     @ApiModelProperty(required = true, notes = "Supply Snr")
-    private MicroserviceSupplyDto supplySnr;
+    private CustomSupplyDto supplySnr;
 
     @ApiModelProperty(required = true, notes = "Supply Ant")
-    private MicroserviceSupplyDto supplyAnt;
+    private CustomSupplyDto supplyAnt;
 
     @ApiModelProperty(required = true, notes = "Stats")
     private List<IntegrationStatDto> stats;
@@ -198,27 +198,27 @@ public class IntegrationDto implements Serializable {
         this.supplyAntId = supplyAntId;
     }
 
-    public MicroserviceSupplyDto getSupplyCadastre() {
+    public CustomSupplyDto getSupplyCadastre() {
         return supplyCadastre;
     }
 
-    public void setSupplyCadastre(MicroserviceSupplyDto supplyCadastre) {
+    public void setSupplyCadastre(CustomSupplyDto supplyCadastre) {
         this.supplyCadastre = supplyCadastre;
     }
 
-    public MicroserviceSupplyDto getSupplySnr() {
+    public CustomSupplyDto getSupplySnr() {
         return supplySnr;
     }
 
-    public void setSupplySnr(MicroserviceSupplyDto supplySnr) {
+    public void setSupplySnr(CustomSupplyDto supplySnr) {
         this.supplySnr = supplySnr;
     }
 
-    public MicroserviceSupplyDto getSupplyAnt() {
+    public CustomSupplyDto getSupplyAnt() {
         return supplyAnt;
     }
 
-    public void setSupplyAnt(MicroserviceSupplyDto supplyAnt) {
+    public void setSupplyAnt(CustomSupplyDto supplyAnt) {
         this.supplyAnt = supplyAnt;
     }
 

@@ -1,37 +1,28 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
+import com.ai.st.microservice.common.exceptions.*;
 
-import com.ai.st.microservice.workspaces.business.UserBusiness;
+import com.ai.st.microservice.workspaces.business.TaskBusiness;
+import com.ai.st.microservice.workspaces.dto.CancelTaskDto;
+import com.ai.st.microservice.workspaces.dto.tasks.CustomTaskDto;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.ai.st.microservice.workspaces.business.TaskBusiness;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.CancelTaskDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.tasks.MicroserviceTaskDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Api(value = "Manage Tasks", tags = {"Tasks"})
 @RestController
@@ -40,31 +31,30 @@ public class TaskV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(TaskV1Controller.class);
 
-    @Autowired
-    private UserFeignClient userClient;
+    private final TaskBusiness taskBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
-    @Autowired
-    private TaskBusiness taskBusiness;
+    public TaskV1Controller(TaskBusiness taskBusiness, AdministrationBusiness administrationBusiness) {
+        this.taskBusiness = taskBusiness;
+        this.administrationBusiness = administrationBusiness;
+    }
 
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @RequestMapping(value = "/pending", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/pending", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get pending tasks")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get pending tasks", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Get pending tasks", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPendingTasks(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
-        List<MicroserviceTaskDto> listTasks = new ArrayList<>();
+        List<CustomTaskDto> listTasks = new ArrayList<>();
         Object responseDto = null;
 
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -90,10 +80,10 @@ public class TaskV1Controller {
                 : new ResponseEntity<>(listTasks, httpStatus);
     }
 
-    @RequestMapping(value = "/{taskId}/start", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{taskId}/start", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start task")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Task started", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Task started", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> startTask(@RequestHeader("authorization") String headerAuthorization,
@@ -105,7 +95,7 @@ public class TaskV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -130,10 +120,10 @@ public class TaskV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{taskId}/finish", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{taskId}/finish", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Finish task")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Task finished", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Task finished", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> finishTask(@RequestHeader("authorization") String headerAuthorization,
@@ -145,7 +135,7 @@ public class TaskV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -170,14 +160,15 @@ public class TaskV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{taskId}/cancel", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{taskId}/cancel", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Cancel task")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Task cancelled", response = MicroserviceTaskDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Task cancelled", response = CustomTaskDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<?> cancelTask(@RequestHeader("authorization") String headerAuthorization,
-                                        @PathVariable Long taskId, @RequestBody(required = true) CancelTaskDto cancelTaskRequest) {
+                                        @PathVariable Long taskId,
+                                        @RequestBody CancelTaskDto cancelTaskRequest) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -185,7 +176,7 @@ public class TaskV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }

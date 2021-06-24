@@ -35,10 +35,10 @@ public class FileTool {
 			return null;
 		}
 		char[] array = str.toCharArray();
-		for (int indice = 0; indice < array.length; indice++) {
-			int pos = original.indexOf(array[indice]);
+		for (int index = 0; index < array.length; index++) {
+			int pos = original.indexOf(array[index]);
 			if (pos > -1) {
-				array[indice] = replace.charAt(pos);
+				array[index] = replace.charAt(pos);
 			}
 		}
 		return new String(array);

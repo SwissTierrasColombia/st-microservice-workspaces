@@ -22,7 +22,7 @@ import feign.form.spring.SpringFormEncoder;
 public interface FTPFeignClient {
 
 	@RequestMapping(method = RequestMethod.POST, value = "/api/managers/v1/ftp/add-user", consumes = APPLICATION_JSON_VALUE)
-	public void createUserFTP(@RequestBody MicroserviceCreateUserFTPDto data);
+	void createUserFTP(@RequestBody MicroserviceCreateUserFTPDto data);
 
 	class Configuration {
 
