@@ -483,6 +483,19 @@ public class ProviderBusiness {
 
         if (sendToReview) {
 
+            for (CustomSupplyRequestedDto supplyRequested : suppliesRequestDto) {
+                if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_UNDELIVERED)) {
+
+                    try {
+                        MicroserviceRequestDto responseUpdateDto = providerClient.closeRequest(requestId, userCode);
+                        return new CustomRequestDto(responseUpdateDto);
+                    } catch (Exception e) {
+                        throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+                    }
+
+                }
+            }
+
             // Update supply requested
             try {
 
@@ -1181,7 +1194,6 @@ public class ProviderBusiness {
 
             List<MicroserviceSupplyRequestedDto> response = providerClient.getSuppliesRequestedToReview(providerId, states);
             suppliesRequestedDto = response.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
-
 
 
             for (CustomSupplyRequestedDto sR : suppliesRequestedDto) {
