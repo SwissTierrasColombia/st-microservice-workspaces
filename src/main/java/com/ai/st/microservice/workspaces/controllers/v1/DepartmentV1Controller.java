@@ -63,7 +63,7 @@ public class DepartmentV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (administrationBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession) || administrationBusiness.isProvider(userDtoSession)) {
                 listDepartments = departmentBusiness.getDepartments();
             } else if (administrationBusiness.isManager(userDtoSession)) {
 
@@ -113,7 +113,7 @@ public class DepartmentV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (administrationBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession) || administrationBusiness.isProvider(userDtoSession)) {
                 listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
             } else if (administrationBusiness.isManager(userDtoSession)) {
 
