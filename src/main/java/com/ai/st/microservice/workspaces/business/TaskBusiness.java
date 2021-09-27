@@ -1,13 +1,11 @@
 package com.ai.st.microservice.workspaces.business;
 
-import com.ai.st.microservice.common.clients.ProviderFeignClient;
-import com.ai.st.microservice.common.clients.SupplyFeignClient;
-import com.ai.st.microservice.common.clients.TaskFeignClient;
-import com.ai.st.microservice.common.clients.UserFeignClient;
+import com.ai.st.microservice.common.clients.*;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderUserDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceRequestDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceSupplyRequestedDto;
+import com.ai.st.microservice.common.dto.quality.MicroserviceXTFAttachmentDto;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyAttachmentDto;
 import com.ai.st.microservice.common.dto.supplies.MicroserviceSupplyDto;
 import com.ai.st.microservice.common.dto.tasks.*;
@@ -61,6 +59,7 @@ public class TaskBusiness {
 
     public static final Long TASK_CATEGORY_INTEGRATION = (long) 1;
     public static final Long TASK_CATEGORY_CADASTRAL_INPUT_GENERATION = (long) 2;
+    public static final Long TASK_CATEGORY_XTF_QUALITY_PROCESS = (long) 3;
 
     public static final Long TASK_TYPE_STEP_ONCE = (long) 1;
     public static final Long TASK_TYPE_STEP_ALWAYS = (long) 2;
@@ -80,11 +79,12 @@ public class TaskBusiness {
     private final ProviderBusiness providerBusiness;
     private final DatabaseIntegrationBusiness databaseIntegrationBusiness;
     private final IIntegrationService integrationService;
+    private final QualityFeignClient qualityClient;
 
     public TaskBusiness(TaskFeignClient taskClient, UserFeignClient userClient, SupplyFeignClient supplyClient,
                         ProviderFeignClient providerClient, IliBusiness iliBusiness, CrytpoBusiness cryptoBusiness,
                         IntegrationBusiness integrationBusiness, DatabaseIntegrationBusiness databaseIntegrationBusiness,
-                        ProviderBusiness providerBusiness, IIntegrationService integrationService) {
+                        ProviderBusiness providerBusiness, IIntegrationService integrationService, QualityFeignClient qualityClient) {
         this.taskClient = taskClient;
         this.userClient = userClient;
         this.supplyClient = supplyClient;
@@ -95,6 +95,7 @@ public class TaskBusiness {
         this.databaseIntegrationBusiness = databaseIntegrationBusiness;
         this.providerBusiness = providerBusiness;
         this.integrationService = integrationService;
+        this.qualityClient = qualityClient;
     }
 
     public CustomTaskDto extendTask(CustomTaskDto taskDto) {
@@ -254,31 +255,22 @@ public class TaskBusiness {
         CustomTaskMemberDto memberFound = membersDto.stream()
                 .filter(memberDto -> memberDto.getMemberCode().equals(userId)).findAny().orElse(null);
 
-        if (!(memberFound instanceof CustomTaskMemberDto)) {
+        if (memberFound == null) {
             throw new BusinessException("El usuario no tiene asignada la tarea.");
         }
 
-        MicroserviceTaskCategoryDto categoryFound = taskDto.getCategories().stream()
-                .filter(categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_INTEGRATION)
-                        || categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
-                .findAny().orElse(null);
-
-        // task of integration
-        if (categoryFound instanceof MicroserviceTaskCategoryDto) {
-            try {
-
-                List<? extends MicroserviceTaskMemberDto> responseMembersDto = taskDto.getMembers();
-                List<CustomTaskMemberDto> membersListDto =
-                        responseMembersDto.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
-
-                for (CustomTaskMemberDto memberDto : membersListDto) {
-                    if (!memberDto.getMemberCode().equals(userId)) {
-                        taskClient.removeMemberFromTask(taskId, memberDto.getMemberCode());
-                    }
+        // remove others members
+        try {
+            List<? extends MicroserviceTaskMemberDto> responseMembersDto = taskDto.getMembers();
+            List<CustomTaskMemberDto> membersListDto =
+                    responseMembersDto.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
+            for (CustomTaskMemberDto memberDto : membersListDto) {
+                if (!memberDto.getMemberCode().equals(userId)) {
+                    taskClient.removeMemberFromTask(taskId, memberDto.getMemberCode());
                 }
-            } catch (Exception e) {
-                log.error("No se ha podido desasignar los usuarios de la tarea: " + e.getMessage());
             }
+        } catch (Exception e) {
+            log.error("No se ha podido desasignar los usuarios de la tarea: " + e.getMessage());
         }
 
         try {
@@ -317,7 +309,7 @@ public class TaskBusiness {
         CustomTaskMemberDto memberFound = membersDto.stream()
                 .filter(memberDto -> memberDto.getMemberCode().equals(userDto.getId())).findAny().orElse(null);
 
-        if (!(memberFound instanceof CustomTaskMemberDto)) {
+        if (memberFound == null) {
             throw new BusinessException("El usuario no tiene asignada la tarea.");
         }
 
@@ -328,16 +320,16 @@ public class TaskBusiness {
         // task of integration
         try {
 
-            if (categoryIntegrationFound instanceof MicroserviceTaskCategoryDto) {
+            if (categoryIntegrationFound != null) {
 
                 MicroserviceTaskMetadataDto metadataIntegration = taskDto.getMetadata().stream()
                         .filter(metadataDto -> metadataDto.getKey().equals("integration")).findAny().orElse(null);
-                if (metadataIntegration instanceof MicroserviceTaskMetadataDto) {
+                if (metadataIntegration != null) {
 
                     MicroserviceTaskMetadataPropertyDto propertyIntegration = metadataIntegration.getProperties()
                             .stream().filter(propertyDto -> propertyDto.getKey().equals("integration")).findAny()
                             .orElse(null);
-                    if (propertyIntegration instanceof MicroserviceTaskMetadataPropertyDto) {
+                    if (propertyIntegration != null) {
                         Long integrationId = Long.parseLong(propertyIntegration.getValue());
 
                         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
@@ -381,16 +373,16 @@ public class TaskBusiness {
         }
 
         MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
-                categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
+                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
                 .findAny().orElse(null);
 
         // task for generation of supplies
-        if (categoryGenerationFound instanceof MicroserviceTaskCategoryDto) {
+        if (categoryGenerationFound != null) {
 
             MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
                     .filter(metadataDto -> metadataDto.getKey().equals("request")).findAny().orElse(null);
 
-            if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+            if (metadataRequest != null) {
 
                 MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
                         .filter(propertyDto -> propertyDto.getKey().equals("requestId")).findAny().orElse(null);
@@ -439,11 +431,54 @@ public class TaskBusiness {
             }
         }
 
+        MicroserviceTaskCategoryDto categoryXTFQuality = taskDto.getCategories().stream().filter(
+                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_XTF_QUALITY_PROCESS))
+                .findAny().orElse(null);
+
+        if (categoryXTFQuality != null) {
+
+            MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+                    .filter(meta -> meta.getKey().equalsIgnoreCase("attachment")).findAny().orElse(null);
+            if (metadataRequest != null) {
+
+                BusinessException error = new BusinessException("Ha ocurrido un error finalizando la tarea del proceso de calidad");
+
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryId = metadataRequest.getProperties()
+                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryProductId = metadataRequest.getProperties()
+                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryProductId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyAttachmentId = metadataRequest.getProperties()
+                        .stream().filter(p -> p.getKey().equalsIgnoreCase("attachmentId")).findAny().orElseThrow(() -> error);
+
+                Long deliveryId = Long.parseLong(propertyDeliveryId.getValue());
+                Long productId = Long.parseLong(propertyDeliveryProductId.getValue());
+                Long attachmentId = Long.parseLong(propertyAttachmentId.getValue());
+
+                MicroserviceXTFAttachmentDto attachmentDto = qualityClient.findAttachmentById(deliveryId, productId, attachmentId);
+
+                System.out.println("ID ADJUNTO " + attachmentDto.getAttachmentId());
+                System.out.println("DATA " + attachmentDto.getData().isHasReportRevision());
+
+                if (!attachmentDto.getData().isHasReportRevision()) {
+                    throw new BusinessException("No se puede finalizar la tarea porque no se ha cargado el reporte de revisión al archivo XTF");
+                }
+
+            }
+
+
+            // validate if task has a report revision
+            //qualityClient.findAttachmentById();
+
+            // update state xtf to finish in Quality Microservice
+
+
+        }
+
         // close task
         try {
-            MicroserviceTaskDto response = taskClient.closeTask(taskId);
+            /*MicroserviceTaskDto response = taskClient.closeTask(taskId);
             taskDto = new CustomTaskDto(response);
-            taskDto = this.extendTask(taskDto);
+            taskDto = this.extendTask(taskDto);*/
         } catch (Exception e) {
             log.error("No se ha podido finalizar la tarea: " + e.getMessage());
             throw new BusinessException("No se ha podido finalizar la tarea.");
@@ -581,7 +616,7 @@ public class TaskBusiness {
         }
 
         MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
-                categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
+                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
                 .findAny().orElse(null);
 
         // task for generation of supplies

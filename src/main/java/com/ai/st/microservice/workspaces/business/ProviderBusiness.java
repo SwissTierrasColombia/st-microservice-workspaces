@@ -549,7 +549,7 @@ public class ProviderBusiness {
                     for (CustomTaskDto taskDto : tasksDto) {
                         MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
                                 .filter(meta -> meta.getKey().equalsIgnoreCase("request")).findAny().orElse(null);
-                        if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+                        if (metadataRequest != null) {
 
                             MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties()
                                     .stream().filter(p -> p.getKey().equalsIgnoreCase("requestId")).findAny()
