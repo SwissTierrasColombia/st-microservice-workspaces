@@ -456,29 +456,19 @@ public class TaskBusiness {
 
                 MicroserviceXTFAttachmentDto attachmentDto = qualityClient.findAttachmentById(deliveryId, productId, attachmentId);
 
-                System.out.println("ID ADJUNTO " + attachmentDto.getAttachmentId());
-                System.out.println("DATA " + attachmentDto.getData().isHasReportRevision());
-
                 if (!attachmentDto.getData().isHasReportRevision()) {
                     throw new BusinessException("No se puede finalizar la tarea porque no se ha cargado el reporte de revisión al archivo XTF");
                 }
 
+                qualityClient.udpdateXTFStatusToQualityProcessFinished(deliveryId, productId, attachmentId);
             }
-
-
-            // validate if task has a report revision
-            //qualityClient.findAttachmentById();
-
-            // update state xtf to finish in Quality Microservice
-
-
         }
 
         // close task
         try {
-            /*MicroserviceTaskDto response = taskClient.closeTask(taskId);
+            MicroserviceTaskDto response = taskClient.closeTask(taskId);
             taskDto = new CustomTaskDto(response);
-            taskDto = this.extendTask(taskDto);*/
+            taskDto = this.extendTask(taskDto);
         } catch (Exception e) {
             log.error("No se ha podido finalizar la tarea: " + e.getMessage());
             throw new BusinessException("No se ha podido finalizar la tarea.");
@@ -513,7 +503,7 @@ public class TaskBusiness {
         CustomTaskMemberDto memberFound = membersDto.stream()
                 .filter(memberDto -> memberDto.getMemberCode().equals(userDto.getId())).findAny().orElse(null);
 
-        if (!(memberFound instanceof CustomTaskMemberDto)) {
+        if (memberFound == null) {
             throw new BusinessException("El usuario no tiene asignada la tarea.");
         }
 
@@ -524,16 +514,16 @@ public class TaskBusiness {
         // task of integration
         try {
 
-            if (categoryIntegrationFound instanceof MicroserviceTaskCategoryDto) {
+            if (categoryIntegrationFound != null) {
 
                 MicroserviceTaskMetadataDto metadataIntegration = taskDto.getMetadata().stream()
                         .filter(metadataDto -> metadataDto.getKey().equals("integration")).findAny().orElse(null);
-                if (metadataIntegration instanceof MicroserviceTaskMetadataDto) {
+                if (metadataIntegration != null) {
 
                     MicroserviceTaskMetadataPropertyDto propertyIntegration = metadataIntegration.getProperties()
                             .stream().filter(propertyDto -> propertyDto.getKey().equals("integration")).findAny()
                             .orElse(null);
-                    if (propertyIntegration instanceof MicroserviceTaskMetadataPropertyDto) {
+                    if (propertyIntegration != null) {
                         Long integrationId = Long.parseLong(propertyIntegration.getValue());
 
                         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
@@ -622,12 +612,12 @@ public class TaskBusiness {
         // task for generation of supplies
         try {
 
-            if (categoryGenerationFound instanceof MicroserviceTaskCategoryDto) {
+            if (categoryGenerationFound != null) {
 
                 MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
                         .filter(metadataDto -> metadataDto.getKey().equals("request")).findAny().orElse(null);
 
-                if (metadataRequest instanceof MicroserviceTaskMetadataDto) {
+                if (metadataRequest != null) {
 
                     MicroserviceTaskMetadataPropertyDto propertyRequest = metadataRequest.getProperties().stream()
                             .filter(propertyDto -> propertyDto.getKey().equals("requestId")).findAny().orElse(null);
@@ -676,6 +666,34 @@ public class TaskBusiness {
 
         } catch (Exception e) {
             log.error("No se ha podido re-asignar la tarea: " + e.getMessage());
+        }
+
+        MicroserviceTaskCategoryDto categoryXTFQuality = taskDto.getCategories().stream().filter(
+                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_XTF_QUALITY_PROCESS))
+                .findAny().orElse(null);
+
+        if (categoryXTFQuality != null) {
+
+            MicroserviceTaskMetadataDto metadataRequest = taskDto.getMetadata().stream()
+                    .filter(meta -> meta.getKey().equalsIgnoreCase("attachment")).findAny().orElse(null);
+            if (metadataRequest != null) {
+
+                BusinessException error = new BusinessException("Ha ocurrido un error cancelando la tarea del proceso de calidad");
+
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryId = metadataRequest.getProperties()
+                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryProductId = metadataRequest.getProperties()
+                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryProductId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyAttachmentId = metadataRequest.getProperties()
+                        .stream().filter(p -> p.getKey().equalsIgnoreCase("attachmentId")).findAny().orElseThrow(() -> error);
+
+                Long deliveryId = Long.parseLong(propertyDeliveryId.getValue());
+                Long productId = Long.parseLong(propertyDeliveryProductId.getValue());
+                Long attachmentId = Long.parseLong(propertyAttachmentId.getValue());
+
+                qualityClient.updateXTFStatusToAccepted(deliveryId, productId, attachmentId);
+            }
+
         }
 
         try {
