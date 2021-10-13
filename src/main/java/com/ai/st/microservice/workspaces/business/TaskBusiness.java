@@ -194,7 +194,7 @@ public class TaskBusiness {
         return taskDto;
     }
 
-    public CustomTaskDto createTaskForGenerationSupply(List<Long> users, String municipality, Long requestId,
+    public CustomTaskDto createTaskForGenerationSupply(List<Long> users, String municipality, String department, Long requestId,
                                                        Long typeSupplyId, Date dateDeadline, String modelVersion) throws BusinessException {
 
         List<Long> taskCategories = new ArrayList<>();
@@ -210,8 +210,8 @@ public class TaskBusiness {
             deadline = sdf.format(dateDeadline.getTime());
         }
 
-        String description = "Generación de insumo catastral para el municipio " + municipality;
-        String name = "Generar insumo catastral " + municipality;
+        String description = "Generación de insumo catastral para el Municipio";
+        String name = String.format("%s (%s)", municipality, department);
 
         List<MicroserviceCreateTaskMetadataDto> metadata = new ArrayList<>();
 
@@ -221,6 +221,7 @@ public class TaskBusiness {
         listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("requestId", requestId.toString()));
         listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("typeSupplyId", typeSupplyId.toString()));
         listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("municipality", municipality));
+        listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("department", department));
         listPropertiesRequest.add(new MicroserviceCreateTaskPropertyDto("modelVersion", modelVersion));
 
         metadataRequest.setProperties(listPropertiesRequest);
@@ -628,15 +629,19 @@ public class TaskBusiness {
                     MicroserviceTaskMetadataPropertyDto propertyMunicipality = metadataRequest.getProperties().stream()
                             .filter(propertyDto -> propertyDto.getKey().equals("municipality")).findAny().orElse(null);
 
+                    MicroserviceTaskMetadataPropertyDto propertyDepartment = metadataRequest.getProperties().stream()
+                            .filter(propertyDto -> propertyDto.getKey().equals("department")).findAny().orElse(null);
+
                     MicroserviceTaskMetadataPropertyDto propertyModelVersion = metadataRequest.getProperties().stream()
                             .filter(propertyDto -> propertyDto.getKey().equals("modelVersion")).findAny().orElse(null);
 
                     if (propertyRequest != null && propertyTypeSupply != null && propertyMunicipality != null
-                            && propertyModelVersion != null) {
+                            && propertyModelVersion != null && propertyDepartment != null) {
 
                         Long requestId = Long.parseLong(propertyRequest.getValue());
                         Long typeSupplyId = Long.parseLong(propertyTypeSupply.getValue());
                         String municipality = propertyMunicipality.getValue();
+                        String department = propertyDepartment.getValue();
 
                         MicroserviceRequestDto response = providerClient.findRequestById(requestId);
 
@@ -654,7 +659,7 @@ public class TaskBusiness {
                                 users.add(providerUserDto.getUserCode());
                             }
 
-                            this.createTaskForGenerationSupply(users, municipality, requestId, typeSupplyId,
+                            this.createTaskForGenerationSupply(users, municipality, department, requestId, typeSupplyId,
                                     taskDto.getDeadline(), propertyModelVersion.getValue());
                         }
 

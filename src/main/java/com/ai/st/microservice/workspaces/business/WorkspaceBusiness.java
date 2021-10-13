@@ -531,7 +531,7 @@ public class WorkspaceBusiness {
                             .filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL))
                             .findAny().orElse(null);
 
-                    if (supplyRequested instanceof CustomSupplyRequestedDto) {
+                    if (supplyRequested != null) {
                         // new task
 
                         List<Long> profiles = new ArrayList<>();
@@ -547,7 +547,7 @@ public class WorkspaceBusiness {
                             }
 
                             taskBusiness.createTaskForGenerationSupply(users,
-                                    municipalityEntity.getName().toLowerCase(), responseRequest.getId(),
+                                    municipalityEntity.getName(), municipalityEntity.getDepartment().getName(), responseRequest.getId(),
                                     supplyRequested.getTypeSupply().getId(), null, supplyRequested.getModelVersion());
 
                         } catch (Exception e) {
