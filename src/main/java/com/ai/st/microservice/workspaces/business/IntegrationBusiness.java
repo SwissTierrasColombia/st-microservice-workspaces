@@ -28,12 +28,19 @@ import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
 public class IntegrationBusiness {
+
+    @Value("${integrations.database.username}")
+    private String databaseUsername;
+
+    @Value("${integrations.database.password}")
+    private String databasePassword;
 
     private final SupplyFeignClient supplyClient;
     private final ProviderFeignClient providerClient;
@@ -375,11 +382,11 @@ public class IntegrationBusiness {
                     "No se puede configurar el geovisor porque la integración esta en un estado inválido.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity =
-                integrationEntity.getWorkspace().getManagers().stream().filter(m -> m.getManagerCode().equals(managerId)).findAny().orElse(null);
-        if (workspaceManagerEntity == null) {
-            throw new BusinessException("La integración no pertenece al gestor");
-        }
+        integrationEntity.getWorkspace().getManagers()
+                .stream().filter(m -> m.getManagerCode().equals(managerId)).findAny()
+                .orElseThrow(() -> new BusinessException("La integración no pertenece al gestor"));
+
+        String municipalityCode = integrationEntity.getWorkspace().getMunicipality().getCode();
 
         try {
 
@@ -387,31 +394,51 @@ public class IntegrationBusiness {
             String port = cryptoBusiness.decrypt(integrationEntity.getPort());
             String database = cryptoBusiness.decrypt(integrationEntity.getDatabase());
             String schema = cryptoBusiness.decrypt(integrationEntity.getSchema());
-            String username = cryptoBusiness.decrypt(integrationEntity.getUsername());
-            String password = cryptoBusiness.decrypt(integrationEntity.getPassword());
-            String nameView = "integration_cat_reg";
 
-            databaseBusiness.createViewIntegration(host, port, database, schema, nameView);
+            String perimeterView = "perimetros";
+            String sideWalkView = "veredas";
+            String buildingView = "construcciones";
+            String buildingUnitsView = "unidades_construcciones";
+            String squareView = "manzanas";
+            String parcelsIntegratedView = "predios_integrados";
+
+            databaseBusiness.createPerimeterView(host, port, database, schema, perimeterView);
+            databaseBusiness.createSidewalkView(host, port, database, schema, sideWalkView);
+            databaseBusiness.createBuildingView(host, port, database, schema, buildingView);
+            databaseBusiness.createBuildingUnitsView(host, port, database, schema, buildingUnitsView);
+            databaseBusiness.createSquareView(host, port, database, schema, squareView);
+            databaseBusiness.createParcelIntegratedView(host, port, database, schema, parcelsIntegratedView);
 
             MicroserviceSetupMapDto data = new MicroserviceSetupMapDto();
-            data.setName_conn(nameView);
+            data.setName_conn(String.format("connection_%s_%d", municipalityCode, integrationId));
+            data.setStore(String.format("store_%s_%d", municipalityCode, integrationId));
+            data.setWorkspace(String.format("workspace_%s_%d", municipalityCode, integrationId));
             data.setDbname(database);
             data.setHost(host);
-            data.setPassword(password);
-            data.setPort(Integer.parseInt(port));
+            data.setPassword(databasePassword);
+            data.setPort(port);
             data.setSchema(schema);
-            data.setUser(username);
-            data.setLayers(new ArrayList<>(Collections.singletonList(nameView)));
+            data.setUser(databaseUsername);
+            List<MicroserviceSetupMapDto.Layer> layers = new ArrayList<>();
+            layers.add(new MicroserviceSetupMapDto.Layer(perimeterView, "perimetro_urbano", "Perímetros"));
+            layers.add(new MicroserviceSetupMapDto.Layer(sideWalkView, "vereda", "Veredas"));
+            layers.add(new MicroserviceSetupMapDto.Layer(buildingView, "construccion_Insumo", "Construcción"));
+            layers.add(new MicroserviceSetupMapDto.Layer(squareView, "manzana", "Manzanas"));
+            layers.add(new MicroserviceSetupMapDto.Layer(parcelsIntegratedView, "predio", "Predios Integrados"));
+            data.setLayers(layers);
 
             MicroserviceDataMapDto dataResponse = geovisorClient.setupMap(data);
+            String[] split = dataResponse.getSt_geocreatefastcontext().split("#");
 
-            log.info("URL: " + dataResponse.getData());
-
-            String url = dataResponse.getData();
+            String url = String.format("#%s", split[1]);
 
             updateURLMap(integrationEntity.getId(), url);
 
+        } catch (BusinessException e) {
+            log.error("Error configurando el mapa (geoapi): " + e.getMessageError());
+            throw new BusinessException(e.getMessage());
         } catch (Exception e) {
+            log.error("Error configurando el mapa: " + e.getMessage());
             throw new BusinessException(
                     "No se ha podido realizar la configuración de la integración para su visualización.");
         }
