@@ -70,7 +70,7 @@ public class AdministratorMicroserviceBusiness {
             }
 
             List<Long> listRolesWrong = roleManager.getProfiles().stream()
-                    .filter(p -> !p.equals(RoleBusiness.SUB_ROLE_DIRECTOR)).collect(Collectors.toList());
+                    .filter(p -> !p.equals(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)).collect(Collectors.toList());
 
             if (listRolesWrong.size() > 0) {
                 throw new BusinessException("No se puede asignar al usuario un perfil diferente al de Director.");
@@ -90,7 +90,7 @@ public class AdministratorMicroserviceBusiness {
 
         }
 
-        return this.createUser(firstName, lastName, email, username, password, roleProvider, roleAdmin, roleManager,
+        return this.createUser(firstName, lastName, email, username, password, true, roleProvider, roleAdmin, roleManager,
                 roleOperator);
     }
 
@@ -102,13 +102,25 @@ public class AdministratorMicroserviceBusiness {
         }
 
         List<Long> listRolesWrong = roleManager.getProfiles().stream()
-                .filter(p -> p.equals(RoleBusiness.SUB_ROLE_DIRECTOR)).collect(Collectors.toList());
+                .filter(p -> p.equals(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)).collect(Collectors.toList());
 
         if (listRolesWrong.size() > 0) {
             throw new BusinessException("No se puede asignar al usuario un perfil Director.");
         }
 
-        return this.createUser(firstName, lastName, email, username, password, null, null, roleManager, null);
+        boolean enabled = true;
+
+        if (roleManager.getProfiles().contains(RoleBusiness.SUB_ROLE_SINIC_MANAGER)) {
+            List<MicroserviceManagerUserDto> usersSINIC =
+                    managerClient.findUsersByManager(roleManager.getManagerId(), new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_SINIC_MANAGER)));
+
+            int count = (int) usersSINIC.stream().map(user -> userClient.findById(user.getUserCode())).filter(MicroserviceUserDto::getEnabled).count();
+            if (count > 0) {
+                enabled = false;
+            }
+        }
+
+        return this.createUser(firstName, lastName, email, username, password, enabled, null, null, roleManager, null);
     }
 
     public CustomUserDto createUserFromProvider(String firstName, String lastName, String email, String username,
@@ -127,11 +139,11 @@ public class AdministratorMicroserviceBusiness {
             }
         }
 
-        return this.createUser(firstName, lastName, email, username, password, roleProvider, null, null, null);
+        return this.createUser(firstName, lastName, email, username, password, true, roleProvider, null, null, null);
     }
 
-    public CustomUserDto createUser(String firstName, String lastName, String email, String username,
-                                    String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+    public CustomUserDto createUser(String firstName, String lastName, String email, String username, String password, boolean enabled,
+                                    CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
                                     CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
         MicroserviceUserDto userResponseDto;
@@ -142,6 +154,7 @@ public class AdministratorMicroserviceBusiness {
         createUserDto.setLastName(lastName);
         createUserDto.setPassword(password);
         createUserDto.setUsername(username);
+        createUserDto.setEnabled(enabled);
 
         List<Long> roles = new ArrayList<>();
 
@@ -344,7 +357,7 @@ public class AdministratorMicroserviceBusiness {
             }
 
             MicroserviceManagerProfileDto profileDto = profiles.stream()
-                    .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
+                    .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)).findAny().orElse(null);
 
             if (profileDto == null) {
                 throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
@@ -528,7 +541,7 @@ public class AdministratorMicroserviceBusiness {
             }
 
             MicroserviceManagerProfileDto profileDto = profiles.stream()
-                    .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR)).findAny().orElse(null);
+                    .filter(p -> p.getId().equals(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)).findAny().orElse(null);
 
             if (profileDto == null) {
                 throw new BusinessException("No se puede editar usuarios gestores que no cuentan con el rol Director");
@@ -576,6 +589,23 @@ public class AdministratorMicroserviceBusiness {
         if (roleManagerDto == null) {
             throw new BusinessException("No se puede editar usuarios que no son gestores");
         }
+
+        if (status && !userDto.getEnabled()) {
+            List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userId);
+            int count = (int) profiles.stream().map(MicroserviceManagerProfileDto::getId).filter(id -> id.equals(RoleBusiness.SUB_ROLE_SINIC_MANAGER)).count();
+            if (count > 0) {
+
+                List<MicroserviceManagerUserDto> usersSINIC =
+                        managerClient.findUsersByManager(managerCode, new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_SINIC_MANAGER)));
+
+                int countEnabled = (int) usersSINIC.stream().map(user -> userClient.findById(user.getUserCode())).filter(MicroserviceUserDto::getEnabled).count();
+                if (countEnabled > 0) {
+                    throw new BusinessException("Sólo puede existir un usuario SINIC activo en el sistema");
+                }
+
+            }
+        }
+
 
         MicroserviceManagerDto managerDto;
         try {
@@ -708,7 +738,7 @@ public class AdministratorMicroserviceBusiness {
             MicroserviceRoleDto roleProvider = userDto.getRoles().stream()
                     .filter(r -> r.getId().equals(RoleBusiness.ROLE_SUPPLY_SUPPLIER)).findAny().orElse(null);
 
-            if (roleManager instanceof MicroserviceRoleDto) {
+            if (roleManager != null) {
 
                 List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userDto.getId());
 
@@ -718,7 +748,7 @@ public class AdministratorMicroserviceBusiness {
                 userDto.setEntity(managerDto);
                 listUsersResponse.add(userDto);
 
-            } else if (roleProvider instanceof MicroserviceRoleDto) {
+            } else if (roleProvider != null) {
 
                 try {
                     List<MicroserviceProviderRoleDto> profiles = providerClient.findRolesByUser(userDto.getId());

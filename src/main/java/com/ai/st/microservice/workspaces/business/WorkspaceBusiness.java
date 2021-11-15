@@ -1022,7 +1022,7 @@ public class WorkspaceBusiness {
         try {
 
             List<Long> profiles = new ArrayList<>();
-            profiles.add(RoleBusiness.SUB_ROLE_INTEGRATOR);
+            profiles.add(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER);
 
             List<MicroserviceManagerUserDto> listUsersIntegrators = managerClient.findUsersByManager(managerDto.getId(),
                     profiles);
@@ -1691,7 +1691,7 @@ public class WorkspaceBusiness {
             try {
 
                 List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(managerDto.getId(),
-                        new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+                        new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
                 for (MicroserviceManagerUserDto directorDto : directors) {
 
