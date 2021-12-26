@@ -1,83 +1,85 @@
 package com.ai.st.microservice.workspaces.business;
 
-import java.util.Date;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 
 import com.ai.st.microservice.workspaces.dto.WorkspaceManagerDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceManagerService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 
+import org.springframework.stereotype.Component;
+
+import java.util.Date;
+
 @Component
 public class WorkspaceManagerBusiness {
 
-	@Autowired
-	private IWorkspaceManagerService workspaceManagerService;
+    private final IWorkspaceManagerService workspaceManagerService;
+    private final IWorkspaceService workspaceService;
+    private final ManagerMicroserviceBusiness managerBusiness;
 
-	@Autowired
-	private IWorkspaceService workspaceService;
+    public WorkspaceManagerBusiness(IWorkspaceManagerService workspaceManagerService, IWorkspaceService workspaceService,
+                                    ManagerMicroserviceBusiness managerBusiness) {
+        this.workspaceManagerService = workspaceManagerService;
+        this.workspaceService = workspaceService;
+        this.managerBusiness = managerBusiness;
+    }
 
-	@Autowired
-	private ManagerBusiness managerBusiness;
+    public WorkspaceManagerDto createWorkspaceManager(Long managerCode, String specificObservations,
+                                                      String generalObservations, Date startDate, String urlSupportFile, Long workspaceId) {
 
-	public WorkspaceManagerDto createWorkspaceManager(Long managerCode, String specificObservations,
-			String generalObservations, Date startDate, String urlSupportFile, Long workspaceId) {
+        WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
 
-		WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
+        WorkspaceManagerEntity newManager = new WorkspaceManagerEntity();
+        newManager.setManagerCode(managerCode);
+        if (specificObservations != null && !specificObservations.isEmpty()) {
+            newManager.setObservations(specificObservations);
+        } else {
+            newManager.setObservations(generalObservations);
+        }
+        newManager.setStartDate(startDate);
+        newManager.setSupportFile(urlSupportFile);
+        newManager.setWorkspace(workspaceEntity);
 
-		WorkspaceManagerEntity newManager = new WorkspaceManagerEntity();
-		newManager.setManagerCode(managerCode);
-		if (specificObservations != null && !specificObservations.isEmpty()) {
-			newManager.setObservations(specificObservations);
-		} else {
-			newManager.setObservations(generalObservations);
-		}
-		newManager.setStartDate(startDate);
-		newManager.setSupportFile(urlSupportFile);
-		newManager.setWorkspace(workspaceEntity);
+        newManager = workspaceManagerService.createManager(newManager);
 
-		newManager = workspaceManagerService.createManager(newManager);
+        return entityParseToDto(newManager);
+    }
 
-		return entityParseToDto(newManager);
-	}
+    public WorkspaceManagerDto updateWorkspaceManager(Long workspaceManagerId, String observations, Date startDate) {
 
-	public WorkspaceManagerDto updateWorkspaceManager(Long workspaceManagerId, String observations, Date startDate) {
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceManagerService
+                .getWorkspaceManagerById(workspaceManagerId);
 
-		WorkspaceManagerEntity workspaceManagerEntity = workspaceManagerService
-				.getWorkspaceManagerById(workspaceManagerId);
+        workspaceManagerEntity.setObservations(observations);
+        workspaceManagerEntity.setStartDate(startDate);
 
-		workspaceManagerEntity.setObservations(observations);
-		workspaceManagerEntity.setStartDate(startDate);
+        workspaceManagerEntity = workspaceManagerService.updateWorkspaceManager((workspaceManagerEntity));
 
-		workspaceManagerEntity = workspaceManagerService.updateWorkspaceManager((workspaceManagerEntity));
+        return entityParseToDto(workspaceManagerEntity);
+    }
 
-		return entityParseToDto(workspaceManagerEntity);
-	}
+    public void deleteWorkspaceManagerById(Long workspaceManagerId) {
+        workspaceManagerService.deleteWorkspaceManagerById(workspaceManagerId);
+    }
 
-	public void deleteWorkspaceManagerById(Long workspaceManagerId) {
-		workspaceManagerService.deleteWorkspaceManagerById(workspaceManagerId);
-	}
+    public WorkspaceManagerDto entityParseToDto(WorkspaceManagerEntity workspaceManagerEntity) {
 
-	public WorkspaceManagerDto entityParseToDto(WorkspaceManagerEntity workspaceManagerEntity) {
+        WorkspaceManagerDto workspaceManagerDto = new WorkspaceManagerDto();
 
-		WorkspaceManagerDto workspaceManagerDto = new WorkspaceManagerDto();
+        workspaceManagerDto.setManagerCode(workspaceManagerEntity.getManagerCode());
+        workspaceManagerDto.setObservations(workspaceManagerEntity.getObservations());
+        workspaceManagerDto.setStartDate(workspaceManagerEntity.getStartDate());
 
-		workspaceManagerDto.setManagerCode(workspaceManagerEntity.getManagerCode());
-		workspaceManagerDto.setObservations(workspaceManagerEntity.getObservations());
-		workspaceManagerDto.setStartDate(workspaceManagerEntity.getStartDate());
+        try {
+            MicroserviceManagerDto managerDto = managerBusiness.getManagerById(workspaceManagerEntity.getManagerCode());
+            workspaceManagerDto.setManager(managerDto);
+        } catch (Exception e) {
+            workspaceManagerDto.setManager(null);
+        }
 
-		try {
-			MicroserviceManagerDto managerDto = managerBusiness.getManagerById(workspaceManagerEntity.getManagerCode());
-			workspaceManagerDto.setManager(managerDto);
-		} catch (Exception e) {
-			workspaceManagerDto.setManager(null);
-		}
-
-		return workspaceManagerDto;
-	}
+        return workspaceManagerDto;
+    }
 
 }

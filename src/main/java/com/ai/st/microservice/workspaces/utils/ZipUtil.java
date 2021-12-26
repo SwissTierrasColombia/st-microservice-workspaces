@@ -1,9 +1,6 @@
 package com.ai.st.microservice.workspaces.utils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -23,7 +20,7 @@ public class ZipUtil {
 
     public static boolean zipContainsFile(String filePathZip, List<String> extensionsToSearch) {
 
-        Boolean fileFound = false;
+        boolean fileFound = false;
 
         try {
 
@@ -121,7 +118,7 @@ public class ZipUtil {
 
             for (String extension : extensionsToSearch) {
 
-                Boolean fileFound = false;
+                boolean fileFound = false;
 
                 Enumeration<? extends ZipEntry> entries = zipFile.entries();
                 while (entries.hasMoreElements()) {
@@ -179,34 +176,6 @@ public class ZipUtil {
         return null;
     }
 
-    public static String zipping(File file, String zipName, String fileName, String namespace) {
-
-        try {
-
-            String path = namespace + File.separatorChar + zipName + ".zip";
-
-            new File(namespace).mkdirs();
-            File f = new File(path);
-            if (f.exists()) {
-                f.delete();
-            }
-            ZipOutputStream o = new ZipOutputStream(new FileOutputStream(f));
-            ZipEntry e = new ZipEntry(fileName);
-            o.putNextEntry(e);
-            byte[] data = Files.readAllBytes(file.toPath());
-            o.write(data, 0, data.length);
-            o.closeEntry();
-            o.close();
-
-            return path;
-
-        } catch (IOException e) {
-            log.error("Error zipping archive: " + e.getMessage());
-        }
-
-        return null;
-    }
-
     public static String zipping(List<File> files, String zipName, String namespace) {
 
         try {
@@ -218,21 +187,33 @@ public class ZipUtil {
             if (f.exists()) {
                 f.delete();
             }
-            ZipOutputStream o = new ZipOutputStream(new FileOutputStream(f));
+
+            byte[] buffer = new byte[1024];
+
+            FileOutputStream fos = new FileOutputStream(f);
+            ZipOutputStream o = new ZipOutputStream(fos);
 
             for (File file : files) {
                 ZipEntry e = new ZipEntry(file.getName());
                 o.putNextEntry(e);
-                byte[] data = Files.readAllBytes(file.toPath());
-                o.write(data, 0, data.length);
+                FileInputStream in = new FileInputStream(file.getAbsolutePath());
+                int len;
+                while ((len = in.read(buffer)) > 0) {
+                    o.write(buffer, 0, len);
+                }
+                in.close();
                 o.closeEntry();
             }
 
             o.close();
+            fos.close();
 
             return path;
+
         } catch (IOException e) {
-            log.error("Error zipping archive: " + e.getMessage());
+            log.error("Error zipping archive (I): " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Error zipping archive (II): " + e.getMessage());
         }
 
         return null;
@@ -240,7 +221,7 @@ public class ZipUtil {
 
     public static boolean hasGDBDatabase(String filePathZip) {
 
-        Boolean fileFound = false;
+        boolean fileFound = false;
 
         try {
 

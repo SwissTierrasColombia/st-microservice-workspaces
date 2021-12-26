@@ -35,7 +35,7 @@ public class IntegrationEntity {
     @Temporal(TemporalType.TIMESTAMP)
     private Date startedAt;
 
-    @Column(name = "finished_at", nullable = true)
+    @Column(name = "finished_at")
     @Temporal(TemporalType.TIMESTAMP)
     private Date finishedAt;
 
@@ -43,7 +43,7 @@ public class IntegrationEntity {
     @JoinColumn(name = "integration_state_id", referencedColumnName = "id", nullable = false)
     private IntegrationStateEntity state;
 
-    @Column(name = "errors", nullable = true, length = 1000)
+    @Column(name = "errors", length = 1000)
     private String errors;
 
     @Column(name = "hostname", nullable = false)
@@ -70,20 +70,20 @@ public class IntegrationEntity {
     @Column(name = "supply_snr_id", nullable = false)
     private Long supplySnrId;
 
-    @Column(name = "supply_ant_id", nullable = true)
+    @Column(name = "supply_ant_id")
     private Long supplyAntId;
 
-    @Column(name = "url_map", nullable = true)
+    @Column(name = "url_map")
     private String urlMap;
 
     @Column(name = "manager_code", nullable = false)
     private Long managerCode;
 
     @OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
-    private List<IntegrationStatEntity> stats = new ArrayList<IntegrationStatEntity>();
+    private List<IntegrationStatEntity> stats = new ArrayList<>();
 
     @OneToMany(mappedBy = "integration", cascade = CascadeType.ALL)
-    private List<IntegrationHistoryEntity> histories = new ArrayList<IntegrationHistoryEntity>();
+    private List<IntegrationHistoryEntity> histories = new ArrayList<>();
 
     public IntegrationEntity() {
 

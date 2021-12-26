@@ -1,35 +1,28 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.exceptions.*;
 
 import com.ai.st.microservice.workspaces.business.*;
+import com.ai.st.microservice.workspaces.dto.DepartmentDto;
+import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.ai.st.microservice.workspaces.clients.ManagerFeignClient;
-import com.ai.st.microservice.workspaces.clients.UserFeignClient;
-import com.ai.st.microservice.workspaces.dto.DepartmentDto;
-import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Api(value = "Manage Departments", tags = {"Departments"})
 @RestController
@@ -38,25 +31,20 @@ public class DepartmentV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(DepartmentV1Controller.class);
 
-    @Autowired
-    private UserFeignClient userClient;
+    private final DepartmentBusiness departmentBusiness;
+    private final MunicipalityBusiness municipalityBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
-    @Autowired
-    private ManagerFeignClient managerClient;
+    public DepartmentV1Controller(DepartmentBusiness departmentBusiness, MunicipalityBusiness municipalityBusiness,
+                                  ManagerMicroserviceBusiness managerBusiness, AdministrationBusiness administrationBusiness) {
+        this.departmentBusiness = departmentBusiness;
+        this.municipalityBusiness = municipalityBusiness;
+        this.managerBusiness = managerBusiness;
+        this.administrationBusiness = administrationBusiness;
+    }
 
-    @Autowired
-    private DepartmentBusiness departmentBusiness;
-
-    @Autowired
-    private MunicipalityBusiness municipalityBusiness;
-
-    @Autowired
-    private UserBusiness userBusiness;
-
-    @Autowired
-    private ManagerBusiness managerBusiness;
-
-    @RequestMapping(value = "", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get departments")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get departments", response = DepartmentDto.class, responseContainer = "List"),
@@ -70,14 +58,14 @@ public class DepartmentV1Controller {
 
         try {
 
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession) || administrationBusiness.isProvider(userDtoSession)) {
                 listDepartments = departmentBusiness.getDepartments();
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
@@ -105,7 +93,7 @@ public class DepartmentV1Controller {
         return new ResponseEntity<>(listDepartments, httpStatus);
     }
 
-    @RequestMapping(value = "/{departmentId}/municipalities", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{departmentId}/municipalities", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipalities by department")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities by department", response = MunicipalityDto.class, responseContainer = "List"),
@@ -120,14 +108,14 @@ public class DepartmentV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (userBusiness.isAdministrator(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession) || administrationBusiness.isProvider(userDtoSession)) {
                 listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
-            } else if (userBusiness.isManager(userDtoSession)) {
+            } else if (administrationBusiness.isManager(userDtoSession)) {
 
                 // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());

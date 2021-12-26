@@ -22,22 +22,22 @@ import feign.form.spring.SpringFormEncoder;
 @FeignClient(name = "data", configuration = GeovisorFeignClient.Configuration.class, url = "pending")
 public interface GeovisorFeignClient {
 
-	@RequestMapping(method = RequestMethod.POST, value = "/users/test", consumes = APPLICATION_JSON_VALUE)
-	public MicroserviceDataMapDto setupMap(@RequestBody MicroserviceSetupMapDto data);
+    @RequestMapping(method = RequestMethod.POST, value = "/users/test", consumes = APPLICATION_JSON_VALUE)
+    MicroserviceDataMapDto setupMap(@RequestBody MicroserviceSetupMapDto data);
 
-	class Configuration {
+    class Configuration {
 
-		@Bean
-		Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
-			return new SpringFormEncoder(new SpringEncoder(converters));
-		}
+        @Bean
+        Encoder feignFormEncoder(ObjectFactory<HttpMessageConverters> converters) {
+            return new SpringFormEncoder(new SpringEncoder(converters));
+        }
 
-		@Bean
-		@Scope("prototype")
-		public Feign.Builder feignBuilder() {
-			return Feign.builder();
-		}
+        @Bean
+        @Scope("prototype")
+        public Feign.Builder feignBuilder() {
+            return Feign.builder();
+        }
 
-	}
+    }
 
 }

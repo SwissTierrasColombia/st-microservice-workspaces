@@ -16,10 +16,10 @@ public class DepartmentEntity {
 	@Column(name = "id", nullable = false)
 	private Long id;
 	
-	@Column(name = "name", nullable = false, length = 255)
+	@Column(name = "name", nullable = false)
 	private String name;
 	
-	@Column(name = "code", nullable = false, length = 255)
+	@Column(name = "code", nullable = false)
 	private String code;
 	
 	public DepartmentEntity() {

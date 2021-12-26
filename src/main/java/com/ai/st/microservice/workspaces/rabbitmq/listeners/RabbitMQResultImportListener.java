@@ -1,22 +1,25 @@
 package com.ai.st.microservice.workspaces.rabbitmq.listeners;
 
+import com.ai.st.microservice.common.dto.ili.MicroserviceResultImportDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceSupplyRevisionDto;
+
+import com.ai.st.microservice.workspaces.business.ProviderBusiness;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.dto.ili.MicroserviceResultImportDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceSupplyRevisionDto;
 
 @Component
 public class RabbitMQResultImportListener {
 
     private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-    @Autowired
-    private ProviderBusiness providerBusiness;
+    private final ProviderBusiness providerBusiness;
+
+    public RabbitMQResultImportListener(ProviderBusiness providerBusiness) {
+        this.providerBusiness = providerBusiness;
+    }
 
     @RabbitListener(queues = "${st.rabbitmq.queueResultImport.queue}", concurrency = "${st.rabbitmq.queueResultImport.concurrency}")
     public void updateIntegration(MicroserviceResultImportDto resultDto) {
@@ -40,7 +43,6 @@ public class RabbitMQResultImportListener {
                 if (supplyRevisionDto == null || !resultDto.getResult()) {
                     providerBusiness.updateStateToSupplyRequested(requestId, supplyRequestedId,
                             ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW);
-
                 }
 
                 if (resultDto.getResult()) {

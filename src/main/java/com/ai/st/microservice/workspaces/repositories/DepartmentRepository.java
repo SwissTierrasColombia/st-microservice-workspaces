@@ -17,5 +17,5 @@ public interface DepartmentRepository extends CrudRepository<DepartmentEntity, L
 			+ "	workspaces.municipalities m,\n" + "	workspaces.workspaces w,\n" + "	workspaces.workspace_managers wm\n"
 			+ "where\n" + "	w.municipality_id = m.id\n" + "	and m.department_id = d.id\n"
 			+ "	and wm.workspace_id = w.id \n" + "	and wm.manager_code = :managerCode \n" + "	and w.is_active = true")
-	List<DepartmentEntity> getDeparmentsByManagerCode(@Param("managerCode") Long managerCode);
+	List<DepartmentEntity> getDepartmentsByManagerCode(@Param("managerCode") Long managerCode);
 }

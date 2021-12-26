@@ -1,33 +1,24 @@
 package com.ai.st.microservice.workspaces.controllers.v1;
 
+import com.ai.st.microservice.common.business.AdministrationBusiness;
+import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
+import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
+import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
+import com.ai.st.microservice.common.exceptions.*;
+
+import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
+import com.ai.st.microservice.workspaces.business.ProviderBusiness;
+import com.ai.st.microservice.workspaces.dto.CreatePetitionDto;
+import com.ai.st.microservice.workspaces.dto.UpdatePetitionDto;
+import com.ai.st.microservice.workspaces.dto.providers.CustomPetitionDto;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.ai.st.microservice.workspaces.business.ManagerBusiness;
-import com.ai.st.microservice.workspaces.business.ProviderBusiness;
-import com.ai.st.microservice.workspaces.business.UserBusiness;
-import com.ai.st.microservice.workspaces.dto.BasicResponseDto;
-import com.ai.st.microservice.workspaces.dto.CreatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.UpdatePetitionDto;
-import com.ai.st.microservice.workspaces.dto.administration.MicroserviceUserDto;
-import com.ai.st.microservice.workspaces.dto.managers.MicroserviceManagerDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroservicePetitionDto;
-import com.ai.st.microservice.workspaces.dto.providers.MicroserviceProviderDto;
-import com.ai.st.microservice.workspaces.exceptions.BusinessException;
-import com.ai.st.microservice.workspaces.exceptions.DisconnectedMicroserviceException;
-import com.ai.st.microservice.workspaces.exceptions.InputValidationException;
+import org.springframework.web.bind.annotation.*;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,19 +32,21 @@ public class PetitionV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(PetitionV1Controller.class);
 
-    @Autowired
-    private UserBusiness userBusiness;
+    private final ManagerMicroserviceBusiness managerBusiness;
+    private final ProviderBusiness providerBusiness;
+    private final AdministrationBusiness administrationBusiness;
 
-    @Autowired
-    private ManagerBusiness managerBusiness;
+    public PetitionV1Controller(ManagerMicroserviceBusiness managerBusiness, ProviderBusiness providerBusiness,
+                                AdministrationBusiness administrationBusiness) {
+        this.managerBusiness = managerBusiness;
+        this.providerBusiness = providerBusiness;
+        this.administrationBusiness = administrationBusiness;
+    }
 
-    @Autowired
-    private ProviderBusiness providerBusiness;
-
-    @RequestMapping(value = "", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create petition")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Petition created", response = MicroservicePetitionDto.class),
+            @ApiResponse(code = 201, message = "Petition created", response = CustomPetitionDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> createPetition(@RequestBody CreatePetitionDto requestCreatePetition,
@@ -65,7 +58,7 @@ public class PetitionV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -115,10 +108,10 @@ public class PetitionV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/manager", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/manager", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for manager")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions getted", response = MicroservicePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForManager(@RequestHeader("authorization") String headerAuthorization,
@@ -130,7 +123,7 @@ public class PetitionV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -165,10 +158,10 @@ public class PetitionV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/provider/open", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/provider/open", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for provider (open)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions getted", response = MicroservicePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForProviderOpen(@RequestHeader("authorization") String headerAuthorization) {
@@ -179,7 +172,7 @@ public class PetitionV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -213,10 +206,10 @@ public class PetitionV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/provider/close", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/provider/close", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get petitions for provider (close)")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petitions getted", response = MicroservicePetitionDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForProviderClose(
@@ -228,7 +221,7 @@ public class PetitionV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -263,10 +256,10 @@ public class PetitionV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{petitionId}/accept", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{petitionId}/accept", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update petition")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petition updated", response = MicroservicePetitionDto.class),
+            @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> acceptPetition(@RequestBody UpdatePetitionDto requestUpdatePetition,
@@ -278,7 +271,7 @@ public class PetitionV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
@@ -322,10 +315,10 @@ public class PetitionV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
-    @RequestMapping(value = "/{petitionId}/reject", method = RequestMethod.PUT, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/{petitionId}/reject", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update petition")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petition updated", response = MicroservicePetitionDto.class),
+            @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> rejectPetition(@RequestBody UpdatePetitionDto requestUpdatePetition,
@@ -337,7 +330,7 @@ public class PetitionV1Controller {
         try {
 
             // user session
-            MicroserviceUserDto userDtoSession = userBusiness.getUserByToken(headerAuthorization);
+            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
