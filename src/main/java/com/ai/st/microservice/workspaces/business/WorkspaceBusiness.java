@@ -44,11 +44,7 @@ import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
-import com.ai.st.microservice.workspaces.services.IIntegrationService;
-import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
-import com.ai.st.microservice.workspaces.services.IMunicipalityService;
-import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
-import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.services.*;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 
 import org.apache.commons.io.FilenameUtils;
@@ -106,6 +102,7 @@ public class WorkspaceBusiness {
     private final WorkspaceManagerBusiness workspaceManagerBusiness;
     private final WorkspaceOperatorBusiness workspaceOperatorBusiness;
     private final AdministrationBusiness administrationBusiness;
+    private final IWorkspaceManagerService workspaceManagerService;
 
     public WorkspaceBusiness(ManagerFeignClient managerClient, ProviderFeignClient providerClient,
                              UserFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
@@ -115,7 +112,8 @@ public class WorkspaceBusiness {
                              IliBusiness iliBusiness, ProviderBusiness providerBusiness, FileBusiness fileBusiness,
                              SupplyBusiness supplyBusiness, OperatorMicroserviceBusiness operatorBusiness, NotificationBusiness notificationBusiness,
                              ManagerMicroserviceBusiness managerBusiness, WorkspaceManagerBusiness workspaceManagerBusiness,
-                             WorkspaceOperatorBusiness workspaceOperatorBusiness, AdministrationBusiness administrationBusiness) {
+                             WorkspaceOperatorBusiness workspaceOperatorBusiness, AdministrationBusiness administrationBusiness,
+                             IWorkspaceManagerService workspaceManagerService) {
         this.managerClient = managerClient;
         this.providerClient = providerClient;
         this.userClient = userClient;
@@ -139,6 +137,7 @@ public class WorkspaceBusiness {
         this.administrationBusiness = administrationBusiness;
         this.workspaceManagerBusiness = workspaceManagerBusiness;
         this.workspaceOperatorBusiness = workspaceOperatorBusiness;
+        this.workspaceManagerService = workspaceManagerService;
     }
 
     public List<WorkspaceDto> getWorkspacesByMunicipality(Long municipalityId, Long managerCode)
@@ -1022,7 +1021,7 @@ public class WorkspaceBusiness {
         try {
 
             List<Long> profiles = new ArrayList<>();
-            profiles.add(RoleBusiness.SUB_ROLE_INTEGRATOR);
+            profiles.add(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER);
 
             List<MicroserviceManagerUserDto> listUsersIntegrators = managerClient.findUsersByManager(managerDto.getId(),
                     profiles);
@@ -1691,7 +1690,7 @@ public class WorkspaceBusiness {
             try {
 
                 List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(managerDto.getId(),
-                        new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+                        new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
                 for (MicroserviceManagerUserDto directorDto : directors) {
 
@@ -1818,6 +1817,19 @@ public class WorkspaceBusiness {
         }
 
         return workspacesOperators;
+    }
+
+    public WorkspaceManagerDto getWorkspacesByManagerAndMunicipality(Long managerCode, String municipalityCode) throws BusinessException {
+
+        List<WorkspaceManagerEntity> workspaceManagerEntities =
+                workspaceManagerService.getWorkspaceManagerByManager(managerCode);
+
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceManagerEntities.stream()
+                .filter(wM -> wM.getWorkspace().getMunicipality().getCode().equalsIgnoreCase(municipalityCode))
+                .findAny()
+                .orElseThrow(() -> new BusinessException(""));
+
+        return workspaceManagerBusiness.entityParseToDto(workspaceManagerEntity);
     }
 
 }

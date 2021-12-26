@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.repositories.WorkspaceManagerRepository;
 
+import java.util.List;
+
 @Service
 public class WorkspaceManagerService implements IWorkspaceManagerService {
 
@@ -39,5 +41,9 @@ public class WorkspaceManagerService implements IWorkspaceManagerService {
         workspaceManagerRepository.deleteById(id);
     }
 
+    @Override
+    public List<WorkspaceManagerEntity> getWorkspaceManagerByManager(Long managerCode) {
+        return workspaceManagerRepository.findByManagerCode(managerCode);
+    }
 
 }
