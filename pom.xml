@@ -14,7 +14,7 @@
 
     <groupId>com.ai.st.microservice.workspaces</groupId>
     <artifactId>st-microservice-workspaces</artifactId>
-    <version>3.11.1</version>
+    <version>4.1.5</version>
     <name>st-microservice-workspaces</name>
     <description>Microservice Workspaces</description>
 
@@ -122,7 +122,7 @@
         <dependency>
             <groupId>com.ai.st.microservice.common</groupId>
             <artifactId>st-common</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.2</version>
         </dependency>
 
     </dependencies>
