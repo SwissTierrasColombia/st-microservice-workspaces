@@ -1254,4 +1254,29 @@ public class WorkspaceV1Controller {
         return new ResponseEntity<>(responseDto, httpStatus);
     }
 
+    @GetMapping(value = "/managers/{managerCode}/municipalities/{municipalityCode}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Get workspaces by manager")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ResponseBody
+    public ResponseEntity<?> getWorkspaceByManagerAndMunicipality(@PathVariable Long managerCode,
+                                                                  @PathVariable String municipalityCode) {
+
+        HttpStatus httpStatus;
+        Object responseDto;
+
+        try {
+
+            responseDto = workspaceBusiness.getWorkspacesByManagerAndMunicipality(managerCode, municipalityCode);
+            httpStatus = HttpStatus.OK;
+
+        } catch (Exception e) {
+            log.error("Error WorkspaceV1Controller@getWorkspaceByManagerAndMunicipality#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage(), 3);
+        }
+
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
+
 }

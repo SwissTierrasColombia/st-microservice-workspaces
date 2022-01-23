@@ -122,7 +122,7 @@ public class RabbitMQUpdateExportIntegrationListener {
                     try {
 
                         List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(integrationEntity.getManagerCode(),
-                                new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR)));
+                                new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
                         for (MicroserviceManagerUserDto directorDto : directors) {
 

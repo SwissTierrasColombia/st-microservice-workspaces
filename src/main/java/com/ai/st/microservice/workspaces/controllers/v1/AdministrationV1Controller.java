@@ -70,7 +70,7 @@ public class AdministrationV1Controller {
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
                 responseDto = administrationMicroserviceBusiness.createUser(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
-                        requestCreateUser.getPassword(), null, requestCreateUser.getRoleAdministrator(), null, null);
+                        requestCreateUser.getPassword(), true, null, requestCreateUser.getRoleAdministrator(), null, null);
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
