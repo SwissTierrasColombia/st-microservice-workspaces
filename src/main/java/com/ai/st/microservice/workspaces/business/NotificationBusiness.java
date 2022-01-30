@@ -42,6 +42,28 @@ public class NotificationBusiness {
 
     }
 
+    public void sendNotificationCreationSinicUser(String email, String password, String profile, String user,
+                                             Long userCode) {
+
+        try {
+
+            MicroserviceNotificationNewUserDto notification = new MicroserviceNotificationNewUserDto();
+            notification.setEmail(email);
+            notification.setPassword(password);
+            notification.setProfile(profile);
+            notification.setStatus(0);
+            notification.setType("sinic");
+            notification.setUser(user);
+            notification.setUserCode(userCode);
+
+            notifierClient.creationUser(notification);
+
+        } catch (Exception e) {
+            log.error("Error enviando la notificación #1: " + e.getMessage());
+        }
+
+    }
+
     public void sendNotificationMunicipalityManagementDto(String email, String department, String municipality, Date startDate,
                                                           Long userCode, String supportFile) {
 

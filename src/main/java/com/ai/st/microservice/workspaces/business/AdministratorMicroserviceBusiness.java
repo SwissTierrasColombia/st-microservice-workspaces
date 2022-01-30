@@ -205,6 +205,8 @@ public class AdministratorMicroserviceBusiness {
 
         createUserDto.setRoles(roles);
 
+        boolean useSinicTemplate = false;
+
         if (roles.size() > 0) {
 
             try {
@@ -251,6 +253,10 @@ public class AdministratorMicroserviceBusiness {
 
                         for (Long profileId : roleManager.getProfiles()) {
 
+                            if (profileId.equals(RoleBusiness.SUB_ROLE_SINIC_MANAGER)) {
+                                useSinicTemplate = true;
+                            }
+
                             MicroserviceAddUserToManagerDto addUser = new MicroserviceAddUserToManagerDto();
                             addUser.setUserCode(userResponseDto.getId());
                             addUser.setProfileId(profileId);
@@ -278,8 +284,15 @@ public class AdministratorMicroserviceBusiness {
 
         // send notification
         try {
-            notificationBusiness.sendNotificationCreationUser(email, password, entityName, username,
-                    userResponseDto.getId());
+
+            if (useSinicTemplate) {
+                notificationBusiness.sendNotificationCreationSinicUser(email, password, entityName, username,
+                        userResponseDto.getId());
+            } else {
+                notificationBusiness.sendNotificationCreationUser(email, password, entityName, username,
+                        userResponseDto.getId());
+            }
+
         } catch (Exception e) {
             log.error(String.format("Error enviando notificación de la creación del usuario: %s", e.getMessage()));
         }
