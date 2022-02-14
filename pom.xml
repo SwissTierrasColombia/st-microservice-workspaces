@@ -14,7 +14,7 @@
 
     <groupId>com.ai.st.microservice.workspaces</groupId>
     <artifactId>st-microservice-workspaces</artifactId>
-    <version>4.2.1</version>
+    <version>4.2.2</version>
     <name>st-microservice-workspaces</name>
     <description>Microservice Workspaces</description>
 
