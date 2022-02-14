@@ -1276,8 +1276,8 @@ public class ProviderV1Controller {
     }
 
     @PostMapping(value = "/supplies-review/{supplyRequestedId}/skip", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Start revision")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
+    @ApiOperation(value = "Skip revision")
+    @ApiResponses(value = {@ApiResponse(code = 200, message = "Revision skipped", response = BasicResponseDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class)})
     @ResponseBody
     public ResponseEntity<Object> skipRevision(@RequestHeader("authorization") String headerAuthorization,

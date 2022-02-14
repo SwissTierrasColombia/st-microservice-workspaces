@@ -713,6 +713,8 @@ public class WorkspaceBusiness {
             List<MicroserviceRequestDto> response = providerClient.getRequestsByProviderClosed(providerId, userCode);
             List<CustomRequestDto> responseRequestsDto = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
 
+            log.info("Requests found: " + responseRequestsDto.size());
+
             for (CustomRequestDto requestDto : responseRequestsDto) {
 
                 List<CustomEmitterDto> emittersDto = new ArrayList<>();

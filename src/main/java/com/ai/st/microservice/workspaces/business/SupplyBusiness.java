@@ -22,6 +22,7 @@ import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,6 +106,8 @@ public class SupplyBusiness {
     private Object getSuppliesByMunicipality(MunicipalityEntity municipality, List<String> extensions, Integer page,
                                              List<Long> requests, boolean active, Long managerCode, Long operatorCode) throws BusinessException {
 
+        log.info("Get supplies by municipality started");
+
         List<Long> states = new ArrayList<>();
 
         if (active) {
@@ -115,6 +118,9 @@ public class SupplyBusiness {
             states.add(SupplyBusiness.SUPPLY_STATE_REMOVED);
         }
 
+        log.info(String.format("Params: municipality=%s extensions=%s page=%d requests=%s active=%s managerCode=%d operatorCode=%d states=%s",
+                municipality.getId(), StringUtils.join(extensions, ","), page, StringUtils.join(requests, ","),
+                active, managerCode, operatorCode, StringUtils.join(states, ",")));
 
         List<CustomSupplyDto> suppliesDto;
 
@@ -124,12 +130,16 @@ public class SupplyBusiness {
 
             if (page != null) {
 
+                log.info("Get results with pagination");
+
                 dataPaginated = supplyClient.getSuppliesByMunicipalityCodeByFilters(municipality.getCode(), page, managerCode, requests, states);
 
                 List<? extends MicroserviceSupplyDto> response = dataPaginated.getItems();
                 suppliesDto = response.stream().map(CustomSupplyDto::new).collect(Collectors.toList());
 
             } else {
+
+                log.info("Get results without pagination");
 
                 List<MicroserviceSupplyDto> response = supplyClient.getSuppliesByMunicipalityCode(municipality.getCode(), states);
                 suppliesDto = response.stream().map(CustomSupplyDto::new).collect(Collectors.toList());
@@ -139,6 +149,8 @@ public class SupplyBusiness {
                 }
 
             }
+
+            log.info("Result founds: " + suppliesDto.size());
 
             List<CustomSupplyDto> all = new ArrayList<>();
 
@@ -201,7 +213,9 @@ public class SupplyBusiness {
                 all.add(supplyDto);
             }
 
+
             if (page != null) {
+                log.info("Returning results with pagination");
                 dataPaginated.setItems(all);
                 return dataPaginated;
             }
@@ -221,7 +235,7 @@ public class SupplyBusiness {
                     for (MicroserviceExtensionDto extensionDto : extensionsDto) {
 
                         String extensionFound = extensions.stream().filter(
-                                extension -> extensionDto.getName().equalsIgnoreCase(extension))
+                                        extension -> extensionDto.getName().equalsIgnoreCase(extension))
                                 .findAny().orElse(null);
                         if (extensionFound != null) {
                             suppliesFinal.add(supplyDto);
@@ -234,6 +248,7 @@ public class SupplyBusiness {
             suppliesFinal = suppliesDto;
         }
 
+        log.info("Returning results without pagination");
         return suppliesFinal;
     }
 
@@ -242,6 +257,21 @@ public class SupplyBusiness {
                                         Long managerCode, Long cadastralAuthority, String modelVersion, Long stateSupplyId, String name,
                                         Boolean isValid)
             throws BusinessException {
+
+        log.info("Create supply in supplies microservice started");
+
+        for (MicroserviceCreateSupplyAttachmentDto attachment : attachments) {
+            System.out.println("attachment ID: " + attachment.getAttachmentTypeId());
+            System.out.println("attachment DATA: " + attachment.getData());
+        }
+
+        final String attachmentStringId = StringUtils.join(attachments.stream()
+                .map(MicroserviceCreateSupplyAttachmentDto::getAttachmentTypeId).collect(Collectors.toList()), ",");
+
+        log.info(String.format("params: municipality=%s observations=%s typeSupplyCode=%d toManagerCode=%d " +
+                        "attachments=%s requestId=%d userCode=%d providerCode=%d managerCode=%d cadastralAuthority=%d " +
+                        "modelVersion=%s stateSupplyId=%d name=%s isValid=%s", municipalityCode, observations, typeSupplyCode, toManagerCode,
+                attachmentStringId, requestId, userCode, providerCode, managerCode, cadastralAuthority, modelVersion, stateSupplyId, name, isValid));
 
         CustomSupplyDto supplyDto;
 
@@ -268,6 +298,10 @@ public class SupplyBusiness {
 
             if (typeSupplyCode != null) {
                 createSupplyDto.setTypeSupplyCode(typeSupplyCode);
+            }
+
+            if (observations == null) {
+                createSupplyDto.setObservations("N/A");
             }
 
             createSupplyDto.setAttachments(attachments);
@@ -309,6 +343,7 @@ public class SupplyBusiness {
 
         } catch (Exception e) {
             log.error("No se ha podido crear el insumo: " + e.getMessage());
+            log.error("No se ha podido crear el insumo: " + e.getCause());
             throw new BusinessException("No se ha podido cargar el insumo");
         }
 

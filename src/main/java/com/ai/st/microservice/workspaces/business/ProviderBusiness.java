@@ -476,7 +476,9 @@ public class ProviderBusiness {
             supplyRegistral = suppliesRequestedDto.stream()
                     .filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SNR_SUPPLY_REGISTRAL))
                     .findAny().orElse(null);
-            sendToReview = (supplyRegistral != null);
+
+            sendToReview = (supplyRegistral != null && supplyRegistral.getState().getId()
+                    .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_ACCEPTED));
         }
 
         CustomRequestDto requestUpdatedDto;
@@ -1602,6 +1604,10 @@ public class ProviderBusiness {
     public void skipRevision(Long supplyRequestedId, Long userCode, MicroserviceProviderDto providerDto)
             throws BusinessException {
 
+        log.info("Skip revision started");
+
+        log.info(String.format("Params: supplyRequestedId=%d userCode=%d provider=%d", supplyRequestedId, userCode, providerDto.getId()));
+
         CustomSupplyRequestedDto supplyRequestedDto = this.getSupplyRequestedById(supplyRequestedId);
         if (supplyRequestedDto == null) {
             throw new BusinessException("El insumo solicitado no existe");
@@ -1619,6 +1625,9 @@ public class ProviderBusiness {
 
         Long requestId = supplyRequestedDto.getRequest().getId();
         String urlDocumentaryRepository = supplyRequestedDto.getUrl();
+
+        log.info("Request ID: " + requestId);
+        log.info("URL attachment: " + urlDocumentaryRepository);
 
         CustomRequestDto requestDto = this.getRequestById(requestId);
 
