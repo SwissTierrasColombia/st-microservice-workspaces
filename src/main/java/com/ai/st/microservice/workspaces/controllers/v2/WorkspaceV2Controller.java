@@ -6,23 +6,9 @@ import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.exceptions.*;
 
-import com.ai.st.microservice.workspaces.config.SCMContext;
 import com.ai.st.microservice.workspaces.dto.*;
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
-
-import static io.opentelemetry.sdk.resources.ResourceConstants.SERVICE_NAME;
-
-import com.ai.st.microservice.workspaces.services.logger.SCMLogger;
-import com.newrelic.telemetry.Attributes;
-import com.newrelic.telemetry.opentelemetry.export.NewRelicSpanExporter;
-import io.opentelemetry.OpenTelemetry;
-import io.opentelemetry.context.Scope;
-import io.opentelemetry.sdk.OpenTelemetrySdk;
-import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
-import io.opentelemetry.trace.Span;
-import io.opentelemetry.trace.Status;
-import io.opentelemetry.trace.Tracer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -50,8 +36,6 @@ import java.util.List;
 
 import javax.servlet.ServletContext;
 
-import org.apache.logging.log4j.LogManager;
-
 @Api(value = "Manage Workspaces", tags = { "Workspaces" })
 @RestController
 @RequestMapping("api/workspaces/v2/workspaces")
@@ -59,21 +43,17 @@ public class WorkspaceV2Controller {
 
     private final Logger log = LoggerFactory.getLogger(WorkspaceV2Controller.class);
 
-    private static final org.apache.logging.log4j.Logger LOGGER = LogManager.getLogger(WorkspaceV2Controller.class);
-
     private final WorkspaceBusiness workspaceBusiness;
     private final ManagerMicroserviceBusiness managerBusiness;
     private final ServletContext servletContext;
     private final AdministrationBusiness administrationBusiness;
-    private final SCMLogger scmLogger;
 
     public WorkspaceV2Controller(WorkspaceBusiness workspaceBusiness, ManagerMicroserviceBusiness managerBusiness,
-            ServletContext servletContext, AdministrationBusiness administrationBusiness, SCMLogger scmLogger) {
+            ServletContext servletContext, AdministrationBusiness administrationBusiness) {
         this.workspaceBusiness = workspaceBusiness;
         this.managerBusiness = managerBusiness;
         this.servletContext = servletContext;
         this.administrationBusiness = administrationBusiness;
-        this.scmLogger = scmLogger;
     }
 
     @GetMapping(value = "validate-municipalities-to-assign", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -114,34 +94,10 @@ public class WorkspaceV2Controller {
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> assignManager(@ModelAttribute AssignManagerDto assignManagerDto) {
-
-        SCMContext.put(SCMContext.get().withFlowName("assignManager"));
-
-        /*
-         * String apiKey = "NRII-qy_P0ztv1U5tjW9FCRhUxwtD6h32ncte"; NewRelicSpanExporter exporter =
-         * NewRelicSpanExporter.newBuilder().apiKey(apiKey) .commonAttributes(new Attributes().put(SERVICE_NAME,
-         * "WorkspaceV2Controller")).build();
-         *
-         * BatchSpanProcessor spanProcessor = BatchSpanProcessor.newBuilder(exporter).build();
-         * OpenTelemetrySdk.getTracerProvider().addSpanProcessor(spanProcessor);
-         *
-         * Tracer tracer = OpenTelemetry.getTracerProvider().get("opentel-example", "1.0");
-         *
-         * Span rootSpan = tracer.spanBuilder("assignManager").setAttribute("http.method", "POST")
-         * .setAttribute("http.url", "/assign-manager").startSpan();
-         */
-
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
-
-            // Scope scope = tracer.withSpan(rootSpan);
-
-            // Span childSpan = tracer.spanBuilder("requestAssignManager").setSpanKind(Span.Kind.CONSUMER)
-            // .setAttribute("db.name", "example").setAttribute("db.user", "postgres").startSpan();
-            // // call business logic
-            // childSpan.end();
 
             // validation manager code
             Long managerCode = assignManagerDto.getManagerCode();
@@ -193,19 +149,10 @@ public class WorkspaceV2Controller {
             log.error("Error WorkspaceV2Controller@assignManager#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
             responseDto = new BasicResponseDto(e.getMessage(), 2);
-            // rootSpan.setStatus(Status.INTERNAL.withDescription("my error example"));
         } catch (Exception e) {
             log.error("Error WorkspaceV2Controller@assignManager#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 3);
-        } catch (Throwable t) {
-            Status status = Status.UNKNOWN.withDescription("Cunning error message goes here!");
-            // rootSpan.setStatus(status);
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(t.getMessage(), 3);
-        } finally {
-            // rootSpan.end();
-            // spanProcessor.shutdown();
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
