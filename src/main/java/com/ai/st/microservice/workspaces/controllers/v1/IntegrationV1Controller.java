@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Integrations", tags = {"Integrations"})
+@Api(value = "Manage Integrations", tags = { "Integrations" })
 @RestController
 @RequestMapping("api/workspaces/v1/integrations")
 public class IntegrationV1Controller {
@@ -35,7 +35,7 @@ public class IntegrationV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public IntegrationV1Controller(ManagerMicroserviceBusiness managerBusiness, IntegrationBusiness integrationBusiness,
-                                   AdministrationBusiness administrationBusiness) {
+            AdministrationBusiness administrationBusiness) {
         this.managerBusiness = managerBusiness;
         this.integrationBusiness = integrationBusiness;
         this.administrationBusiness = administrationBusiness;
@@ -45,7 +45,7 @@ public class IntegrationV1Controller {
     @ApiOperation(value = "Get integrations")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get integrations", response = IntegrationDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getIntegrationsRunning(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -94,10 +94,10 @@ public class IntegrationV1Controller {
     @ApiOperation(value = "Get integrations")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get integrations", response = PossibleIntegrationDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> configureViewIntegration(@RequestHeader("authorization") String headerAuthorization,
-                                                           @PathVariable Long integrationId) {
+            @PathVariable Long integrationId) {
         HttpStatus httpStatus;
         Object responseDto;
 

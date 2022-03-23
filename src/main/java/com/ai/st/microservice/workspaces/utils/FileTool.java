@@ -11,37 +11,37 @@ import org.slf4j.LoggerFactory;
 
 public class FileTool {
 
-	private final static Logger log = LoggerFactory.getLogger(FileTool.class);
+    private final static Logger log = LoggerFactory.getLogger(FileTool.class);
 
-	public static File createSimpleFile(String content, String filename) {
+    public static File createSimpleFile(String content, String filename) {
 
-		File file = new File(filename);
+        File file = new File(filename);
 
-		try (Writer writer = new BufferedWriter(new FileWriter(file))) {
-			writer.write(content);
-		} catch (IOException e) {
-			log.error("Error creando archivo: " + e.getMessage());
-		}
+        try (Writer writer = new BufferedWriter(new FileWriter(file))) {
+            writer.write(content);
+        } catch (IOException e) {
+            log.error("Error creando archivo: " + e.getMessage());
+        }
 
-		return file;
-	}
+        return file;
+    }
 
-	public static String removeAccents(String str) {
+    public static String removeAccents(String str) {
 
-		final String original = "ÁáÉéÍíÓóÚúÑñÜü";
-		final String replace = "AaEeIiOoUuNnUu";
+        final String original = "ÁáÉéÍíÓóÚúÑñÜü";
+        final String replace = "AaEeIiOoUuNnUu";
 
-		if (str == null) {
-			return null;
-		}
-		char[] array = str.toCharArray();
-		for (int index = 0; index < array.length; index++) {
-			int pos = original.indexOf(array[index]);
-			if (pos > -1) {
-				array[index] = replace.charAt(pos);
-			}
-		}
-		return new String(array);
-	}
+        if (str == null) {
+            return null;
+        }
+        char[] array = str.toCharArray();
+        for (int index = 0; index < array.length; index++) {
+            int pos = original.indexOf(array[index]);
+            if (pos > -1) {
+                array[index] = replace.charAt(pos);
+            }
+        }
+        return new String(array);
+    }
 
 }

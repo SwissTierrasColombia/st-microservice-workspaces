@@ -10,87 +10,87 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value = "AssignOperatorWorkpaceDto")
 public class AssignOperatorWorkpaceDto implements Serializable {
 
-	private static final long serialVersionUID = -4217826518362864745L;
+    private static final long serialVersionUID = -4217826518362864745L;
 
-	@ApiModelProperty(required = true, notes = "Start date")
-	private String startDate;
+    @ApiModelProperty(required = true, notes = "Start date")
+    private String startDate;
 
-	@ApiModelProperty(required = true, notes = "End date")
-	private String endDate;
+    @ApiModelProperty(required = true, notes = "End date")
+    private String endDate;
 
-	@ApiModelProperty(required = true, notes = "Operator Code")
-	private Long operatorCode;
+    @ApiModelProperty(required = true, notes = "Operator Code")
+    private Long operatorCode;
 
-	@ApiModelProperty(required = false, notes = "Observations")
-	private String observations;
+    @ApiModelProperty(required = false, notes = "Observations")
+    private String observations;
 
-	@ApiModelProperty(required = true, notes = "Support file")
-	private MultipartFile supportFile;
-	
-	@ApiModelProperty(required = false, notes = "Number parcels expected")
-	private Long numberParcelsExpected;
-	
-	@ApiModelProperty(required = false, notes = "Work area")
-	private Double workArea;
+    @ApiModelProperty(required = true, notes = "Support file")
+    private MultipartFile supportFile;
 
-	public AssignOperatorWorkpaceDto() {
+    @ApiModelProperty(required = false, notes = "Number parcels expected")
+    private Long numberParcelsExpected;
 
-	}
+    @ApiModelProperty(required = false, notes = "Work area")
+    private Double workArea;
 
-	public String getStartDate() {
-		return startDate;
-	}
+    public AssignOperatorWorkpaceDto() {
 
-	public void setStartDate(String startDate) {
-		this.startDate = startDate;
-	}
+    }
 
-	public String getEndDate() {
-		return endDate;
-	}
+    public String getStartDate() {
+        return startDate;
+    }
 
-	public void setEndDate(String endDate) {
-		this.endDate = endDate;
-	}
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
+    }
 
-	public Long getOperatorCode() {
-		return operatorCode;
-	}
+    public String getEndDate() {
+        return endDate;
+    }
 
-	public void setOperatorCode(Long operatorCode) {
-		this.operatorCode = operatorCode;
-	}
+    public void setEndDate(String endDate) {
+        this.endDate = endDate;
+    }
 
-	public MultipartFile getSupportFile() {
-		return supportFile;
-	}
+    public Long getOperatorCode() {
+        return operatorCode;
+    }
 
-	public void setSupportFile(MultipartFile supportFile) {
-		this.supportFile = supportFile;
-	}
+    public void setOperatorCode(Long operatorCode) {
+        this.operatorCode = operatorCode;
+    }
 
-	public String getObservations() {
-		return observations;
-	}
+    public MultipartFile getSupportFile() {
+        return supportFile;
+    }
 
-	public void setObservations(String observations) {
-		this.observations = observations;
-	}
+    public void setSupportFile(MultipartFile supportFile) {
+        this.supportFile = supportFile;
+    }
 
-	public Long getNumberParcelsExpected() {
-		return numberParcelsExpected;
-	}
+    public String getObservations() {
+        return observations;
+    }
 
-	public void setNumberParcelsExpected(Long numberParcelsExpected) {
-		this.numberParcelsExpected = numberParcelsExpected;
-	}
+    public void setObservations(String observations) {
+        this.observations = observations;
+    }
 
-	public Double getWorkArea() {
-		return workArea;
-	}
+    public Long getNumberParcelsExpected() {
+        return numberParcelsExpected;
+    }
 
-	public void setWorkArea(Double workArea) {
-		this.workArea = workArea;
-	}
+    public void setNumberParcelsExpected(Long numberParcelsExpected) {
+        this.numberParcelsExpected = numberParcelsExpected;
+    }
+
+    public Double getWorkArea() {
+        return workArea;
+    }
+
+    public void setWorkArea(Double workArea) {
+        this.workArea = workArea;
+    }
 
 }

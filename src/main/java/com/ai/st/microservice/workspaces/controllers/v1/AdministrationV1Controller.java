@@ -27,7 +27,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Users-Roles", tags = {"Administration"})
+@Api(value = "Manage Users-Roles", tags = { "Administration" })
 @RestController
 @RequestMapping("api/workspaces/v1/administration")
 public class AdministrationV1Controller {
@@ -40,8 +40,8 @@ public class AdministrationV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public AdministrationV1Controller(AdministratorMicroserviceBusiness administrationBusiness,
-                                      ManagerMicroserviceBusiness managerBusiness, ProviderBusiness providerBusiness,
-                                      AdministrationBusiness administrationBusiness1) {
+            ManagerMicroserviceBusiness managerBusiness, ProviderBusiness providerBusiness,
+            AdministrationBusiness administrationBusiness1) {
         this.administrationMicroserviceBusiness = administrationBusiness;
         this.managerBusiness = managerBusiness;
         this.providerBusiness = providerBusiness;
@@ -50,11 +50,11 @@ public class AdministrationV1Controller {
 
     @PostMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create user")
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> createUser(@RequestBody CreateUserDto requestCreateUser,
-                                             @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -70,7 +70,8 @@ public class AdministrationV1Controller {
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
                 responseDto = administrationMicroserviceBusiness.createUser(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
-                        requestCreateUser.getPassword(), true, null, requestCreateUser.getRoleAdministrator(), null, null);
+                        requestCreateUser.getPassword(), true, null, requestCreateUser.getRoleAdministrator(), null,
+                        null);
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
@@ -79,11 +80,11 @@ public class AdministrationV1Controller {
                     requestCreateUser.getRoleProvider().setFromAdministrator(true);
                 }
 
-                responseDto = administrationMicroserviceBusiness.createUserFromAdministrator(requestCreateUser.getFirstName(),
-                        requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
-                        requestCreateUser.getPassword(), requestCreateUser.getRoleProvider(),
-                        requestCreateUser.getRoleAdministrator(), requestCreateUser.getRoleManager(),
-                        requestCreateUser.getRoleOperator());
+                responseDto = administrationMicroserviceBusiness.createUserFromAdministrator(
+                        requestCreateUser.getFirstName(), requestCreateUser.getLastName(), requestCreateUser.getEmail(),
+                        requestCreateUser.getUsername(), requestCreateUser.getPassword(),
+                        requestCreateUser.getRoleProvider(), requestCreateUser.getRoleAdministrator(),
+                        requestCreateUser.getRoleManager(), requestCreateUser.getRoleOperator());
             }
 
             if (administrationBusiness.isManager(userDtoSession)) {
@@ -109,7 +110,8 @@ public class AdministrationV1Controller {
 
                 requestCreateUser.getRoleProvider().setFromAdministrator(false);
 
-                MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+                MicroserviceProviderDto providerDto = providerBusiness
+                        .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
                 }
@@ -119,9 +121,10 @@ public class AdministrationV1Controller {
 
                 requestCreateUser.getRoleProvider().setProviderId(providerDto.getId());
 
-                responseDto = administrationMicroserviceBusiness.createUserFromProvider(requestCreateUser.getFirstName(),
-                        requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
-                        requestCreateUser.getPassword(), requestCreateUser.getRoleProvider());
+                responseDto = administrationMicroserviceBusiness.createUserFromProvider(
+                        requestCreateUser.getFirstName(), requestCreateUser.getLastName(), requestCreateUser.getEmail(),
+                        requestCreateUser.getUsername(), requestCreateUser.getPassword(),
+                        requestCreateUser.getRoleProvider());
 
             }
 
@@ -142,11 +145,11 @@ public class AdministrationV1Controller {
 
     @PostMapping(value = "/users/reset-password", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Change password user")
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> resetUserPassword(@RequestBody ChangePasswordDto requestChangePassword,
-                                                    @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -182,12 +185,11 @@ public class AdministrationV1Controller {
 
     @PutMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Update user", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Update user", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> updateUser(@PathVariable Long userId,
-                                             @RequestBody UpdateUserDto requestUpdateUser,
-                                             @RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<Object> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDto requestUpdateUser,
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -201,13 +203,15 @@ public class AdministrationV1Controller {
             }
 
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
-                responseDto = administrationMicroserviceBusiness.updateUserFromSuperAdmin(userId, requestUpdateUser.getFirstName(),
-                        requestUpdateUser.getLastName(), requestUpdateUser.getEmail());
+                responseDto = administrationMicroserviceBusiness.updateUserFromSuperAdmin(userId,
+                        requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(),
+                        requestUpdateUser.getEmail());
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
                 responseDto = administrationMicroserviceBusiness.updateUserFromAdministrator(userId,
-                        requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail());
+                        requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(),
+                        requestUpdateUser.getEmail());
             }
 
             if (administrationBusiness.isManager(userDtoSession)) {
@@ -221,15 +225,17 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.updateUserFromManager(userId, requestUpdateUser.getFirstName(),
-                        requestUpdateUser.getLastName(), requestUpdateUser.getEmail(), managerDto.getId());
+                responseDto = administrationMicroserviceBusiness.updateUserFromManager(userId,
+                        requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail(),
+                        managerDto.getId());
 
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get providers
-                MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+                MicroserviceProviderDto providerDto = providerBusiness
+                        .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
                 }
@@ -237,8 +243,9 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.updateUserFromProvider(userId, requestUpdateUser.getFirstName(),
-                        requestUpdateUser.getLastName(), requestUpdateUser.getEmail(), providerDto.getId());
+                responseDto = administrationMicroserviceBusiness.updateUserFromProvider(userId,
+                        requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail(),
+                        providerDto.getId());
 
             }
 
@@ -267,11 +274,11 @@ public class AdministrationV1Controller {
 
     @PutMapping(value = "/users/{userId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "User disabled", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "User disabled", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> disableUser(@PathVariable Long userId,
-                                              @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -302,13 +309,15 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar el soporte.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, false, managerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, false,
+                        managerDto.getId());
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
-                MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+                MicroserviceProviderDto providerDto = providerBusiness
+                        .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
                 }
@@ -316,7 +325,8 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar usuarios.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, false, providerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, false,
+                        providerDto.getId());
 
             }
 
@@ -345,11 +355,11 @@ public class AdministrationV1Controller {
 
     @PutMapping(value = "/users/{userId}/enable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Enable user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "User enabled", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "User enabled", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> enableUser(@PathVariable Long userId,
-                                             @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -381,13 +391,15 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, true, managerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, true,
+                        managerDto.getId());
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
-                MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+                MicroserviceProviderDto providerDto = providerBusiness
+                        .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
                 }
@@ -395,7 +407,8 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, true, providerDto.getId());
+                responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, true,
+                        providerDto.getId());
 
             }
 
@@ -424,8 +437,8 @@ public class AdministrationV1Controller {
 
     @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get users")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Get users", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get users", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getUsers(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -466,7 +479,8 @@ public class AdministrationV1Controller {
             if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
-                MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+                MicroserviceProviderDto providerDto = providerBusiness
+                        .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
                 }
@@ -503,11 +517,11 @@ public class AdministrationV1Controller {
 
     @PostMapping(value = "/users/{userId}/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Add profile to user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> addProfileToUser(@RequestHeader("authorization") String headerAuthorization,
-                                                   @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
+            @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -528,27 +542,30 @@ public class AdministrationV1Controller {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-                    throw new InputValidationException("El usuario no tiene permisos para agregar perfiles a los usuarios.");
+                    throw new InputValidationException(
+                            "El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.addProfileToUserFromManager(userId, addProfileUser.getProfileId(),
-                        managerDto.getId());
+                responseDto = administrationMicroserviceBusiness.addProfileToUserFromManager(userId,
+                        addProfileUser.getProfileId(), managerDto.getId());
 
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
-                MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+                MicroserviceProviderDto providerDto = providerBusiness
+                        .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
                 }
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
-                    throw new InputValidationException("El usuario no tiene permisos para agregar perfiles a los usuarios.");
+                    throw new InputValidationException(
+                            "El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
 
-                responseDto = administrationMicroserviceBusiness.addProfileToUserFromProvider(userId, addProfileUser.getProfileId(),
-                        providerDto.getId());
+                responseDto = administrationMicroserviceBusiness.addProfileToUserFromProvider(userId,
+                        addProfileUser.getProfileId(), providerDto.getId());
 
             }
 
@@ -577,11 +594,11 @@ public class AdministrationV1Controller {
 
     @DeleteMapping(value = "/users/{userId}/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Remove profile to user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> removeProfileToUser(@RequestHeader("authorization") String headerAuthorization,
-                                                      @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
+            @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -602,7 +619,8 @@ public class AdministrationV1Controller {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-                    throw new InputValidationException("El usuario no tiene permisos para remover perfiles a los usuarios.");
+                    throw new InputValidationException(
+                            "El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
 
                 responseDto = administrationMicroserviceBusiness.removeProfileToUserFromManager(userId,
@@ -613,12 +631,14 @@ public class AdministrationV1Controller {
             if (administrationBusiness.isProvider(userDtoSession)) {
 
                 // get provider
-                MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+                MicroserviceProviderDto providerDto = providerBusiness
+                        .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
                 }
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
-                    throw new InputValidationException("El usuario no tiene permisos para remover perfiles a los usuarios.");
+                    throw new InputValidationException(
+                            "El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
 
                 responseDto = administrationMicroserviceBusiness.removeProfileToUserFromProvider(userId,

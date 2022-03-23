@@ -33,7 +33,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Cadastral Authority Processes ", tags = {"Cadastral Authority"})
+@Api(value = "Manage Cadastral Authority Processes ", tags = { "Cadastral Authority" })
 @RestController
 @RequestMapping("api/workspaces/v1/cadastral-authority")
 public class CadastralAuthorityV1Controller {
@@ -44,8 +44,8 @@ public class CadastralAuthorityV1Controller {
     private final ServletContext servletContext;
     private final AdministrationBusiness administrationBusiness;
 
-    public CadastralAuthorityV1Controller(CadastralAuthorityBusiness cadastralAuthorityBusiness, ServletContext servletContext,
-                                          AdministrationBusiness administrationBusiness) {
+    public CadastralAuthorityV1Controller(CadastralAuthorityBusiness cadastralAuthorityBusiness,
+            ServletContext servletContext, AdministrationBusiness administrationBusiness) {
         this.cadastralAuthorityBusiness = cadastralAuthorityBusiness;
         this.servletContext = servletContext;
         this.administrationBusiness = administrationBusiness;
@@ -53,14 +53,13 @@ public class CadastralAuthorityV1Controller {
 
     @PostMapping(value = "/supplies/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create supply (cadastral authority)")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Supply created", response = CustomSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Supply created", response = CustomSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> createSupply(@PathVariable Long municipalityId,
-                                               @RequestHeader("authorization") String headerAuthorization,
-                                               @RequestParam(name = "file", required = false) MultipartFile file,
-                                               @ModelAttribute CreateSupplyCadastralAuthorityDto supplyCadastralAuthorityDto) {
+            @RequestHeader("authorization") String headerAuthorization,
+            @RequestParam(name = "file", required = false) MultipartFile file,
+            @ModelAttribute CreateSupplyCadastralAuthorityDto supplyCadastralAuthorityDto) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -97,8 +96,9 @@ public class CadastralAuthorityV1Controller {
                 throw new InputValidationException("Las observaciones son requeridas.");
             }
 
-            responseDto = cadastralAuthorityBusiness.createSupplyCadastralAuthority(municipalityId, managerCode, attachmentTypeId,
-                    name, observations, supplyCadastralAuthorityDto.getFtp(), file, userDtoSession.getId());
+            responseDto = cadastralAuthorityBusiness.createSupplyCadastralAuthority(municipalityId, managerCode,
+                    attachmentTypeId, name, observations, supplyCadastralAuthorityDto.getFtp(), file,
+                    userDtoSession.getId());
             httpStatus = HttpStatus.CREATED;
 
         } catch (DisconnectedMicroserviceException e) {
@@ -124,12 +124,11 @@ public class CadastralAuthorityV1Controller {
 
     @GetMapping(value = "/report/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create report (cadastral authority)")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Supply created", response = CustomSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Supply created", response = CustomSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> downloadReport(@PathVariable Long municipalityId,
-                                                 @RequestParam(name = "manager") Long managerCode) {
+            @RequestParam(name = "manager") Long managerCode) {
 
         MediaType mediaType;
         File file;

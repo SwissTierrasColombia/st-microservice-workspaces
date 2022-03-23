@@ -10,9 +10,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@EnableFeignClients(basePackages = {"com.ai.st.microservice.common.clients", "com.ai.st.microservice.workspaces.clients"})
+@EnableFeignClients(basePackages = { "com.ai.st.microservice.common.clients", "com.ai.st.microservice.workspaces" })
 @EnableEurekaClient
-@ComponentScan(value = {"com.ai.st.microservice.common.business", "com.ai.st.microservice.workspaces"})
+@ComponentScan(value = { "com.ai.st.microservice.common.business", "com.ai.st.microservice.workspaces" })
+
 public class StMicroserviceWorkspacesApplication {
 
     public static void main(String[] args) {

@@ -25,7 +25,7 @@ public final class CustomUserDto extends MicroserviceUserDto {
     }
 
     public CustomUserDto(Long id, String firstName, String lastName, String email, String username, String password,
-                         Boolean enabled, Date createdAt, Date updatedAt, List<MicroserviceRoleDto> roles) {
+            Boolean enabled, Date createdAt, Date updatedAt, List<MicroserviceRoleDto> roles) {
         super();
         this.setId(id);
         this.setFirstName(firstName);

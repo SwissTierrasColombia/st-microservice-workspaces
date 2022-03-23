@@ -25,7 +25,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Petitions", tags = {"Petitions"})
+@Api(value = "Manage Petitions", tags = { "Petitions" })
 @RestController
 @RequestMapping("api/workspaces/v1/petitions")
 public class PetitionV1Controller {
@@ -37,7 +37,7 @@ public class PetitionV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public PetitionV1Controller(ManagerMicroserviceBusiness managerBusiness, ProviderBusiness providerBusiness,
-                                AdministrationBusiness administrationBusiness) {
+            AdministrationBusiness administrationBusiness) {
         this.managerBusiness = managerBusiness;
         this.providerBusiness = providerBusiness;
         this.administrationBusiness = administrationBusiness;
@@ -45,12 +45,11 @@ public class PetitionV1Controller {
 
     @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create petition")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Petition created", response = CustomPetitionDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Petition created", response = CustomPetitionDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> createPetition(@RequestBody CreatePetitionDto requestCreatePetition,
-                                                 @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -112,10 +111,10 @@ public class PetitionV1Controller {
     @ApiOperation(value = "Get petitions for manager")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForManager(@RequestHeader("authorization") String headerAuthorization,
-                                                         @RequestParam(name = "provider", required = false) Long providerId) {
+            @RequestParam(name = "provider", required = false) Long providerId) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -162,9 +161,10 @@ public class PetitionV1Controller {
     @ApiOperation(value = "Get petitions for provider (open)")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getPetitionsForProviderOpen(@RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<Object> getPetitionsForProviderOpen(
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -178,7 +178,8 @@ public class PetitionV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -210,7 +211,7 @@ public class PetitionV1Controller {
     @ApiOperation(value = "Get petitions for provider (close)")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Petitions got", response = CustomPetitionDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getPetitionsForProviderClose(
             @RequestHeader("authorization") String headerAuthorization) {
@@ -258,12 +259,11 @@ public class PetitionV1Controller {
 
     @PutMapping(value = "/{petitionId}/accept", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update petition")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> acceptPetition(@RequestBody UpdatePetitionDto requestUpdatePetition,
-                                                 @PathVariable Long petitionId, @RequestHeader("authorization") String headerAuthorization) {
+            @PathVariable Long petitionId, @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -277,7 +277,8 @@ public class PetitionV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -286,7 +287,8 @@ public class PetitionV1Controller {
             }
 
             // validate description
-            if (requestUpdatePetition.getJustification() == null || requestUpdatePetition.getJustification().isEmpty()) {
+            if (requestUpdatePetition.getJustification() == null
+                    || requestUpdatePetition.getJustification().isEmpty()) {
                 throw new InputValidationException("La justificación es requerida");
             }
 
@@ -317,12 +319,11 @@ public class PetitionV1Controller {
 
     @PutMapping(value = "/{petitionId}/reject", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update petition")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Petition updated", response = CustomPetitionDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> rejectPetition(@RequestBody UpdatePetitionDto requestUpdatePetition,
-                                                 @PathVariable Long petitionId, @RequestHeader("authorization") String headerAuthorization) {
+            @PathVariable Long petitionId, @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -336,7 +337,8 @@ public class PetitionV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -345,7 +347,8 @@ public class PetitionV1Controller {
             }
 
             // validate description
-            if (requestUpdatePetition.getJustification() == null || requestUpdatePetition.getJustification().isEmpty()) {
+            if (requestUpdatePetition.getJustification() == null
+                    || requestUpdatePetition.getJustification().isEmpty()) {
                 throw new InputValidationException("La justificación es requerida");
             }
 

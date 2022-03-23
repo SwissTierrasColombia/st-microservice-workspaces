@@ -38,9 +38,10 @@ public class RabbitMQUpdateIntegrationListener {
     private final IIntegrationStateService integrationStateService;
     private final AdministrationBusiness administrationBusiness;
 
-    public RabbitMQUpdateIntegrationListener(IntegrationBusiness integrationBusiness, NotificationBusiness notificationBusiness,
-                                             ManagerMicroserviceBusiness managerBusiness, IIntegrationService integrationService,
-                                             IIntegrationStateService integrationStateService, AdministrationBusiness administrationBusiness) {
+    public RabbitMQUpdateIntegrationListener(IntegrationBusiness integrationBusiness,
+            NotificationBusiness notificationBusiness, ManagerMicroserviceBusiness managerBusiness,
+            IIntegrationService integrationService, IIntegrationStateService integrationStateService,
+            AdministrationBusiness administrationBusiness) {
         this.integrationBusiness = integrationBusiness;
         this.notificationBusiness = notificationBusiness;
         this.managerBusiness = managerBusiness;
@@ -78,7 +79,8 @@ public class RabbitMQUpdateIntegrationListener {
                 WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
                 MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-                List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(integrationEntity.getManagerCode(),
+                List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
+                        integrationEntity.getManagerCode(),
                         new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
                 for (MicroserviceManagerUserDto directorDto : directors) {
@@ -106,8 +108,8 @@ public class RabbitMQUpdateIntegrationListener {
                 logErrors = errors.toString();
             }
 
-            integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, logErrors, null, null,
-                    "SISTEMA");
+            integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, logErrors, null,
+                    null, "SISTEMA");
 
         } catch (Exception e) {
             log.error("Error RabbitMQUpdateIntegrationListener@updateIntegration#Business ---> " + e.getMessage());

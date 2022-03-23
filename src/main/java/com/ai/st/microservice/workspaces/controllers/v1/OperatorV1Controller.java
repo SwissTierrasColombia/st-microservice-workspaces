@@ -33,7 +33,7 @@ import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@Api(value = "Manage Operators", tags = {"Operators"})
+@Api(value = "Manage Operators", tags = { "Operators" })
 @RestController
 @RequestMapping("api/workspaces/v1/operators")
 public class OperatorV1Controller {
@@ -46,7 +46,7 @@ public class OperatorV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public OperatorV1Controller(WorkspaceOperatorBusiness workspaceOperatorBusiness, ServletContext servletContext,
-                                OperatorMicroserviceBusiness operatorBusiness, AdministrationBusiness administrationBusiness) {
+            OperatorMicroserviceBusiness operatorBusiness, AdministrationBusiness administrationBusiness) {
         this.workspaceOperatorBusiness = workspaceOperatorBusiness;
         this.servletContext = servletContext;
         this.operatorBusiness = operatorBusiness;
@@ -55,12 +55,11 @@ public class OperatorV1Controller {
 
     @PutMapping(value = "/deliveries/{deliveryId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable delivery")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Delivery disabled", response = CustomDeliveryDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Delivery disabled", response = CustomDeliveryDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> disableDelivery(@PathVariable Long deliveryId,
-                                                  @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -101,11 +100,11 @@ public class OperatorV1Controller {
 
     @GetMapping(value = "/deliveries/{deliveryId}/reports-individual/{supplyId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Download report individual")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Download report individual"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Download report individual"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> reportDownloadSupplyIndividual(@PathVariable Long deliveryId, @PathVariable Long supplyId,
-                                                            @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         MediaType mediaType;
         File file;
@@ -160,11 +159,11 @@ public class OperatorV1Controller {
 
     @GetMapping(value = "/deliveries/{deliveryId}/reports-total", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Download report total")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Download report total"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Download report total"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> reportDownloadSupplyTotal(@PathVariable Long deliveryId,
-                                                       @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         MediaType mediaType;
         File file;

@@ -21,7 +21,7 @@ public class NotificationBusiness {
     }
 
     public void sendNotificationCreationUser(String email, String password, String profile, String user,
-                                             Long userCode) {
+            Long userCode) {
 
         try {
 
@@ -43,7 +43,7 @@ public class NotificationBusiness {
     }
 
     public void sendNotificationCreationSinicUser(String email, String password, String profile, String user,
-                                             Long userCode) {
+            Long userCode) {
 
         try {
 
@@ -64,8 +64,8 @@ public class NotificationBusiness {
 
     }
 
-    public void sendNotificationMunicipalityManagementDto(String email, String department, String municipality, Date startDate,
-                                                          Long userCode, String supportFile) {
+    public void sendNotificationMunicipalityManagementDto(String email, String department, String municipality,
+            Date startDate, Long userCode, String supportFile) {
 
         try {
 
@@ -89,7 +89,7 @@ public class NotificationBusiness {
     }
 
     public void sendNotificationAssignmentOperation(String email, Long userCode, String manager, String municipality,
-                                                    String department, Date requestDateFrom, Date requestDateTo, String supportFile) {
+            String department, Date requestDateFrom, Date requestDateTo, String supportFile) {
 
         try {
 
@@ -115,8 +115,8 @@ public class NotificationBusiness {
 
     }
 
-    public void sendNotificationInputRequest(String email, Long userCode, String manager, String municipality, String department,
-                                             String requestNumber, Date requestDate) {
+    public void sendNotificationInputRequest(String email, Long userCode, String manager, String municipality,
+            String department, String requestNumber, Date requestDate) {
 
         try {
 
@@ -140,8 +140,8 @@ public class NotificationBusiness {
 
     }
 
-    public void sendNotificationLoadOfInputs(String email, Long userCode, boolean loadStatus, String municipality, String department,
-                                             String requestNumber, Date loadDate, String supportFile) {
+    public void sendNotificationLoadOfInputs(String email, Long userCode, boolean loadStatus, String municipality,
+            String department, String requestNumber, Date loadDate, String supportFile) {
 
         try {
 
@@ -166,8 +166,8 @@ public class NotificationBusiness {
 
     }
 
-    public void sendNotificationInputIntegrations(String email, Long userCode, String integrationStatus, String municipality,
-                                                  String department, Date integrationDate) {
+    public void sendNotificationInputIntegrations(String email, Long userCode, String integrationStatus,
+            String municipality, String department, Date integrationDate) {
 
         try {
 
@@ -190,8 +190,8 @@ public class NotificationBusiness {
 
     }
 
-    public void sendNotificationTaskAssignment(String email, Long userCode, String task, String municipality, String department,
-                                               Date taskDate) {
+    public void sendNotificationTaskAssignment(String email, Long userCode, String task, String municipality,
+            String department, Date taskDate) {
 
         try {
 
@@ -215,7 +215,7 @@ public class NotificationBusiness {
     }
 
     public void sendNotificationProductGenerated(String email, Long userCode, String municipality, String department,
-                                                 Date requestDate) {
+            Date requestDate) {
 
         try {
 
@@ -237,8 +237,8 @@ public class NotificationBusiness {
 
     }
 
-    public void sendNotificationDeliverySupplies(String email, Long userCode, String manager, String municipality, String department,
-                                                 String supportFile, Date requestDate) {
+    public void sendNotificationDeliverySupplies(String email, Long userCode, String manager, String municipality,
+            String department, String supportFile, Date requestDate) {
 
         try {
 

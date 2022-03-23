@@ -59,7 +59,7 @@ public class DatabaseIntegrationBusiness {
     }
 
     public void protectedDatabase(String host, String port, String database, String schema, String username,
-                                  String password) throws BusinessException {
+            String password) throws BusinessException {
 
         try {
 
@@ -179,7 +179,8 @@ public class DatabaseIntegrationBusiness {
 
     }
 
-    public void createParcelIntegratedView(String host, String port, String database, String schema, String viewName) throws BusinessException {
+    public void createParcelIntegratedView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
 
         try {
 
@@ -187,47 +188,29 @@ public class DatabaseIntegrationBusiness {
 
             Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
-            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName +
-                    " AS SELECT pc.t_id AS id,\n" +
-                    "    pc.numero_predial,\n" +
-                    "        CASE\n" +
-                    "            WHEN pc.nupre IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE pc.nupre\n" +
-                    "        END AS nupre,\n" +
-                    "    pc.circulo_registral,\n" +
-                    "    pc.matricula_inmobiliaria_catastro,\n" +
-                    "        CASE\n" +
-                    "            WHEN r.valor IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE r.valor\n" +
-                    "        END AS direccion,\n" +
-                    "    pc.tipo_predio,\n" +
-                    "    cpt.dispname AS condicion_predio,\n" +
-                    "        CASE\n" +
-                    "            WHEN ep.estado_alerta IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE ep.estado_alerta\n" +
-                    "        END AS estado_predio,\n" +
-                    "    t.geometria,\n" +
-                    "    t.area_terreno_alfanumerica,\n" +
-                    "    t.area_terreno_digital,\n" +
-                    "        CASE\n" +
-                    "            WHEN ipi.t_id IS NULL THEN false\n" +
-                    "            ELSE true\n" +
-                    "        END AS cruzo\n" +
-                    "   FROM " + schema + ".gc_prediocatastro pc\n" +
-                    "     JOIN " + schema + ".gc_terreno t ON t.gc_predio = pc.t_id AND t.geometria IS NOT NULL\n" +
-                    "     LEFT JOIN " + schema + ".ini_predioinsumos ipi ON ipi.gc_predio_catastro = pc.t_id\n" +
-                    "     LEFT JOIN " + schema + ".gc_condicionprediotipo cpt ON cpt.t_id = pc.condicion_predio\n" +
-                    "     LEFT JOIN " + schema + ".gc_estadopredio ep ON ep.gc_prediocatastro_estado_predio = pc.t_id\n" +
-                    "     LEFT JOIN LATERAL ( SELECT r_1.t_id,\n" +
-                    "            r_1.t_seq,\n" +
-                    "            r_1.valor,\n" +
-                    "            r_1.principal,\n" +
-                    "            r_1.geometria_referencia,\n" +
-                    "            r_1.gc_prediocatastro_direcciones\n" +
-                    "           FROM " + schema + ".gc_direccion r_1\n" +
-                    "          WHERE pc.t_id = r_1.gc_prediocatastro_direcciones\n" +
-                    "         LIMIT 1) r ON true\n" +
-                    "  ORDER BY pc.t_id;");
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT pc.t_id AS id,\n" + "    pc.numero_predial,\n" + "        CASE\n"
+                    + "            WHEN pc.nupre IS NULL THEN 'NA'::character varying\n" + "            ELSE pc.nupre\n"
+                    + "        END AS nupre,\n" + "    pc.circulo_registral,\n"
+                    + "    pc.matricula_inmobiliaria_catastro,\n" + "        CASE\n"
+                    + "            WHEN r.valor IS NULL THEN 'NA'::character varying\n" + "            ELSE r.valor\n"
+                    + "        END AS direccion,\n" + "    pc.tipo_predio,\n"
+                    + "    cpt.dispname AS condicion_predio,\n" + "        CASE\n"
+                    + "            WHEN ep.estado_alerta IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE ep.estado_alerta\n" + "        END AS estado_predio,\n" + "    t.geometria,\n"
+                    + "    t.area_terreno_alfanumerica,\n" + "    t.area_terreno_digital,\n" + "        CASE\n"
+                    + "            WHEN ipi.t_id IS NULL THEN false\n" + "            ELSE true\n"
+                    + "        END AS cruzo\n" + "   FROM " + schema + ".gc_prediocatastro pc\n" + "     JOIN " + schema
+                    + ".gc_terreno t ON t.gc_predio = pc.t_id AND t.geometria IS NOT NULL\n" + "     LEFT JOIN "
+                    + schema + ".ini_predioinsumos ipi ON ipi.gc_predio_catastro = pc.t_id\n" + "     LEFT JOIN "
+                    + schema + ".gc_condicionprediotipo cpt ON cpt.t_id = pc.condicion_predio\n" + "     LEFT JOIN "
+                    + schema + ".gc_estadopredio ep ON ep.gc_prediocatastro_estado_predio = pc.t_id\n"
+                    + "     LEFT JOIN LATERAL ( SELECT r_1.t_id,\n" + "            r_1.t_seq,\n"
+                    + "            r_1.valor,\n" + "            r_1.principal,\n"
+                    + "            r_1.geometria_referencia,\n" + "            r_1.gc_prediocatastro_direcciones\n"
+                    + "           FROM " + schema + ".gc_direccion r_1\n"
+                    + "          WHERE pc.t_id = r_1.gc_prediocatastro_direcciones\n" + "         LIMIT 1) r ON true\n"
+                    + "  ORDER BY pc.t_id;");
             stmt1.execute();
 
         } catch (Exception e) {
@@ -237,7 +220,8 @@ public class DatabaseIntegrationBusiness {
 
     }
 
-    public void createPerimeterView(String host, String port, String database, String schema, String viewName) throws BusinessException {
+    public void createPerimeterView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
 
         try {
 
@@ -245,31 +229,19 @@ public class DatabaseIntegrationBusiness {
 
             Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
-            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName +
-                    " AS SELECT\n" +
-                    "        CASE\n" +
-                    "            WHEN p.codigo_departamento IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE p.codigo_departamento\n" +
-                    "        END AS codigo_departamento,\n" +
-                    "        CASE\n" +
-                    "            WHEN p.codigo_municipio IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE p.codigo_municipio\n" +
-                    "        END AS codigo_municipio,\n" +
-                    "        CASE\n" +
-                    "            WHEN p.tipo_avaluo IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE p.tipo_avaluo\n" +
-                    "        END AS tipo_avaluo,\n" +
-                    "        CASE\n" +
-                    "            WHEN p.nombre_geografico IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE p.nombre_geografico\n" +
-                    "        END AS nombre_geografico,\n" +
-                    "        CASE\n" +
-                    "            WHEN p.codigo_nombre IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE p.codigo_nombre\n" +
-                    "        END AS codigo_nombre,\n" +
-                    "    p.geometria\n" +
-                    "   FROM " + schema + ".gc_perimetro p\n" +
-                    "  WHERE p.geometria IS NOT NULL;");
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT\n" + "        CASE\n"
+                    + "            WHEN p.codigo_departamento IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.codigo_departamento\n" + "        END AS codigo_departamento,\n"
+                    + "        CASE\n" + "            WHEN p.codigo_municipio IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.codigo_municipio\n" + "        END AS codigo_municipio,\n" + "        CASE\n"
+                    + "            WHEN p.tipo_avaluo IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.tipo_avaluo\n" + "        END AS tipo_avaluo,\n" + "        CASE\n"
+                    + "            WHEN p.nombre_geografico IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.nombre_geografico\n" + "        END AS nombre_geografico,\n"
+                    + "        CASE\n" + "            WHEN p.codigo_nombre IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.codigo_nombre\n" + "        END AS codigo_nombre,\n" + "    p.geometria\n"
+                    + "   FROM " + schema + ".gc_perimetro p\n" + "  WHERE p.geometria IS NOT NULL;");
             stmt1.execute();
 
         } catch (Exception e) {
@@ -279,7 +251,8 @@ public class DatabaseIntegrationBusiness {
 
     }
 
-    public void createSidewalkView(String host, String port, String database, String schema, String viewName) throws BusinessException {
+    public void createSidewalkView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
 
         try {
 
@@ -287,27 +260,17 @@ public class DatabaseIntegrationBusiness {
 
             Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
-            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName +
-                    " AS SELECT\n" +
-                    "        CASE\n" +
-                    "            WHEN v.codigo IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE v.codigo\n" +
-                    "        END AS codigo,\n" +
-                    "        CASE\n" +
-                    "            WHEN v.codigo_anterior IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE v.codigo_anterior\n" +
-                    "        END AS codigo_anterior,\n" +
-                    "        CASE\n" +
-                    "            WHEN v.nombre IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE v.nombre\n" +
-                    "        END AS nombre,\n" +
-                    "        CASE\n" +
-                    "            WHEN v.codigo_sector IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE v.codigo_sector\n" +
-                    "        END AS codigo_sector,\n" +
-                    "    v.geometria\n" +
-                    "   FROM " + schema + ".gc_vereda v\n" +
-                    "  WHERE v.geometria IS NOT NULL;");
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT\n" + "        CASE\n"
+                    + "            WHEN v.codigo IS NULL THEN 'NA'::character varying\n" + "            ELSE v.codigo\n"
+                    + "        END AS codigo,\n" + "        CASE\n"
+                    + "            WHEN v.codigo_anterior IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE v.codigo_anterior\n" + "        END AS codigo_anterior,\n" + "        CASE\n"
+                    + "            WHEN v.nombre IS NULL THEN 'NA'::character varying\n" + "            ELSE v.nombre\n"
+                    + "        END AS nombre,\n" + "        CASE\n"
+                    + "            WHEN v.codigo_sector IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE v.codigo_sector\n" + "        END AS codigo_sector,\n" + "    v.geometria\n"
+                    + "   FROM " + schema + ".gc_vereda v\n" + "  WHERE v.geometria IS NOT NULL;");
             stmt1.execute();
 
         } catch (Exception e) {
@@ -317,7 +280,8 @@ public class DatabaseIntegrationBusiness {
 
     }
 
-    public void createBuildingView(String host, String port, String database, String schema, String viewName) throws BusinessException {
+    public void createBuildingView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
 
         try {
 
@@ -325,20 +289,14 @@ public class DatabaseIntegrationBusiness {
 
             Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
-            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName +
-                    " AS SELECT c.t_id AS id,\n" +
-                    "    c.gc_predio AS id_predio,\n" +
-                    "        CASE\n" +
-                    "            WHEN c.etiqueta IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE c.etiqueta\n" +
-                    "        END AS etiqueta,\n" +
-                    "    uct.dispname AS tipo_construccion,\n" +
-                    "    c.tipo_dominio,\n" +
-                    "    c.area_construida,\n" +
-                    "    c.geometria\n" +
-                    "   FROM " + schema + ".gc_construccion c\n" +
-                    "     LEFT JOIN " + schema + ".gc_unidadconstrucciontipo uct ON uct.t_id = c.tipo_construccion\n" +
-                    "  WHERE c.geometria IS NOT NULL;");
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT c.t_id AS id,\n" + "    c.gc_predio AS id_predio,\n" + "        CASE\n"
+                    + "            WHEN c.etiqueta IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE c.etiqueta\n" + "        END AS etiqueta,\n"
+                    + "    uct.dispname AS tipo_construccion,\n" + "    c.tipo_dominio,\n" + "    c.area_construida,\n"
+                    + "    c.geometria\n" + "   FROM " + schema + ".gc_construccion c\n" + "     LEFT JOIN " + schema
+                    + ".gc_unidadconstrucciontipo uct ON uct.t_id = c.tipo_construccion\n"
+                    + "  WHERE c.geometria IS NOT NULL;");
             stmt1.execute();
 
         } catch (Exception e) {
@@ -348,7 +306,8 @@ public class DatabaseIntegrationBusiness {
 
     }
 
-    public void createBuildingUnitsView(String host, String port, String database, String schema, String viewName) throws BusinessException {
+    public void createBuildingUnitsView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
 
         try {
 
@@ -356,24 +315,17 @@ public class DatabaseIntegrationBusiness {
 
             Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
-            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName +
-                    " AS SELECT uc.t_id AS id,\n" +
-                    "        CASE\n" +
-                    "            WHEN uc.etiqueta IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE uc.etiqueta\n" +
-                    "        END AS etiqueta,\n" +
-                    "        CASE\n" +
-                    "            WHEN uc.tipo_dominio IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE uc.tipo_dominio\n" +
-                    "        END AS tipo_dominio,\n" +
-                    "    uct.dispname AS tipo_construccion,\n" +
-                    "    uc.total_habitaciones,\n" +
-                    "    uc.total_banios,\n" +
-                    "    uc.total_pisos,\n" +
-                    "    uc.geometria\n" +
-                    "   FROM " + schema + ".gc_unidadconstruccion uc\n" +
-                    "     LEFT JOIN " + schema + ".gc_unidadconstrucciontipo uct ON uct.t_id = uc.tipo_construccion\n" +
-                    "  WHERE uc.geometria IS NOT NULL;");
+            PreparedStatement stmt1 = connection.prepareStatement(
+                    "CREATE OR REPLACE VIEW " + schema + "." + viewName + " AS SELECT uc.t_id AS id,\n"
+                            + "        CASE\n" + "            WHEN uc.etiqueta IS NULL THEN 'NA'::character varying\n"
+                            + "            ELSE uc.etiqueta\n" + "        END AS etiqueta,\n" + "        CASE\n"
+                            + "            WHEN uc.tipo_dominio IS NULL THEN 'NA'::character varying\n"
+                            + "            ELSE uc.tipo_dominio\n" + "        END AS tipo_dominio,\n"
+                            + "    uct.dispname AS tipo_construccion,\n" + "    uc.total_habitaciones,\n"
+                            + "    uc.total_banios,\n" + "    uc.total_pisos,\n" + "    uc.geometria\n" + "   FROM "
+                            + schema + ".gc_unidadconstruccion uc\n" + "     LEFT JOIN " + schema
+                            + ".gc_unidadconstrucciontipo uct ON uct.t_id = uc.tipo_construccion\n"
+                            + "  WHERE uc.geometria IS NOT NULL;");
             stmt1.execute();
 
         } catch (Exception e) {
@@ -383,7 +335,8 @@ public class DatabaseIntegrationBusiness {
 
     }
 
-    public void createSquareView(String host, String port, String database, String schema, String viewName) throws BusinessException {
+    public void createSquareView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
 
         try {
 
@@ -391,23 +344,15 @@ public class DatabaseIntegrationBusiness {
 
             Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
-            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName +
-                    " AS SELECT\n" +
-                    "        CASE\n" +
-                    "            WHEN m.codigo IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE m.codigo\n" +
-                    "        END AS codigo,\n" +
-                    "        CASE\n" +
-                    "            WHEN m.codigo_anterior IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE m.codigo_anterior\n" +
-                    "        END AS codigo_anterior,\n" +
-                    "        CASE\n" +
-                    "            WHEN m.codigo_barrio IS NULL THEN 'NA'::character varying\n" +
-                    "            ELSE m.codigo_barrio\n" +
-                    "        END AS codigo_barrio,\n" +
-                    "    m.geometria\n" +
-                    "   FROM " + schema + ".gc_manzana m\n" +
-                    "  WHERE m.geometria IS NOT NULL;");
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT\n" + "        CASE\n"
+                    + "            WHEN m.codigo IS NULL THEN 'NA'::character varying\n" + "            ELSE m.codigo\n"
+                    + "        END AS codigo,\n" + "        CASE\n"
+                    + "            WHEN m.codigo_anterior IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE m.codigo_anterior\n" + "        END AS codigo_anterior,\n" + "        CASE\n"
+                    + "            WHEN m.codigo_barrio IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE m.codigo_barrio\n" + "        END AS codigo_barrio,\n" + "    m.geometria\n"
+                    + "   FROM " + schema + ".gc_manzana m\n" + "  WHERE m.geometria IS NOT NULL;");
             stmt1.execute();
 
         } catch (Exception e) {

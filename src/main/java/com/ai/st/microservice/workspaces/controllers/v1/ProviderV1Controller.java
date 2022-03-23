@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@Api(value = "Manage Providers", tags = {"Providers"})
+@Api(value = "Manage Providers", tags = { "Providers" })
 @RestController
 @RequestMapping("api/workspaces/v1/providers")
 public class ProviderV1Controller {
@@ -50,7 +50,7 @@ public class ProviderV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public ProviderV1Controller(WorkspaceBusiness workspaceBusiness, ProviderBusiness providerBusiness,
-                                ManagerMicroserviceBusiness managerBusiness, AdministrationBusiness administrationBusiness) {
+            ManagerMicroserviceBusiness managerBusiness, AdministrationBusiness administrationBusiness) {
         this.workspaceBusiness = workspaceBusiness;
         this.providerBusiness = providerBusiness;
         this.managerBusiness = managerBusiness;
@@ -59,12 +59,11 @@ public class ProviderV1Controller {
 
     @PostMapping(value = "/municipalities/{municipalityId}/requests", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create request")
-    @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Create request", response = CustomRequestDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Create request", response = CustomRequestDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> createRequest(@RequestBody CreateRequestDto createRequestDto,
-                                                @RequestHeader("authorization") String headerAuthorization, @PathVariable Long municipalityId) {
+            @RequestHeader("authorization") String headerAuthorization, @PathVariable Long municipalityId) {
 
         HttpStatus httpStatus;
         List<CustomRequestDto> listRequests = new ArrayList<>();
@@ -113,7 +112,8 @@ public class ProviderV1Controller {
                     }
                 }
             } else {
-                throw new InputValidationException("La solicitud debe contener al menos un tipo de insumo a solicitar.");
+                throw new InputValidationException(
+                        "La solicitud debe contener al menos un tipo de insumo a solicitar.");
             }
 
             listRequests = workspaceBusiness.createRequest(deadline, supplies, userDtoSession.getId(),
@@ -146,9 +146,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Get pending requests by provider")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get pending requests by provider", response = CustomRequestDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsPendingByProveedor(@RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<Object> getRequestsPendingByProveedor(
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         List<CustomRequestDto> listRequests = new ArrayList<>();
@@ -193,9 +194,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Get closed-requests")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get closed requests by provider", response = CustomRequestDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsClosedByProveedor(@RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<Object> getRequestsClosedByProveedor(
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         List<CustomRequestDto> listRequests = new ArrayList<>();
@@ -210,7 +212,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserTechnicalOrAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserTechnicalOrAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -238,15 +241,14 @@ public class ProviderV1Controller {
 
     @PutMapping(value = "/requests/{requestId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Answer request")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Answer request", response = CustomRequestDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Answer request", response = CustomRequestDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> answerRequest(@PathVariable Long requestId,
-                                                @RequestHeader("authorization") String headerAuthorization,
-                                                @RequestParam(name = "files[]", required = false) MultipartFile[] files,
-                                                @RequestParam(name = "extra", required = false) MultipartFile extraFile,
-                                                @ModelAttribute AnswerRequestDto answerRequest) {
+            @RequestHeader("authorization") String headerAuthorization,
+            @RequestParam(name = "files[]", required = false) MultipartFile[] files,
+            @RequestParam(name = "extra", required = false) MultipartFile extraFile,
+            @ModelAttribute AnswerRequestDto answerRequest) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -271,9 +273,9 @@ public class ProviderV1Controller {
                 throw new InputValidationException("El tipo de insumo es inválido.");
             }
 
-            responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getSkipErrors(), answerRequest.getJustification(),
-                    files, extraFile, answerRequest.getUrl(), providerDto, userDtoSession.getId(),
-                    answerRequest.getObservations());
+            responseDto = providerBusiness.answerRequest(requestId, typeSupplyId, answerRequest.getSkipErrors(),
+                    answerRequest.getJustification(), files, extraFile, answerRequest.getUrl(), providerDto,
+                    userDtoSession.getId(), answerRequest.getObservations());
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
@@ -299,12 +301,11 @@ public class ProviderV1Controller {
 
     @PutMapping(value = "/requests/{requestId}/close", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Close request")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> closeRequest(@PathVariable Long requestId,
-                                               @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -345,9 +346,8 @@ public class ProviderV1Controller {
 
     @GetMapping(value = "/requests/emmiters", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Close request")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getRequestsByEmitters(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -392,10 +392,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Create type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Create type supply", response = MicroserviceTypeSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> createTypeSupply(@RequestBody CreateTypeSupplyDto createTypeSupplyDto,
-                                                   @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -409,7 +409,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -444,7 +445,7 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Get types supplies")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get types supplies", response = MicroserviceTypeSupplyDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getTypeSupplies(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -460,7 +461,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -492,11 +494,11 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Update type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Update type supply", response = MicroserviceTypeSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> updateTypeSupply(@PathVariable Long typeSupplyId,
-                                                   @RequestBody CreateTypeSupplyDto createTypeSupplyDto,
-                                                   @RequestHeader("authorization") String headerAuthorization) {
+            @RequestBody CreateTypeSupplyDto createTypeSupplyDto,
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -510,7 +512,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -545,10 +548,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Enable type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Type supply enabled", response = MicroserviceTypeSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> enableTypeSupply(@PathVariable Long typeSupplyId,
-                                                   @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -562,7 +565,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -594,10 +598,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Disable type supply")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Type supply disabled", response = MicroserviceTypeSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> disableTypeSupply(@PathVariable Long typeSupplyId,
-                                                    @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -611,7 +615,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -641,11 +646,11 @@ public class ProviderV1Controller {
 
     @DeleteMapping(value = "/types-supplies/{typeSupplyId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Delete type supply")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Delete type supply"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Delete type supply"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> deleteTypeSupply(@PathVariable Long typeSupplyId,
-                                                   @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -659,7 +664,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -691,10 +697,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Create profile")
     @ApiResponses(value = {
             @ApiResponse(code = 201, message = "Create profile", response = MicroserviceProviderProfileDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> createProfile(@RequestBody CreateProviderProfileDto createProfileDto,
-                                                @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -708,7 +714,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -742,7 +749,7 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Get profiles")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get profiles", response = MicroserviceProviderProfileDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getProfiles(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -758,7 +765,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -790,11 +798,11 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Update profile")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Update profile", response = MicroserviceProviderProfileDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> updateProfile(@PathVariable Long profileId,
-                                                @RequestHeader("authorization") String headerAuthorization,
-                                                @RequestBody CreateProviderProfileDto updateProfileDto) {
+            @RequestHeader("authorization") String headerAuthorization,
+            @RequestBody CreateProviderProfileDto updateProfileDto) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -808,7 +816,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -839,11 +848,11 @@ public class ProviderV1Controller {
 
     @DeleteMapping(value = "/profiles/{profileId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Delete profile")
-    @ApiResponses(value = {@ApiResponse(code = 204, message = "Delete profile"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 204, message = "Delete profile"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> deleteProfile(@PathVariable Long profileId,
-                                                @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -857,7 +866,8 @@ public class ProviderV1Controller {
             }
 
             // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
+            MicroserviceProviderDto providerDto = providerBusiness
+                    .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
@@ -889,11 +899,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Get requests by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getRequestsByMunicipality(@RequestHeader("authorization") String headerAuthorization,
-                                                            @RequestParam(name = "page") Integer page,
-                                                            @RequestParam(name = "municipality") String municipalityCode) {
+            @RequestParam(name = "page") Integer page, @RequestParam(name = "municipality") String municipalityCode) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -938,11 +947,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Get requests by provider")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getRequestsByProvider(@RequestHeader("authorization") String headerAuthorization,
-                                                        @RequestParam(name = "page") Integer page,
-                                                        @RequestParam(name = "provider") Long providerId) {
+            @RequestParam(name = "page") Integer page, @RequestParam(name = "provider") Long providerId) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -985,10 +993,10 @@ public class ProviderV1Controller {
     @ApiOperation(value = "Get requests by package")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getRequestsByPackage(@RequestHeader("authorization") String headerAuthorization,
-                                                       @RequestParam(name = "package", required = false) String packageLabel) {
+            @RequestParam(name = "package", required = false) String packageLabel) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -1020,303 +1028,6 @@ public class ProviderV1Controller {
             responseDto = new BasicResponseDto(e.getMessage(), 2);
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@getRequestsByPackage#General ---> " + e.getMessage());
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
-        }
-
-        return new ResponseEntity<>(responseDto, httpStatus);
-    }
-
-    @GetMapping(value = "/supplies-review", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Get supplies requested to review")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get supplies requested to review", response = CustomSupplyRequestedDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
-    @ResponseBody
-    public ResponseEntity<Object> getSuppliesRequestedToReview(@RequestHeader("authorization") String headerAuthorization) {
-
-        HttpStatus httpStatus;
-        Object responseDto;
-
-        try {
-
-            // user session
-            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
-            if (userDtoSession == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-            }
-
-            // get provider
-            MicroserviceProviderDto providerDto = providerBusiness
-                    .getProviderByUserAdministrator(userDtoSession.getId());
-            if (providerDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
-            }
-            if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
-                throw new BusinessException("No tiene permiso para consultar insumos pendientes de revisión.");
-            }
-
-            responseDto = providerBusiness.getSuppliesToReview(providerDto.getId());
-            httpStatus = HttpStatus.OK;
-
-        } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@getSuppliesRequestedToReview#Microservice ---> " + e.getMessage());
-            httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
-        } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@getSuppliesRequestedToReview#Business ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
-        } catch (Exception e) {
-            log.error("Error ProviderV1Controller@getSuppliesRequestedToReview#General ---> " + e.getMessage());
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
-        }
-
-        return new ResponseEntity<>(responseDto, httpStatus);
-    }
-
-    @PostMapping(value = "/supplies-review/{supplyRequestedId}/start", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Start revision")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
-    @ResponseBody
-    public ResponseEntity<Object> startRevision(@RequestHeader("authorization") String headerAuthorization,
-                                                @PathVariable Long supplyRequestedId) {
-
-        HttpStatus httpStatus;
-        Object responseDto;
-
-        try {
-
-            // user session
-            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
-            if (userDtoSession == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-            }
-
-            // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
-            if (providerDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
-            }
-            if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
-                throw new BusinessException("No tiene permiso para iniciar la revisión.");
-            }
-
-            providerBusiness.startRevision(supplyRequestedId, userDtoSession.getId(), providerDto);
-            responseDto = new BasicResponseDto("Revisión iniciada", 7);
-            httpStatus = HttpStatus.OK;
-
-        } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@startRevision#Microservice ---> " + e.getMessage());
-            httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
-        } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@startRevision#Business ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
-        } catch (Exception e) {
-            log.error("Error ProviderV1Controller@startRevision#General ---> " + e.getMessage());
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
-        }
-
-        return new ResponseEntity<>(responseDto, httpStatus);
-    }
-
-    @GetMapping(value = "/supplies-review/{supplyRequestedId}/records", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Start revision")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Start revision", response = MicroserviceQueryResultRegistralRevisionDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
-    @ResponseBody
-    public ResponseEntity<Object> getRecordsFromRevision(@RequestHeader("authorization") String headerAuthorization,
-                                                         @PathVariable Long supplyRequestedId, @RequestParam(name = "page") int page) {
-
-        HttpStatus httpStatus;
-        Object responseDto;
-
-        try {
-
-            // user session
-            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
-            if (userDtoSession == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-            }
-
-            // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
-            if (providerDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
-            }
-            if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
-                throw new BusinessException("No tiene permiso para consultar esta información.");
-            }
-
-            responseDto = providerBusiness.getRecordsFromRevision(providerDto, supplyRequestedId, page);
-            httpStatus = HttpStatus.OK;
-
-        } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@startRevision#Microservice ---> " + e.getMessage());
-            httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
-        } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@startRevision#Business ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
-        } catch (Exception e) {
-            log.error("Error ProviderV1Controller@startRevision#General ---> " + e.getMessage());
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
-        }
-
-        return new ResponseEntity<>(responseDto, httpStatus);
-    }
-
-    @PostMapping(value = "/supplies-review/{supplyRequestedId}/update/{boundarySpaceId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Start revision")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Start revision", response = MicroserviceQueryResultRegistralRevisionDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
-    @ResponseBody
-    public ResponseEntity<Object> updateRecordBoundarySpace(@RequestHeader("authorization") String headerAuthorization,
-                                                            @PathVariable Long supplyRequestedId, @PathVariable Long boundarySpaceId,
-                                                            @RequestParam(name = "file") MultipartFile file) {
-
-        HttpStatus httpStatus;
-        Object responseDto;
-
-        try {
-
-            // user session
-            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
-            if (userDtoSession == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-            }
-
-            // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
-            if (providerDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
-            }
-            if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
-                throw new BusinessException("No tiene permiso para actualizar la información.");
-            }
-
-            providerBusiness.uploadAttachmentToRevision(providerDto, file, supplyRequestedId, boundarySpaceId,
-                    userDtoSession.getId());
-            responseDto = new BasicResponseDto("Registro actualizado", 7);
-            httpStatus = HttpStatus.OK;
-
-        } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@updateRecordBoundarySpace#Microservice ---> " + e.getMessage());
-            httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
-        } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@updateRecordBoundarySpace#Business ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
-        } catch (Exception e) {
-            log.error("Error ProviderV1Controller@updateRecordBoundarySpace#General ---> " + e.getMessage());
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
-        }
-
-        return new ResponseEntity<>(responseDto, httpStatus);
-    }
-
-    @PostMapping(value = "/supplies-review/{supplyRequestedId}/close", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Start revision")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Start revision", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
-    @ResponseBody
-    public ResponseEntity<Object> closeRevision(@RequestHeader("authorization") String headerAuthorization,
-                                                @PathVariable Long supplyRequestedId) {
-
-        HttpStatus httpStatus;
-        Object responseDto;
-
-        try {
-
-            // user session
-            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
-            if (userDtoSession == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-            }
-
-            // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
-            if (providerDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
-            }
-            if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
-                throw new BusinessException("No tiene permiso para cerrar la revisión.");
-            }
-
-            providerBusiness.closeRevision(supplyRequestedId, userDtoSession.getId(), providerDto);
-            responseDto = new BasicResponseDto("El proceso de cerrar revisión ha iniciado", 7);
-            httpStatus = HttpStatus.OK;
-
-        } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@startRevision#Microservice ---> " + e.getMessage());
-            httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
-        } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@startRevision#Business ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
-        } catch (Exception e) {
-            log.error("Error ProviderV1Controller@startRevision#General ---> " + e.getMessage());
-            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
-        }
-
-        return new ResponseEntity<>(responseDto, httpStatus);
-    }
-
-    @PostMapping(value = "/supplies-review/{supplyRequestedId}/skip", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ApiOperation(value = "Skip revision")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Revision skipped", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
-    @ResponseBody
-    public ResponseEntity<Object> skipRevision(@RequestHeader("authorization") String headerAuthorization,
-                                               @PathVariable Long supplyRequestedId) {
-
-        HttpStatus httpStatus;
-        Object responseDto;
-
-        try {
-
-            // user session
-            MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
-            if (userDtoSession == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
-            }
-
-            // get provider
-            MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserAdministrator(userDtoSession.getId());
-            if (providerDto == null) {
-                throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
-            }
-            if (!providerBusiness.userProviderIsDelegate(userDtoSession.getId())) {
-                throw new BusinessException("No tiene permiso para omitir la revisión.");
-            }
-
-            providerBusiness.skipRevision(supplyRequestedId, userDtoSession.getId(), providerDto);
-            responseDto = new BasicResponseDto("Revisión omitida", 7);
-            httpStatus = HttpStatus.OK;
-
-        } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@skipRevision#Microservice ---> " + e.getMessage());
-            httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
-        } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@skipRevision#Business ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
-        } catch (Exception e) {
-            log.error("Error ProviderV1Controller@skipRevision#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 3);
         }

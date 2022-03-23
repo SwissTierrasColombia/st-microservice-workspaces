@@ -19,15 +19,15 @@ public class WorkspaceManagerBusiness {
     private final IWorkspaceService workspaceService;
     private final ManagerMicroserviceBusiness managerBusiness;
 
-    public WorkspaceManagerBusiness(IWorkspaceManagerService workspaceManagerService, IWorkspaceService workspaceService,
-                                    ManagerMicroserviceBusiness managerBusiness) {
+    public WorkspaceManagerBusiness(IWorkspaceManagerService workspaceManagerService,
+            IWorkspaceService workspaceService, ManagerMicroserviceBusiness managerBusiness) {
         this.workspaceManagerService = workspaceManagerService;
         this.workspaceService = workspaceService;
         this.managerBusiness = managerBusiness;
     }
 
     public WorkspaceManagerDto createWorkspaceManager(Long managerCode, String specificObservations,
-                                                      String generalObservations, Date startDate, String urlSupportFile, Long workspaceId) {
+            String generalObservations, Date startDate, String urlSupportFile, Long workspaceId) {
 
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
 

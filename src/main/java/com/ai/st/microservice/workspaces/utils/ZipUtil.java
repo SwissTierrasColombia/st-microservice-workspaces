@@ -227,7 +227,6 @@ public class ZipUtil {
 
             ZipFile zipFile = new ZipFile(filePathZip);
 
-
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
@@ -237,7 +236,6 @@ public class ZipUtil {
                     break;
                 }
             }
-
 
             zipFile.close();
         } catch (IOException e) {

@@ -49,10 +49,10 @@ public class WorkspaceOperatorBusiness {
     private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceOperatorBusiness(IWorkspaceOperatorService operatorService, IWorkspaceService workspaceService,
-                                     IWorkspaceOperatorService workspaceOperatorService, OperatorMicroserviceBusiness operatorBusiness,
-                                     ReportBusiness reportBusiness, MunicipalityBusiness municipalityBusiness,
-                                     ManagerMicroserviceBusiness managerBusiness, SupplyBusiness supplyBusiness,
-                                     AdministrationBusiness administrationBusiness) {
+            IWorkspaceOperatorService workspaceOperatorService, OperatorMicroserviceBusiness operatorBusiness,
+            ReportBusiness reportBusiness, MunicipalityBusiness municipalityBusiness,
+            ManagerMicroserviceBusiness managerBusiness, SupplyBusiness supplyBusiness,
+            AdministrationBusiness administrationBusiness) {
         this.operatorService = operatorService;
         this.workspaceService = workspaceService;
         this.workspaceOperatorService = workspaceOperatorService;
@@ -73,8 +73,8 @@ public class WorkspaceOperatorBusiness {
             for (CustomDeliveryDto delivery : deliveries) {
 
                 List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = delivery.getSupplies();
-                List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                        suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+                List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream()
+                        .map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
 
                 CustomSupplyDeliveryDto supplyDto = suppliesDeliveryDto.stream()
                         .filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
@@ -93,14 +93,13 @@ public class WorkspaceOperatorBusiness {
         return null;
     }
 
-    public CustomDeliveryDto registerDownloadSupply(CustomDeliveryDto deliveryDto, Long supplyCode,
-                                                    Long userCode) {
+    public CustomDeliveryDto registerDownloadSupply(CustomDeliveryDto deliveryDto, Long supplyCode, Long userCode) {
 
         try {
 
             List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-            List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                    suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+            List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream()
+                    .map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
 
             CustomSupplyDeliveryDto supplyDto = suppliesDeliveryDto.stream()
                     .filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
@@ -179,8 +178,8 @@ public class WorkspaceOperatorBusiness {
         }
 
         List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         CustomSupplyDeliveryDto supplyDeliveryDto = suppliesDeliveryDto.stream()
                 .filter(s -> s.getSupplyCode().equals(supplyId)).findAny().orElse(null);
@@ -252,7 +251,8 @@ public class WorkspaceOperatorBusiness {
         }
 
         supplies.add(new MicroserviceDownloadedSupplyDto(supplyName,
-                DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName.toUpperCase()));
+                DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy,
+                providerName.toUpperCase()));
 
         MicroserviceReportInformationDto report = reportBusiness.generateReportDownloadSupply(namespace, dateCreation,
                 dateDelivery, deliveryId.toString(), departmentName, managerName, municipalityCode, municipalityName,
@@ -294,8 +294,8 @@ public class WorkspaceOperatorBusiness {
         }
 
         List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveryDto) {
             if (!supplyDeliveryDto.getDownloaded()) {
@@ -334,8 +334,8 @@ public class WorkspaceOperatorBusiness {
         List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
 
         List<? extends MicroserviceSupplyDeliveryDto> response = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto =
-                response.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto = response.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
@@ -371,7 +371,8 @@ public class WorkspaceOperatorBusiness {
             }
 
             supplies.add(new MicroserviceDownloadedSupplyDto(supplyName,
-                    DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName.toUpperCase()));
+                    DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy,
+                    providerName.toUpperCase()));
         }
 
         MicroserviceReportInformationDto report = reportBusiness.generateReportDownloadSupply(namespace, dateCreation,
@@ -409,7 +410,6 @@ public class WorkspaceOperatorBusiness {
             throw new BusinessException("No se ha encontrado el operador.");
         }
 
-
         if (!deliveryDto.getManagerCode().equals(managerId)) {
             throw new BusinessException("La entrega no pertenece al gestor.");
         }
@@ -440,8 +440,8 @@ public class WorkspaceOperatorBusiness {
         List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
 
         List<? extends MicroserviceSupplyDeliveryDto> response = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto =
-                response.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto = response.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
@@ -484,8 +484,9 @@ public class WorkspaceOperatorBusiness {
         operatorService.deleteWorkspaceOperatorById(workspaceOperatorId);
     }
 
-    public WorkspaceOperatorDto createOperator(Date startDate, Date endDate, Long numberParcelsExpected, Double workArea, String observations,
-                                               String supportFileURL, Long workspaceId, Long operatorCode, Long managerCode) {
+    public WorkspaceOperatorDto createOperator(Date startDate, Date endDate, Long numberParcelsExpected,
+            Double workArea, String observations, String supportFileURL, Long workspaceId, Long operatorCode,
+            Long managerCode) {
 
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
 
@@ -509,7 +510,7 @@ public class WorkspaceOperatorBusiness {
     }
 
     public WorkspaceOperatorDto updateWorkspaceOperator(Long workspaceManagerId, Date startDate, Date endDate,
-                                                        String observations, Long parcelsExpected, Double workArea, String supportFile) {
+            String observations, Long parcelsExpected, Double workArea, String supportFile) {
 
         WorkspaceOperatorEntity workspaceOperatorEntity = workspaceOperatorService
                 .getWorkspaceOperatorById(workspaceManagerId);
@@ -550,7 +551,8 @@ public class WorkspaceOperatorBusiness {
         municipalityDto.setId(municipalityEntity.getId());
         municipalityDto.setName(municipalityEntity.getName());
         municipalityDto.setCode(municipalityEntity.getCode());
-        municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
+        municipalityDto.setDepartment(
+                new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
         workspaceOperatorDto.setMunicipality(municipalityDto);
 
         try {

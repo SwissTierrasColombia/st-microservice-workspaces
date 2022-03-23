@@ -105,15 +105,16 @@ public class WorkspaceBusiness {
     private final IWorkspaceManagerService workspaceManagerService;
 
     public WorkspaceBusiness(ManagerFeignClient managerClient, ProviderFeignClient providerClient,
-                             UserFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
-                             IWorkspaceService workspaceService, IIntegrationService integrationService, IIntegrationStateService integrationStateService,
-                             IWorkspaceOperatorService workspaceOperatorService, DatabaseIntegrationBusiness databaseIntegrationBusiness,
-                             CrytpoBusiness cryptoBusiness, IntegrationBusiness integrationBusiness, TaskBusiness taskBusiness,
-                             IliBusiness iliBusiness, ProviderBusiness providerBusiness, FileBusiness fileBusiness,
-                             SupplyBusiness supplyBusiness, OperatorMicroserviceBusiness operatorBusiness, NotificationBusiness notificationBusiness,
-                             ManagerMicroserviceBusiness managerBusiness, WorkspaceManagerBusiness workspaceManagerBusiness,
-                             WorkspaceOperatorBusiness workspaceOperatorBusiness, AdministrationBusiness administrationBusiness,
-                             IWorkspaceManagerService workspaceManagerService) {
+            UserFeignClient userClient, SupplyFeignClient supplyClient, IMunicipalityService municipalityService,
+            IWorkspaceService workspaceService, IIntegrationService integrationService,
+            IIntegrationStateService integrationStateService, IWorkspaceOperatorService workspaceOperatorService,
+            DatabaseIntegrationBusiness databaseIntegrationBusiness, CrytpoBusiness cryptoBusiness,
+            IntegrationBusiness integrationBusiness, TaskBusiness taskBusiness, IliBusiness iliBusiness,
+            ProviderBusiness providerBusiness, FileBusiness fileBusiness, SupplyBusiness supplyBusiness,
+            OperatorMicroserviceBusiness operatorBusiness, NotificationBusiness notificationBusiness,
+            ManagerMicroserviceBusiness managerBusiness, WorkspaceManagerBusiness workspaceManagerBusiness,
+            WorkspaceOperatorBusiness workspaceOperatorBusiness, AdministrationBusiness administrationBusiness,
+            IWorkspaceManagerService workspaceManagerService) {
         this.managerClient = managerClient;
         this.providerClient = providerClient;
         this.userClient = userClient;
@@ -156,9 +157,8 @@ public class WorkspaceBusiness {
             WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
             if (workspaceActive != null) {
 
-
-                WorkspaceManagerEntity workspaceManagerEntity =
-                        workspaceActive.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+                WorkspaceManagerEntity workspaceManagerEntity = workspaceActive.getManagers().stream()
+                        .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
                 if (workspaceManagerEntity == null) {
                     throw new BusinessException("El gestor no tiene acceso al municipio.");
                 }
@@ -178,9 +178,8 @@ public class WorkspaceBusiness {
     }
 
     public WorkspaceDto assignOperator(Long workspaceId, Date startDate, Date endDate, Long operatorCode,
-                                       Long numberParcelsExpected, Double workArea, MultipartFile supportFile, String observations,
-                                       Long managerCode) throws BusinessException {
-
+            Long numberParcelsExpected, Double workArea, MultipartFile supportFile, String observations,
+            Long managerCode) throws BusinessException {
 
         // validate if the workspace exists
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
@@ -199,7 +198,8 @@ public class WorkspaceBusiness {
             throw new BusinessException("La fecha de finalización debe ser mayor a la fecha de inicio.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
         }
@@ -233,8 +233,9 @@ public class WorkspaceBusiness {
             throw new BusinessException("El operador ya ha sido asignado al municipio.");
         }
 
-        WorkspaceOperatorDto workspaceOperatorDto = workspaceOperatorBusiness.createOperator(startDate, endDate, numberParcelsExpected, workArea, observations,
-                urlDocumentaryRepository, workspaceId, operatorCode, managerCode);
+        WorkspaceOperatorDto workspaceOperatorDto = workspaceOperatorBusiness.createOperator(startDate, endDate,
+                numberParcelsExpected, workArea, observations, urlDocumentaryRepository, workspaceId, operatorCode,
+                managerCode);
 
         // send notification
         try {
@@ -262,7 +263,7 @@ public class WorkspaceBusiness {
     }
 
     public WorkspaceDto updateManagerFromWorkspace(Long workspaceId, Long managerCode, Date startDate,
-                                                   String observations) throws BusinessException {
+            String observations) throws BusinessException {
 
         WorkspaceDto workspaceDto;
 
@@ -326,19 +327,20 @@ public class WorkspaceBusiness {
         // validate access
         if (managerCode != null) {
 
-            WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers()
-                    .stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+            WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                    .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
             if (workspaceManagerEntity == null) {
                 throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
             }
 
-            listOperatorsDto = workspaceEntity.getOperators().stream().filter(o -> o.getManagerCode().equals(managerCode))
+            listOperatorsDto = workspaceEntity.getOperators().stream()
+                    .filter(o -> o.getManagerCode().equals(managerCode))
                     .map(workspaceOperatorBusiness::entityParseToDto).collect(Collectors.toList());
 
         } else {
 
-            listOperatorsDto = workspaceEntity.getOperators().stream()
-                    .map(workspaceOperatorBusiness::entityParseToDto).collect(Collectors.toList());
+            listOperatorsDto = workspaceEntity.getOperators().stream().map(workspaceOperatorBusiness::entityParseToDto)
+                    .collect(Collectors.toList());
 
         }
 
@@ -363,8 +365,8 @@ public class WorkspaceBusiness {
         // validate access
         if (managerCode != null) {
 
-            WorkspaceManagerEntity workspaceManagerEntity =
-                    workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+            WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                    .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
             if (workspaceManagerEntity == null) {
                 throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
             }
@@ -374,8 +376,8 @@ public class WorkspaceBusiness {
         return entityParseToDto(workspaceEntity);
     }
 
-    public List<CustomRequestDto> createRequest(Date deadline, List<TypeSupplyRequestedDto> supplies,
-                                                Long userCode, Long managerCode, Long municipalityId) throws BusinessException {
+    public List<CustomRequestDto> createRequest(Date deadline, List<TypeSupplyRequestedDto> supplies, Long userCode,
+            Long managerCode, Long municipalityId) throws BusinessException {
 
         // validate if the municipality exists
         MunicipalityEntity municipalityEntity = municipalityService.getMunicipalityById(municipalityId);
@@ -386,11 +388,10 @@ public class WorkspaceBusiness {
         // validate access
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
 
-
         if (workspaceEntity != null) {
 
-            WorkspaceManagerEntity workspaceManagerEntity =
-                    workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+            WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                    .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
             if (workspaceManagerEntity == null) {
                 throw new BusinessException("El usuario no tiene acceso al espacio de trabajo.");
             }
@@ -505,14 +506,13 @@ public class WorkspaceBusiness {
 
                         MicroserviceUserDto userDto = administrationBusiness.getUserById(providerUser.getUserCode());
                         if (userDto.getEnabled()) {
-                            providerUser.getProfiles().stream()
-                                    .filter(p -> p.getId().equals(providerProfileId)).findAny()
-                                    .ifPresent(profileFound -> notificationBusiness.sendNotificationInputRequest(userDto.getEmail(), userCode,
-                                            managerDto.getName(), municipalityEntity.getName(),
-                                            municipalityEntity.getDepartment().getName(), responseRequest.getId().toString(),
-                                            new Date()));
+                            providerUser.getProfiles().stream().filter(p -> p.getId().equals(providerProfileId))
+                                    .findAny()
+                                    .ifPresent(profileFound -> notificationBusiness.sendNotificationInputRequest(
+                                            userDto.getEmail(), userCode, managerDto.getName(),
+                                            municipalityEntity.getName(), municipalityEntity.getDepartment().getName(),
+                                            responseRequest.getId().toString(), new Date()));
                         }
-
 
                     }
 
@@ -522,9 +522,10 @@ public class WorkspaceBusiness {
 
                 if (responseRequest.getProvider().getId().equals(ProviderBusiness.PROVIDER_IGAC_ID)) {
 
-                    List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = responseRequest.getSuppliesRequested();
-                    List<CustomSupplyRequestedDto> suppliesRequestDto =
-                            suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+                    List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = responseRequest
+                            .getSuppliesRequested();
+                    List<CustomSupplyRequestedDto> suppliesRequestDto = suppliesResponse.stream()
+                            .map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
                     CustomSupplyRequestedDto supplyRequested = suppliesRequestDto.stream()
                             .filter(sR -> sR.getTypeSupply().getId().equals(ProviderBusiness.PROVIDER_SUPPLY_CADASTRAL))
@@ -545,8 +546,8 @@ public class WorkspaceBusiness {
                                 users.add(providerUserDto.getUserCode());
                             }
 
-                            taskBusiness.createTaskForGenerationSupply(users,
-                                    municipalityEntity.getName(), municipalityEntity.getDepartment().getName(), responseRequest.getId(),
+                            taskBusiness.createTaskForGenerationSupply(users, municipalityEntity.getName(),
+                                    municipalityEntity.getDepartment().getName(), responseRequest.getId(),
                                     supplyRequested.getTypeSupply().getId(), null, supplyRequested.getModelVersion());
 
                         } catch (Exception e) {
@@ -566,8 +567,7 @@ public class WorkspaceBusiness {
         return requests;
     }
 
-    public List<CustomRequestDto> getPendingRequestByProvider(Long userCode, Long providerId)
-            throws BusinessException {
+    public List<CustomRequestDto> getPendingRequestByProvider(Long userCode, Long providerId) throws BusinessException {
 
         List<CustomRequestDto> listPendingRequestsDto = new ArrayList<>();
 
@@ -580,17 +580,19 @@ public class WorkspaceBusiness {
                 throw new BusinessException("El usuario no esta registrado como usuario para el proveedor de insumo.");
             }
 
-            List<MicroserviceRequestDto> response = providerClient.getRequestsByProvider(providerId, ProviderBusiness.REQUEST_STATE_REQUESTED);
+            List<MicroserviceRequestDto> response = providerClient.getRequestsByProvider(providerId,
+                    ProviderBusiness.REQUEST_STATE_REQUESTED);
 
-            List<CustomRequestDto> responseRequestsDto = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
+            List<CustomRequestDto> responseRequestsDto = response.stream().map(CustomRequestDto::new)
+                    .collect(Collectors.toList());
 
             for (CustomRequestDto requestDto : responseRequestsDto) {
 
                 List<CustomEmitterDto> emittersDto = new ArrayList<>();
 
                 List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
-                List<CustomEmitterDto> emitterDtoList =
-                        emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+                List<CustomEmitterDto> emitterDtoList = emittersResponse.stream().map(CustomEmitterDto::new)
+                        .collect(Collectors.toList());
 
                 for (CustomEmitterDto emitterDto : emitterDtoList) {
 
@@ -628,8 +630,8 @@ public class WorkspaceBusiness {
                 requestDto.setMunicipality(municipalityDto);
 
                 List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
-                List<CustomSupplyRequestedDto> suppliesRequestDto =
-                        suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+                List<CustomSupplyRequestedDto> suppliesRequestDto = suppliesResponse.stream()
+                        .map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
                 for (CustomSupplyRequestedDto supply : suppliesRequestDto) {
 
@@ -653,8 +655,8 @@ public class WorkspaceBusiness {
                 int countNot = 0;
 
                 List<? extends MicroserviceSupplyRequestedDto> suppliesResponseDto = requestDto.getSuppliesRequested();
-                List<CustomSupplyRequestedDto> suppliesRequestedDto =
-                        suppliesResponseDto.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+                List<CustomSupplyRequestedDto> suppliesRequestedDto = suppliesResponseDto.stream()
+                        .map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
                 for (CustomSupplyRequestedDto supply : suppliesRequestedDto) {
 
@@ -667,10 +669,10 @@ public class WorkspaceBusiness {
 
                         if (supply.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_PENDING_REVIEW)
                                 || supply.getState().getId()
-                                .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW)
+                                        .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_SETTING_REVIEW)
                                 || supply.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_IN_REVIEW)
                                 || supply.getState().getId()
-                                .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW)) {
+                                        .equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_CLOSING_REVIEW)) {
 
                             supply.setCanUpload(false);
                             countNot++;
@@ -703,15 +705,15 @@ public class WorkspaceBusiness {
         return listPendingRequestsDto;
     }
 
-    public List<CustomRequestDto> getClosedRequestByProvider(Long userCode, Long providerId)
-            throws BusinessException {
+    public List<CustomRequestDto> getClosedRequestByProvider(Long userCode, Long providerId) throws BusinessException {
 
         List<CustomRequestDto> listClosedRequestsDto = new ArrayList<>();
 
         try {
 
             List<MicroserviceRequestDto> response = providerClient.getRequestsByProviderClosed(providerId, userCode);
-            List<CustomRequestDto> responseRequestsDto = response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
+            List<CustomRequestDto> responseRequestsDto = response.stream().map(CustomRequestDto::new)
+                    .collect(Collectors.toList());
 
             log.info("Requests found: " + responseRequestsDto.size());
 
@@ -720,8 +722,8 @@ public class WorkspaceBusiness {
                 List<CustomEmitterDto> emittersDto = new ArrayList<>();
 
                 List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
-                List<CustomEmitterDto> emittersRequestDto =
-                        emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+                List<CustomEmitterDto> emittersRequestDto = emittersResponse.stream().map(CustomEmitterDto::new)
+                        .collect(Collectors.toList());
 
                 for (CustomEmitterDto emitterDto : emittersRequestDto) {
                     if (emitterDto.getEmitterType().equals("ENTITY")) {
@@ -767,8 +769,8 @@ public class WorkspaceBusiness {
                 }
 
                 List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
-                List<CustomSupplyRequestedDto> suppliesRequestDto =
-                        suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+                List<CustomSupplyRequestedDto> suppliesRequestDto = suppliesResponse.stream()
+                        .map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
                 for (CustomSupplyRequestedDto supply : suppliesRequestDto) {
 
@@ -798,9 +800,7 @@ public class WorkspaceBusiness {
     }
 
     public IntegrationDto makeIntegrationCadastreRegistration(Long municipalityId, Long supplyIdCadastre,
-                                                              Long supplyIdRegistration,
-                                                              MicroserviceManagerDto managerDto,
-                                                              MicroserviceUserDto userDto)
+            Long supplyIdRegistration, MicroserviceManagerDto managerDto, MicroserviceUserDto userDto)
             throws BusinessException {
 
         IntegrationDto integrationResponseDto;
@@ -816,8 +816,8 @@ public class WorkspaceBusiness {
             throw new BusinessException("El municipio no cuenta con un espacio de trabajo activo.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity =
-                workspaceActive.getManagers().stream().filter(m -> m.getManagerCode().equals(managerDto.getId())).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceActive.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerDto.getId())).findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("No tiene acceso al municipio.");
         }
@@ -829,8 +829,8 @@ public class WorkspaceBusiness {
         statesId.add(IntegrationStateBusiness.STATE_STARTED_ASSISTED);
         statesId.add(IntegrationStateBusiness.STATE_FINISHED_ASSISTED);
 
-        List<IntegrationEntity> integrationsPending = integrationService
-                .getPendingIntegrations(workspaceActive.getId(), statesId, managerDto.getId());
+        List<IntegrationEntity> integrationsPending = integrationService.getPendingIntegrations(workspaceActive.getId(),
+                statesId, managerDto.getId());
 
         if (integrationsPending.size() > 0) {
             throw new BusinessException("Existe una integración en curso para el municipio.");
@@ -961,7 +961,7 @@ public class WorkspaceBusiness {
     }
 
     public IntegrationDto startIntegrationAssisted(Long workspaceId, Long integrationId,
-                                                   MicroserviceManagerDto managerDto, MicroserviceUserDto userDto) throws BusinessException {
+            MicroserviceManagerDto managerDto, MicroserviceUserDto userDto) throws BusinessException {
 
         IntegrationDto integrationDto;
 
@@ -976,8 +976,8 @@ public class WorkspaceBusiness {
                     "No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity =
-                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerDto.getId())).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerDto.getId())).findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("No tiene acceso al municipio.");
         }
@@ -1002,7 +1002,8 @@ public class WorkspaceBusiness {
 
         String textHistory = userDto.getFirstName() + " " + userDto.getLastName() + " - " + managerDto.getName();
         integrationDto = integrationBusiness.updateStateToIntegration(integrationId,
-                IntegrationStateBusiness.STATE_STARTED_ASSISTED, null, userDto.getId(), managerDto.getId(), textHistory);
+                IntegrationStateBusiness.STATE_STARTED_ASSISTED, null, userDto.getId(), managerDto.getId(),
+                textHistory);
 
         String host = integrationEntity.getHostname();
         String port = integrationEntity.getPort();
@@ -1079,7 +1080,8 @@ public class WorkspaceBusiness {
 
                 for (MicroserviceManagerUserDto managerUserDto : listUsersIntegrators) {
 
-                    MicroserviceUserDto userIntegratorDto = administrationBusiness.getUserById(managerUserDto.getUserCode());
+                    MicroserviceUserDto userIntegratorDto = administrationBusiness
+                            .getUserById(managerUserDto.getUserCode());
                     if (userIntegratorDto != null && userDto.getEnabled()) {
                         notificationBusiness.sendNotificationTaskAssignment(userIntegratorDto.getEmail(),
                                 userIntegratorDto.getId(), name, municipalityEntity.getName(),
@@ -1101,7 +1103,7 @@ public class WorkspaceBusiness {
     }
 
     public IntegrationDto exportXtf(Long workspaceId, Long integrationId, MicroserviceManagerDto managerDto,
-                                    MicroserviceUserDto userDto) throws BusinessException {
+            MicroserviceUserDto userDto) throws BusinessException {
 
         IntegrationDto integrationDto;
 
@@ -1116,8 +1118,8 @@ public class WorkspaceBusiness {
                     "No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity =
-                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerDto.getId())).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerDto.getId())).findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("No tiene acceso al municipio.");
         }
@@ -1150,8 +1152,8 @@ public class WorkspaceBusiness {
             MicroserviceSupplyDto response = supplyClient.findSupplyById(integrationEntity.getSupplyCadastreId());
             CustomSupplyDto supplyCadastreDto = new CustomSupplyDto(response);
 
-            String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace(" ", "_")
-                    + "/insumos/gestores/" + managerDto.getId();
+            String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace(" ", "_") + "/insumos/gestores/"
+                    + managerDto.getId();
 
             iliBusiness.startExport(hostnameDecrypt, databaseDecrypt, databaseIntegrationPassword, portDecrypt,
                     schemaDecrypt, databaseIntegrationUsername, integrationId, false,
@@ -1190,9 +1192,10 @@ public class WorkspaceBusiness {
             throw new BusinessException("No se ha encontrado la integración.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity =
-                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)
-                        && integrationEntity.getManagerCode().equals(m.getManagerCode())).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerCode)
+                        && integrationEntity.getManagerCode().equals(m.getManagerCode()))
+                .findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("El gestor no tiene acceso al municipio.");
         }
@@ -1232,8 +1235,8 @@ public class WorkspaceBusiness {
         WorkspaceEntity workspaceActive = workspaceService.getWorkspaceActiveByMunicipality(municipalityEntity);
         if (workspaceActive != null) {
 
-            WorkspaceManagerEntity workspaceManagerEntity =
-                    workspaceActive.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+            WorkspaceManagerEntity workspaceManagerEntity = workspaceActive.getManagers().stream()
+                    .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
             if (workspaceManagerEntity != null) {
                 hasAccess = true;
             }
@@ -1254,7 +1257,7 @@ public class WorkspaceBusiness {
             for (MicroserviceSupplyAttachmentDto attachment : supplyDto.getAttachments()) {
                 if (attachment.getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_SUPPLY)
                         || attachment.getAttachmentType().getId()
-                        .equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE)) {
+                                .equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE)) {
                     pathsFile.add(attachment.getData());
                 }
             }
@@ -1276,8 +1279,8 @@ public class WorkspaceBusiness {
                 throw new BusinessException("El espacio de trabajo no se encuentra activo.");
             }
 
-            WorkspaceManagerEntity workspaceManagerEntity =
-                    workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+            WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                    .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
             if (workspaceManagerEntity == null) {
                 throw new BusinessException("No tiene acceso al municipio.");
             }
@@ -1303,7 +1306,7 @@ public class WorkspaceBusiness {
     }
 
     public CustomDeliveryDto createDelivery(Long workspaceId, Long managerCode, Long operatorCode, String observations,
-                                            List<CreateSupplyDeliveryDto> suppliesDto) throws BusinessException {
+            List<CreateSupplyDeliveryDto> suppliesDto) throws BusinessException {
 
         CustomDeliveryDto deliveryDto;
 
@@ -1318,8 +1321,8 @@ public class WorkspaceBusiness {
                     "No se puede iniciar la integración ya que le espacio de trabajo no es el actual.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity =
-                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("El gestor no tiene acceso al municipio.");
         }
@@ -1329,9 +1332,9 @@ public class WorkspaceBusiness {
             throw new BusinessException("El municipio no tiene asignado ningún operador.");
         }
 
-        WorkspaceOperatorEntity workspaceOperatorEntity =
-                operators.stream().filter(o -> o.getOperatorCode().equals(operatorCode) && o.getManagerCode().equals(managerCode)).
-                        findAny().orElse(null);
+        WorkspaceOperatorEntity workspaceOperatorEntity = operators.stream()
+                .filter(o -> o.getOperatorCode().equals(operatorCode) && o.getManagerCode().equals(managerCode))
+                .findAny().orElse(null);
         if (workspaceOperatorEntity == null) {
             throw new BusinessException("El municipio no tiene asignado el operador.");
         }
@@ -1360,8 +1363,8 @@ public class WorkspaceBusiness {
             for (CustomDeliveryDto deliveryFoundDto : deliveriesDto) {
 
                 List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryFoundDto.getSupplies();
-                List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                        suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+                List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream()
+                        .map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
 
                 CustomSupplyDeliveryDto supplyFound = suppliesDeliveryDto.stream()
                         .filter(supplyDto -> supplyDto.getSupplyCode().equals(deliverySupplyDto.getSupplyId()))
@@ -1369,7 +1372,8 @@ public class WorkspaceBusiness {
 
                 if (supplyFound != null) {
 
-                    String nameSupply = (supply.getTypeSupply() != null) ? supply.getTypeSupply().getName() : supply.getObservations();
+                    String nameSupply = (supply.getTypeSupply() != null) ? supply.getTypeSupply().getName()
+                            : supply.getObservations();
 
                     String messageError = String.format("El insumo %s ya ha sido entregado al operador.", nameSupply);
                     throw new BusinessException(messageError);
@@ -1411,7 +1415,8 @@ public class WorkspaceBusiness {
         return deliveryDto;
     }
 
-    public String getManagerSupportURL(Long workspaceId, Long managerCode, Long managerCodeSession) throws BusinessException {
+    public String getManagerSupportURL(Long workspaceId, Long managerCode, Long managerCodeSession)
+            throws BusinessException {
 
         String supportURL = null;
 
@@ -1622,7 +1627,7 @@ public class WorkspaceBusiness {
     }
 
     public List<WorkspaceDto> assignManager(Date startDate, Long managerCode,
-                                            List<MunicipalityToAssignDto> municipalities, String observations, MultipartFile supportFile)
+            List<MunicipalityToAssignDto> municipalities, String observations, MultipartFile supportFile)
             throws BusinessException {
 
         List<WorkspaceDto> workspacesDto = new ArrayList<>();
@@ -1648,7 +1653,6 @@ public class WorkspaceBusiness {
             }
 
         }
-
 
         for (MunicipalityToAssignDto municipalityToAssign : municipalities) {
 
@@ -1698,8 +1702,9 @@ public class WorkspaceBusiness {
 
                     MicroserviceUserDto userDto = administrationBusiness.getUserById(directorDto.getUserCode());
                     if (userDto != null && userDto.getEnabled()) {
-                        notificationBusiness.sendNotificationMunicipalityManagementDto(userDto.getEmail(), municipalityEntity.getDepartment().getName(),
-                                municipalityEntity.getName(), startDate, userDto.getId(), "");
+                        notificationBusiness.sendNotificationMunicipalityManagementDto(userDto.getEmail(),
+                                municipalityEntity.getDepartment().getName(), municipalityEntity.getName(), startDate,
+                                userDto.getId(), "");
                     }
 
                 }
@@ -1716,8 +1721,9 @@ public class WorkspaceBusiness {
         return workspacesDto;
     }
 
-    public WorkspaceDto updateOperatorFromWorkspace(Long workspaceId, Long managerCode, Long operatorCode, Date startDate, Date endDate, String observations,
-                                                    Long numberParcelsExpected, Double workArea, MultipartFile supportFile) throws BusinessException {
+    public WorkspaceDto updateOperatorFromWorkspace(Long workspaceId, Long managerCode, Long operatorCode,
+            Date startDate, Date endDate, String observations, Long numberParcelsExpected, Double workArea,
+            MultipartFile supportFile) throws BusinessException {
 
         WorkspaceDto workspaceDto;
 
@@ -1743,7 +1749,9 @@ public class WorkspaceBusiness {
             throw new BusinessException("El gestor no pertenece al municipio.");
         }
 
-        WorkspaceOperatorEntity workspaceOperatorFound = workspaceEntity.getOperators().stream().filter(o -> o.getOperatorCode().equals(operatorCode) && o.getManagerCode().equals(managerCode)).findAny().orElse(null);
+        WorkspaceOperatorEntity workspaceOperatorFound = workspaceEntity.getOperators().stream()
+                .filter(o -> o.getOperatorCode().equals(operatorCode) && o.getManagerCode().equals(managerCode))
+                .findAny().orElse(null);
         if (workspaceOperatorFound == null) {
             throw new BusinessException("El gestor no tiene permitido editar el operador.");
         }
@@ -1772,7 +1780,8 @@ public class WorkspaceBusiness {
         return workspaceDto;
     }
 
-    public String getOperatorSupportURL(Long workspaceId, Long operatorCode, Long managerCodeSession) throws BusinessException {
+    public String getOperatorSupportURL(Long workspaceId, Long operatorCode, Long managerCodeSession)
+            throws BusinessException {
 
         String supportURL;
 
@@ -1808,8 +1817,8 @@ public class WorkspaceBusiness {
 
     public List<WorkspaceOperatorDto> getWorkspacesByOperator(Long operatorCode) {
 
-        List<WorkspaceOperatorEntity> workspaceOperatorEntities =
-                workspaceOperatorService.getWorkspacesOperatorsByOperatorCode(operatorCode);
+        List<WorkspaceOperatorEntity> workspaceOperatorEntities = workspaceOperatorService
+                .getWorkspacesOperatorsByOperatorCode(operatorCode);
 
         List<WorkspaceOperatorDto> workspacesOperators = new ArrayList<>();
 
@@ -1821,15 +1830,15 @@ public class WorkspaceBusiness {
         return workspacesOperators;
     }
 
-    public WorkspaceManagerDto getWorkspacesByManagerAndMunicipality(Long managerCode, String municipalityCode) throws BusinessException {
+    public WorkspaceManagerDto getWorkspacesByManagerAndMunicipality(Long managerCode, String municipalityCode)
+            throws BusinessException {
 
-        List<WorkspaceManagerEntity> workspaceManagerEntities =
-                workspaceManagerService.getWorkspaceManagerByManager(managerCode);
+        List<WorkspaceManagerEntity> workspaceManagerEntities = workspaceManagerService
+                .getWorkspaceManagerByManager(managerCode);
 
         WorkspaceManagerEntity workspaceManagerEntity = workspaceManagerEntities.stream()
                 .filter(wM -> wM.getWorkspace().getMunicipality().getCode().equalsIgnoreCase(municipalityCode))
-                .findAny()
-                .orElseThrow(() -> new BusinessException(""));
+                .findAny().orElseThrow(() -> new BusinessException(""));
 
         return workspaceManagerBusiness.entityParseToDto(workspaceManagerEntity);
     }

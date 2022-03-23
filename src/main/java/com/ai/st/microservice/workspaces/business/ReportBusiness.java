@@ -22,9 +22,9 @@ public class ReportBusiness {
     }
 
     public MicroserviceReportInformationDto generateReportDownloadSupply(String namespace, String dateCreation,
-                                                                         String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
-                                                                         String municipalityName, String observations, String operatorName,
-                                                                         List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
+            String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
+            String municipalityName, String observations, String operatorName,
+            List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
 
         MicroserviceReportInformationDto informationDto;
 
@@ -53,8 +53,8 @@ public class ReportBusiness {
     }
 
     public MicroserviceReportInformationDto generateReportDeliveryAC(String namespace, String createdAt,
-                                                                     String departmentName, String managerName, String municipalityCode, String municipalityName,
-                                                                     List<MicroserviceSupplyACDto> supplies) throws BusinessException {
+            String departmentName, String managerName, String municipalityCode, String municipalityName,
+            List<MicroserviceSupplyACDto> supplies) throws BusinessException {
 
         MicroserviceReportInformationDto informationDto;
 
@@ -83,9 +83,9 @@ public class ReportBusiness {
     }
 
     public MicroserviceReportInformationDto generateReportDeliveryManager(String namespace, String dateCreation,
-                                                                          String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
-                                                                          String municipalityName, String observations, String operatorName,
-                                                                          List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
+            String dateDelivery, String deliveryId, String departmentName, String managerName, String municipalityCode,
+            String municipalityName, String observations, String operatorName,
+            List<MicroserviceDownloadedSupplyDto> supplies) throws BusinessException {
 
         MicroserviceReportInformationDto informationDto;
 

@@ -18,7 +18,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Municipalities", tags = {"Municipalities"})
+@Api(value = "Manage Municipalities", tags = { "Municipalities" })
 @RestController
 @RequestMapping("api/workspaces/v1/municipalities")
 public class MunicipalityV1Controller {
@@ -35,7 +35,7 @@ public class MunicipalityV1Controller {
     @ApiOperation(value = "Get municipalities by manager")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities by manager", response = MunicipalityDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getMunicipalitiesByManager(@PathVariable Long managerId) {
 
@@ -64,7 +64,7 @@ public class MunicipalityV1Controller {
     @ApiOperation(value = "Get municipalities by department")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities not workspaces", response = MunicipalityDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getMunicipalitiesNotWorkspaceByDepartment(@PathVariable Long departmentId) {
 
@@ -93,9 +93,8 @@ public class MunicipalityV1Controller {
 
     @GetMapping(value = "/code/{municipalityCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipality by code")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Municipality got", response = MunicipalityDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Municipality got", response = MunicipalityDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getMunicipalityByCode(@PathVariable String municipalityCode) {
 

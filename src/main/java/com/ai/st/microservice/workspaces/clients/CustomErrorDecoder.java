@@ -15,15 +15,15 @@ public final class CustomErrorDecoder implements ErrorDecoder {
     public Exception decode(String methodKey, Response response) {
 
         switch (response.status()) {
-            case 400:
-                log.error("Error request (400): " + response.request().toString());
-                log.error("Error request body (400): " + response.body().toString());
-                return new BusinessException("Error 400 en la comunicación con el microservicio");
-            case 500:
-            default:
-                log.error("Error request (500): " + response.request().toString());
-                log.error("Error request body (500): " + response.body().toString());
-                return new BusinessException("Error 500 en la comunicación con el microservicio");
+        case 400:
+            log.error("Error request (400): " + response.request().toString());
+            log.error("Error request body (400): " + response.body().toString());
+            return new BusinessException("Error 400 en la comunicación con el microservicio");
+        case 500:
+        default:
+            log.error("Error request (500): " + response.request().toString());
+            log.error("Error request body (500): " + response.body().toString());
+            return new BusinessException("Error 500 en la comunicación con el microservicio");
         }
 
     }

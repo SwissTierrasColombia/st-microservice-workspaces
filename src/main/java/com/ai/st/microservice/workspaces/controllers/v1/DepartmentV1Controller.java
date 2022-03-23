@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiResponses;
 import java.util.ArrayList;
 import java.util.List;
 
-@Api(value = "Manage Departments", tags = {"Departments"})
+@Api(value = "Manage Departments", tags = { "Departments" })
 @RestController
 @RequestMapping("api/workspaces/v1/departments")
 public class DepartmentV1Controller {
@@ -37,7 +37,7 @@ public class DepartmentV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public DepartmentV1Controller(DepartmentBusiness departmentBusiness, MunicipalityBusiness municipalityBusiness,
-                                  ManagerMicroserviceBusiness managerBusiness, AdministrationBusiness administrationBusiness) {
+            ManagerMicroserviceBusiness managerBusiness, AdministrationBusiness administrationBusiness) {
         this.departmentBusiness = departmentBusiness;
         this.municipalityBusiness = municipalityBusiness;
         this.managerBusiness = managerBusiness;
@@ -48,7 +48,7 @@ public class DepartmentV1Controller {
     @ApiOperation(value = "Get departments")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get departments", response = DepartmentDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<List<DepartmentDto>> getDepartments(
             @RequestHeader("authorization") String headerAuthorization) {
@@ -63,7 +63,8 @@ public class DepartmentV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (administrationBusiness.isAdministrator(userDtoSession) || administrationBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)
+                    || administrationBusiness.isProvider(userDtoSession)) {
                 listDepartments = departmentBusiness.getDepartments();
             } else if (administrationBusiness.isManager(userDtoSession)) {
 
@@ -97,10 +98,10 @@ public class DepartmentV1Controller {
     @ApiOperation(value = "Get municipalities by department")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities by department", response = MunicipalityDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<List<MunicipalityDto>> getMunicipalitiesById(@PathVariable Long departmentId,
-                                                                       @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         List<MunicipalityDto> listMunicipalities = new ArrayList<>();
@@ -113,7 +114,8 @@ public class DepartmentV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
 
-            if (administrationBusiness.isAdministrator(userDtoSession) || administrationBusiness.isProvider(userDtoSession)) {
+            if (administrationBusiness.isAdministrator(userDtoSession)
+                    || administrationBusiness.isProvider(userDtoSession)) {
                 listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
             } else if (administrationBusiness.isManager(userDtoSession)) {
 

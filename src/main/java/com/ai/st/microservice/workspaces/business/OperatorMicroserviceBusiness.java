@@ -48,7 +48,7 @@ public class OperatorMicroserviceBusiness {
     private SupplyBusiness supplyBusiness;
 
     public CustomDeliveryDto createDelivery(Long operatorId, Long managerCode, String municipalityCode,
-                                            String observations, List<MicroserviceCreateDeliverySupplyDto> supplies)
+            String observations, List<MicroserviceCreateDeliverySupplyDto> supplies)
             throws DisconnectedMicroserviceException {
 
         try {
@@ -70,7 +70,8 @@ public class OperatorMicroserviceBusiness {
 
     public List<CustomDeliveryDto> getDeliveriesByOperator(Long operatorId, String municipalityCode) {
         try {
-            List<MicroserviceDeliveryDto> response = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode);
+            List<MicroserviceDeliveryDto> response = operatorClient.findDeliveriesByOperator(operatorId,
+                    municipalityCode);
             return response.stream().map(CustomDeliveryDto::new).collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Error consultando las entregas: " + e.getMessage());
@@ -84,7 +85,8 @@ public class OperatorMicroserviceBusiness {
 
         try {
 
-            List<MicroserviceDeliveryDto> deliveriesResponse = operatorClient.findDeliveriesActivesByOperator(operatorId, true);
+            List<MicroserviceDeliveryDto> deliveriesResponse = operatorClient
+                    .findDeliveriesActivesByOperator(operatorId, true);
 
             deliveries = deliveriesResponse.stream().map(CustomDeliveryDto::new).collect(Collectors.toList());
 
@@ -110,17 +112,15 @@ public class OperatorMicroserviceBusiness {
                     log.error("Error consultando municipio: " + e.getMessage());
                 }
 
-
                 List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-                List<CustomSupplyDeliveryDto> supplyDeliveriesDto =
-                        suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+                List<CustomSupplyDeliveryDto> supplyDeliveriesDto = suppliesResponse.stream()
+                        .map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
 
                 for (CustomSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
 
                     try {
 
-                        CustomSupplyDto supplyDto = supplyBusiness
-                                .getSupplyById(supplyDeliveryDto.getSupplyCode());
+                        CustomSupplyDto supplyDto = supplyBusiness.getSupplyById(supplyDeliveryDto.getSupplyCode());
                         supplyDeliveryDto.setSupply(supplyDto);
 
                     } catch (Exception e) {
@@ -129,7 +129,8 @@ public class OperatorMicroserviceBusiness {
 
                     if (supplyDeliveryDto.getDownloadedBy() != null) {
                         try {
-                            MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+                            MicroserviceUserDto userDto = administrationBusiness
+                                    .getUserById(supplyDeliveryDto.getDownloadedBy());
                             supplyDeliveryDto.setUserDownloaded(userDto);
                         } catch (Exception e) {
                             log.error("Error consultando usuario: " + e.getMessage());
@@ -154,7 +155,8 @@ public class OperatorMicroserviceBusiness {
             MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
             supplyDelivered.setDownloaded(true);
             supplyDelivered.setDownloadedBy(userCode);
-            MicroserviceDeliveryDto response = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
+            MicroserviceDeliveryDto response = operatorClient.updateSupplyDelivered(deliveryId, supplyId,
+                    supplyDelivered);
             return new CustomDeliveryDto(response);
         } catch (Exception e) {
             log.error("Error actualizando la fecha de descarga del insumo: " + e.getMessage());
@@ -235,7 +237,8 @@ public class OperatorMicroserviceBusiness {
         try {
             MicroserviceUpdateDeliveredSupplyDto supplyDelivered = new MicroserviceUpdateDeliveredSupplyDto();
             supplyDelivered.setReportUrl(reportUrl);
-            MicroserviceDeliveryDto response = operatorClient.updateSupplyDelivered(deliveryId, supplyId, supplyDelivered);
+            MicroserviceDeliveryDto response = operatorClient.updateSupplyDelivered(deliveryId, supplyId,
+                    supplyDelivered);
             return new CustomDeliveryDto(response);
         } catch (Exception e) {
             log.error("Error actualizando la url del reporte de descarga del insumo: " + e.getMessage());
@@ -275,7 +278,8 @@ public class OperatorMicroserviceBusiness {
 
             }
 
-            List<MicroserviceDeliveryDto> response = operatorClient.findDeliveriesByOperator(operatorId, municipalityCode, false);
+            List<MicroserviceDeliveryDto> response = operatorClient.findDeliveriesByOperator(operatorId,
+                    municipalityCode, false);
             deliveries = response.stream().map(CustomDeliveryDto::new).collect(Collectors.toList());
 
             for (CustomDeliveryDto deliveryDto : deliveries) {
@@ -364,8 +368,8 @@ public class OperatorMicroserviceBusiness {
         }
 
         List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> supplyDeliveriesDto =
-                suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> supplyDeliveriesDto = suppliesResponse.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         for (CustomSupplyDeliveryDto supplyDeliveryDto : supplyDeliveriesDto) {
 
@@ -380,7 +384,8 @@ public class OperatorMicroserviceBusiness {
 
             if (supplyDeliveryDto.getDownloadedBy() != null) {
                 try {
-                    MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyDeliveryDto.getDownloadedBy());
+                    MicroserviceUserDto userDto = administrationBusiness
+                            .getUserById(supplyDeliveryDto.getDownloadedBy());
                     supplyDeliveryDto.setUserDownloaded(userDto);
                 } catch (Exception e) {
                     log.error("Error consultando usuario: " + e.getMessage());

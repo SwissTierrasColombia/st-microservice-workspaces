@@ -46,10 +46,11 @@ public class RabbitMQUpdateExportIntegrationListener {
     private final IntegrationService integrationService;
     private final AdministrationBusiness administrationBusiness;
 
-    public RabbitMQUpdateExportIntegrationListener(IntegrationBusiness integrationBusiness, ManagerMicroserviceBusiness managerBusiness,
-                                                   NotificationBusiness notificationBusiness, DatabaseIntegrationBusiness databaseIntegration,
-                                                   CrytpoBusiness cryptoBusiness, SupplyBusiness supplyBusiness, IntegrationService integrationService,
-                                                   AdministrationBusiness administrationBusiness) {
+    public RabbitMQUpdateExportIntegrationListener(IntegrationBusiness integrationBusiness,
+            ManagerMicroserviceBusiness managerBusiness, NotificationBusiness notificationBusiness,
+            DatabaseIntegrationBusiness databaseIntegration, CrytpoBusiness cryptoBusiness,
+            SupplyBusiness supplyBusiness, IntegrationService integrationService,
+            AdministrationBusiness administrationBusiness) {
         this.integrationBusiness = integrationBusiness;
         this.managerBusiness = managerBusiness;
         this.notificationBusiness = notificationBusiness;
@@ -99,29 +100,34 @@ public class RabbitMQUpdateExportIntegrationListener {
                     // load supply to municipality
                     String observations = "Archivo XTF generado para el modelo de insumos";
 
-                    CustomSupplyDto supplyCadastralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplyCadastreId());
-                    CustomSupplyDto supplyRegistralDto = supplyBusiness.getSupplyById(integrationEntity.getSupplySnrId());
+                    CustomSupplyDto supplyCadastralDto = supplyBusiness
+                            .getSupplyById(integrationEntity.getSupplyCadastreId());
+                    CustomSupplyDto supplyRegistralDto = supplyBusiness
+                            .getSupplyById(integrationEntity.getSupplySnrId());
                     boolean isValid = supplyCadastralDto.getValid() && supplyRegistralDto.getValid();
 
-                    supplyBusiness.createSupply(municipalityCode, observations, null, integrationEntity.getManagerCode(), attachments, null,
-                            null, null, integrationEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
-                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio", isValid);
+                    supplyBusiness.createSupply(municipalityCode, observations, null,
+                            integrationEntity.getManagerCode(), attachments, null, null, null,
+                            integrationEntity.getManagerCode(), null, resultExportDto.getModelVersion(),
+                            SupplyBusiness.SUPPLY_STATE_ACTIVE, "Datos en modelo de insumos para el Municipio",
+                            isValid);
 
                     /*
                      * try { // delete database
-                     * databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity.
-                     * getDatabase()), cryptoBusiness.decrypt(integrationEntity.getUsername())); }
-                     * catch (Exception e) { log.error("No se ha podido borrar la base de datos: " +
-                     * e.getMessage()); }
+                     * databaseIntegration.dropDatabase(cryptoBusiness.decrypt(integrationEntity. getDatabase()),
+                     * cryptoBusiness.decrypt(integrationEntity.getUsername())); } catch (Exception e) {
+                     * log.error("No se ha podido borrar la base de datos: " + e.getMessage()); }
                      */
 
-                    // integrationBusiness.configureViewIntegration(integrationEntity.getId(), integrationEntity.getManagerCode());
+                    // integrationBusiness.configureViewIntegration(integrationEntity.getId(),
+                    // integrationEntity.getManagerCode());
 
                     // send notification
 
                     try {
 
-                        List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(integrationEntity.getManagerCode(),
+                        List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
+                                integrationEntity.getManagerCode(),
                                 new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
                         for (MicroserviceManagerUserDto directorDto : directors) {
@@ -154,7 +160,8 @@ public class RabbitMQUpdateExportIntegrationListener {
                     logErrors = errors.toString();
                 }
 
-                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, logErrors, null, null, "SISTEMA");
+                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, logErrors,
+                        null, null, "SISTEMA");
 
             }
 
@@ -163,7 +170,8 @@ public class RabbitMQUpdateExportIntegrationListener {
 
             Long stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
             try {
-                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId, e.getMessage(), null, null, "SISTEMA");
+                integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId,
+                        e.getMessage(), null, null, "SISTEMA");
             } catch (BusinessException e1) {
                 log.error("Error actualizando el estado de la integración por error: " + e.getMessage());
             }

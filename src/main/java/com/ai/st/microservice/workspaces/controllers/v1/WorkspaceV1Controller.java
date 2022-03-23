@@ -55,7 +55,7 @@ import java.util.*;
 
 import javax.servlet.ServletContext;
 
-@Api(value = "Manage Workspaces", tags = {"Workspaces"})
+@Api(value = "Manage Workspaces", tags = { "Workspaces" })
 @RestController
 @RequestMapping("api/workspaces/v1/workspaces")
 public class WorkspaceV1Controller {
@@ -76,10 +76,10 @@ public class WorkspaceV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceV1Controller(WorkspaceBusiness workspaceBusiness, IntegrationBusiness integrationBusiness,
-                                 SupplyBusiness supplyBusiness, OperatorMicroserviceBusiness operatorBusiness,
-                                 ManagerMicroserviceBusiness managerBusiness, MunicipalityBusiness municipalityBusiness,
-                                 WorkspaceOperatorBusiness workspaceOperatorBusiness, ServletContext servletContext,
-                                 AdministrationBusiness administrationBusiness) {
+            SupplyBusiness supplyBusiness, OperatorMicroserviceBusiness operatorBusiness,
+            ManagerMicroserviceBusiness managerBusiness, MunicipalityBusiness municipalityBusiness,
+            WorkspaceOperatorBusiness workspaceOperatorBusiness, ServletContext servletContext,
+            AdministrationBusiness administrationBusiness) {
         this.workspaceBusiness = workspaceBusiness;
         this.integrationBusiness = integrationBusiness;
         this.supplyBusiness = supplyBusiness;
@@ -95,10 +95,10 @@ public class WorkspaceV1Controller {
     @ApiOperation(value = "Get workspaces by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get workspaces by municipality", response = WorkspaceDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<List<WorkspaceDto>> getWorkspacesByMunicipality(@PathVariable Long municipalityId,
-                                                                          @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         List<WorkspaceDto> listWorkspaces = new ArrayList<>();
@@ -148,11 +148,11 @@ public class WorkspaceV1Controller {
     @ApiOperation(value = "Assign operator to workspace (municipality)")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Assign operator to workspace", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> assignOperator(@PathVariable Long workspaceId,
-                                                 @ModelAttribute AssignOperatorWorkpaceDto requestAssignOperator,
-                                                 @RequestHeader("authorization") String headerAuthorization) {
+            @ModelAttribute AssignOperatorWorkpaceDto requestAssignOperator,
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -257,12 +257,12 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "/{workspaceId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspace by id")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Get workspace by id", response = WorkspaceDto.class),
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get workspace by id", response = WorkspaceDto.class),
             @ApiResponse(code = 404, message = "Workspace not found", response = String.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getWorkspaceById(@PathVariable Long workspaceId,
-                                                   @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -313,10 +313,10 @@ public class WorkspaceV1Controller {
     @ApiOperation(value = "Get operators by workspace")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get operators by workspace", response = WorkspaceDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getOperatorsByWorkspace(@PathVariable Long workspaceId,
-                                                     @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         List<WorkspaceOperatorDto> listOperators = new ArrayList<>();
@@ -369,10 +369,10 @@ public class WorkspaceV1Controller {
     @ApiOperation(value = "Get workspace active by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get workspace active by municipality", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getWorkspaceActiveByMunicipality(@PathVariable Long municipalityId,
-                                                                   @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -398,7 +398,8 @@ public class WorkspaceV1Controller {
                 }
 
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-                    throw new InputValidationException("El usuario no tiene permisos para consultar el espacio de trabajo.");
+                    throw new InputValidationException(
+                            "El usuario no tiene permisos para consultar el espacio de trabajo.");
                 }
 
                 responseDto = workspaceBusiness.getWorkspaceActiveByMunicipality(municipalityId, managerDto.getId());
@@ -407,7 +408,8 @@ public class WorkspaceV1Controller {
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Microservice ---> " + e.getMessage());
+            log.error(
+                    "Error WorkspaceV1Controller@getWorkspaceActiveByMunicipality#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 4);
         } catch (BusinessException e) {
@@ -425,12 +427,12 @@ public class WorkspaceV1Controller {
 
     @PostMapping(value = "/integration/{municipalityId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Make integration")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Integration done", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Integration done", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> makeIntegrationAutomatic(@PathVariable Long municipalityId,
-                                                      @RequestBody MakeIntegrationDto requestMakeIntegration,
-                                                      @RequestHeader("authorization") String headerAuthorization) {
+            @RequestBody MakeIntegrationDto requestMakeIntegration,
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -490,10 +492,10 @@ public class WorkspaceV1Controller {
     @ApiOperation(value = "Get integrations by workspace")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get integrations", response = IntegrationDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getIntegrationsByWorkspace(@PathVariable Long workspaceId,
-                                                        @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -542,11 +544,11 @@ public class WorkspaceV1Controller {
 
     @PostMapping(value = "{workspaceId}/integrations/{integrationId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Start integration assisted")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Get integrations", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get integrations", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> startIntegrationAssisted(@PathVariable Long workspaceId, @PathVariable Long integrationId,
-                                                      @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -565,7 +567,8 @@ public class WorkspaceV1Controller {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
-                throw new InputValidationException("El usuario no tiene permisos para realizar la integración asistida.");
+                throw new InputValidationException(
+                        "El usuario no tiene permisos para realizar la integración asistida.");
             }
 
             responseDto = workspaceBusiness.startIntegrationAssisted(workspaceId, integrationId, managerDto,
@@ -591,11 +594,11 @@ public class WorkspaceV1Controller {
 
     @PostMapping(value = "{workspaceId}/integrations/{integrationId}/export", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Generate supply from integration")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Supply generated", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Supply generated", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> generateSupply(@PathVariable Long workspaceId, @PathVariable Long integrationId,
-                                            @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -641,11 +644,10 @@ public class WorkspaceV1Controller {
     @ApiOperation(value = "Remove integration from workspace")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Integration deleted", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> removeIntegrationFromWorkspace(@PathVariable Long workspaceId,
-                                                            @PathVariable Long integrationId,
-                                                            @RequestHeader("authorization") String headerAuthorization) {
+            @PathVariable Long integrationId, @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -690,11 +692,11 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "download-supply/{supplyId}")
     @ApiOperation(value = "Download file")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> downloadSupply(@PathVariable Long supplyId,
-                                            @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         MediaType mediaType;
         File file;
@@ -725,7 +727,8 @@ public class WorkspaceV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para actualizar el soporte.");
                 }
 
-                if (!workspaceBusiness.managerHasAccessToMunicipality(supplyDto.getMunicipalityCode(), managerDto.getId())) {
+                if (!workspaceBusiness.managerHasAccessToMunicipality(supplyDto.getMunicipalityCode(),
+                        managerDto.getId())) {
                     throw new InputValidationException("El gestor no tiene acceso al insumo.");
                 }
 
@@ -738,12 +741,14 @@ public class WorkspaceV1Controller {
                 // get operator
                 MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
 
-                CustomDeliveryDto deliveryDto = workspaceOperatorBusiness.getDeliveryFromSupply(operatorDto.getId(), supplyDto.getId());
+                CustomDeliveryDto deliveryDto = workspaceOperatorBusiness.getDeliveryFromSupply(operatorDto.getId(),
+                        supplyDto.getId());
                 if (deliveryDto == null) {
                     throw new InputValidationException("El operador no tiene acceso al insumo.");
                 }
 
-                workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId(), userDtoSession.getId());
+                workspaceOperatorBusiness.registerDownloadSupply(deliveryDto, supplyDto.getId(),
+                        userDtoSession.getId());
 
             }
 
@@ -758,7 +763,8 @@ public class WorkspaceV1Controller {
                             .getAttachmentType().getId().equals(SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE))
                     .findAny().orElse(null);
 
-            MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(supplyDto.getMunicipalityCode());
+            MunicipalityDto municipalityDto = municipalityBusiness
+                    .getMunicipalityByCode(supplyDto.getMunicipalityCode());
 
             // the supply has FTP
             if (attachmentFtp != null && attachmentSupply == null) {
@@ -766,7 +772,8 @@ public class WorkspaceV1Controller {
                 File fileFTP = supplyBusiness.generateFTPFile(supplyDto, municipalityDto);
 
                 String randomCode = RandomStringUtils.random(10, false, true);
-                pathFile = ZipUtil.zipping(new ArrayList<>(Collections.singletonList(fileFTP)), "insumo_" + randomCode, stTemporalDirectory);
+                pathFile = ZipUtil.zipping(new ArrayList<>(Collections.singletonList(fileFTP)), "insumo_" + randomCode,
+                        stTemporalDirectory);
 
             }
             // the supply has file to download
@@ -778,8 +785,8 @@ public class WorkspaceV1Controller {
                 File fileSupply = new File(attachmentSupply.getData());
 
                 String randomCode = RandomStringUtils.random(10, false, true);
-                pathFile = ZipUtil.zipping(new ArrayList<>(Arrays.asList(fileFTP, fileSupply)),
-                        "insumo_" + randomCode, stTemporalDirectory);
+                pathFile = ZipUtil.zipping(new ArrayList<>(Arrays.asList(fileFTP, fileSupply)), "insumo_" + randomCode,
+                        stTemporalDirectory);
 
             }
 
@@ -821,11 +828,11 @@ public class WorkspaceV1Controller {
 
     @DeleteMapping(value = "{workspaceId}/supplies/{supplyId}")
     @ApiOperation(value = "Delete supply")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Supply Deleted", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Supply Deleted", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> removeSupply(@PathVariable Long workspaceId, @PathVariable Long supplyId,
-                                          @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -878,12 +885,12 @@ public class WorkspaceV1Controller {
 
     @PostMapping(value = "{workspaceId}/operators/deliveries")
     @ApiOperation(value = "Create delivery")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Delivery created", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> createDelivery(@PathVariable Long workspaceId,
-                                            @RequestHeader("authorization") String headerAuthorization,
-                                            @RequestBody CreateDeliveryDto createDeliveryDto) {
+            @RequestHeader("authorization") String headerAuthorization,
+            @RequestBody CreateDeliveryDto createDeliveryDto) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -929,7 +936,8 @@ public class WorkspaceV1Controller {
                 throw new InputValidationException("Es necesario definir a cuál operador se le realizará la entrega.");
             }
 
-            responseDto = workspaceBusiness.createDelivery(workspaceId, managerDto.getId(), operatorCode, observations, supplies);
+            responseDto = workspaceBusiness.createDelivery(workspaceId, managerDto.getId(), operatorCode, observations,
+                    supplies);
             httpStatus = HttpStatus.CREATED;
 
         } catch (DisconnectedMicroserviceException e) {
@@ -955,8 +963,8 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "operators/deliveries")
     @ApiOperation(value = "Get deliveries")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Get deliveries", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get deliveries", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getSuppliesOperator(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -1001,10 +1009,10 @@ public class WorkspaceV1Controller {
     @ApiOperation(value = "Get deliveries closed")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries closed", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getDeliveriesClosed(@RequestHeader("authorization") String headerAuthorization,
-                                                 @RequestParam(required = false, name = "municipality") Long municipalityId) {
+            @RequestParam(required = false, name = "municipality") Long municipalityId) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -1045,13 +1053,12 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "/location")
     @ApiOperation(value = "Get workspaces by location")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get workspaces", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get workspaces", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getWorkspacesByLocation(@RequestHeader("authorization") String headerAuthorization,
-                                                     @RequestParam(name = "department") Long departmentId,
-                                                     @RequestParam(required = false, name = "municipality") Long municipalityId) {
+            @RequestParam(name = "department") Long departmentId,
+            @RequestParam(required = false, name = "municipality") Long municipalityId) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -1076,7 +1083,8 @@ public class WorkspaceV1Controller {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
 
-                responseDto = workspaceBusiness.getWorkspacesByLocation(departmentId, municipalityId, managerDto.getId());
+                responseDto = workspaceBusiness.getWorkspacesByLocation(departmentId, municipalityId,
+                        managerDto.getId());
             }
 
             httpStatus = HttpStatus.OK;
@@ -1100,11 +1108,11 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "/report-delivery/{deliveryId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Download report delivery")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Download report delivery"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Download report delivery"),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> reportDownloadDeliveryManager(@PathVariable Long deliveryId,
-                                                           @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         MediaType mediaType;
         File file;
@@ -1162,11 +1170,11 @@ public class WorkspaceV1Controller {
 
     @DeleteMapping(value = "/unassign/{municipalityId}/managers/{managerCode}")
     @ApiOperation(value = "Unassigned manager from municipality")
-    @ApiResponses(value = {@ApiResponse(code = 204, message = "Unassigned manager", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 204, message = "Unassigned manager", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> unassignedManagerFromMunicipality(@PathVariable Long municipalityId,
-                                                               @PathVariable Long managerCode) {
+            @PathVariable Long managerCode) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -1192,8 +1200,8 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "/operators", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspaces by operator")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getWorkspacesByOperator(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -1232,8 +1240,8 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "/operators/{operatorCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspaces by operator")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getWorkspacesByOperator(@PathVariable Long operatorCode) {
 
@@ -1256,11 +1264,11 @@ public class WorkspaceV1Controller {
 
     @GetMapping(value = "/managers/{managerCode}/municipalities/{municipalityCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get workspaces by manager")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Obtained workspaces", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getWorkspaceByManagerAndMunicipality(@PathVariable Long managerCode,
-                                                                  @PathVariable String municipalityCode) {
+            @PathVariable String municipalityCode) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -1271,7 +1279,8 @@ public class WorkspaceV1Controller {
             httpStatus = HttpStatus.OK;
 
         } catch (Exception e) {
-            log.error("Error WorkspaceV1Controller@getWorkspaceByManagerAndMunicipality#General ---> " + e.getMessage());
+            log.error(
+                    "Error WorkspaceV1Controller@getWorkspaceByManagerAndMunicipality#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             responseDto = new BasicResponseDto(e.getMessage(), 3);
         }

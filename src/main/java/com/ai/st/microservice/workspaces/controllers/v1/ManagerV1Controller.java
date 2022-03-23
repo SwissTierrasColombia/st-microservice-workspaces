@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Managers ", tags = {"Managers"})
+@Api(value = "Managers ", tags = { "Managers" })
 @RestController
 @RequestMapping("api/workspaces/v1/managers")
 public class ManagerV1Controller {
@@ -34,8 +34,8 @@ public class ManagerV1Controller {
     private final OperatorMicroserviceBusiness operatorBusiness;
     private final AdministrationBusiness administrationBusiness;
 
-    public ManagerV1Controller(ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness,
-                               AdministrationBusiness administrationBusiness) {
+    public ManagerV1Controller(ManagerMicroserviceBusiness managerBusiness,
+            OperatorMicroserviceBusiness operatorBusiness, AdministrationBusiness administrationBusiness) {
         this.managerBusiness = managerBusiness;
         this.operatorBusiness = operatorBusiness;
         this.administrationBusiness = administrationBusiness;
@@ -45,7 +45,7 @@ public class ManagerV1Controller {
     @ApiOperation(value = "Get deliveries by manager")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries by manager", response = CustomDeliveryDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getDeliveriesByManager(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -94,10 +94,10 @@ public class ManagerV1Controller {
     @ApiOperation(value = "Get delivery by id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries by manager", response = CustomDeliveryDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getDeliveriesById(@RequestHeader("authorization") String headerAuthorization,
-                                               @PathVariable Long deliveryId) {
+            @PathVariable Long deliveryId) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -144,7 +144,7 @@ public class ManagerV1Controller {
     @ApiOperation(value = "Get operators by manager session")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Operators got", response = MicroserviceOperatorDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getOperatorsByManager(@RequestHeader("authorization") String headerAuthorization) {
 

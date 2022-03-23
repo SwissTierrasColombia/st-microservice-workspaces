@@ -36,8 +36,9 @@ public class RabbitMQUpdateStateSupplyListener {
     private final IMunicipalityService municipalityService;
     private final AdministrationBusiness administrationBusiness;
 
-    public RabbitMQUpdateStateSupplyListener(ProviderFeignClient providerClient, NotificationBusiness notificationBusiness,
-                                             IMunicipalityService municipalityService, AdministrationBusiness administrationBusiness) {
+    public RabbitMQUpdateStateSupplyListener(ProviderFeignClient providerClient,
+            NotificationBusiness notificationBusiness, IMunicipalityService municipalityService,
+            AdministrationBusiness administrationBusiness) {
         this.providerClient = providerClient;
         this.notificationBusiness = notificationBusiness;
         this.municipalityService = municipalityService;
@@ -80,8 +81,8 @@ public class RabbitMQUpdateStateSupplyListener {
             try {
 
                 List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
-                List<CustomSupplyRequestedDto> suppliesRequestDto =
-                        suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+                List<CustomSupplyRequestedDto> suppliesRequestDto = suppliesResponse.stream()
+                        .map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
                 CustomSupplyRequestedDto supplyRequestedDto = suppliesRequestDto.stream()
                         .filter(supply -> supply.getId().equals(validationDto.getSupplyRequestedId())).findAny()
@@ -92,10 +93,9 @@ public class RabbitMQUpdateStateSupplyListener {
 
                 MicroserviceUserDto userDto = administrationBusiness.getUserById(supplyRequestedDto.getDeliveredBy());
                 if (userDto != null && userDto.getEnabled()) {
-                    notificationBusiness.sendNotificationLoadOfInputs(userDto.getEmail(), userDto.getId(),
-                            xtfAccept, municipalityEntity.getName(),
-                            municipalityEntity.getDepartment().getName(), validationDto.getRequestId().toString(),
-                            new Date(), "");
+                    notificationBusiness.sendNotificationLoadOfInputs(userDto.getEmail(), userDto.getId(), xtfAccept,
+                            municipalityEntity.getName(), municipalityEntity.getDepartment().getName(),
+                            validationDto.getRequestId().toString(), new Date(), "");
                 }
 
             } catch (Exception e) {

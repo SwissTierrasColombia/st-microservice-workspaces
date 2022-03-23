@@ -29,8 +29,8 @@ public class ManagerMicroserviceBusiness {
     private final IWorkspaceOperatorService workspaceOperatorService;
     private final OperatorMicroserviceBusiness operatorBusiness;
 
-    public ManagerMicroserviceBusiness(ManagerFeignClient managerClient, IWorkspaceOperatorService workspaceOperatorService,
-                                       OperatorMicroserviceBusiness operatorBusiness) {
+    public ManagerMicroserviceBusiness(ManagerFeignClient managerClient,
+            IWorkspaceOperatorService workspaceOperatorService, OperatorMicroserviceBusiness operatorBusiness) {
         this.managerClient = managerClient;
         this.workspaceOperatorService = workspaceOperatorService;
         this.operatorBusiness = operatorBusiness;
@@ -102,8 +102,8 @@ public class ManagerMicroserviceBusiness {
 
     public List<MicroserviceOperatorDto> getOperatorsByManager(Long managerCode) {
 
-        List<WorkspaceOperatorEntity> workspacesOperators =
-                workspaceOperatorService.getWorkspacesOperatorsByManagerCode(managerCode);
+        List<WorkspaceOperatorEntity> workspacesOperators = workspaceOperatorService
+                .getWorkspacesOperatorsByManagerCode(managerCode);
 
         List<Long> operatorsId = new ArrayList<>();
 

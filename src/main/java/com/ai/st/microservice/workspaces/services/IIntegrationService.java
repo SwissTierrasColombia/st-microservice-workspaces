@@ -20,8 +20,8 @@ public interface IIntegrationService {
 
     List<IntegrationEntity> getIntegrationByWorkspace(WorkspaceEntity workspaceEntity, Long managerCode);
 
-    IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
-                                                             IntegrationStateEntity state, Long managerCode);
+    IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId, IntegrationStateEntity state,
+            Long managerCode);
 
     void deleteIntegration(Long id);
 

@@ -56,11 +56,12 @@ public class IntegrationBusiness {
 
     private final Logger log = LoggerFactory.getLogger(IntegrationBusiness.class);
 
-    public IntegrationBusiness(SupplyFeignClient supplyClient, ProviderFeignClient providerClient, GeovisorFeignClient geovisorClient,
-                               IIntegrationService integrationService, IIntegrationStatService integrationStatService,
-                               IIntegrationStateService integrationStateService, IWorkspaceService workspaceService,
-                               SupplyBusiness supplyBusiness, MunicipalityBusiness municipalityBusiness,
-                               DatabaseIntegrationBusiness databaseBusiness, CrytpoBusiness cryptoBusiness) {
+    public IntegrationBusiness(SupplyFeignClient supplyClient, ProviderFeignClient providerClient,
+            GeovisorFeignClient geovisorClient, IIntegrationService integrationService,
+            IIntegrationStatService integrationStatService, IIntegrationStateService integrationStateService,
+            IWorkspaceService workspaceService, SupplyBusiness supplyBusiness,
+            MunicipalityBusiness municipalityBusiness, DatabaseIntegrationBusiness databaseBusiness,
+            CrytpoBusiness cryptoBusiness) {
         this.supplyClient = supplyClient;
         this.providerClient = providerClient;
         this.geovisorClient = geovisorClient;
@@ -75,9 +76,9 @@ public class IntegrationBusiness {
     }
 
     public IntegrationDto createIntegration(String hostname, String port, String database, String schema,
-                                            String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
-                                            WorkspaceEntity workspaceEntity, IntegrationStateEntity stateEntity, Long userCode, Long managerCode,
-                                            String user) {
+            String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
+            WorkspaceEntity workspaceEntity, IntegrationStateEntity stateEntity, Long userCode, Long managerCode,
+            String user) {
 
         IntegrationEntity integrationEntity = new IntegrationEntity();
         integrationEntity.setDatabase(database);
@@ -110,7 +111,7 @@ public class IntegrationBusiness {
     }
 
     public IntegrationDto updateCredentialsIntegration(Long integrationId, String hostname, String port,
-                                                       String database, String schema, String username, String password) throws BusinessException {
+            String database, String schema, String username, String password) throws BusinessException {
 
         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
         if (integrationEntity == null) {
@@ -131,7 +132,7 @@ public class IntegrationBusiness {
     }
 
     public IntegrationDto addStatToIntegration(Long integrationId, Long countSnr, Long countCadastre, Long countAnt,
-                                               Long countMatch, Double percentage) throws BusinessException {
+            Long countMatch, Double percentage) throws BusinessException {
 
         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
         if (integrationEntity == null) {
@@ -151,8 +152,8 @@ public class IntegrationBusiness {
         return this.transformEntityToDto(integrationEntity);
     }
 
-    public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId, String errors, Long userCode, Long managerCode,
-                                                   String user) throws BusinessException {
+    public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId, String errors, Long userCode,
+            Long managerCode, String user) throws BusinessException {
 
         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
         if (integrationEntity == null) {
@@ -207,8 +208,8 @@ public class IntegrationBusiness {
             }
         }
 
-        List<IntegrationEntity> listIntegrationsEntity =
-                integrationService.getIntegrationByWorkspace(workspaceEntity, managerCode);
+        List<IntegrationEntity> listIntegrationsEntity = integrationService.getIntegrationByWorkspace(workspaceEntity,
+                managerCode);
 
         for (IntegrationEntity integrationEntity : listIntegrationsEntity) {
             listIntegrationsDto.add(this.transformEntityToDto(integrationEntity));
@@ -218,10 +219,12 @@ public class IntegrationBusiness {
 
             try {
 
-                MicroserviceSupplyDto responseCadastre = supplyClient.findSupplyById(integrationDto.getSupplyCadastreId());
+                MicroserviceSupplyDto responseCadastre = supplyClient
+                        .findSupplyById(integrationDto.getSupplyCadastreId());
                 CustomSupplyDto supplyCadastreDto = new CustomSupplyDto(responseCadastre);
 
-                supplyCadastreDto.setTypeSupply(providerClient.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode()));
+                supplyCadastreDto
+                        .setTypeSupply(providerClient.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode()));
                 integrationDto.setSupplyCadastre(supplyCadastreDto);
 
                 MicroserviceSupplyDto responseSnr = supplyClient.findSupplyById(integrationDto.getSupplySnrId());
@@ -339,8 +342,7 @@ public class IntegrationBusiness {
 
             try {
 
-                CustomSupplyDto supplyCadastreDto = supplyBusiness
-                        .getSupplyById(integrationDto.getSupplyCadastreId());
+                CustomSupplyDto supplyCadastreDto = supplyBusiness.getSupplyById(integrationDto.getSupplyCadastreId());
                 integrationDto.setSupplyCadastre(supplyCadastreDto);
 
                 CustomSupplyDto supplySnrDto = supplyBusiness.getSupplyById(integrationDto.getSupplySnrId());
@@ -382,9 +384,8 @@ public class IntegrationBusiness {
                     "No se puede configurar el geovisor porque la integración esta en un estado inválido.");
         }
 
-        integrationEntity.getWorkspace().getManagers()
-                .stream().filter(m -> m.getManagerCode().equals(managerId)).findAny()
-                .orElseThrow(() -> new BusinessException("La integración no pertenece al gestor"));
+        integrationEntity.getWorkspace().getManagers().stream().filter(m -> m.getManagerCode().equals(managerId))
+                .findAny().orElseThrow(() -> new BusinessException("La integración no pertenece al gestor"));
 
         String municipalityCode = integrationEntity.getWorkspace().getMunicipality().getCode();
 

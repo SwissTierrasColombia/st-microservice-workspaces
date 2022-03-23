@@ -39,8 +39,9 @@ public class RabbitMQResultExportListener {
     private final CrytpoBusiness cryptoBusiness;
     private final SupplyBusiness supplyBusiness;
 
-    public RabbitMQResultExportListener(ProviderBusiness providerBusiness, DatabaseIntegrationBusiness databaseIntegration,
-                                        CrytpoBusiness cryptoBusiness, SupplyBusiness supplyBusiness) {
+    public RabbitMQResultExportListener(ProviderBusiness providerBusiness,
+            DatabaseIntegrationBusiness databaseIntegration, CrytpoBusiness cryptoBusiness,
+            SupplyBusiness supplyBusiness) {
         this.providerBusiness = providerBusiness;
         this.databaseIntegration = databaseIntegration;
         this.cryptoBusiness = cryptoBusiness;
@@ -48,7 +49,7 @@ public class RabbitMQResultExportListener {
     }
 
     @RabbitListener(queues = "${st.rabbitmq.queueResultExport.queue}", concurrency = "${st.rabbitmq.queueResultExport.concurrency}")
-    public void updateIntegration(MicroserviceResultExportDto resultDto) {
+    public void updateResultExport(MicroserviceResultExportDto resultDto) {
 
         log.info("procesando resultado de la exportación ... " + resultDto.getReference());
 
@@ -74,8 +75,8 @@ public class RabbitMQResultExportListener {
                     CustomRequestDto requestDto = providerBusiness.getRequestById(requestId);
 
                     List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
-                    List<CustomSupplyRequestedDto> suppliesRequestDto =
-                            suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+                    List<CustomSupplyRequestedDto> suppliesRequestDto = suppliesResponse.stream()
+                            .map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
                     CustomSupplyRequestedDto supplyRequestedDto = suppliesRequestDto.stream()
                             .filter(sR -> sR.getId().equals(supplyRequestedId)).findAny().orElse(null);
@@ -119,16 +120,17 @@ public class RabbitMQResultExportListener {
                             SupplyBusiness.SUPPLY_ATTACHMENT_TYPE_FTP));
 
                     List<? extends MicroserviceEmitterDto> emittersResponse = requestDto.getEmitters();
-                    List<CustomEmitterDto> emittersRequestDto =
-                            emittersResponse.stream().map(CustomEmitterDto::new).collect(Collectors.toList());
+                    List<CustomEmitterDto> emittersRequestDto = emittersResponse.stream().map(CustomEmitterDto::new)
+                            .collect(Collectors.toList());
 
-                    CustomEmitterDto emitterDto = emittersRequestDto.stream().
-                            filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
+                    CustomEmitterDto emitterDto = emittersRequestDto.stream()
+                            .filter(e -> e.getEmitterType().equalsIgnoreCase("ENTITY")).findAny().orElse(null);
 
                     supplyBusiness.createSupply(requestDto.getMunicipalityCode(), supplyRequestedDto.getObservations(),
-                            supplyRequestedDto.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments, requestId, userId,
-                            requestDto.getProvider().getId(), null, null, supplyRequestedDto.getModelVersion(),
-                            SupplyBusiness.SUPPLY_STATE_ACTIVE, supplyRequestedDto.getTypeSupply().getName(), supplyRequestedDto.getValid());
+                            supplyRequestedDto.getTypeSupply().getId(), emitterDto.getEmitterCode(), attachments,
+                            requestId, userId, requestDto.getProvider().getId(), null, null,
+                            supplyRequestedDto.getModelVersion(), SupplyBusiness.SUPPLY_STATE_ACTIVE,
+                            supplyRequestedDto.getTypeSupply().getName(), supplyRequestedDto.getValid());
 
                     // delete database
                     try {

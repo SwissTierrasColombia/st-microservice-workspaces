@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiResponses;
 import java.util.ArrayList;
 import java.util.List;
 
-@Api(value = "Manage Tasks", tags = {"Tasks"})
+@Api(value = "Manage Tasks", tags = { "Tasks" })
 @RestController
 @RequestMapping("api/workspaces/v1/tasks")
 public class TaskV1Controller {
@@ -43,7 +43,7 @@ public class TaskV1Controller {
     @ApiOperation(value = "Get pending tasks")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get pending tasks", response = CustomTaskDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getPendingTasks(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -84,10 +84,10 @@ public class TaskV1Controller {
     @ApiOperation(value = "Start task")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Task started", response = CustomTaskDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> startTask(@RequestHeader("authorization") String headerAuthorization,
-                                       @PathVariable Long taskId) {
+            @PathVariable Long taskId) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -124,10 +124,10 @@ public class TaskV1Controller {
     @ApiOperation(value = "Finish task")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Task finished", response = CustomTaskDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> finishTask(@RequestHeader("authorization") String headerAuthorization,
-                                        @PathVariable Long taskId) {
+            @PathVariable Long taskId) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -164,11 +164,10 @@ public class TaskV1Controller {
     @ApiOperation(value = "Cancel task")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Task cancelled", response = CustomTaskDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> cancelTask(@RequestHeader("authorization") String headerAuthorization,
-                                        @PathVariable Long taskId,
-                                        @RequestBody CancelTaskDto cancelTaskRequest) {
+            @PathVariable Long taskId, @RequestBody CancelTaskDto cancelTaskRequest) {
 
         HttpStatus httpStatus;
         Object responseDto;

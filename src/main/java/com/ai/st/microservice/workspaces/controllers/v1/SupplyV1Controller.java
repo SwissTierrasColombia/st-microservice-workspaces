@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiResponses;
 
 import java.util.List;
 
-@Api(value = "Manage Supplies", tags = {"Supplies"})
+@Api(value = "Manage Supplies", tags = { "Supplies" })
 @RestController
 @RequestMapping("api/workspaces/v1/supplies")
 public class SupplyV1Controller {
@@ -36,7 +36,7 @@ public class SupplyV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public SupplyV1Controller(SupplyBusiness supplyBusiness, ManagerMicroserviceBusiness managerBusiness,
-                              AdministrationBusiness administrationBusiness) {
+            AdministrationBusiness administrationBusiness) {
         this.supplyBusiness = supplyBusiness;
         this.managerBusiness = managerBusiness;
         this.administrationBusiness = administrationBusiness;
@@ -46,16 +46,16 @@ public class SupplyV1Controller {
     @ApiOperation(value = "Get supplies by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get supplies", response = CustomSupplyDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getSuppliesByMunicipality(@PathVariable Long municipalityId,
-                                                       @RequestParam(name = "extensions", required = false) List<String> extensions,
-                                                       @RequestHeader("authorization") String headerAuthorization,
-                                                       @RequestParam(name = "page", required = false) Integer page,
-                                                       @RequestParam(name = "manager", required = false) Long managerCode,
-                                                       @RequestParam(name = "operator", required = false) Long operatorCode,
-                                                       @RequestParam(name = "active", defaultValue = "true") boolean active,
-                                                       @RequestParam(name = "requests", required = false) List<Long> requests) {
+            @RequestParam(name = "extensions", required = false) List<String> extensions,
+            @RequestHeader("authorization") String headerAuthorization,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "manager", required = false) Long managerCode,
+            @RequestParam(name = "operator", required = false) Long operatorCode,
+            @RequestParam(name = "active", defaultValue = "true") boolean active,
+            @RequestParam(name = "requests", required = false) List<Long> requests) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -103,12 +103,11 @@ public class SupplyV1Controller {
 
     @PutMapping(value = "/{supplyId}/active", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Active supply")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> activeSupply(@PathVariable Long supplyId,
-                                          @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -153,12 +152,11 @@ public class SupplyV1Controller {
 
     @PutMapping(value = "/{supplyId}/inactive", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Inactive supply")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> inactiveSupply(@PathVariable Long supplyId,
-                                            @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;

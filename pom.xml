@@ -14,12 +14,12 @@
 
     <groupId>com.ai.st.microservice.workspaces</groupId>
     <artifactId>st-microservice-workspaces</artifactId>
-    <version>4.2.2</version>
+    <version>4.5.0</version>
     <name>st-microservice-workspaces</name>
     <description>Microservice Workspaces</description>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>11</java.version>
         <spring-cloud.version>Hoxton.RC2</spring-cloud.version>
     </properties>
 
@@ -125,6 +125,19 @@
             <version>1.1.2</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.immutables</groupId>
+            <artifactId>value</artifactId>
+            <version>2.8.2</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+            <version>0.5.0</version>
+        </dependency>
+
     </dependencies>
 
     <dependencyManagement>
@@ -144,6 +157,35 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>2.18.0</version>
+                <configuration>
+                    <lineEnding>LF</lineEnding>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>8.5.4</version>
+                <configuration>
+                    <user>postgres</user>
+                    <password>123456</password>
+                    <url>jdbc:postgresql://localhost:54321/sistema-transicion</url>
+                    <schemas>
+                        <schema>workspaces</schema>
+                    </schemas>
+                </configuration>
             </plugin>
         </plugins>
     </build>

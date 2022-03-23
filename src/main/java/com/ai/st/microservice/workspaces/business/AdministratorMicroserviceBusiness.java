@@ -45,9 +45,9 @@ public class AdministratorMicroserviceBusiness {
     private final OperatorMicroserviceBusiness operatorBusiness;
 
     public AdministratorMicroserviceBusiness(UserFeignClient userClient, ProviderFeignClient providerClient,
-                                             ManagerFeignClient managerClient, OperatorFeignClient operatorClient,
-                                             NotificationBusiness notificationBusiness, ProviderBusiness providerBusiness,
-                                             ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness) {
+            ManagerFeignClient managerClient, OperatorFeignClient operatorClient,
+            NotificationBusiness notificationBusiness, ProviderBusiness providerBusiness,
+            ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness) {
         this.userClient = userClient;
         this.providerClient = providerClient;
         this.managerClient = managerClient;
@@ -58,10 +58,9 @@ public class AdministratorMicroserviceBusiness {
         this.operatorBusiness = operatorBusiness;
     }
 
-    public CustomUserDto createUserFromAdministrator(String firstName, String lastName, String email,
-                                                     String username, String password, CreateUserRoleProviderDto roleProvider,
-                                                     CreateUserRoleAdministratorDto roleAdmin, CreateUserRoleManagerDto roleManager,
-                                                     CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+    public CustomUserDto createUserFromAdministrator(String firstName, String lastName, String email, String username,
+            String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+            CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
         if (roleManager != null) {
 
@@ -79,7 +78,8 @@ public class AdministratorMicroserviceBusiness {
         }
 
         if (roleProvider != null) {
-            roleProvider.setProfiles(new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)));
+            roleProvider
+                    .setProfiles(new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_PROVIDER)));
         }
 
         if (roleOperator != null) {
@@ -90,12 +90,12 @@ public class AdministratorMicroserviceBusiness {
 
         }
 
-        return this.createUser(firstName, lastName, email, username, password, true, roleProvider, roleAdmin, roleManager,
-                roleOperator);
+        return this.createUser(firstName, lastName, email, username, password, true, roleProvider, roleAdmin,
+                roleManager, roleOperator);
     }
 
     public CustomUserDto createUserFromManager(String firstName, String lastName, String email, String username,
-                                               String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
+            String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
 
         if (roleManager.getProfiles().size() == 0) {
             throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
@@ -111,10 +111,11 @@ public class AdministratorMicroserviceBusiness {
         boolean enabled = true;
 
         if (roleManager.getProfiles().contains(RoleBusiness.SUB_ROLE_SINIC_MANAGER)) {
-            List<MicroserviceManagerUserDto> usersSINIC =
-                    managerClient.findUsersByManager(roleManager.getManagerId(), new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_SINIC_MANAGER)));
+            List<MicroserviceManagerUserDto> usersSINIC = managerClient.findUsersByManager(roleManager.getManagerId(),
+                    new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_SINIC_MANAGER)));
 
-            int count = (int) usersSINIC.stream().map(user -> userClient.findById(user.getUserCode())).filter(MicroserviceUserDto::getEnabled).count();
+            int count = (int) usersSINIC.stream().map(user -> userClient.findById(user.getUserCode()))
+                    .filter(MicroserviceUserDto::getEnabled).count();
             if (count > 0) {
                 enabled = false;
             }
@@ -124,7 +125,7 @@ public class AdministratorMicroserviceBusiness {
     }
 
     public CustomUserDto createUserFromProvider(String firstName, String lastName, String email, String username,
-                                                String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
+            String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
 
         if (roleProvider.getProfiles().size() == 0) {
             throw new BusinessException("Se debe especificar al menos un perfil para el usuario.");
@@ -142,9 +143,9 @@ public class AdministratorMicroserviceBusiness {
         return this.createUser(firstName, lastName, email, username, password, true, roleProvider, null, null, null);
     }
 
-    public CustomUserDto createUser(String firstName, String lastName, String email, String username, String password, boolean enabled,
-                                    CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
-                                    CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+    public CustomUserDto createUser(String firstName, String lastName, String email, String username, String password,
+            boolean enabled, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+            CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
         MicroserviceUserDto userResponseDto;
 
@@ -321,7 +322,7 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -342,7 +343,7 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -401,14 +402,14 @@ public class AdministratorMicroserviceBusiness {
         return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public CustomUserDto updateUserFromManager(Long userId, String firstName, String lastName, String email, Long managerCode)
-            throws BusinessException {
+    public CustomUserDto updateUserFromManager(Long userId, String firstName, String lastName, String email,
+            Long managerCode) throws BusinessException {
 
         MicroserviceUserDto userDto;
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -436,14 +437,14 @@ public class AdministratorMicroserviceBusiness {
         return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public CustomUserDto updateUserFromProvider(Long userId, String firstName, String lastName, String email, Long providerCode)
-            throws BusinessException {
+    public CustomUserDto updateUserFromProvider(Long userId, String firstName, String lastName, String email,
+            Long providerCode) throws BusinessException {
 
         MicroserviceUserDto userDto;
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -485,7 +486,8 @@ public class AdministratorMicroserviceBusiness {
         return this.updateUser(userId, firstName, lastName, email);
     }
 
-    public CustomUserDto updateUser(Long userId, String firstName, String lastName, String email) throws BusinessException {
+    public CustomUserDto updateUser(Long userId, String firstName, String lastName, String email)
+            throws BusinessException {
         try {
 
             MicroserviceUpdateUserDto updateUser = new MicroserviceUpdateUserDto();
@@ -507,7 +509,7 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -526,7 +528,7 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -592,7 +594,7 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -605,20 +607,21 @@ public class AdministratorMicroserviceBusiness {
 
         if (status && !userDto.getEnabled()) {
             List<MicroserviceManagerProfileDto> profiles = managerClient.findProfilesByUser(userId);
-            int count = (int) profiles.stream().map(MicroserviceManagerProfileDto::getId).filter(id -> id.equals(RoleBusiness.SUB_ROLE_SINIC_MANAGER)).count();
+            int count = (int) profiles.stream().map(MicroserviceManagerProfileDto::getId)
+                    .filter(id -> id.equals(RoleBusiness.SUB_ROLE_SINIC_MANAGER)).count();
             if (count > 0) {
 
-                List<MicroserviceManagerUserDto> usersSINIC =
-                        managerClient.findUsersByManager(managerCode, new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_SINIC_MANAGER)));
+                List<MicroserviceManagerUserDto> usersSINIC = managerClient.findUsersByManager(managerCode,
+                        new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_SINIC_MANAGER)));
 
-                int countEnabled = (int) usersSINIC.stream().map(user -> userClient.findById(user.getUserCode())).filter(MicroserviceUserDto::getEnabled).count();
+                int countEnabled = (int) usersSINIC.stream().map(user -> userClient.findById(user.getUserCode()))
+                        .filter(MicroserviceUserDto::getEnabled).count();
                 if (countEnabled > 0) {
                     throw new BusinessException("Sólo puede existir un usuario SINIC activo en el sistema");
                 }
 
             }
         }
-
 
         MicroserviceManagerDto managerDto;
         try {
@@ -644,7 +647,7 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            log.error("Error consultando el usuario para la edición: " + e.getMessage());
+            log.error("Error consultando el usuario para la modificación: " + e.getMessage());
             throw new BusinessException("No se ha encontrado el usuario");
         }
 
@@ -770,7 +773,8 @@ public class AdministratorMicroserviceBusiness {
                     MicroserviceProviderDto providerDto = providerClient.findProviderByAdministrator(userDto.getId());
                     userDto.setEntity(providerDto);
                 } catch (Exception e) {
-                    log.error("Error consultando el proveedor de insumo por el código de usuario administrador: " + e.getMessage());
+                    log.error("Error consultando el proveedor de insumo por el código de usuario administrador: "
+                            + e.getMessage());
                 }
 
                 try {
@@ -955,8 +959,8 @@ public class AdministratorMicroserviceBusiness {
             MicroserviceUserDto response = userClient.findById(userId);
             userDto = new CustomUserDto(response);
 
-            usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
-                    .findAny().ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
+            usersProvider.stream().filter(u -> u.getUserCode().equals(userId)).findAny()
+                    .ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
 
         } catch (Exception e) {
             log.error("Error agregando perfil a un usuario proveedor: " + e.getMessage());
@@ -1034,8 +1038,8 @@ public class AdministratorMicroserviceBusiness {
             MicroserviceUserDto response = userClient.findById(userId);
             userDto = new CustomUserDto(response);
 
-            usersProvider.stream().filter(u -> u.getUserCode().equals(userId))
-                    .findAny().ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
+            usersProvider.stream().filter(u -> u.getUserCode().equals(userId)).findAny()
+                    .ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
 
         } catch (BusinessException e) {
             log.error("Error quitando el perfil a un usuario proveedor: " + e.getMessage());
