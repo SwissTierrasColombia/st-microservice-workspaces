@@ -113,4 +113,11 @@ public class CreateUserDto implements Serializable {
         this.roleOperator = roleOperator;
     }
 
+    @Override
+    public String toString() {
+        return "CreateUserDto{" + "firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", username='"
+                + username + '\'' + ", email='" + email + '\'' + ", roleProvider=" + roleProvider
+                + ", roleAdministrator=" + roleAdministrator + ", roleManager=" + roleManager + ", roleOperator="
+                + roleOperator + '}';
+    }
 }

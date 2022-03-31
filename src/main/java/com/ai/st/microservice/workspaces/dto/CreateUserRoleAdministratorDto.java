@@ -25,4 +25,8 @@ public class CreateUserRoleAdministratorDto implements Serializable {
         this.roleId = roleId;
     }
 
+    @Override
+    public String toString() {
+        return "CreateUserRoleAdministratorDto{" + "roleId=" + roleId + '}';
+    }
 }

@@ -25,4 +25,10 @@ public class AddProfileToUserDto implements Serializable {
         this.profileId = profileId;
     }
 
+    @Override
+    public String toString() {
+        return "AddProfileToUserDto{" +
+                "profileId=" + profileId +
+                '}';
+    }
 }

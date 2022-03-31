@@ -71,4 +71,9 @@ public class CreateUserRoleProviderDto implements Serializable {
         this.isTechnical = isTechnical;
     }
 
+    @Override
+    public String toString() {
+        return "CreateUserRoleProviderDto{" + "roleId=" + roleId + ", providerId=" + providerId + ", profiles="
+                + profiles + ", isTechnical=" + isTechnical + ", fromAdministrator=" + fromAdministrator + '}';
+    }
 }

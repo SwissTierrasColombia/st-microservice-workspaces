@@ -10,6 +10,7 @@ import com.ai.st.microservice.common.dto.operators.MicroserviceOperatorDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -58,7 +59,9 @@ public class ManagerMicroserviceBusiness {
         try {
             managerDto = managerClient.findByUserCode(userCode);
         } catch (Exception e) {
-            log.error("No se ha podido consultar el gestor: " + e.getMessage());
+            String message = "No se ha podido consultar el gestor: " + e.getMessage();
+            SCMTracing.sendError(message);
+            log.error(message);
         }
 
         return managerDto;

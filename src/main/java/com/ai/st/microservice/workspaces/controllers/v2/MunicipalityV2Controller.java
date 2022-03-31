@@ -6,6 +6,7 @@ import com.ai.st.microservice.common.exceptions.*;
 import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 
+import com.newrelic.api.agent.NewRelic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,9 @@ public class MunicipalityV2Controller {
     @ResponseBody
     public ResponseEntity<?> getMunicipalitiesWhereManagerDoesNotBelongIn(@PathVariable Long managerCode,
             @PathVariable Long departmentId) {
+
+        NewRelic.addCustomParameter("departmentId", departmentId);
+        NewRelic.addCustomParameter("mara", "dog");
 
         HttpStatus httpStatus;
         Object responseDto;

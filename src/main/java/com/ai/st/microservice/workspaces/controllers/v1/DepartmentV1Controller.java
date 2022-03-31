@@ -9,6 +9,9 @@ import com.ai.st.microservice.workspaces.business.*;
 import com.ai.st.microservice.workspaces.dto.DepartmentDto;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
+import com.newrelic.api.agent.Trace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -48,8 +51,10 @@ public class DepartmentV1Controller {
     @ApiOperation(value = "Get departments")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get departments", response = DepartmentDto.class, responseContainer = "List"),
+            @ApiResponse(code = 422, message = "Error getting departments", response = String.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
+    @Trace(dispatcher = true)
     public ResponseEntity<List<DepartmentDto>> getDepartments(
             @RequestHeader("authorization") String headerAuthorization) {
 
@@ -58,37 +63,49 @@ public class DepartmentV1Controller {
 
         try {
 
+            SCMTracing.setTransactionName("api/workspaces/v1/departments");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isAdministrator(userDtoSession)
                     || administrationBusiness.isProvider(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 listDepartments = departmentBusiness.getDepartments();
             } else if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 listDepartments = departmentBusiness.getDepartmentsByManagerCode(managerDto.getId());
             }
-
             httpStatus = HttpStatus.OK;
+
+            throw new DisconnectedMicroserviceException("***************TESTING***************");
+
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error DepartmentV1Controller@getDepartments#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             listDepartments = null;
             log.error("Error DepartmentV1Controller@getDepartments#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             listDepartments = null;
             log.error("Error DepartmentV1Controller@getDepartments#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(listDepartments, httpStatus);
@@ -98,8 +115,10 @@ public class DepartmentV1Controller {
     @ApiOperation(value = "Get municipalities by department")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities by department", response = MunicipalityDto.class, responseContainer = "List"),
+            @ApiResponse(code = 422, message = "Error getting municipalities", response = String.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
+    @Trace(dispatcher = true)
     public ResponseEntity<List<MunicipalityDto>> getMunicipalitiesById(@PathVariable Long departmentId,
             @RequestHeader("authorization") String headerAuthorization) {
 
@@ -108,18 +127,24 @@ public class DepartmentV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("api/workspaces/v1/departments/{departmentId}/municipalities");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.DEPARTMENT_ID, departmentId);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isAdministrator(userDtoSession)
                     || administrationBusiness.isProvider(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentId(departmentId);
             } else if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -133,14 +158,17 @@ public class DepartmentV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error DepartmentV1Controller@getMunicipalitiesById#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             listMunicipalities = null;
             log.error("Error DepartmentV1Controller@getMunicipalitiesById#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             listMunicipalities = null;
             log.error("Error DepartmentV1Controller@getMunicipalitiesById#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(listMunicipalities, httpStatus);

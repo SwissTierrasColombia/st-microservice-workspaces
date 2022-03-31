@@ -36,4 +36,8 @@ public class CreateUserRoleOperatorDto implements Serializable {
         this.operatorId = operatorId;
     }
 
+    @Override
+    public String toString() {
+        return "CreateUserRoleOperatorDto{" + "roleId=" + roleId + ", operatorId=" + operatorId + '}';
+    }
 }

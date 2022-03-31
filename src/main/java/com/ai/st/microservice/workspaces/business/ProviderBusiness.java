@@ -25,6 +25,7 @@ import com.ai.st.microservice.workspaces.dto.tasks.CustomTaskMemberDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
@@ -1038,15 +1039,14 @@ public class ProviderBusiness {
     }
 
     public MicroserviceProviderDto getProviderByUserAdministrator(Long userCode) {
-
         MicroserviceProviderDto providerDto = null;
-
         try {
             providerDto = providerClient.findProviderByAdministrator(userCode);
         } catch (Exception e) {
-            log.error("No se ha podido consultar el proveedor: " + e.getMessage());
+            String message = "No se ha podido consultar el proveedor a partir de usuario administrador: " + e.getMessage();
+            SCMTracing.sendError(message);
+            log.error(message);
         }
-
         return providerDto;
     }
 
