@@ -14,10 +14,13 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.services.MunicipalityService;
 import com.ai.st.microservice.workspaces.services.WorkspaceService;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +31,8 @@ import java.util.List;
 
 @Component
 public class CadastralAuthorityBusiness {
+
+    private final Logger log = LoggerFactory.getLogger(CadastralAuthorityBusiness.class);
 
     @Value("${st.filesDirectory}")
     private String stFilesDirectory;
@@ -114,6 +119,9 @@ public class CadastralAuthorityBusiness {
             supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null, managerCode, attachments,
                     null, userCode, null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name, null);
         } catch (Exception e) {
+            String messageError = String.format("Error al intentar crear un insumo: %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido cargar el insumo.");
         }
 

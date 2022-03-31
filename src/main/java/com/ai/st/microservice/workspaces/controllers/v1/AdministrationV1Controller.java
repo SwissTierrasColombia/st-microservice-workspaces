@@ -31,7 +31,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Users-Roles", tags = {"Administration"})
+@Api(value = "Manage Users-Roles", tags = { "Administration" })
 @RestController
 @RequestMapping("api/workspaces/v1/administration")
 public final class AdministrationV1Controller {
@@ -44,8 +44,8 @@ public final class AdministrationV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public AdministrationV1Controller(AdministratorMicroserviceBusiness administrationBusiness,
-                                      ManagerMicroserviceBusiness managerBusiness, ProviderBusiness providerBusiness,
-                                      AdministrationBusiness administrationBusiness1) {
+            ManagerMicroserviceBusiness managerBusiness, ProviderBusiness providerBusiness,
+            AdministrationBusiness administrationBusiness1) {
         this.administrationMicroserviceBusiness = administrationBusiness;
         this.managerBusiness = managerBusiness;
         this.providerBusiness = providerBusiness;
@@ -54,11 +54,11 @@ public final class AdministrationV1Controller {
 
     @PostMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create user")
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> createUser(@RequestBody CreateUserDto requestCreateUser,
-                                        @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -149,11 +149,11 @@ public final class AdministrationV1Controller {
 
     @PostMapping(value = "/users/reset-password", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Change password user")
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> resetUserPassword(@RequestBody ChangePasswordDto requestChangePassword,
-                                                    @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
@@ -197,11 +197,11 @@ public final class AdministrationV1Controller {
 
     @PutMapping(value = "/users/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Update user", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Update user", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDto requestUpdateUser,
-                                             @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -293,11 +293,11 @@ public final class AdministrationV1Controller {
 
     @PutMapping(value = "/users/{userId}/disable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Disable user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "User disabled", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "User disabled", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> disableUser(@PathVariable Long userId,
-                                              @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -383,11 +383,11 @@ public final class AdministrationV1Controller {
 
     @PutMapping(value = "/users/{userId}/enable", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Enable user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "User enabled", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "User enabled", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> enableUser(@PathVariable Long userId,
-                                             @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -474,8 +474,8 @@ public final class AdministrationV1Controller {
 
     @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get users")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Get users", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get users", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> getUsers(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -561,11 +561,11 @@ public final class AdministrationV1Controller {
 
     @PostMapping(value = "/users/{userId}/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Add profile to user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> addProfileToUser(@RequestHeader("authorization") String headerAuthorization,
-                                                   @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
+            @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
@@ -644,11 +644,11 @@ public final class AdministrationV1Controller {
 
     @DeleteMapping(value = "/users/{userId}/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Remove profile to user")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> removeProfileToUser(@RequestHeader("authorization") String headerAuthorization,
-                                                      @RequestBody AddProfileToUserDto removeProfileUser, @PathVariable Long userId) {
+            @RequestBody AddProfileToUserDto removeProfileUser, @PathVariable Long userId) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
