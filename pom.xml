@@ -122,7 +122,7 @@
         <dependency>
             <groupId>com.ai.st.microservice.common</groupId>
             <artifactId>st-common</artifactId>
-            <version>1.1.2</version>
+            <version>1.1.6</version>
         </dependency>
 
         <dependency>
