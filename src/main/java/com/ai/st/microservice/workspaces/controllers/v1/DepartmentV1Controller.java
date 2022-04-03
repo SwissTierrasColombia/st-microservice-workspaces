@@ -11,7 +11,6 @@ import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 
 import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
-import com.newrelic.api.agent.Trace;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -54,7 +53,6 @@ public class DepartmentV1Controller {
             @ApiResponse(code = 422, message = "Error getting departments", response = String.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    @Trace(dispatcher = true)
     public ResponseEntity<List<DepartmentDto>> getDepartments(
             @RequestHeader("authorization") String headerAuthorization) {
 
@@ -63,7 +61,7 @@ public class DepartmentV1Controller {
 
         try {
 
-            SCMTracing.setTransactionName("api/workspaces/v1/departments");
+            SCMTracing.setTransactionName("getDepartments");
             SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
 
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
@@ -89,8 +87,6 @@ public class DepartmentV1Controller {
                 listDepartments = departmentBusiness.getDepartmentsByManagerCode(managerDto.getId());
             }
             httpStatus = HttpStatus.OK;
-
-            throw new DisconnectedMicroserviceException("***************TESTING***************");
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error DepartmentV1Controller@getDepartments#Microservice ---> " + e.getMessage());
@@ -118,7 +114,6 @@ public class DepartmentV1Controller {
             @ApiResponse(code = 422, message = "Error getting municipalities", response = String.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    @Trace(dispatcher = true)
     public ResponseEntity<List<MunicipalityDto>> getMunicipalitiesById(@PathVariable Long departmentId,
             @RequestHeader("authorization") String headerAuthorization) {
 
@@ -127,9 +122,8 @@ public class DepartmentV1Controller {
 
         try {
 
-            SCMTracing.setTransactionName("api/workspaces/v1/departments/{departmentId}/municipalities");
+            SCMTracing.setTransactionName("getMunicipalitiesByDepartment");
             SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
-            SCMTracing.addCustomParameter(TracingKeyword.DEPARTMENT_ID, departmentId);
 
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
@@ -149,6 +143,8 @@ public class DepartmentV1Controller {
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 listMunicipalities = municipalityBusiness.getMunicipalitiesByDepartmentIdAndManager(departmentId,
                         managerDto.getId());

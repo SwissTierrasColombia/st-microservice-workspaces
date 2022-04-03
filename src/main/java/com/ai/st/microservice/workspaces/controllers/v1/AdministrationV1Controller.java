@@ -105,6 +105,8 @@ public final class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para crear usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 requestCreateUser.getRoleManager().setManagerId(managerDto.getId());
                 responseDto = administrationMicroserviceBusiness.createUserFromManager(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
@@ -122,6 +124,10 @@ public final class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para crear usuarios.");
                 }
+
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
+
                 requestCreateUser.getRoleProvider().setProviderId(providerDto.getId());
                 responseDto = administrationMicroserviceBusiness.createUserFromProvider(
                         requestCreateUser.getFirstName(), requestCreateUser.getLastName(), requestCreateUser.getEmail(),
@@ -242,6 +248,8 @@ public final class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.updateUserFromManager(userId,
                         requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail(),
@@ -258,7 +266,8 @@ public final class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.updateUserFromProvider(userId,
                         requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail(),
                         providerDto.getId());
@@ -334,6 +343,8 @@ public final class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar el soporte.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, false,
                         managerDto.getId());
@@ -349,6 +360,8 @@ public final class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, false,
                         providerDto.getId());
@@ -424,6 +437,8 @@ public final class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, true,
                         managerDto.getId());
@@ -439,6 +454,8 @@ public final class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, true,
                         providerDto.getId());
@@ -514,6 +531,8 @@ public final class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para consultar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 responseDto = administrationMicroserviceBusiness.getUsersFromManager(managerDto.getId());
             }
 
@@ -527,7 +546,8 @@ public final class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para consultar usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.getUsersFromProvider(providerDto.getId());
 
             }
@@ -594,7 +614,8 @@ public final class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 responseDto = administrationMicroserviceBusiness.addProfileToUserFromManager(userId,
                         addProfileUser.getProfileId(), managerDto.getId());
             }
@@ -610,7 +631,8 @@ public final class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.addProfileToUserFromProvider(userId,
                         addProfileUser.getProfileId(), providerDto.getId());
             }
@@ -677,7 +699,8 @@ public final class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 responseDto = administrationMicroserviceBusiness.removeProfileToUserFromManager(userId,
                         removeProfileUser.getProfileId(), managerDto.getId());
             }
@@ -693,7 +716,8 @@ public final class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.removeProfileToUserFromProvider(userId,
                         removeProfileUser.getProfileId(), providerDto.getId());
             }

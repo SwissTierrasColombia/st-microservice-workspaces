@@ -46,9 +46,9 @@ public class AdministratorMicroserviceBusiness {
     private final OperatorMicroserviceBusiness operatorBusiness;
 
     public AdministratorMicroserviceBusiness(UserFeignClient userClient, ProviderFeignClient providerClient,
-                                             ManagerFeignClient managerClient, OperatorFeignClient operatorClient,
-                                             NotificationBusiness notificationBusiness, ProviderBusiness providerBusiness,
-                                             ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness) {
+            ManagerFeignClient managerClient, OperatorFeignClient operatorClient,
+            NotificationBusiness notificationBusiness, ProviderBusiness providerBusiness,
+            ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness) {
         this.userClient = userClient;
         this.providerClient = providerClient;
         this.managerClient = managerClient;
@@ -60,8 +60,8 @@ public class AdministratorMicroserviceBusiness {
     }
 
     public CustomUserDto createUserFromAdministrator(String firstName, String lastName, String email, String username,
-                                                     String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
-                                                     CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+            String password, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+            CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
         if (roleManager != null) {
 
@@ -94,7 +94,7 @@ public class AdministratorMicroserviceBusiness {
     }
 
     public CustomUserDto createUserFromManager(String firstName, String lastName, String email, String username,
-                                               String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
+            String password, CreateUserRoleManagerDto roleManager) throws BusinessException {
 
         if (roleManager.getProfiles().size() == 0) {
             throw new BusinessException("Para asignar el rol de gestor se debe especificar al menos un perfil.");
@@ -124,7 +124,7 @@ public class AdministratorMicroserviceBusiness {
     }
 
     public CustomUserDto createUserFromProvider(String firstName, String lastName, String email, String username,
-                                                String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
+            String password, CreateUserRoleProviderDto roleProvider) throws BusinessException {
 
         if (roleProvider.getProfiles().size() == 0) {
             throw new BusinessException("Se debe especificar al menos un perfil para el usuario.");
@@ -143,8 +143,8 @@ public class AdministratorMicroserviceBusiness {
     }
 
     public CustomUserDto createUser(String firstName, String lastName, String email, String username, String password,
-                                    boolean enabled, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
-                                    CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
+            boolean enabled, CreateUserRoleProviderDto roleProvider, CreateUserRoleAdministratorDto roleAdmin,
+            CreateUserRoleManagerDto roleManager, CreateUserRoleOperatorDto roleOperator) throws BusinessException {
 
         MicroserviceUserDto userResponseDto;
 
@@ -333,7 +333,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId, e.getMessage());
+            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(message);
             log.error(message);
             throw new BusinessException("No se ha encontrado el usuario");
@@ -356,7 +357,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId, e.getMessage());
+            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(message);
             log.error(message);
             throw new BusinessException("No se ha encontrado el usuario");
@@ -382,7 +384,8 @@ public class AdministratorMicroserviceBusiness {
             try {
                 profiles = managerClient.findProfilesByUser(userId);
             } catch (Exception e) {
-                String message = String.format("Error consultando los perfiles del usuario %d : %s", userId, e.getMessage());
+                String message = String.format("Error consultando los perfiles del usuario %d : %s", userId,
+                        e.getMessage());
                 SCMTracing.sendError(message);
                 log.error(message);
             }
@@ -403,7 +406,8 @@ public class AdministratorMicroserviceBusiness {
             try {
                 roles = providerClient.findRolesByUser(userId);
             } catch (Exception e) {
-                String message = String.format("Error consultando los roles del usuario %d proveedor : %s", userId, e.getMessage());
+                String message = String.format("Error consultando los roles del usuario %d proveedor : %s", userId,
+                        e.getMessage());
                 SCMTracing.sendError(message);
                 log.error(message);
             }
@@ -422,13 +426,14 @@ public class AdministratorMicroserviceBusiness {
     }
 
     public CustomUserDto updateUserFromManager(Long userId, String firstName, String lastName, String email,
-                                               Long managerCode) throws BusinessException {
+            Long managerCode) throws BusinessException {
 
         MicroserviceUserDto userDto;
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId, e.getMessage());
+            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(message);
             log.error(message);
             throw new BusinessException("No se ha encontrado el usuario");
@@ -459,13 +464,14 @@ public class AdministratorMicroserviceBusiness {
     }
 
     public CustomUserDto updateUserFromProvider(Long userId, String firstName, String lastName, String email,
-                                                Long providerCode) throws BusinessException {
+            Long providerCode) throws BusinessException {
 
         MicroserviceUserDto userDto;
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId, e.getMessage());
+            String message = String.format("Error consultando el usuario %d para la modificación: %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(message);
             log.error(message);
             throw new BusinessException("No se ha encontrado el usuario");
@@ -482,7 +488,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             providerDtoByUser = providerClient.findByUserCode(userId);
         } catch (Exception e) {
-            String message = String.format("Error consultando el proveedor por usuario %d : %s", userId, e.getMessage());
+            String message = String.format("Error consultando el proveedor por usuario %d : %s", userId,
+                    e.getMessage());
             log.warn(message);
         }
 
@@ -490,7 +497,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
         } catch (Exception e) {
-            String message = String.format("Error consultando el proveedor por administrador %d : %s", userId, e.getMessage());
+            String message = String.format("Error consultando el proveedor por administrador %d : %s", userId,
+                    e.getMessage());
             log.warn(message);
         }
 
@@ -554,7 +562,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el usuario '%d' para la modificación: %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el usuario '%d' para la modificación: %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha encontrado el usuario");
@@ -626,7 +635,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el usuario '%d' para la modificación: %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el usuario '%d' para la modificación: %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha encontrado el usuario");
@@ -661,7 +671,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             managerDto = managerClient.findByUserCode(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el gestor a partir del usuario '%d' : %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el gestor a partir del usuario '%d' : %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha podido modificar el usuario.");
@@ -681,7 +692,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             userDto = userClient.findById(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el usuario '%d' para la modificación: %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el usuario '%d' para la modificación: %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha encontrado el usuario");
@@ -705,7 +717,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             providerDtoByAdmin = providerClient.findProviderByAdministrator(userId);
         } catch (Exception e) {
-            log.warn(String.format("No se ha encontrado el proveedor por usuario administrador '%d' : %s", userId, e.getMessage()));
+            log.warn(String.format("No se ha encontrado el proveedor por usuario administrador '%d' : %s", userId,
+                    e.getMessage()));
         }
 
         if (providerDtoByAdmin == null && providerDtoByUser == null) {
@@ -805,8 +818,9 @@ public class AdministratorMicroserviceBusiness {
                     MicroserviceProviderDto providerDto = providerClient.findProviderByAdministrator(userDto.getId());
                     userDto.setEntity(providerDto);
                 } catch (Exception e) {
-                    log.warn(String.format("Error consultando el proveedor de insumo por el código de usuario administrador %d: %s", userDto.getId(),
-                            e.getMessage()));
+                    log.warn(String.format(
+                            "Error consultando el proveedor de insumo por el código de usuario administrador %d: %s",
+                            userDto.getId(), e.getMessage()));
                 }
 
                 try {
@@ -817,8 +831,8 @@ public class AdministratorMicroserviceBusiness {
                     userDto.setEntity(providerDto);
 
                 } catch (Exception e) {
-                    log.warn(String.format("Error consultando el proveedor de insumo por el código de usuario %d: %s", userDto.getId(),
-                            e.getMessage()));
+                    log.warn(String.format("Error consultando el proveedor de insumo por el código de usuario %d: %s",
+                            userDto.getId(), e.getMessage()));
                 }
 
                 listUsersResponse.add(userDto);
@@ -843,7 +857,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             usersManagerDto = managerClient.findUsersByManager(managerCode, null);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando los usuarios del gestor '%d': %s", managerCode, e.getMessage());
+            String messageError = String.format("Error consultando los usuarios del gestor '%d': %s", managerCode,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
         }
@@ -858,7 +873,9 @@ public class AdministratorMicroserviceBusiness {
                 userDto.setProfilesManager(userManagerDto.getProfiles());
                 users.add(userDto);
             } catch (Exception e) {
-                String messageError = String.format("Error consultando el usuario al intentar retornar usuarios gestores'%d': %s", userManagerDto.getUserCode(), e.getMessage());
+                String messageError = String.format(
+                        "Error consultando el usuario al intentar retornar usuarios gestores'%d': %s",
+                        userManagerDto.getUserCode(), e.getMessage());
                 SCMTracing.sendError(messageError);
                 log.error(messageError);
             }
@@ -874,7 +891,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             usersProviderDto = providerClient.findUsersByProviderId(providerCode);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando los usuarios del proveedor '%d': %s", providerCode, e.getMessage());
+            String messageError = String.format("Error consultando los usuarios del proveedor '%d': %s", providerCode,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
         }
@@ -889,7 +907,9 @@ public class AdministratorMicroserviceBusiness {
                 userDto.setProfilesProvider(userProviderDto.getProfiles());
                 users.add(userDto);
             } catch (Exception e) {
-                String messageError = String.format("Error consultando el usuario al intentar retornar usuarios proveedores '%d': %s", userProviderDto.getUserCode(), e.getMessage());
+                String messageError = String.format(
+                        "Error consultando el usuario al intentar retornar usuarios proveedores '%d': %s",
+                        userProviderDto.getUserCode(), e.getMessage());
                 SCMTracing.sendError(messageError);
                 log.error(messageError);
             }
@@ -900,7 +920,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             adminsProviderDto = providerClient.findAdministratorsByProviderId(providerCode);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando usuarios (administradores) del proveedor '%d': %s", providerCode, e.getMessage());
+            String messageError = String.format("Error consultando usuarios (administradores) del proveedor '%d': %s",
+                    providerCode, e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
         }
@@ -917,7 +938,9 @@ public class AdministratorMicroserviceBusiness {
                     userDto.setRolesProvider(userProviderDto.getRoles());
                     users.add(userDto);
                 } catch (Exception e) {
-                    String messageError = String.format("Error consultando el usuario al intentar retornar usuarios proveedores(administradores) '%d': %s", userProviderDto.getUserCode(), e.getMessage());
+                    String messageError = String.format(
+                            "Error consultando el usuario al intentar retornar usuarios proveedores(administradores) '%d': %s",
+                            userProviderDto.getUserCode(), e.getMessage());
                     SCMTracing.sendError(messageError);
                     log.error(messageError);
                 }
@@ -949,7 +972,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             managerDto = managerClient.findByUserCode(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el gestor por el usuario '%d' : %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el gestor por el usuario '%d' : %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha encontrado el gestor");
@@ -973,7 +997,8 @@ public class AdministratorMicroserviceBusiness {
             userDto.setProfilesManager(managerUser.getProfiles());
 
         } catch (Exception e) {
-            String messageError = String.format("Error agregando perfil al usuario '%d' del gestor '%d': %s", userId, managerCode, e.getMessage());
+            String messageError = String.format("Error agregando perfil al usuario '%d' del gestor '%d': %s", userId,
+                    managerCode, e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha podido agregar el perfil al usuario.");
@@ -991,7 +1016,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             providerDto = providerClient.findByUserCode(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el proveedor por usuario %d : %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el proveedor por usuario %d : %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha encontrado el proveedor");
@@ -1017,7 +1043,8 @@ public class AdministratorMicroserviceBusiness {
                     .ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
 
         } catch (Exception e) {
-            String messageError = String.format("Error agregando perfil al usuario '%d' del proveedor '%d': %s", userId, providerCode, e.getMessage());
+            String messageError = String.format("Error agregando perfil al usuario '%d' del proveedor '%d': %s", userId,
+                    providerCode, e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha podido agregar el perfil al usuario.");
@@ -1035,7 +1062,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             managerDto = managerClient.findByUserCode(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el gestor por el usuario '%d' : %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el gestor por el usuario '%d' : %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha encontrado el gestor");
@@ -1060,7 +1088,8 @@ public class AdministratorMicroserviceBusiness {
             userDto.setProfilesManager(managerUser.getProfiles());
 
         } catch (BusinessException e) {
-            String messageError = String.format("Error quitando perfil al usuario '%d' del gestor '%d': %s", userId, managerCode, e.getMessage());
+            String messageError = String.format("Error quitando perfil al usuario '%d' del gestor '%d': %s", userId,
+                    managerCode, e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException(e.getMessage());
@@ -1078,7 +1107,8 @@ public class AdministratorMicroserviceBusiness {
         try {
             providerDto = providerClient.findByUserCode(userId);
         } catch (Exception e) {
-            String messageError = String.format("Error consultando el proveedor por usuario %d : %s", userId, e.getMessage());
+            String messageError = String.format("Error consultando el proveedor por usuario %d : %s", userId,
+                    e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException("No se ha encontrado el proveedor");
@@ -1104,7 +1134,8 @@ public class AdministratorMicroserviceBusiness {
                     .ifPresent(userFound -> userDto.setProfilesProvider(userFound.getProfiles()));
 
         } catch (BusinessException e) {
-            String messageError = String.format("Error quitando perfil al usuario '%d' del proveedor '%d': %s", userId, providerCode, e.getMessage());
+            String messageError = String.format("Error quitando perfil al usuario '%d' del proveedor '%d': %s", userId,
+                    providerCode, e.getMessage());
             SCMTracing.sendError(messageError);
             log.error(messageError);
             throw new BusinessException(e.getMessage());

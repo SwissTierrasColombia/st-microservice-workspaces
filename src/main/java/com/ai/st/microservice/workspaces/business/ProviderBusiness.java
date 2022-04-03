@@ -1043,7 +1043,8 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findProviderByAdministrator(userCode);
         } catch (Exception e) {
-            String message = "No se ha podido consultar el proveedor a partir de usuario administrador: " + e.getMessage();
+            String message = "No se ha podido consultar el proveedor a partir de usuario administrador: "
+                    + e.getMessage();
             SCMTracing.sendError(message);
             log.error(message);
         }
