@@ -18,6 +18,7 @@ import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -193,7 +194,9 @@ public class OperatorMicroserviceBusiness {
             operatorDto = operatorClient.findById(operatorId);
 
         } catch (Exception e) {
-            log.error("Error consultando operador: " + e.getMessage());
+            String messageError = String.format("Error consultando operador %d : %s", operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return operatorDto;
@@ -289,7 +292,10 @@ public class OperatorMicroserviceBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error consultando las entregas cerradas: " + e.getMessage());
+            String messageError = String.format("Error consultando las entregas cerradas del operador %d : %s",
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return deliveries;
@@ -311,11 +317,13 @@ public class OperatorMicroserviceBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error consultando las entregas: " + e.getMessage());
+            String messageError = String.format("Error consultando las entregas para el gestor %d : %s", managerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return deliveries;
-
     }
 
     public CustomDeliveryDto getDeliveryIdAndManager(Long deliveryId, Long managerCode) throws BusinessException {
@@ -326,7 +334,10 @@ public class OperatorMicroserviceBusiness {
             MicroserviceDeliveryDto response = operatorClient.findDeliveryById(deliveryId);
             deliveryDto = new CustomDeliveryDto(response);
         } catch (Exception e) {
-            log.error("Error consultando entrega: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega con id %d para el gestor %d : %s",
+                    deliveryId, managerCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar la entrega");
         }
 
