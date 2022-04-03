@@ -73,6 +73,7 @@ public class ProviderV1Controller {
 
             SCMTracing.setTransactionName("createSuppliesRequest");
             SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, createRequestDto.toString());
 
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
