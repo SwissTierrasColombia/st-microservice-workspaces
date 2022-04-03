@@ -4,6 +4,7 @@ import com.ai.st.microservice.common.clients.IliFeignClient;
 import com.ai.st.microservice.common.dto.ili.*;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +57,9 @@ public class IliBusiness {
             iliClient.startExport(exportDto);
 
         } catch (Exception e) {
-            log.error(String.format("Error starting export %s", e.getMessage()));
+            String messageError = String.format("Error empezando la exportación a un archivo XTF : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la generación del insumo");
         }
 
@@ -83,7 +86,9 @@ public class IliBusiness {
             iliClient.startIntegrationCadastreRegistration(integrationDto);
 
         } catch (Exception e) {
-            log.error(String.format("Error starting integration %s", e.getMessage()));
+            String messageError = String.format("Error empezando la integración : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la integración.");
         }
 
@@ -111,7 +116,9 @@ public class IliBusiness {
             iliClient.startValidation(ilivalidatorDto);
 
         } catch (Exception e) {
-            log.error(String.format("Error starting validation %s", e.getMessage()));
+            String messageError = String.format("Error empezando la validación de archivo XTF : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la validación.");
         }
 
