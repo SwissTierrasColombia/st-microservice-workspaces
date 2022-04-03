@@ -83,17 +83,17 @@ public class ManagerV1Controller {
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ManagerV1Controller@getDeliveriesByManager#Microservice ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ManagerV1Controller@getDeliveriesByManager#Business ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ManagerV1Controller@getDeliveriesByManager#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             SCMTracing.sendError(e.getMessage());
         }
@@ -142,17 +142,17 @@ public class ManagerV1Controller {
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ManagerV1Controller@getDeliveryById#Microservice ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ManagerV1Controller@getDeliveryById#Business ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ManagerV1Controller@getDeliveryById#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
             SCMTracing.sendError(e.getMessage());
         }
@@ -197,7 +197,7 @@ public class ManagerV1Controller {
         } catch (Exception e) {
             log.error("Error ManagerV1Controller@getOperatorsByManager#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 

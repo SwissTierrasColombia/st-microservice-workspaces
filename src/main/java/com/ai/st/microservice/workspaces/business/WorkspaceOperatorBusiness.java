@@ -22,6 +22,7 @@ import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 
 import org.slf4j.Logger;
@@ -123,7 +124,10 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (deliveryDto == null) {
@@ -137,6 +141,10 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.disableDelivery(deliveryId);
         } catch (Exception e) {
+            String messageError = String.format("Error desactivando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido desactivar la entrega.");
         }
 
@@ -152,13 +160,18 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
             operatorDto = operatorBusiness.getOperatorById(operatorId);
         } catch (Exception e) {
-            log.error("Error consultando operador por id: " + e.getMessage());
+            String messageError = String.format("Error consultando el operador %d : %s", operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (operatorDto == null) {
@@ -272,13 +285,18 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
             operatorDto = operatorBusiness.getOperatorById(operatorId);
         } catch (Exception e) {
-            log.error("Error consultando operador por id: " + e.getMessage());
+            String messageError = String.format("Error consultando el operador %d : %s", operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (deliveryDto == null) {

@@ -244,7 +244,11 @@ public class OperatorMicroserviceBusiness {
                     supplyDelivered);
             return new CustomDeliveryDto(response);
         } catch (Exception e) {
-            log.error("Error actualizando la url del reporte de descarga del insumo: " + e.getMessage());
+            String messageError = String.format(
+                    "Error actualizando la url del reporte de descarga del insumo %d en la entrega %d: %s", supplyId,
+                    deliveryId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             return null;
         }
     }
@@ -256,7 +260,10 @@ public class OperatorMicroserviceBusiness {
             MicroserviceDeliveryDto response = operatorClient.updateDelivery(deliveryId, data);
             return new CustomDeliveryDto(response);
         } catch (Exception e) {
-            log.error("Error actualizando el reporte de descarga de la entrega: " + e.getMessage());
+            String messageError = String.format("Error actualizando el reporte de descarga de la entrega %d: %s",
+                    deliveryId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             return null;
         }
     }
@@ -356,7 +363,10 @@ public class OperatorMicroserviceBusiness {
             MicroserviceManagerDto managerDto = managerClient.findById(deliveryDto.getManagerCode());
             deliveryDto.setManager(managerDto);
         } catch (Exception e) {
-            log.error("Error consultando gestor: " + e.getMessage());
+            String messageError = String.format("Error consultando el gestor %d en la entrega %d: %s",
+                    deliveryDto.getManagerCode(), deliveryDto.getId(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
@@ -375,7 +385,10 @@ public class OperatorMicroserviceBusiness {
 
             deliveryDto.setMunicipality(municipalityDto);
         } catch (Exception e) {
-            log.error("Error consultando municipio: " + e.getMessage());
+            String messageError = String.format("Error consultando el municipio %s en la entrega %d: %s",
+                    deliveryDto.getMunicipalityCode(), deliveryDto.getId(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
@@ -390,7 +403,10 @@ public class OperatorMicroserviceBusiness {
                 supplyDeliveryDto.setSupply(supplyDto);
 
             } catch (Exception e) {
-                log.error("Error consultando insumo: " + e.getMessage());
+                String messageError = String.format("Error consultando el insumo %d en la entrega %d: %s",
+                        supplyDeliveryDto.getSupplyCode(), supplyDeliveryDto.getId(), e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
             if (supplyDeliveryDto.getDownloadedBy() != null) {
@@ -399,7 +415,10 @@ public class OperatorMicroserviceBusiness {
                             .getUserById(supplyDeliveryDto.getDownloadedBy());
                     supplyDeliveryDto.setUserDownloaded(userDto);
                 } catch (Exception e) {
-                    log.error("Error consultando usuario: " + e.getMessage());
+                    String messageError = String.format("Error consultando el usuario %d en la entrega %d: %s",
+                            supplyDeliveryDto.getDownloadedBy(), supplyDeliveryDto.getId(), e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                 }
             }
 
@@ -415,6 +434,10 @@ public class OperatorMicroserviceBusiness {
         try {
             operatorDto = operatorClient.findByUserCode(userCode);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el operador a partir del código del usuario %d: %s",
+                    userCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             return null;
         }
         return operatorDto;

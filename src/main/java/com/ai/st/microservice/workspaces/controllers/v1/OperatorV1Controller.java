@@ -10,6 +10,8 @@ import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceOperatorBusiness;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -66,17 +68,23 @@ public class OperatorV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("disableDeliveryFromOperator");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get operator
             MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
             if (operatorDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.OPERATOR_ID, operatorDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.OPERATOR_NAME, operatorDto.getName());
 
             responseDto = workspaceOperatorBusiness.disableDelivery(operatorDto.getId(), deliveryId);
             httpStatus = HttpStatus.OK;
@@ -84,15 +92,18 @@ public class OperatorV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error OperatorV1Controller@disableDelivery#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error OperatorV1Controller@disableDelivery#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error OperatorV1Controller@disableDelivery#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -112,17 +123,23 @@ public class OperatorV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("downloadReportIndividualForOperator");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get operator
             MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
             if (operatorDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.OPERATOR_ID, operatorDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.OPERATOR_NAME, operatorDto.getName());
 
             String pathFile = workspaceOperatorBusiness.generateReportDownloadSupplyIndividual(operatorDto.getId(),
                     deliveryId, supplyId);
@@ -143,13 +160,16 @@ public class OperatorV1Controller {
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error OperatorV1Controller@reportDownloadSupplyIndividual#Microservice ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+            SCMTracing.sendError(e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (BusinessException e) {
             log.error("Error OperatorV1Controller@reportDownloadSupplyIndividual#Business ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+            SCMTracing.sendError(e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.UNPROCESSABLE_ENTITY);
         } catch (Exception e) {
             log.error("Error OperatorV1Controller@reportDownloadSupplyIndividual#General ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+            SCMTracing.sendError(e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
@@ -171,17 +191,23 @@ public class OperatorV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("downloadReportCompleteForOperator");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get operator
             MicroserviceOperatorDto operatorDto = operatorBusiness.getOperatorByUserCode(userDtoSession.getId());
             if (operatorDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el operador.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.OPERATOR_ID, operatorDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.OPERATOR_NAME, operatorDto.getName());
 
             String pathFile = workspaceOperatorBusiness.generateReportDownloadSupplyTotal(operatorDto.getId(),
                     deliveryId);
@@ -202,13 +228,16 @@ public class OperatorV1Controller {
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error OperatorV1Controller@reportDownloadSupplyTotal#Microservice ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 4), HttpStatus.INTERNAL_SERVER_ERROR);
+            SCMTracing.sendError(e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (BusinessException e) {
             log.error("Error OperatorV1Controller@reportDownloadSupplyTotal#Business ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+            SCMTracing.sendError(e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.UNPROCESSABLE_ENTITY);
         } catch (Exception e) {
             log.error("Error OperatorV1Controller@reportDownloadSupplyTotal#General ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+            SCMTracing.sendError(e.getMessage());
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
