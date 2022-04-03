@@ -281,7 +281,6 @@ public class AdministratorMicroserviceBusiness {
                 }
 
             } catch (BusinessException e) {
-                SCMTracing.sendError("Error creando el usuario: " + e.getMessage());
                 throw new BusinessException(e.getMessage());
             }
 
