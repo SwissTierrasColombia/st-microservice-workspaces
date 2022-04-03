@@ -97,7 +97,10 @@ public class ManagerMicroserviceBusiness {
             }
 
         } catch (FeignException e) {
-            log.error("No se ha podido verificar si el usuario es un director(gestor): " + e.getMessage());
+            String messageError = String.format("Error verificando si el usuario %d es un director(gestor) : %s",
+                    userCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return isDirector;

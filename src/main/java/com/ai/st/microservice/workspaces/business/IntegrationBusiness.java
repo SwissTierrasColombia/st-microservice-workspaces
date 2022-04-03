@@ -26,6 +26,7 @@ import com.ai.st.microservice.workspaces.services.IIntegrationStatService;
 import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -342,14 +343,17 @@ public class IntegrationBusiness {
 
             try {
 
-                CustomSupplyDto supplyCadastreDto = supplyBusiness.getSupplyById(integrationDto.getSupplyCadastreId());
-                integrationDto.setSupplyCadastre(supplyCadastreDto);
+                CustomSupplyDto supplyCadastralDto = supplyBusiness.getSupplyById(integrationDto.getSupplyCadastreId());
+                integrationDto.setSupplyCadastre(supplyCadastralDto);
 
                 CustomSupplyDto supplySnrDto = supplyBusiness.getSupplyById(integrationDto.getSupplySnrId());
                 integrationDto.setSupplySnr(supplySnrDto);
 
             } catch (Exception e) {
-                log.error("Error consultando insumo: " + e.getMessage());
+                String messageError = String.format("Error consultando los insumos %d (cadastral) %d (registral) : %s",
+                        integrationDto.getSupplyCadastreId(), integrationDto.getSupplySnrId(), e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
         }
@@ -436,10 +440,16 @@ public class IntegrationBusiness {
             updateURLMap(integrationEntity.getId(), url);
 
         } catch (BusinessException e) {
-            log.error("Error configurando el mapa (geoapi): " + e.getMessageError());
+            String messageError = String.format("Error configurando el mapa (geo-api) de la integración %d : %s",
+                    integrationId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error configurando el mapa: " + e.getMessage());
+            String messageError = String.format("Error configurando el mapa de la integración %d : %s", integrationId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(
                     "No se ha podido realizar la configuración de la integración para su visualización.");
         }
