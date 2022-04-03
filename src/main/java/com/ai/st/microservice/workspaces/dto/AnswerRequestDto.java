@@ -68,4 +68,11 @@ public class AnswerRequestDto implements Serializable {
     public void setSkipErrors(Boolean skipErrors) {
         this.skipErrors = skipErrors;
     }
+
+    @Override
+    public String toString() {
+        return "AnswerRequestDto{" + "typeSupplyId=" + typeSupplyId + ", justification='" + justification + '\''
+                + ", url='" + url + '\'' + ", observations='" + observations + '\'' + ", skipErrors=" + skipErrors
+                + '}';
+    }
 }

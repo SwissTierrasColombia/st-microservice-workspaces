@@ -3,7 +3,6 @@ package com.ai.st.microservice.workspaces.controllers.v1;
 import com.ai.st.microservice.common.business.AdministrationBusiness;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.general.BasicResponseDto;
-import com.ai.st.microservice.common.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderProfileDto;
@@ -17,8 +16,9 @@ import com.ai.st.microservice.workspaces.dto.CreateRequestDto;
 import com.ai.st.microservice.workspaces.dto.CreateTypeSupplyDto;
 import com.ai.st.microservice.workspaces.dto.TypeSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.dto.providers.CustomRequestDto;
-import com.ai.st.microservice.workspaces.dto.providers.CustomSupplyRequestedDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -62,7 +62,7 @@ public class ProviderV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 201, message = "Create request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> createRequest(@RequestBody CreateRequestDto createRequestDto,
+    public ResponseEntity<?> createRequest(@RequestBody CreateRequestDto createRequestDto,
             @RequestHeader("authorization") String headerAuthorization, @PathVariable Long municipalityId) {
 
         HttpStatus httpStatus;
@@ -71,13 +71,17 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("createSuppliesRequest");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -85,6 +89,8 @@ public class ProviderV1Controller {
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para actualizar el soporte.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             // validation deadline
             String deadlineString = createRequestDto.getDeadline();
@@ -123,19 +129,23 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@createRequest#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error ProviderV1Controller@createRequest#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@createRequest#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@createRequest#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -148,8 +158,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Get pending requests by provider", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsPendingByProveedor(
-            @RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<?> getRequestsPendingByProveedor(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         List<CustomRequestDto> listRequests = new ArrayList<>();
@@ -157,17 +166,23 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getRequestsPendingByProveedor");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserTechnical(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             listRequests = workspaceBusiness.getPendingRequestByProvider(userDtoSession.getId(), providerDto.getId());
             httpStatus = HttpStatus.OK;
@@ -175,15 +190,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@getRequestsPendingByProveedor#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@getRequestsPendingByProveedor#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@getRequestsPendingByProveedor#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -196,8 +214,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Get closed requests by provider", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsClosedByProveedor(
-            @RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<?> getRequestsClosedByProveedor(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         List<CustomRequestDto> listRequests = new ArrayList<>();
@@ -205,18 +222,24 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getRequestsClosedByProveedor");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserTechnicalOrAdministrator(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             listRequests = workspaceBusiness.getClosedRequestByProvider(userDtoSession.getId(), providerDto.getId());
             httpStatus = HttpStatus.OK;
@@ -224,15 +247,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@getRequestsClosedByProveedor#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return (responseDto != null) ? new ResponseEntity<>(responseDto, httpStatus)
@@ -244,7 +270,7 @@ public class ProviderV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Answer request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> answerRequest(@PathVariable Long requestId,
+    public ResponseEntity<?> answerRequest(@PathVariable Long requestId,
             @RequestHeader("authorization") String headerAuthorization,
             @RequestParam(name = "files[]", required = false) MultipartFile[] files,
             @RequestParam(name = "extra", required = false) MultipartFile extraFile,
@@ -255,17 +281,24 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("answerSuppliesRequest");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, answerRequest.toString());
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserTechnical(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             // validation type supply
             Long typeSupplyId = answerRequest.getTypeSupplyId();
@@ -281,19 +314,23 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@answerRequest#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error ProviderV1Controller@answerRequest#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@answerRequest#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@answerRequest#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -304,7 +341,7 @@ public class ProviderV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> closeRequest(@PathVariable Long requestId,
+    public ResponseEntity<?> closeRequest(@PathVariable Long requestId,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -312,17 +349,23 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("closeRequest");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness.getProviderByUserTechnical(userDtoSession.getId());
             if (providerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el proveedor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.closeRequest(requestId, providerDto, userDtoSession.getId());
             httpStatus = HttpStatus.OK;
@@ -330,15 +373,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@closeRequest#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@closeRequest#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@closeRequest#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -349,24 +395,30 @@ public class ProviderV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Close request", response = CustomRequestDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsByEmitters(@RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<?> getRequestsByEmitters(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getRequestsByEmitters");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = providerBusiness.getRequestsByEmittersManager(managerDto.getId());
             httpStatus = HttpStatus.OK;
@@ -374,15 +426,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@getRequestsByEmmiters#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@getRequestsByEmmiters#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@getRequestsByEmmiters#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -402,13 +457,18 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("createTypeSupply");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, createTypeSupplyDto.toString());
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -417,6 +477,8 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para crear insumos.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.createTypeSupply(providerDto.getId(), createTypeSupplyDto.getName(),
                     createTypeSupplyDto.getDescription(), createTypeSupplyDto.getMetadataRequired(),
@@ -427,15 +489,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@createTypeSupply#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@createTypeSupply#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@createTypeSupply#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -447,20 +512,24 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Get types supplies", response = MicroserviceTypeSupplyDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getTypeSupplies(@RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<?> getTypeSupplies(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getTypeSupplies");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -469,6 +538,8 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para consultar insumos.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.getTypesSuppliesByProvider(providerDto.getId());
             httpStatus = HttpStatus.OK;
@@ -476,15 +547,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@getTypeSupplies#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@getTypeSupplies#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@getTypeSupplies#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -496,8 +570,8 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Update type supply", response = MicroserviceTypeSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> updateTypeSupply(@PathVariable Long typeSupplyId,
-            @RequestBody CreateTypeSupplyDto createTypeSupplyDto,
+    public ResponseEntity<?> updateTypeSupply(@PathVariable Long typeSupplyId,
+            @RequestBody CreateTypeSupplyDto updateTypeSupplyDto,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -505,13 +579,18 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("updateTypeSupply");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, updateTypeSupplyDto.toString());
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -520,25 +599,30 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para modificar insumos.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.updateTypeSupply(providerDto.getId(), typeSupplyId,
-                    createTypeSupplyDto.getName(), createTypeSupplyDto.getDescription(),
-                    createTypeSupplyDto.getMetadataRequired(), createTypeSupplyDto.getModelRequired(),
-                    createTypeSupplyDto.getProviderProfileId(), createTypeSupplyDto.getExtensions());
+                    updateTypeSupplyDto.getName(), updateTypeSupplyDto.getDescription(),
+                    updateTypeSupplyDto.getMetadataRequired(), updateTypeSupplyDto.getModelRequired(),
+                    updateTypeSupplyDto.getProviderProfileId(), updateTypeSupplyDto.getExtensions());
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@updateTypeSupply#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@updateTypeSupply#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@updateTypeSupply	#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -550,7 +634,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Type supply enabled", response = MicroserviceTypeSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> enableTypeSupply(@PathVariable Long typeSupplyId,
+    public ResponseEntity<?> enableTypeSupply(@PathVariable Long typeSupplyId,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -558,13 +642,17 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("enableTypeSupply");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -573,6 +661,8 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new BusinessException("No tiene permiso para modificar el tipo de insumo.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.enableTypeSupply(providerDto.getId(), typeSupplyId);
             httpStatus = HttpStatus.OK;
@@ -580,15 +670,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@enableTypeSupply#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@enableTypeSupply#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@enableTypeSupply	#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -600,7 +693,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Type supply disabled", response = MicroserviceTypeSupplyDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> disableTypeSupply(@PathVariable Long typeSupplyId,
+    public ResponseEntity<?> disableTypeSupply(@PathVariable Long typeSupplyId,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -608,13 +701,17 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("disableTypeSupply");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -623,6 +720,8 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new BusinessException("No tiene permiso para modificar el tipo de insumo.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.disableTypeSupply(providerDto.getId(), typeSupplyId);
             httpStatus = HttpStatus.OK;
@@ -630,15 +729,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@disableTypeSupply#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@disableTypeSupply#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@disableTypeSupply	#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -649,7 +751,7 @@ public class ProviderV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Delete type supply"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> deleteTypeSupply(@PathVariable Long typeSupplyId,
+    public ResponseEntity<?> deleteTypeSupply(@PathVariable Long typeSupplyId,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -657,13 +759,17 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("deleteTypeSupply");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -672,6 +778,8 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new BusinessException("No tiene permiso para eliminar insumos.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             providerBusiness.deleteTypeSupply(providerDto.getId(), typeSupplyId);
             httpStatus = HttpStatus.NO_CONTENT;
@@ -679,15 +787,18 @@ public class ProviderV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ProviderV1Controller@deleteTypeSupply#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ProviderV1Controller@deleteTypeSupply#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ProviderV1Controller@deleteTypeSupply	#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -696,10 +807,10 @@ public class ProviderV1Controller {
     @PostMapping(value = "/profiles", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Create profile")
     @ApiResponses(value = {
-            @ApiResponse(code = 201, message = "Create profile", response = MicroserviceProviderProfileDto.class),
+            @ApiResponse(code = 201, message = "Profile created", response = MicroserviceProviderProfileDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> createProfile(@RequestBody CreateProviderProfileDto createProfileDto,
+    public ResponseEntity<?> createProviderProfile(@RequestBody CreateProviderProfileDto createProfileDto,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -707,13 +818,18 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("createProviderProfile");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, createProfileDto.toString());
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -722,6 +838,8 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new BusinessException("No tiene permiso para crear perfiles.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.createProfile(providerDto.getId(), createProfileDto.getName(),
                     createProfileDto.getDescription());
@@ -729,17 +847,20 @@ public class ProviderV1Controller {
             httpStatus = HttpStatus.CREATED;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@createProfile#Microservice ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@createProviderProfile#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@createProfile#Business ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@createProviderProfile#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ProviderV1Controller@createProfile#General ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@createProviderProfile#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -751,20 +872,24 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Get profiles", response = MicroserviceProviderProfileDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getProfiles(@RequestHeader("authorization") String headerAuthorization) {
+    public ResponseEntity<?> getProviderProfiles(@RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getProviderProfiles");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -773,22 +898,27 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new BusinessException("No tiene permiso para consultar perfiles.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.getProfilesByProvider(providerDto.getId());
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@getProfiles#Microservice ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getProviderProfiles#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@getProfiles#Business ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getProviderProfiles#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ProviderV1Controller@getProfiles#General ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getProviderProfiles#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -800,7 +930,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Update profile", response = MicroserviceProviderProfileDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> updateProfile(@PathVariable Long profileId,
+    public ResponseEntity<?> updateProviderProfile(@PathVariable Long profileId,
             @RequestHeader("authorization") String headerAuthorization,
             @RequestBody CreateProviderProfileDto updateProfileDto) {
 
@@ -809,13 +939,18 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("updateProviderProfile");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, updateProfileDto.toString());
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -824,23 +959,28 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new BusinessException("No tiene permiso para modificar perfiles.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             responseDto = providerBusiness.updateProfile(providerDto.getId(), profileId, updateProfileDto.getName(),
                     updateProfileDto.getDescription());
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@updateProfile#Microservice ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@updateProviderProfile#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@updateProfile#Business ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@updateProviderProfile#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ProviderV1Controller@updateProfile#General ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@updateProviderProfile#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -851,7 +991,7 @@ public class ProviderV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 204, message = "Delete profile"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> deleteProfile(@PathVariable Long profileId,
+    public ResponseEntity<?> deleteProviderProfile(@PathVariable Long profileId,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -859,13 +999,17 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("deleteProviderProfile");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get provider
             MicroserviceProviderDto providerDto = providerBusiness
                     .getProviderByUserAdministrator(userDtoSession.getId());
             if (providerDto == null) {
@@ -874,22 +1018,27 @@ public class ProviderV1Controller {
             if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                 throw new BusinessException("No tiene permiso para remover perfiles.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
             providerBusiness.deleteProfile(providerDto.getId(), profileId);
             httpStatus = HttpStatus.NO_CONTENT;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@deleteProfile#Microservice ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@deleteProviderProfile#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@deleteProfile#Business ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@deleteProviderProfile#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ProviderV1Controller@deleteProfile#General ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@deleteProviderProfile#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -898,28 +1047,35 @@ public class ProviderV1Controller {
     @GetMapping(value = "/requests/municipality", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get requests by municipality")
     @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
+            @ApiResponse(code = 200, message = "Requests got", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsByMunicipality(@RequestHeader("authorization") String headerAuthorization,
-            @RequestParam(name = "page") Integer page, @RequestParam(name = "municipality") String municipalityCode) {
+    public ResponseEntity<?> getRequestsByMunicipalityForManager(
+            @RequestHeader("authorization") String headerAuthorization, @RequestParam(name = "page") Integer page,
+            @RequestParam(name = "municipality") String municipalityCode) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getRequestsByMunicipalityForManager");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = providerBusiness.getRequestsByManagerAndMunicipality(page, managerDto.getId(),
                     municipalityCode);
@@ -927,17 +1083,21 @@ public class ProviderV1Controller {
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@getRequestsByMunicipality#Microservice ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByMunicipalityForManager#Microservice ---> "
+                    + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@getRequestsByMunicipality#Business ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByMunicipalityForManager#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ProviderV1Controller@getRequestsByMunicipality#General ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByMunicipalityForManager#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -949,7 +1109,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsByProvider(@RequestHeader("authorization") String headerAuthorization,
+    public ResponseEntity<?> getRequestsByProviderForManager(@RequestHeader("authorization") String headerAuthorization,
             @RequestParam(name = "page") Integer page, @RequestParam(name = "provider") Long providerId) {
 
         HttpStatus httpStatus;
@@ -957,33 +1117,42 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getRequestsByProviderForManager");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = providerBusiness.getRequestsByManagerAndProvider(page, managerDto.getId(), providerId);
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@getRequestsByProvider#Microservice ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByProviderForManager#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@getRequestsByProvider#Business ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByProviderForManager#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ProviderV1Controller@getRequestsByProvider#General ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByProviderForManager#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -995,7 +1164,7 @@ public class ProviderV1Controller {
             @ApiResponse(code = 200, message = "Get requests", response = CustomRequestDto.class, responseContainer = "List"),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> getRequestsByPackage(@RequestHeader("authorization") String headerAuthorization,
+    public ResponseEntity<?> getRequestsByPackageForManager(@RequestHeader("authorization") String headerAuthorization,
             @RequestParam(name = "package", required = false) String packageLabel) {
 
         HttpStatus httpStatus;
@@ -1003,33 +1172,42 @@ public class ProviderV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getRequestsByPackageForManager");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = providerBusiness.getRequestsByManagerAndPackage(managerDto.getId(), packageLabel);
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ProviderV1Controller@getRequestsByPackage#Microservice ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByPackageForManager#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ProviderV1Controller@getRequestsByPackage#Business ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByPackageForManager#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ProviderV1Controller@getRequestsByPackage#General ---> " + e.getMessage());
+            log.error("Error ProviderV1Controller@getRequestsByPackageForManager#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

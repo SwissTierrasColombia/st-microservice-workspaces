@@ -1,5 +1,6 @@
 package com.ai.st.microservice.workspaces.business;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
 import org.apache.commons.io.FileUtils;
@@ -39,7 +40,10 @@ public class FileBusiness {
             FileUtils.writeByteArrayToFile(new File(temporalFile), file.getBytes());
             return temporalFile;
         } catch (IOException e) {
-            log.error("Error saving file: " + e.getMessage());
+            String messageError = String.format("Error guardando el archivo %s en el directorio de temporales: %s",
+                    fileName, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return null;
@@ -50,7 +54,9 @@ public class FileBusiness {
         try {
             FileUtils.forceDelete(FileUtils.getFile(path));
         } catch (Exception e) {
-            log.error("It has not been possible delete the file: " + e.getMessage());
+            String messageError = String.format("Error eliminando el archivo %s: %s", path, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
     }
@@ -77,7 +83,10 @@ public class FileBusiness {
             return pathFile;
 
         } catch (IOException e) {
-            log.error("Error saving file: " + e.getMessage());
+            String messageError = String.format("Error guardando el archivo %s en el directorio finales : %s",
+                    namespace, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return null;

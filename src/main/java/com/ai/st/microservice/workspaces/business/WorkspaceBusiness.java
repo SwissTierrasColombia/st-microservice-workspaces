@@ -45,6 +45,7 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.*;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 
 import org.apache.commons.io.FilenameUtils;
@@ -253,7 +254,11 @@ public class WorkspaceBusiness {
                 }
             }
         } catch (Exception e) {
-            log.error("Error enviando notificación al asignar operador: " + e.getMessage());
+            String messageError = String.format(
+                    "Error enviando la notificación al asignar operador al espacio de trabajo %d : %s", workspaceId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         WorkspaceDto workspaceDto = entityParseToDto(workspaceEntity);
@@ -517,7 +522,11 @@ public class WorkspaceBusiness {
                     }
 
                 } catch (Exception er) {
-                    log.error("Error enviando la notificación por solicitud de insumos: " + er.getMessage());
+                    String messageError = String.format(
+                            "Error enviando la notificación a los proveedores por solicitud de insumos : %s",
+                            er.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                 }
 
                 if (responseRequest.getProvider().getId().equals(ProviderBusiness.PROVIDER_IGAC_ID)) {
@@ -551,7 +560,10 @@ public class WorkspaceBusiness {
                                     supplyRequested.getTypeSupply().getId(), null, supplyRequested.getModelVersion());
 
                         } catch (Exception e) {
-                            log.error("No se ha podido crear la tarea de generación de insumos: " + e.getMessage());
+                            String messageError = String.format("Error creando la tarea de generación de insumos : %s",
+                                    e.getMessage());
+                            SCMTracing.sendError(messageError);
+                            log.error(messageError);
                         }
 
                     }
@@ -559,7 +571,9 @@ public class WorkspaceBusiness {
                 }
 
             } catch (BusinessException e) {
-                log.error("No se ha podido crear la solicitud: " + e.getMessage());
+                String messageError = String.format("Error creando la solicitud de insumos : %s", e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
         }
@@ -601,6 +615,10 @@ public class WorkspaceBusiness {
                             MicroserviceManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
                             emitterDto.setUser(managerDto);
                         } catch (Exception e) {
+                            String messageError = String.format("Error consultando el gestor %d : %s",
+                                    emitterDto.getEmitterCode(), e.getMessage());
+                            SCMTracing.sendError(messageError);
+                            log.error(messageError);
                             emitterDto.setUser(null);
                         }
                     } else {
@@ -608,6 +626,10 @@ public class WorkspaceBusiness {
                             MicroserviceUserDto userDto = userClient.findById(emitterDto.getEmitterCode());
                             emitterDto.setUser(userDto);
                         } catch (Exception e) {
+                            String messageError = String.format("Error consultando el usuario %d : %s",
+                                    emitterDto.getEmitterCode(), e.getMessage());
+                            SCMTracing.sendError(messageError);
+                            log.error(messageError);
                             emitterDto.setUser(null);
                         }
                     }
@@ -642,6 +664,10 @@ public class WorkspaceBusiness {
                             MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
                             supply.setUserDeliveryBy(userDto);
                         } catch (Exception e) {
+                            String messageError = String.format("Error consultando el usuario %d : %s",
+                                    supply.getDeliveredBy(), e.getMessage());
+                            SCMTracing.sendError(messageError);
+                            log.error(messageError);
                             supply.setUserDeliveryBy(null);
                         }
 
@@ -699,7 +725,10 @@ public class WorkspaceBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se han podido cargar las solicitudes pendientes del proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando las solicitudes pendientes del proveedor %d : %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return listPendingRequestsDto;
@@ -731,6 +760,10 @@ public class WorkspaceBusiness {
                             MicroserviceManagerDto managerDto = managerClient.findById(emitterDto.getEmitterCode());
                             emitterDto.setUser(managerDto);
                         } catch (Exception e) {
+                            String messageError = String.format("Error consultando el gestor %d : %s",
+                                    emitterDto.getEmitterCode(), e.getMessage());
+                            SCMTracing.sendError(messageError);
+                            log.error(messageError);
                             emitterDto.setUser(null);
                         }
                     } else {
@@ -738,6 +771,10 @@ public class WorkspaceBusiness {
                             MicroserviceUserDto userDto = userClient.findById(emitterDto.getEmitterCode());
                             emitterDto.setUser(userDto);
                         } catch (Exception e) {
+                            String messageError = String.format("Error consultando el usuario %d : %s",
+                                    emitterDto.getEmitterCode(), e.getMessage());
+                            SCMTracing.sendError(messageError);
+                            log.error(messageError);
                             emitterDto.setUser(null);
                         }
                     }
@@ -765,6 +802,10 @@ public class WorkspaceBusiness {
                         requestDto.setUserClosedBy(userDto);
                     }
                 } catch (Exception e) {
+                    String messageError = String.format("Error consultando el usuario %d : %s",
+                            requestDto.getClosedBy(), e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                     requestDto.setUserClosedBy(null);
                 }
 
@@ -781,6 +822,10 @@ public class WorkspaceBusiness {
                             MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
                             supply.setUserDeliveryBy(userDto);
                         } catch (Exception e) {
+                            String messageError = String.format("Error consultando el usuario %d : %s",
+                                    supply.getDeliveredBy(), e.getMessage());
+                            SCMTracing.sendError(messageError);
+                            log.error(messageError);
                             supply.setUserDeliveryBy(null);
                         }
 
@@ -793,7 +838,10 @@ public class WorkspaceBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se han podido cargar las solicitudes cerradas del proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando las solicitudes cerradas del proveedor %d : %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return listClosedRequestsDto;
@@ -855,6 +903,10 @@ public class WorkspaceBusiness {
             pathFileCadastre = attachment.getData();
 
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el tipo de insumo de catastro %d : %s",
+                    supplyIdCadastre, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar el tipo de insumo.");
         }
         if (supplyCadastreDto.getTypeSupply().getProvider().getProviderCategory().getId() != 1) {
@@ -883,6 +935,10 @@ public class WorkspaceBusiness {
             pathFileRegistration = attachment.getData();
 
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el tipo de insumo de registro %d : %s",
+                    supplyIdRegistration, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar el tipo de insumo.");
         }
         if (supplyRegisteredDto.getTypeSupply().getProvider().getProviderCategory().getId() != 2) {
@@ -940,7 +996,10 @@ public class WorkspaceBusiness {
             integrationId = integrationResponseDto.getId();
 
         } catch (Exception e) {
-            log.error("No se ha podido crear la integración: " + e.getMessage());
+            String messageError = String.format("Error creando la integración catastro(%d)-registro(%d) : %s",
+                    supplyIdCadastre, supplyIdRegistration, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear la integración.");
         }
 
@@ -953,7 +1012,10 @@ public class WorkspaceBusiness {
         } catch (Exception e) {
             integrationBusiness.updateStateToIntegration(integrationId,
                     IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC, e.getMessage(), null, null, "SISTEMA");
-            log.error("No se ha podido iniciar la integración: " + e.getMessage());
+            String messageError = String.format("Error iniciando la integración catastro(%d)-registro(%d) : %s",
+                    supplyIdCadastre, supplyIdRegistration, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la integración.");
         }
 
@@ -1017,7 +1079,10 @@ public class WorkspaceBusiness {
                     cryptoBusiness.decrypt(database), cryptoBusiness.decrypt(schema), cryptoBusiness.decrypt(username),
                     cryptoBusiness.decrypt(password));
         } catch (Exception e) {
-            log.error("No se ha podido restringir la base de datos: " + e.getMessage());
+            String messageError = String.format("Error configurando la base de datos de la integración %d : %s",
+                    integrationId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         // create task
@@ -1091,12 +1156,18 @@ public class WorkspaceBusiness {
                 }
 
             } catch (Exception e) {
-                log.error("Error enviando notificación a los usuarios que se les ha asignado una tarea de integración: "
-                        + e.getMessage());
+                String messageError = String.format(
+                        "Error enviando notificación al usuario ya que se le ha asignado una tarea para la integración %d : %s",
+                        integrationId, e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido crear la tarea de integración: " + e.getMessage());
+            String messageError = String.format("Error creando la tarea para la integración %d : %s", integrationId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return integrationDto;
@@ -1166,7 +1237,10 @@ public class WorkspaceBusiness {
                     textHistory);
 
         } catch (Exception e) {
-            log.error("No se ha podido iniciar la generación del insumo: " + e.getMessage());
+            String messageError = String.format("Error iniciando la generación del insumo para la integración %d : %s",
+                    integrationId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la generación del insumo");
         }
 
@@ -1217,7 +1291,10 @@ public class WorkspaceBusiness {
             integrationBusiness.deleteIntegration(integrationId);
 
         } catch (Exception e) {
-            log.error("Error intentando eliminar la integración: " + e.getMessage());
+            String messageError = String.format("Error eliminando la integración %d : %s", integrationId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido eliminar la integración.");
         }
 
@@ -1263,7 +1340,11 @@ public class WorkspaceBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha encontrado el insumo para eliminarlo: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando el insumo %d en el espacio de trabajo %d para eliminarlo : %s", supplyId,
+                    workspaceId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha encontrado el insumo.");
         }
 
@@ -1404,11 +1485,18 @@ public class WorkspaceBusiness {
                 }
 
             } catch (Exception e) {
-                log.error("Error enviando notificación de entrega de insumos al operador: " + e.getMessage());
+                String messageError = String.format(
+                        "Error enviando la notificación de entrega de insumos al operador %d : %s", operatorCode,
+                        e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido realizar la entrega al operador: " + e.getMessage());
+            String messageError = String.format("Error realizando la entrega de insumos al operador %d : %s",
+                    operatorCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido realizar la entrega al operador.");
         }
 
@@ -1667,7 +1755,10 @@ public class WorkspaceBusiness {
                 urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, false);
 
             } catch (Exception e) {
-                log.error("No se ha podido cargar el soporte gestor: " + e.getMessage());
+                String messageError = String.format("Error guardando el soporte de asignación del gestor %d : %s",
+                        managerCode, e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
                 throw new BusinessException("No se ha podido cargar el soporte.");
             }
 
@@ -1710,7 +1801,10 @@ public class WorkspaceBusiness {
                 }
 
             } catch (Exception e) {
-                log.error("Error enviando notificación al asignar gestor: " + e.getMessage());
+                String messageError = String.format("Error enviando notificación al asignar el gestor %d : %s",
+                        managerCode, e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
             WorkspaceDto workspaceDto = entityParseToDto(workspaceEntity);
@@ -1764,7 +1858,10 @@ public class WorkspaceBusiness {
                 urlBase = FileTool.removeAccents(urlBase);
                 urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, false);
             } catch (Exception e) {
-                log.error("No se ha podido cargar el soporte operador: " + e.getMessage());
+                String messageError = String.format("Error guardando el soporte de asignación del operador %d : %s",
+                        operatorCode, e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
                 throw new BusinessException("No se ha podido cargar el soporte.");
             }
 

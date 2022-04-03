@@ -87,7 +87,10 @@ public class WorkspaceOperatorBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error consultando la entrega por insumo: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega a partir del insumo %d : %s", supplyCode,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido obtener la entrega correspondiente al insumo.");
         }
 
@@ -111,7 +114,10 @@ public class WorkspaceOperatorBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error consultando la entrega por insumo: " + e.getMessage());
+            String messageError = String.format("Error actualizando la entrega %d y el insumo %d : %s",
+                    deliveryDto.getId(), supplyCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return deliveryDto;
@@ -411,17 +417,23 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del gestor %d : %s", deliveryId,
+                    managerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (deliveryDto == null) {
             throw new BusinessException("No se ha encontrado la entrega.");
         }
 
+        Long operatorId = deliveryDto.getOperator().getId();
         try {
-            operatorDto = operatorBusiness.getOperatorById(deliveryDto.getOperator().getId());
+            operatorDto = operatorBusiness.getOperatorById(operatorId);
         } catch (Exception e) {
-            log.error("Error consultando operador por id: " + e.getMessage());
+            String messageError = String.format("Error consultando el operator %d : %s", operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (operatorDto == null) {
@@ -578,6 +590,10 @@ public class WorkspaceOperatorBusiness {
                     .getManagerById(workspaceOperatorEntity.getManagerCode());
             workspaceOperatorDto.setManager(managerDto);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el gestor %d : %s",
+                    workspaceOperatorEntity.getManagerCode(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             workspaceOperatorDto.setManager(null);
         }
 
@@ -586,6 +602,10 @@ public class WorkspaceOperatorBusiness {
                     .getOperatorById(workspaceOperatorEntity.getOperatorCode());
             workspaceOperatorDto.setOperator(operatorDto);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el operador %d : %s",
+                    workspaceOperatorEntity.getOperatorCode(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             workspaceOperatorDto.setOperator(null);
         }
 

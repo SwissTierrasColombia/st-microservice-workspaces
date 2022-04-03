@@ -84,7 +84,7 @@ public class ProviderBusiness {
     public static final Long REQUEST_STATE_DELIVERED = (long) 2;
     public static final Long REQUEST_STATE_CANCELLED = (long) 3;
 
-    // Petitions States
+    // Petition States
     public static final Long PETITION_STATE_PENDING = (long) 1;
     public static final Long PETITION_STATE_ACCEPT = (long) 2;
     public static final Long PETITION_STATE_REJECT = (long) 3;
@@ -820,10 +820,17 @@ public class ProviderBusiness {
             }
 
         } catch (BusinessException e) {
-            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d a partir del paquete %s : %s",
+                    managerCode, packageLabel, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d a partir del paquete %s : %s",
+                    managerCode, packageLabel, e.getMessage());
+            SCMTracing.sendError(messageError);
             throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
         }
 

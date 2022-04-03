@@ -36,4 +36,8 @@ public class CreateProviderProfileDto implements Serializable {
         this.description = description;
     }
 
+    @Override
+    public String toString() {
+        return "CreateProviderProfileDto{" + "name='" + name + '\'' + ", description='" + description + '\'' + '}';
+    }
 }

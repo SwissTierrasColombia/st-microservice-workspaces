@@ -234,8 +234,11 @@ public class IntegrationBusiness {
                 supplySnrDto.setTypeSupply(providerClient.findTypeSuppleById(supplySnrDto.getTypeSupplyCode()));
                 integrationDto.setSupplySnr(supplySnrDto);
 
-            } catch (Exception ignored) {
-
+            } catch (Exception e) {
+                String messageError = String.format("Error consultando los insumos de la integración %d : %s",
+                        integrationDto.getId(), e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
         }
@@ -253,6 +256,10 @@ public class IntegrationBusiness {
         try {
             integrationService.deleteIntegration(integrationId);
         } catch (Exception e) {
+            String messageError = String.format("Error eliminando la integración %d : %s", integrationId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido eliminar la integración.");
         }
 
@@ -314,13 +321,17 @@ public class IntegrationBusiness {
         }
 
         try {
-            MunicipalityDto municipalityDto = municipalityBusiness
-                    .getMunicipalityByCode(integrationEntity.getWorkspace().getMunicipality().getCode());
+            String municipalityCode = integrationEntity.getWorkspace().getMunicipality().getCode();
+            MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(municipalityCode);
             if (municipalityDto != null) {
                 integrationDto.setMunicipalityDto(municipalityDto);
             }
         } catch (Exception e) {
-            log.error("Error consultando municipio: " + e.getMessage());
+            String messageError = String.format("Error consultando el municipio %s para la integración %d: %s",
+                    integrationEntity.getWorkspace().getMunicipality().getCode(), integrationDto.getId(),
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return integrationDto;
