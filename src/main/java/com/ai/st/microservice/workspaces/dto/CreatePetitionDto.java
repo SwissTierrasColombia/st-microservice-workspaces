@@ -36,4 +36,8 @@ public class CreatePetitionDto implements Serializable {
         this.description = description;
     }
 
+    @Override
+    public String toString() {
+        return "CreatePetitionDto{" + "providerId=" + providerId + ", description='" + description + '\'' + '}';
+    }
 }
