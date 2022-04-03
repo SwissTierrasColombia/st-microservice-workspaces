@@ -79,7 +79,7 @@ public class RabbitMQUpdateIntegrationListener {
                 WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
                 MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-                List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
+                List<MicroserviceManagerUserDto> directors = managerBusiness.getUsersByManager(
                         integrationEntity.getManagerCode(),
                         new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 

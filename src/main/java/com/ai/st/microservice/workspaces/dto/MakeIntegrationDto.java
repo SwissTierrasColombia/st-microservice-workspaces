@@ -36,4 +36,9 @@ public class MakeIntegrationDto implements Serializable {
         this.supplyRegistration = supplyRegistration;
     }
 
+    @Override
+    public String toString() {
+        return "MakeIntegrationDto{" + "supplyCadastre=" + supplyCadastre + ", supplyRegistration=" + supplyRegistration
+                + '}';
+    }
 }

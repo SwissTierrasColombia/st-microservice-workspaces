@@ -222,7 +222,10 @@ public class WorkspaceBusiness {
             urlBase = FileTool.removeAccents(urlBase);
             urlDocumentaryRepository = fileBusiness.saveFileToSystem(supportFile, urlBase, false);
         } catch (Exception e) {
-            log.error("No se ha podido cargar el soporte operador: " + e.getMessage());
+            String messageError = String.format("Error guardando el soporte al momento de asignar el operador %d: %s",
+                    operatorCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido cargar el soporte.");
         }
 
@@ -1786,7 +1789,7 @@ public class WorkspaceBusiness {
             // send notification
             try {
 
-                List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(managerDto.getId(),
+                List<MicroserviceManagerUserDto> directors = managerBusiness.getUsersByManager(managerDto.getId(),
                         new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
                 for (MicroserviceManagerUserDto directorDto : directors) {
