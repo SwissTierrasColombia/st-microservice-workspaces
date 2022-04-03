@@ -31,7 +31,7 @@ public class NotificationBusiness {
             notification.setPassword(password);
             notification.setProfile(profile);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("creationUser");
             notification.setUser(user);
             notification.setUserCode(userCode);
 
@@ -55,7 +55,7 @@ public class NotificationBusiness {
             notification.setPassword(password);
             notification.setProfile(profile);
             notification.setStatus(0);
-            notification.setType("sinic");
+            notification.setType("creationSinicUser");
             notification.setUser(user);
             notification.setUserCode(userCode);
 
@@ -81,7 +81,7 @@ public class NotificationBusiness {
             notification.setMpio(municipality);
             notification.setStartDate(startDate);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("assignManager");
             notification.setUserCode(userCode);
             notification.setSupportFile(supportFile);
 
@@ -106,7 +106,7 @@ public class NotificationBusiness {
             notification.setEmail(email);
             notification.setUserCode(userCode);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("assignOperator");
             notification.setManager(manager);
             notification.setMpio(municipality);
             notification.setDpto(department);
@@ -136,7 +136,7 @@ public class NotificationBusiness {
             notification.setEmail(email);
             notification.setUserCode(userCode);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("createSuppliesRequest");
             notification.setManager(manager);
             notification.setMpio(municipality);
             notification.setDpto(department);
@@ -164,7 +164,7 @@ public class NotificationBusiness {
             notification.setEmail(email);
             notification.setUserCode(userCode);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("loadXTFFileInSuppliesModule");
             notification.setLoadStatus(loadStatus);
             notification.setMpio(municipality);
             notification.setDpto(department);
@@ -194,7 +194,7 @@ public class NotificationBusiness {
             notification.setEmail(email);
             notification.setUserCode(userCode);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("resultIntegration");
             notification.setIntegrationStatus(integrationStatus);
             notification.setMpio(municipality);
             notification.setDpto(department);
@@ -222,7 +222,7 @@ public class NotificationBusiness {
             notification.setEmail(email);
             notification.setUserCode(userCode);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("taskAssignment");
             notification.setTask(task);
             notification.setMpio(municipality);
             notification.setDpto(department);
@@ -248,7 +248,7 @@ public class NotificationBusiness {
             notification.setEmail(email);
             notification.setUserCode(userCode);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("productGeneratedFromIntegration");
             notification.setMpio(municipality);
             notification.setDpto(department);
             notification.setRequestDate(requestDate);
@@ -274,7 +274,7 @@ public class NotificationBusiness {
             notification.setEmail(email);
             notification.setUserCode(userCode);
             notification.setStatus(0);
-            notification.setType("success");
+            notification.setType("deliveryCreatedForOperator");
             notification.setManager(manager);
             notification.setMpio(municipality);
             notification.setDpto(department);

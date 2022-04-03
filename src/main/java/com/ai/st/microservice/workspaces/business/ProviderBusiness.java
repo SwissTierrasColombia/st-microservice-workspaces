@@ -232,7 +232,10 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido consultar si la tarea esta asociada al cargue de insumo: " + e.getMessage());
+            String messageError = String.format("Error verificando si la tarea esta asociada al cargue de insumo : %s",
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
@@ -415,6 +418,10 @@ public class ProviderBusiness {
                         MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
                         supply.setUserDeliveryBy(userDto);
                     } catch (Exception e) {
+                        String messageError = String.format("Error consultando el usuario %d : %s",
+                                supply.getDeliveredBy(), e.getMessage());
+                        SCMTracing.sendError(messageError);
+                        log.error(messageError);
                         supply.setUserDeliveryBy(null);
                     }
                 }
@@ -624,20 +631,6 @@ public class ProviderBusiness {
         }
 
         return requestUpdatedDto;
-    }
-
-    @Deprecated
-    public CustomRequestDto closeRequest(Long requestId, Long userCode) {
-        try {
-            MicroserviceRequestDto response = providerClient.closeRequest(requestId, userCode);
-            return new CustomRequestDto(response);
-        } catch (Exception e) {
-            String messageError = String.format("Error cerrando la solicitud %d por el usuario %d : %s", requestId,
-                    userCode, e.getMessage());
-            SCMTracing.sendError(messageError);
-            log.error(messageError);
-            return null;
-        }
     }
 
     public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
@@ -851,6 +844,10 @@ public class ProviderBusiness {
                     MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
                     emitterDto.setUser(managerDto);
                 } catch (Exception e) {
+                    String messageError = String.format("Error consultando el gestor %d : %s",
+                            emitterDto.getEmitterCode(), e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                     emitterDto.setUser(null);
                 }
             } else {
@@ -858,6 +855,10 @@ public class ProviderBusiness {
                     MicroserviceUserDto userDto = administrationBusiness.getUserById(emitterDto.getEmitterCode());
                     emitterDto.setUser(userDto);
                 } catch (Exception e) {
+                    String messageError = String.format("Error consultando el usuario %d : %s",
+                            emitterDto.getEmitterCode(), e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                     emitterDto.setUser(null);
                 }
             }
@@ -894,6 +895,10 @@ public class ProviderBusiness {
                     MicroserviceUserDto userDto = administrationBusiness.getUserById(supply.getDeliveredBy());
                     supply.setUserDeliveryBy(userDto);
                 } catch (Exception e) {
+                    String messageError = String.format("Error consultando el usuario %d : %s", supply.getDeliveredBy(),
+                            e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                     supply.setUserDeliveryBy(null);
                 }
 
@@ -1065,9 +1070,7 @@ public class ProviderBusiness {
         List<MicroserviceTypeSupplyDto> typesSuppliesDto;
 
         try {
-
             typesSuppliesDto = providerClient.getTypesSuppliesByProvider(providerId);
-
         } catch (BusinessException e) {
             String messageError = String.format("Error consultando los tipos de insumos para el proveedor %d: %s",
                     providerId, e.getMessage());
@@ -1121,11 +1124,8 @@ public class ProviderBusiness {
     }
 
     public void deleteTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
-
         try {
-
             providerClient.deleteTypeSupply(providerId, typeSupplyId);
-
         } catch (BusinessException e) {
             String messageError = String.format("Error eliminando el tipo de insumo %d para el proveedor %d: %s",
                     typeSupplyId, providerId, e.getMessage());
