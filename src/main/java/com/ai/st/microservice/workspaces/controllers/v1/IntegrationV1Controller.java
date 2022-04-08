@@ -84,17 +84,17 @@ public class IntegrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error IntegrationV1Controller@getIntegrationsRunning#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error IntegrationV1Controller@getIntegrationsRunning#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error IntegrationV1Controller@getIntegrationsRunning#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -144,17 +144,17 @@ public class IntegrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error IntegrationV1Controller@configureViewIntegration#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error IntegrationV1Controller@configureViewIntegration#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error IntegrationV1Controller@configureViewIntegration#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 

@@ -141,12 +141,12 @@ public final class AdministrationV1Controller {
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@createUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@createUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -184,17 +184,17 @@ public final class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@resetUserPassword#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@resetUserPassword#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@resetUserPassword#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -278,22 +278,22 @@ public final class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@updateUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@updateUser#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@updateUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@updateUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -372,22 +372,22 @@ public final class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@disableUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@disableUser#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@disableUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@disableUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -467,22 +467,22 @@ public final class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@enableUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@enableUser#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@enableUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@enableUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -557,22 +557,22 @@ public final class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@getUsers#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@getUsers#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@getUsers#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@getUsers#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -642,22 +642,22 @@ public final class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -727,22 +727,22 @@ public final class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 

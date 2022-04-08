@@ -111,22 +111,22 @@ public class CadastralAuthorityV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error CadastralAuthorityV1Controller@createSupply#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error CadastralAuthorityV1Controller@createSupply#Validation ---> " + e.getMessage());
             httpStatus = HttpStatus.BAD_REQUEST;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error CadastralAuthorityV1Controller@createSupply#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error CadastralAuthorityV1Controller@createSupply#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             SCMTracing.sendError(e.getMessage());
         }
 
@@ -168,11 +168,11 @@ public class CadastralAuthorityV1Controller {
         } catch (BusinessException e) {
             SCMTracing.sendError(e.getMessage());
             log.error("Error CadastralAuthorityV1Controller@downloadReport#Business ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 2), HttpStatus.UNPROCESSABLE_ENTITY);
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.UNPROCESSABLE_ENTITY);
         } catch (Exception e) {
             SCMTracing.sendError(e.getMessage());
             log.error("Error CadastralAuthorityV1Controller@downloadReport#General ---> " + e.getMessage());
-            return new ResponseEntity<>(new BasicResponseDto(e.getMessage(), 3), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new BasicResponseDto(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + file.getName())
