@@ -14,7 +14,7 @@
 
     <groupId>com.ai.st.microservice.workspaces</groupId>
     <artifactId>st-microservice-workspaces</artifactId>
-    <version>4.5.0</version>
+    <version>4.8.0</version>
     <name>st-microservice-workspaces</name>
     <description>Microservice Workspaces</description>
 
@@ -142,6 +142,14 @@
             <groupId>com.newrelic.agent.java</groupId>
             <artifactId>newrelic-api</artifactId>
             <version>7.5.0</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.newrelic.agent.java</groupId>
+            <artifactId>newrelic-agent</artifactId>
+            <version>7.5.0</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
