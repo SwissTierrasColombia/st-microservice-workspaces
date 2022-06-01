@@ -48,4 +48,10 @@ public class CreateDeliveryDto implements Serializable {
     public void setOperatorCode(Long operatorCode) {
         this.operatorCode = operatorCode;
     }
+
+    @Override
+    public String toString() {
+        return "CreateDeliveryDto{" + "observations='" + observations + '\'' + ", operatorCode=" + operatorCode
+                + ", supplies=" + supplies + '}';
+    }
 }

@@ -20,6 +20,7 @@ import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -142,7 +143,7 @@ public class TaskBusiness {
         return taskDto;
     }
 
-    public List<CustomTaskDto> getPendingTasks(Long userCode) throws BusinessException {
+    public List<CustomTaskDto> getPendingTasksByUser(Long userCode) throws BusinessException {
 
         List<CustomTaskDto> listTasksDto = new ArrayList<>();
 
@@ -162,6 +163,10 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
+            String messageError = String.format("Error consultando las tareas pendientes del usuario %d : %s", userCode,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar las tareas pendientes del usuario.");
         }
 
@@ -189,7 +194,9 @@ public class TaskBusiness {
             taskDto = new CustomTaskDto(response);
 
         } catch (Exception e) {
-            log.error("No se ha podido crear la tarea: " + e.getMessage());
+            String messageError = String.format("Error creando tarea : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear la tarea.");
         }
 
@@ -242,6 +249,9 @@ public class TaskBusiness {
             MicroserviceTaskDto response = taskClient.findTaskById(taskId);
             taskDto = new CustomTaskDto(response);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha encontrado la tarea.");
         }
 
@@ -273,7 +283,9 @@ public class TaskBusiness {
                 }
             }
         } catch (Exception e) {
-            log.error("No se ha podido desasignar los usuarios de la tarea: " + e.getMessage());
+            String messageError = String.format("Error quitando usuarios de la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
@@ -281,7 +293,9 @@ public class TaskBusiness {
             taskDto = new CustomTaskDto(response);
             taskDto = this.extendTask(taskDto);
         } catch (Exception e) {
-            log.error("No se ha podido iniciar la tarea: " + e.getMessage());
+            String messageError = String.format("Error iniciando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la tarea.");
         }
 
@@ -296,6 +310,9 @@ public class TaskBusiness {
             MicroserviceTaskDto response = taskClient.findTaskById(taskId);
             taskDto = new CustomTaskDto(response);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha encontrado la tarea.");
         }
 
@@ -373,7 +390,11 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
+            String messageError = String.format(
+                    "Error generando el producto a partir de la finalización de la tarea de integración %d: %s", taskId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
@@ -413,7 +434,7 @@ public class TaskBusiness {
                         CustomSupplyRequestedDto supplyRequestedDto = suppliesRequestDto.stream()
                                 .filter(sR -> sR.getTypeSupply().getId().equals(typeSupplyId)).findAny().orElse(null);
 
-                        if (supplyRequestedDto instanceof CustomSupplyRequestedDto) {
+                        if (supplyRequestedDto != null) {
 
                             Long supplyStateId = supplyRequestedDto.getState().getId();
                             if (supplyStateId.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
@@ -479,7 +500,9 @@ public class TaskBusiness {
             taskDto = new CustomTaskDto(response);
             taskDto = this.extendTask(taskDto);
         } catch (Exception e) {
-            log.error("No se ha podido finalizar la tarea: " + e.getMessage());
+            String messageError = String.format("Error finalizando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido finalizar la tarea.");
         }
 
@@ -494,6 +517,9 @@ public class TaskBusiness {
             MicroserviceTaskDto response = taskClient.findTaskById(taskId);
             taskDto = new CustomTaskDto(response);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha encontrado la tarea.");
         }
 
@@ -543,7 +569,11 @@ public class TaskBusiness {
                                         cryptoBusiness.decrypt(integrationEntity.getDatabase()),
                                         cryptoBusiness.decrypt(integrationEntity.getUsername()));
                             } catch (Exception e) {
-                                log.error("No se ha podido borrar la base de datos: " + e.getMessage());
+                                String messageError = String.format(
+                                        "Error eliminando la base de datos a partir de la cancelación de la tarea  %d: %s",
+                                        taskId, e.getMessage());
+                                SCMTracing.sendError(messageError);
+                                log.error(messageError);
                             }
 
                             String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
@@ -555,8 +585,11 @@ public class TaskBusiness {
                                 databaseIntegrationBusiness.createDatabase(randomDatabaseName, randomUsername,
                                         randomPassword);
                             } catch (Exception e) {
-                                log.error("No se ha podido crear la base de datos para la integración: "
-                                        + e.getMessage());
+                                String messageError = String.format(
+                                        "Error creando la base de datos a partir de la cancelación de la tarea  %d: %s",
+                                        taskId, e.getMessage());
+                                SCMTracing.sendError(messageError);
+                                log.error(messageError);
                             }
 
                             integrationBusiness.updateCredentialsIntegration(integrationId,
@@ -597,7 +630,11 @@ public class TaskBusiness {
                                         integrationId, supplyCadastreDto.getModelVersion());
 
                             } catch (Exception e) {
-                                log.error("No se ha podido iniciar la integración: " + e.getMessage());
+                                String messageError = String.format(
+                                        "Error iniciando la integración a partir de la cancelación de la tarea  %d: %s",
+                                        taskId, e.getMessage());
+                                SCMTracing.sendError(messageError);
+                                log.error(messageError);
                             }
 
                             // modify integration state to finish assisted
@@ -612,7 +649,10 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
+            String messageError = String.format(
+                    "Error al momento de cancelar una tarea correspondiente a una integración : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
@@ -679,7 +719,9 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido re-asignar la tarea: " + e.getMessage());
+            String messageError = String.format("Error re-asignando la tarea %d : %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         MicroserviceTaskCategoryDto categoryXTFQuality = taskDto.getCategories().stream()
@@ -721,6 +763,9 @@ public class TaskBusiness {
 
             taskDto = this.extendTask(taskDto);
         } catch (Exception e) {
+            String messageError = String.format("Error cancelando la tarea %d : %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido cancelar la tarea.");
         }
 

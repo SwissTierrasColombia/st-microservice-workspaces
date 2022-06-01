@@ -5,8 +5,10 @@ import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
 import com.ai.st.microservice.common.dto.general.BasicResponseDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.MicroserviceProviderDto;
-import com.ai.st.microservice.common.exceptions.*;
 
+import com.ai.st.microservice.common.exceptions.BusinessException;
+import com.ai.st.microservice.common.exceptions.DisconnectedMicroserviceException;
+import com.ai.st.microservice.common.exceptions.InputValidationException;
 import com.ai.st.microservice.workspaces.business.AdministratorMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.ProviderBusiness;
@@ -15,6 +17,8 @@ import com.ai.st.microservice.workspaces.dto.ChangePasswordDto;
 import com.ai.st.microservice.workspaces.dto.CreateUserDto;
 import com.ai.st.microservice.workspaces.dto.UpdateUserDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -30,7 +34,7 @@ import io.swagger.annotations.ApiResponses;
 @Api(value = "Manage Users-Roles", tags = { "Administration" })
 @RestController
 @RequestMapping("api/workspaces/v1/administration")
-public class AdministrationV1Controller {
+public final class AdministrationV1Controller {
 
     private final Logger log = LoggerFactory.getLogger(AdministrationV1Controller.class);
 
@@ -53,7 +57,7 @@ public class AdministrationV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> createUser(@RequestBody CreateUserDto requestCreateUser,
+    public ResponseEntity<?> createUser(@RequestBody CreateUserDto requestCreateUser,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -61,13 +65,19 @@ public class AdministrationV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("createUser");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_SUPER_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.createUser(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
                         requestCreateUser.getPassword(), true, null, requestCreateUser.getRoleAdministrator(), null,
@@ -75,11 +85,10 @@ public class AdministrationV1Controller {
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
-
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 if (requestCreateUser.getRoleProvider() != null) {
                     requestCreateUser.getRoleProvider().setFromAdministrator(true);
                 }
-
                 responseDto = administrationMicroserviceBusiness.createUserFromAdministrator(
                         requestCreateUser.getFirstName(), requestCreateUser.getLastName(), requestCreateUser.getEmail(),
                         requestCreateUser.getUsername(), requestCreateUser.getPassword(),
@@ -88,8 +97,7 @@ public class AdministrationV1Controller {
             }
 
             if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -97,19 +105,17 @@ public class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para crear usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 requestCreateUser.getRoleManager().setManagerId(managerDto.getId());
-
                 responseDto = administrationMicroserviceBusiness.createUserFromManager(requestCreateUser.getFirstName(),
                         requestCreateUser.getLastName(), requestCreateUser.getEmail(), requestCreateUser.getUsername(),
                         requestCreateUser.getPassword(), requestCreateUser.getRoleManager());
-
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
-
+                SCMTracing.addCustomParameter(TracingKeyword.IS_PROVIDER, true);
                 requestCreateUser.getRoleProvider().setFromAdministrator(false);
-
                 MicroserviceProviderDto providerDto = providerBusiness
                         .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
@@ -119,25 +125,29 @@ public class AdministrationV1Controller {
                     throw new InputValidationException("El usuario no tiene permisos para crear usuarios.");
                 }
 
-                requestCreateUser.getRoleProvider().setProviderId(providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
+                requestCreateUser.getRoleProvider().setProviderId(providerDto.getId());
                 responseDto = administrationMicroserviceBusiness.createUserFromProvider(
                         requestCreateUser.getFirstName(), requestCreateUser.getLastName(), requestCreateUser.getEmail(),
                         requestCreateUser.getUsername(), requestCreateUser.getPassword(),
                         requestCreateUser.getRoleProvider());
-
             }
 
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, requestCreateUser.toString());
             httpStatus = HttpStatus.CREATED;
 
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@createUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@createUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -148,7 +158,7 @@ public class AdministrationV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 201, message = "Create user", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> resetUserPassword(@RequestBody ChangePasswordDto requestChangePassword,
+    public ResponseEntity<?> resetUserPassword(@RequestBody ChangePasswordDto requestChangePassword,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -156,11 +166,16 @@ public class AdministrationV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("changeUserPassword");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             responseDto = administrationMicroserviceBusiness.changeUserPassword(userDtoSession.getId(),
                     requestChangePassword.getPassword());
@@ -169,15 +184,18 @@ public class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@resetUserPassword#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@resetUserPassword#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@resetUserPassword#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -188,7 +206,7 @@ public class AdministrationV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Update user", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDto requestUpdateUser,
+    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody UpdateUserDto requestUpdateUser,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -196,27 +214,33 @@ public class AdministrationV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("updateUser");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_SUPER_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.updateUserFromSuperAdmin(userId,
                         requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(),
                         requestUpdateUser.getEmail());
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.updateUserFromAdministrator(userId,
                         requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(),
                         requestUpdateUser.getEmail());
             }
 
             if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -224,16 +248,16 @@ public class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.updateUserFromManager(userId,
                         requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail(),
                         managerDto.getId());
-
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
-
-                // get providers
+                SCMTracing.addCustomParameter(TracingKeyword.IS_PROVIDER, true);
                 MicroserviceProviderDto providerDto = providerBusiness
                         .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
@@ -242,11 +266,11 @@ public class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para editar usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.updateUserFromProvider(userId,
                         requestUpdateUser.getFirstName(), requestUpdateUser.getLastName(), requestUpdateUser.getEmail(),
                         providerDto.getId());
-
             }
 
             httpStatus = HttpStatus.OK;
@@ -254,19 +278,23 @@ public class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@updateUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@updateUser#Validation ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNAUTHORIZED;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@updateUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@updateUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -277,7 +305,7 @@ public class AdministrationV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "User disabled", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> disableUser(@PathVariable Long userId,
+    public ResponseEntity<?> disableUser(@PathVariable Long userId,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -285,22 +313,29 @@ public class AdministrationV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("disableUser");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_SUPER_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromSuperAdmin(userId, false);
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromAdministrator(userId, false);
             }
 
             if (administrationBusiness.isManager(userDtoSession)) {
-
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -308,14 +343,15 @@ public class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar el soporte.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, false,
                         managerDto.getId());
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
-
-                // get provider
+                SCMTracing.addCustomParameter(TracingKeyword.IS_PROVIDER, true);
                 MicroserviceProviderDto providerDto = providerBusiness
                         .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
@@ -324,10 +360,11 @@ public class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para deshabilitar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, false,
                         providerDto.getId());
-
             }
 
             httpStatus = HttpStatus.OK;
@@ -335,19 +372,23 @@ public class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@disableUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@disableUser#Validation ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNAUTHORIZED;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@disableUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@disableUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -358,7 +399,7 @@ public class AdministrationV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "User enabled", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> enableUser(@PathVariable Long userId,
+    public ResponseEntity<?> enableUser(@PathVariable Long userId,
             @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
@@ -366,23 +407,29 @@ public class AdministrationV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("enableUser");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_SUPER_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromSuperAdmin(userId, true);
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromAdministrator(userId, true);
             }
 
             if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -390,14 +437,15 @@ public class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromManager(userId, true,
                         managerDto.getId());
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
-
-                // get provider
+                SCMTracing.addCustomParameter(TracingKeyword.IS_PROVIDER, true);
                 MicroserviceProviderDto providerDto = providerBusiness
                         .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
@@ -406,6 +454,8 @@ public class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para habilitar usuarios.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
 
                 responseDto = administrationMicroserviceBusiness.changeStatusUserFromProvider(userId, true,
                         providerDto.getId());
@@ -417,19 +467,23 @@ public class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@enableUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@enableUser#Validation ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNAUTHORIZED;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@enableUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@enableUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -447,23 +501,29 @@ public class AdministrationV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getUsers");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isSuperAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_SUPER_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.getUsersFromSuperAdmin();
             }
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 responseDto = administrationMicroserviceBusiness.getUsersFromAdministrator();
             }
 
             if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -471,14 +531,13 @@ public class AdministrationV1Controller {
                 if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para consultar usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 responseDto = administrationMicroserviceBusiness.getUsersFromManager(managerDto.getId());
-
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
-
-                // get provider
+                SCMTracing.addCustomParameter(TracingKeyword.IS_PROVIDER, true);
                 MicroserviceProviderDto providerDto = providerBusiness
                         .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
@@ -487,7 +546,8 @@ public class AdministrationV1Controller {
                 if (!providerBusiness.userProviderIsDirector(userDtoSession.getId())) {
                     throw new InputValidationException("El usuario no tiene permisos para consultar usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.getUsersFromProvider(providerDto.getId());
 
             }
@@ -497,19 +557,23 @@ public class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@getUsers#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@getUsers#Validation ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNAUTHORIZED;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@getUsers#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@getUsers#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -520,7 +584,7 @@ public class AdministrationV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> addProfileToUser(@RequestHeader("authorization") String headerAuthorization,
+    public ResponseEntity<?> addProfileToUser(@RequestHeader("authorization") String headerAuthorization,
             @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
 
         HttpStatus httpStatus;
@@ -528,15 +592,20 @@ public class AdministrationV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("addProfileToUser");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, addProfileUser.toString());
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -545,15 +614,14 @@ public class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 responseDto = administrationMicroserviceBusiness.addProfileToUserFromManager(userId,
                         addProfileUser.getProfileId(), managerDto.getId());
-
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
-
-                // get provider
+                SCMTracing.addCustomParameter(TracingKeyword.IS_PROVIDER, true);
                 MicroserviceProviderDto providerDto = providerBusiness
                         .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
@@ -563,10 +631,10 @@ public class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para agregar perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.addProfileToUserFromProvider(userId,
                         addProfileUser.getProfileId(), providerDto.getId());
-
             }
 
             httpStatus = HttpStatus.OK;
@@ -574,19 +642,23 @@ public class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#Validation ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNAUTHORIZED;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@addProfileToUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -597,23 +669,28 @@ public class AdministrationV1Controller {
     @ApiResponses(value = { @ApiResponse(code = 200, message = "Profile Added", response = MicroserviceUserDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<Object> removeProfileToUser(@RequestHeader("authorization") String headerAuthorization,
-            @RequestBody AddProfileToUserDto addProfileUser, @PathVariable Long userId) {
+    public ResponseEntity<?> removeProfileToUser(@RequestHeader("authorization") String headerAuthorization,
+            @RequestBody AddProfileToUserDto removeProfileUser, @PathVariable Long userId) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("removeProfileToUser");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, removeProfileUser.toString());
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -622,15 +699,14 @@ public class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
                 responseDto = administrationMicroserviceBusiness.removeProfileToUserFromManager(userId,
-                        addProfileUser.getProfileId(), managerDto.getId());
-
+                        removeProfileUser.getProfileId(), managerDto.getId());
             }
 
             if (administrationBusiness.isProvider(userDtoSession)) {
-
-                // get provider
+                SCMTracing.addCustomParameter(TracingKeyword.IS_PROVIDER, true);
                 MicroserviceProviderDto providerDto = providerBusiness
                         .getProviderByUserAdministrator(userDtoSession.getId());
                 if (providerDto == null) {
@@ -640,10 +716,10 @@ public class AdministrationV1Controller {
                     throw new InputValidationException(
                             "El usuario no tiene permisos para remover perfiles a los usuarios.");
                 }
-
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_ID, providerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.PROVIDER_NAME, providerDto.getName());
                 responseDto = administrationMicroserviceBusiness.removeProfileToUserFromProvider(userId,
-                        addProfileUser.getProfileId(), providerDto.getId());
-
+                        removeProfileUser.getProfileId(), providerDto.getId());
             }
 
             httpStatus = HttpStatus.OK;
@@ -651,19 +727,23 @@ public class AdministrationV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (InputValidationException e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#Validation ---> " + e.getMessage());
-            httpStatus = HttpStatus.UNAUTHORIZED;
-            responseDto = new BasicResponseDto(e.getMessage(), 1);
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error AdministrationV1Controller@removeProfileToUser#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

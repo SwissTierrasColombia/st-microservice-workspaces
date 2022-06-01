@@ -4,6 +4,7 @@ import com.ai.st.microservice.common.clients.ReportFeignClient;
 import com.ai.st.microservice.common.dto.reports.*;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,11 @@ public class ReportBusiness {
 
             informationDto = reportClient.createReportDownloadSuppliesTotal(data);
         } catch (Exception e) {
-            log.error("Error creando reporte (entrega de insumos por parte del gestor al operador): " + e.getMessage());
+            String messageError = String.format(
+                    "Error creando reporte (entrega de insumos por parte del gestor %s al operador %s): %s",
+                    managerName, operatorName, e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+            log.error(messageError);
             throw new BusinessException("No se ha podido generar el reporte.");
         }
 
@@ -73,8 +78,11 @@ public class ReportBusiness {
 
             informationDto = reportClient.createReportDeliverySuppliesAC(data);
         } catch (Exception e) {
-            log.error("Error creando reporte (entrega de insumos por parte de la autoridad catastral): "
-                    + e.getMessage());
+            String messageError = String.format(
+                    "Error creando reporte (entrega de insumos por parte de la autoridad catastral al gestor %s): %s",
+                    managerName, e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+            log.error(messageError);
             throw new BusinessException("No se ha podido generar el reporte.");
         }
 
@@ -106,7 +114,11 @@ public class ReportBusiness {
 
             informationDto = reportClient.createReportDeliveryManager(data);
         } catch (Exception e) {
-            log.error("Error creando reporte (entrega de insumos por parte del gestor al operador): " + e.getMessage());
+            String messageError = String.format(
+                    "Error creando reporte (entrega de insumos por parte del gestor %s al operador %s): %s",
+                    managerName, operatorName, e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+            log.error(messageError);
             throw new BusinessException("No se ha podido generar el reporte.");
         }
 

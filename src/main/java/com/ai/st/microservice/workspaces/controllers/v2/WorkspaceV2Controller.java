@@ -9,6 +9,8 @@ import com.ai.st.microservice.common.exceptions.*;
 import com.ai.st.microservice.workspaces.dto.*;
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -70,6 +72,8 @@ public class WorkspaceV2Controller {
 
         try {
 
+            SCMTracing.setTransactionName("validateMunicipalitiesBeforeAssigned");
+
             responseDto = workspaceBusiness.validateMunicipalitiesToAssign(municipalities);
             httpStatus = HttpStatus.OK;
 
@@ -77,12 +81,14 @@ public class WorkspaceV2Controller {
             log.error(
                     "Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error(
                     "Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

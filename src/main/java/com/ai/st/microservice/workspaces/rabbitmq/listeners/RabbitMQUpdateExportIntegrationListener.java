@@ -21,6 +21,7 @@ import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IntegrationService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -126,7 +127,7 @@ public class RabbitMQUpdateExportIntegrationListener {
 
                     try {
 
-                        List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(
+                        List<MicroserviceManagerUserDto> directors = managerBusiness.getUsersByManager(
                                 integrationEntity.getManagerCode(),
                                 new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
@@ -142,13 +143,15 @@ public class RabbitMQUpdateExportIntegrationListener {
                         }
 
                     } catch (Exception e) {
-                        log.error("Error enviando notificación de producto generado: " + e.getMessage());
+                        String messageError = String.format("Error enviando notificación de producto generado : %s",
+                                e.getMessage());
+                        SCMTracing.sendError(messageError);
+                        log.error(messageError);
                     }
 
                 } else {
-
                     stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
-                    log.error("Export finished with errors");
+                    log.warn("Export finished with errors");
                 }
 
                 String logErrors = null;
@@ -166,14 +169,20 @@ public class RabbitMQUpdateExportIntegrationListener {
             }
 
         } catch (Exception e) {
-            log.info("Error update export integration: " + e.getMessage());
+            String messageError = String.format("Error actualizando la exportación de la integración %d : %s",
+                    resultExportDto.getIntegrationId(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
 
             Long stateId = IntegrationStateBusiness.STATE_ERROR_GENERATING_PRODUCT;
             try {
                 integrationBusiness.updateStateToIntegration(resultExportDto.getIntegrationId(), stateId,
                         e.getMessage(), null, null, "SISTEMA");
             } catch (BusinessException e1) {
-                log.error("Error actualizando el estado de la integración por error: " + e.getMessage());
+                String messageErrorII = String.format("Error actualizando el estado de la integración %d : %s",
+                        resultExportDto.getIntegrationId(), e.getMessage());
+                SCMTracing.sendError(messageErrorII);
+                log.error(messageErrorII);
             }
         }
 

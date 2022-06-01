@@ -82,4 +82,10 @@ public class CreateTypeSupplyDto implements Serializable {
         this.metadataRequired = metadataRequired;
     }
 
+    @Override
+    public String toString() {
+        return "CreateTypeSupplyDto{" + "description='" + description + '\'' + ", metadataRequired=" + metadataRequired
+                + ", modelRequired=" + modelRequired + ", name='" + name + '\'' + ", providerProfileId="
+                + providerProfileId + ", extensions=" + extensions + '}';
+    }
 }

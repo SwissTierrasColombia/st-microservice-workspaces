@@ -38,4 +38,8 @@ public class CreateRequestDto implements Serializable {
         this.supplies = supplies;
     }
 
+    @Override
+    public String toString() {
+        return "CreateRequestDto{" + "deadline='" + deadline + '\'' + ", supplies=" + supplies + '}';
+    }
 }

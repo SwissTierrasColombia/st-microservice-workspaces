@@ -15,6 +15,7 @@ import com.ai.st.microservice.workspaces.dto.providers.CustomSupplyRequestedDto;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,10 @@ public class RabbitMQUpdateStateSupplyListener {
                 try {
                     FileUtils.deleteQuietly(new File(validationDto.getFilenameTemporal()));
                 } catch (Exception e) {
-                    log.error("No se ha podido eliminar el insumo rechazado: " + e.getMessage());
+                    String messageError = String.format("Error eliminando el insumo físico rechazado : %s",
+                            e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                 }
 
             }
@@ -99,7 +103,11 @@ public class RabbitMQUpdateStateSupplyListener {
                 }
 
             } catch (Exception e) {
-                log.error("Error enviando notificación para informar de la carga del insumo: " + e.getMessage());
+                String messageError = String.format(
+                        "Error enviando notificación para informar de la carga del archivo XTF en el módulo de insumos : %s",
+                        e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
             // update request
@@ -125,6 +133,11 @@ public class RabbitMQUpdateStateSupplyListener {
 
         } catch (Exception e) {
             log.error("Ha ocurrido un error actualizando el estado del insumo: " + e.getMessage());
+            String messageError = String.format(
+                    "Error procesando el resultado de la carga de un archivo XTF en el módulo de insumos : %s",
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
     }

@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.business;
 
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +52,9 @@ public class DatabaseIntegrationBusiness {
             this.createExtensionsToDatabase(database);
 
         } catch (Exception e) {
-            log.error("Error creando base de datos: " + e.getMessage());
+            String messageError = String.format("Error creando base de datos %s: %s", database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido generar la base de datos.");
         }
 
@@ -125,7 +128,9 @@ public class DatabaseIntegrationBusiness {
             stmt13.execute();
 
         } catch (Exception e) {
-            log.error("Error protegiendo base de datos: " + e.getMessage());
+            String messageError = String.format("Error protegiendo la base de datos %s: %s", database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido configurar los permisos a la base de datos.");
         }
 
@@ -145,7 +150,10 @@ public class DatabaseIntegrationBusiness {
             stmt2.execute();
 
         } catch (Exception e) {
-            log.error("Error creando extensiones a la base de datos: " + e.getMessage());
+            String messageError = String.format("Error creando las extensiones en la base de datos %s: %s", database,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
     }
 
@@ -173,7 +181,9 @@ public class DatabaseIntegrationBusiness {
             stmt4.execute();
 
         } catch (Exception e) {
-            log.error("Error eliminando base de datos: " + e.getMessage());
+            String messageError = String.format("Error eliminando la base de datos %s: %s", database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido eliminar la base de datos");
         }
 
@@ -214,7 +224,11 @@ public class DatabaseIntegrationBusiness {
             stmt1.execute();
 
         } catch (Exception e) {
-            log.error("Error creando vista predios integrados: " + e.getMessage());
+            String messageError = String.format(
+                    "Error creando la vista de predios integrados en la base de datos %s: %s", database,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido configurar la vista de predios integrados.");
         }
 
@@ -245,8 +259,11 @@ public class DatabaseIntegrationBusiness {
             stmt1.execute();
 
         } catch (Exception e) {
-            log.error("Error creando vista de perímetro: " + e.getMessage());
-            throw new BusinessException("No se ha podido crear la vista de perímetro.");
+            String messageError = String.format("Error creando la vista de perímetros en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la vista de perímetros.");
         }
 
     }
@@ -274,7 +291,10 @@ public class DatabaseIntegrationBusiness {
             stmt1.execute();
 
         } catch (Exception e) {
-            log.error("Error creando vista de vereda: " + e.getMessage());
+            String messageError = String.format("Error creando la vista de veredas en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear la vista de veredas.");
         }
 
@@ -300,7 +320,10 @@ public class DatabaseIntegrationBusiness {
             stmt1.execute();
 
         } catch (Exception e) {
-            log.error("Error creando vista de construcciones: " + e.getMessage());
+            String messageError = String.format("Error creando la vista de construcciones en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear la vista de construcciones.");
         }
 
@@ -329,7 +352,11 @@ public class DatabaseIntegrationBusiness {
             stmt1.execute();
 
         } catch (Exception e) {
-            log.error("Error creando vista de unidades de construcción: " + e.getMessage());
+            String messageError = String.format(
+                    "Error creando la vista de unidades de construcción en la base de datos %s: %s", database,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear la vista de unidades de construcción.");
         }
 
@@ -356,8 +383,11 @@ public class DatabaseIntegrationBusiness {
             stmt1.execute();
 
         } catch (Exception e) {
-            log.error("Error creando vista de unidades de construcción: " + e.getMessage());
-            throw new BusinessException("No se ha podido crear la vista de unidades de construcción.");
+            String messageError = String.format("Error creando la vista de manzanas en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la vista de manzanas.");
         }
 
     }

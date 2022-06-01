@@ -1,7 +1,6 @@
 package com.ai.st.microservice.workspaces.utils;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -9,6 +8,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,10 @@ public class ZipUtil {
             zipFile.close();
         } catch (IOException e) {
             fileFound = false;
-            log.error("Error unzipping archive: " + e.getMessage());
+            String messageError = String.format("Error descomprimiendo el archivo %s : %s", filePathZip,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return fileFound;
@@ -68,46 +71,14 @@ public class ZipUtil {
 
             zipFile.close();
         } catch (IOException e) {
-            log.error("Error unzipping archive: " + e.getMessage());
+            String messageError = String.format("Error descomprimiendo el archivo %s : %s", filePathZip,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return extensions;
 
-    }
-
-    public static boolean unzipping(String filePathZip) {
-
-        try {
-
-            ZipFile zipFile = new ZipFile(filePathZip);
-
-            Enumeration<? extends ZipEntry> entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                InputStream stream = zipFile.getInputStream(entry);
-
-                String fileEntryOutName = FilenameUtils.getFullPath(filePathZip) + entry.getName();
-                FileOutputStream outputStream = new FileOutputStream(new File(fileEntryOutName));
-
-                int read = 0;
-                byte[] bytes = new byte[1024];
-
-                while ((read = stream.read(bytes)) != -1) {
-                    outputStream.write(bytes, 0, read);
-                }
-                stream.close();
-                outputStream.close();
-
-            }
-
-            zipFile.close();
-
-            return true;
-        } catch (IOException e) {
-            log.error("Error unzipping archive: " + e.getMessage());
-        }
-
-        return false;
     }
 
     public static boolean zipMustContains(String filePathZip, List<String> extensionsToSearch) {
@@ -136,12 +107,17 @@ public class ZipUtil {
             }
 
         } catch (IOException e) {
-            log.error("Error unzipping archive: " + e.getMessage());
+            String messageError = String.format("Error descomprimiendo el archivo %s : %s", filePathZip,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         } finally {
             try {
                 zipFile.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                String messageError = String.format("Error cerrando archivo zip %s : %s", filePathZip, e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
         }
 
@@ -170,7 +146,9 @@ public class ZipUtil {
             return path;
 
         } catch (IOException e) {
-            log.error("Error zipping archive: " + e.getMessage());
+            String messageError = String.format("Error comprimiendo el archivo %s : %s", zipName, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return null;
@@ -210,10 +188,10 @@ public class ZipUtil {
 
             return path;
 
-        } catch (IOException e) {
-            log.error("Error zipping archive (I): " + e.getMessage());
         } catch (Exception e) {
-            log.error("Error zipping archive (II): " + e.getMessage());
+            String messageError = String.format("Error comprimiendo el archivo %s : %s", zipName, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return null;
@@ -240,7 +218,10 @@ public class ZipUtil {
             zipFile.close();
         } catch (IOException e) {
             fileFound = false;
-            log.error("Error hasGDBDatabase: " + e.getMessage());
+            String messageError = String.format("Error comprobando si el archivo zip tiene un archivo GDB : %s",
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return fileFound;

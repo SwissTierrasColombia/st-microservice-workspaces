@@ -68,4 +68,9 @@ public class CreateUserRoleManagerDto implements Serializable {
         this.isDirector = isDirector;
     }
 
+    @Override
+    public String toString() {
+        return "CreateUserRoleManagerDto{" + "roleId=" + roleId + ", managerId=" + managerId + ", profiles=" + profiles
+                + ", isManager=" + isManager + ", isDirector=" + isDirector + '}';
+    }
 }

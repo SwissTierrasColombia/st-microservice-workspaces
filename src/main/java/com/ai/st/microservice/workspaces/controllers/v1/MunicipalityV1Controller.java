@@ -6,6 +6,7 @@ import com.ai.st.microservice.common.exceptions.*;
 import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -44,17 +45,21 @@ public class MunicipalityV1Controller {
 
         try {
 
+            SCMTracing.setTransactionName("getMunicipalitiesByManager");
+
             responseDto = municipalityBusiness.getMunicipalitiesByManager(managerId);
             httpStatus = HttpStatus.OK;
 
         } catch (BusinessException e) {
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             log.error("Error MunicipalityV1Controller@getMunicipalitiesByManager#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            responseDto = new BasicResponseDto(e.getMessage(), 5);
+            responseDto = new BasicResponseDto(e.getMessage());
             log.error("Error MunicipalityV1Controller@getMunicipalitiesByManager#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -73,19 +78,23 @@ public class MunicipalityV1Controller {
 
         try {
 
+            SCMTracing.setTransactionName("getMunicipalitiesNotWorkspaceByDepartment");
+
             responseDto = municipalityBusiness.getMunicipalitiesNotWorkspaceByDepartment(departmentId);
             httpStatus = HttpStatus.OK;
 
         } catch (BusinessException e) {
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             log.error("Error MunicipalityV1Controller@getMunicipalitiesNotWorkspaceByDepartment#Business ---> "
                     + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            responseDto = new BasicResponseDto(e.getMessage(), 5);
+            responseDto = new BasicResponseDto(e.getMessage());
             log.error("Error MunicipalityV1Controller@getMunicipalitiesNotWorkspaceByDepartment#General ---> "
                     + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -93,7 +102,7 @@ public class MunicipalityV1Controller {
 
     @GetMapping(value = "/code/{municipalityCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Get municipality by code")
-    @ApiResponses(value = { @ApiResponse(code = 200, message = "Municipality got", response = MunicipalityDto.class),
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Municipality gotten", response = MunicipalityDto.class),
             @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getMunicipalityByCode(@PathVariable String municipalityCode) {
@@ -103,13 +112,17 @@ public class MunicipalityV1Controller {
 
         try {
 
+            SCMTracing.setTransactionName("getMunicipalityByCode");
+
             responseDto = municipalityBusiness.getMunicipalityByCode(municipalityCode);
             httpStatus = HttpStatus.OK;
 
         } catch (Exception e) {
-            responseDto = new BasicResponseDto(e.getMessage(), 5);
+            responseDto = new BasicResponseDto(e.getMessage());
             log.error("Error MunicipalityV1Controller@getMunicipalityByCode#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
+
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

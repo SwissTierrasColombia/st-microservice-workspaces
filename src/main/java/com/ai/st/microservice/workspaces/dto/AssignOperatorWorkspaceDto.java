@@ -7,8 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
-@ApiModel(value = "AssignOperatorWorkpaceDto")
-public class AssignOperatorWorkpaceDto implements Serializable {
+@ApiModel(value = "AssignOperatorWorkspaceDto")
+public class AssignOperatorWorkspaceDto implements Serializable {
 
     private static final long serialVersionUID = -4217826518362864745L;
 
@@ -33,7 +33,7 @@ public class AssignOperatorWorkpaceDto implements Serializable {
     @ApiModelProperty(required = false, notes = "Work area")
     private Double workArea;
 
-    public AssignOperatorWorkpaceDto() {
+    public AssignOperatorWorkspaceDto() {
 
     }
 
@@ -93,4 +93,10 @@ public class AssignOperatorWorkpaceDto implements Serializable {
         this.workArea = workArea;
     }
 
+    @Override
+    public String toString() {
+        return "AssignOperatorWorkspaceDto{" + "startDate='" + startDate + '\'' + ", endDate='" + endDate + '\''
+                + ", operatorCode=" + operatorCode + ", observations='" + observations + '\''
+                + ", numberParcelsExpected=" + numberParcelsExpected + ", workArea=" + workArea + '}';
+    }
 }

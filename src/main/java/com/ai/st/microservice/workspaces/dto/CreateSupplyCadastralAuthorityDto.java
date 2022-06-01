@@ -13,7 +13,7 @@ public class CreateSupplyCadastralAuthorityDto implements Serializable {
     @ApiModelProperty(required = true, notes = "Attachment Type ID")
     private Long attachmentTypeId;
 
-    @ApiModelProperty(required = false, notes = "FTP")
+    @ApiModelProperty(notes = "FTP")
     private String ftp;
 
     @ApiModelProperty(required = true, notes = "Observations")
@@ -67,5 +67,12 @@ public class CreateSupplyCadastralAuthorityDto implements Serializable {
 
     public void setManagerCode(Long managerCode) {
         this.managerCode = managerCode;
+    }
+
+    @Override
+    public String toString() {
+        return "CreateSupplyCadastralAuthorityDto{" + "attachmentTypeId=" + attachmentTypeId + ", ftp='" + ftp + '\''
+                + ", observations='" + observations + '\'' + ", name='" + name + '\'' + ", managerCode=" + managerCode
+                + '}';
     }
 }

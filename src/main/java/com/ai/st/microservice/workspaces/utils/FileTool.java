@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,9 @@ public class FileTool {
         try (Writer writer = new BufferedWriter(new FileWriter(file))) {
             writer.write(content);
         } catch (IOException e) {
-            log.error("Error creando archivo: " + e.getMessage());
+            String messageError = String.format("Error creando archivo : %s", filename, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return file;

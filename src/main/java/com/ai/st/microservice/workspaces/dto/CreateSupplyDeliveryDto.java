@@ -36,4 +36,8 @@ public class CreateSupplyDeliveryDto implements Serializable {
         this.supplyId = supplyId;
     }
 
+    @Override
+    public String toString() {
+        return "CreateSupplyDeliveryDto{" + "observations='" + observations + '\'' + ", supplyId=" + supplyId + '}';
+    }
 }

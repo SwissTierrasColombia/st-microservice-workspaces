@@ -18,6 +18,7 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 
@@ -42,7 +43,7 @@ public class SupplyBusiness {
 
     private final Logger log = LoggerFactory.getLogger(SupplyBusiness.class);
 
-    // attachments types
+    // attachment types
     public static final Long SUPPLY_ATTACHMENT_TYPE_SUPPLY = (long) 1;
     public static final Long SUPPLY_ATTACHMENT_TYPE_FTP = (long) 2;
     public static final Long SUPPLY_ATTACHMENT_TYPE_EXTERNAL_SOURCE = (long) 3;
@@ -171,6 +172,11 @@ public class SupplyBusiness {
                         supplyDto.setTypeSupply(typeSupplyDto);
 
                     } catch (Exception e) {
+                        String messageError = String.format(
+                                "Error consultando el tipo de insumo %d para el insumo %d : %s",
+                                supplyDto.getTypeSupplyCode(), supplyDto.getId(), e.getMessage());
+                        SCMTracing.sendError(messageError);
+                        log.error(messageError);
                         throw new BusinessException("No se ha podido consultar el tipo de insumo.");
                     }
 
@@ -214,8 +220,11 @@ public class SupplyBusiness {
                         }
 
                     } catch (Exception e) {
-                        log.error("No se ha podido consultar si el insumo ha sido entregado al operador: "
-                                + e.getMessage());
+                        String messageError = String.format(
+                                "Error verificando si el insumo %d ha sido entregado al operador %d : %s",
+                                supplyDto.getId(), operatorCode, e.getMessage());
+                        SCMTracing.sendError(messageError);
+                        log.error(messageError);
                     }
                 }
 
@@ -229,6 +238,10 @@ public class SupplyBusiness {
             }
 
         } catch (Exception e) {
+            String messageError = String.format("Error consultando los insumos del municipio %s : %s",
+                    municipality.getCode(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar los insumos del municipio.");
         }
 
@@ -266,11 +279,6 @@ public class SupplyBusiness {
             String name, Boolean isValid) throws BusinessException {
 
         log.info("Create supply in supplies microservice started");
-
-        for (MicroserviceCreateSupplyAttachmentDto attachment : attachments) {
-            System.out.println("attachment ID: " + attachment.getAttachmentTypeId());
-            System.out.println("attachment DATA: " + attachment.getData());
-        }
 
         final String attachmentStringId = StringUtils.join(attachments.stream()
                 .map(MicroserviceCreateSupplyAttachmentDto::getAttachmentTypeId).collect(Collectors.toList()), ",");
@@ -350,8 +358,10 @@ public class SupplyBusiness {
             supplyDto = new CustomSupplyDto(response);
 
         } catch (Exception e) {
-            log.error("No se ha podido crear el insumo: " + e.getMessage());
-            log.error("No se ha podido crear el insumo: " + e.getCause());
+            String messageError = String.format("Error creando el insumo para el municipio %s : %s debido a: %s",
+                    municipalityCode, e.getMessage(), e.getCause());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido cargar el insumo");
         }
 
@@ -375,22 +385,22 @@ public class SupplyBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido consultar el insumo: " + e.getMessage());
+            String messageError = String.format("Error consultando el insumo %d : %s", supplyId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return supplyDto;
     }
 
     public void deleteSupply(Long supplyId) {
-
         try {
-
             supplyClient.deleteSupplyById(supplyId);
-
         } catch (Exception e) {
-            log.error("No se ha podido eliminar el insumo: " + e.getMessage());
+            String messageError = String.format("Error eliminando el insumo %d : %s", supplyId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
-
     }
 
     public File generateFTPFile(CustomSupplyDto supplyDto, MunicipalityDto municipalityDto) {
@@ -447,10 +457,16 @@ public class SupplyBusiness {
             supplyDto = new CustomSupplyDto(response);
 
         } catch (BusinessException e) {
-            log.error("Error actualizando el estado del insumo: " + e.getMessage());
+            String messageError = String.format("Error actualizando el estado del insumo %d a %d por el gestor %d: %s",
+                    supplyId, stateId, managerCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error actualizando el estado del insumo: " + e.getMessage());
+            String messageError = String.format("Error actualizando el estado del insumo %d a %d por el gestor %d: %s",
+                    supplyId, stateId, managerCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido cambiar el estado del insumo.");
         }
 

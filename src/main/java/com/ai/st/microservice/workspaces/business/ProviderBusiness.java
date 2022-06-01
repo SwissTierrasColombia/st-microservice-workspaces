@@ -3,7 +3,6 @@ package com.ai.st.microservice.workspaces.business;
 import com.ai.st.microservice.common.clients.ProviderFeignClient;
 import com.ai.st.microservice.common.clients.TaskFeignClient;
 import com.ai.st.microservice.common.clients.UserFeignClient;
-import com.ai.st.microservice.common.dto.ili.MicroserviceQueryResultRegistralRevisionDto;
 import com.ai.st.microservice.common.dto.managers.MicroserviceManagerDto;
 import com.ai.st.microservice.common.dto.providers.*;
 import com.ai.st.microservice.common.dto.administration.MicroserviceUserDto;
@@ -25,6 +24,7 @@ import com.ai.st.microservice.workspaces.dto.tasks.CustomTaskMemberDto;
 import com.ai.st.microservice.workspaces.entities.DepartmentEntity;
 import com.ai.st.microservice.workspaces.entities.MunicipalityEntity;
 import com.ai.st.microservice.workspaces.services.IMunicipalityService;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 import com.ai.st.microservice.workspaces.utils.ZipUtil;
 
@@ -84,7 +84,7 @@ public class ProviderBusiness {
     public static final Long REQUEST_STATE_DELIVERED = (long) 2;
     public static final Long REQUEST_STATE_CANCELLED = (long) 3;
 
-    // Petitions States
+    // Petition States
     public static final Long PETITION_STATE_PENDING = (long) 1;
     public static final Long PETITION_STATE_ACCEPT = (long) 2;
     public static final Long PETITION_STATE_REJECT = (long) 3;
@@ -232,7 +232,10 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido consultar si la tarea esta asociada al cargue de insumo: " + e.getMessage());
+            String messageError = String.format("Error verificando si la tarea esta asociada al cargue de insumo : %s",
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (supplyRequested.getState().getId().equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
@@ -349,7 +352,11 @@ public class ProviderBusiness {
                     try {
                         FileUtils.deleteQuietly(new File(filePathTemporal));
                     } catch (Exception e) {
-                        log.error("No se ha podido eliminar el archivo temporal: " + e.getMessage());
+                        String messageError = String.format(
+                                "Error eliminando el archivo temporal %s de la solicitud %d: %s", filePathTemporal,
+                                requestId, e.getMessage());
+                        SCMTracing.sendError(messageError);
+                        log.error(messageError);
                     }
 
                     // save file
@@ -411,12 +418,21 @@ public class ProviderBusiness {
                         MicroserviceUserDto userDto = userClient.findById(supply.getDeliveredBy());
                         supply.setUserDeliveryBy(userDto);
                     } catch (Exception e) {
+                        String messageError = String.format("Error consultando el usuario %d : %s",
+                                supply.getDeliveredBy(), e.getMessage());
+                        SCMTracing.sendError(messageError);
+                        log.error(messageError);
                         supply.setUserDeliveryBy(null);
                     }
                 }
             }
 
         } catch (Exception e) {
+            String messageError = String.format(
+                    "Error actualizando la información de la solicitud %d por el usuario %d: %s", requestId, userCode,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
         }
 
@@ -528,7 +544,10 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Ha ocurrido un error intentando cerrar las tareas asociadas a la solicitud");
+            String messageError = String.format("Error cerrando las tareas asociadas a la solicitud %d : %s", requestId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
@@ -592,7 +611,11 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido crear los insumos: " + e.getMessage());
+            String messageError = String.format(
+                    "Error creando los insumos para el municipio %s al cerrar la solicitud %d : %s",
+                    requestDto.getMunicipalityCode(), requestId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido disponer los insumos al municipio.");
         }
 
@@ -600,21 +623,14 @@ public class ProviderBusiness {
             MicroserviceRequestDto responseUpdateDto = providerClient.closeRequest(requestId, userCode);
             requestUpdatedDto = new CustomRequestDto(responseUpdateDto);
         } catch (Exception e) {
-            throw new BusinessException("No se ha podido actualizar la información de la solicitud.");
+            String messageError = String.format("Error cerrando la solicitud %d por el usuario %d : %s", requestId,
+                    userCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido cerrar la solicitud.");
         }
 
         return requestUpdatedDto;
-    }
-
-    @Deprecated
-    public CustomRequestDto closeRequest(Long requestId, Long userCode) {
-        try {
-            MicroserviceRequestDto response = providerClient.closeRequest(requestId, userCode);
-            return new CustomRequestDto(response);
-        } catch (Exception e) {
-            log.error("Error cerrando solicitud: " + e.getMessage());
-            return null;
-        }
     }
 
     public List<MicroserviceProviderUserDto> getUsersByProvider(Long providerId, List<Long> profiles)
@@ -631,9 +647,11 @@ public class ProviderBusiness {
             }
 
         } catch (BusinessException e) {
-            String message = "No se han podido obtener los usuarios del proveedor.";
-            this.log.error(message + ": " + e.getMessage());
-            throw new BusinessException(message);
+            String messageError = String.format("Error consultando los usuarios que pertenecen al proveedor  %d : %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido consultar los usuarios que pertenecen al proveedor.");
         }
 
         return usersDto;
@@ -644,7 +662,10 @@ public class ProviderBusiness {
             List<MicroserviceRequestDto> response = providerClient.findRequestsByEmmiters(managerCode, "ENTITY");
             return response.stream().map(CustomRequestDto::new).collect(Collectors.toList());
         } catch (Exception e) {
-            log.error("Error consultando solicitudes: " + e.getMessage());
+            String messageError = String.format("Error consultando las solicitudes hechas por el gestor %d : %s",
+                    managerCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             return new ArrayList<>();
         }
     }
@@ -666,10 +687,18 @@ public class ProviderBusiness {
             }
 
         } catch (BusinessException e) {
-            log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d para el municipio %s : %s", managerCode,
+                    municipalityCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error consultando solicitudes por gestor y municipio: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d para el municipio %s : %s", managerCode,
+                    municipalityCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
         }
 
@@ -690,7 +719,10 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error consultando solicitudes por paquete: " + e.getMessage());
+            String messageError = String.format("Error consultando las solicitudes a partir del paquete/orden %s : %s",
+                    packageLabel, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return requestsDto;
@@ -718,10 +750,18 @@ public class ProviderBusiness {
             data.setItems(all);
 
         } catch (BusinessException e) {
-            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d para el proveedor %d : %s", managerCode,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d para el proveedor %d : %s", managerCode,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
         }
 
@@ -764,7 +804,7 @@ public class ProviderBusiness {
 
                     RequestPackageDto packageFound = packages.stream()
                             .filter(p -> p.getPackageLabel().equals(packageRequest)).findAny().orElse(null);
-                    if (packageFound instanceof RequestPackageDto) {
+                    if (packageFound != null) {
                         packageFound.getRequests().add(requestDto);
                     }
 
@@ -773,10 +813,17 @@ public class ProviderBusiness {
             }
 
         } catch (BusinessException e) {
-            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d a partir del paquete %s : %s",
+                    managerCode, packageLabel, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error consultando solicitudes por gestor y proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando las solicitudes hechas por el gestor %d a partir del paquete %s : %s",
+                    managerCode, packageLabel, e.getMessage());
+            SCMTracing.sendError(messageError);
             throw new BusinessException("No se ha podido consultar las solicitudes que el gestor ha realizado.");
         }
 
@@ -797,6 +844,10 @@ public class ProviderBusiness {
                     MicroserviceManagerDto managerDto = managerBusiness.getManagerById(emitterDto.getEmitterCode());
                     emitterDto.setUser(managerDto);
                 } catch (Exception e) {
+                    String messageError = String.format("Error consultando el gestor %d : %s",
+                            emitterDto.getEmitterCode(), e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                     emitterDto.setUser(null);
                 }
             } else {
@@ -804,6 +855,10 @@ public class ProviderBusiness {
                     MicroserviceUserDto userDto = administrationBusiness.getUserById(emitterDto.getEmitterCode());
                     emitterDto.setUser(userDto);
                 } catch (Exception e) {
+                    String messageError = String.format("Error consultando el usuario %d : %s",
+                            emitterDto.getEmitterCode(), e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                     emitterDto.setUser(null);
                 }
             }
@@ -840,6 +895,10 @@ public class ProviderBusiness {
                     MicroserviceUserDto userDto = administrationBusiness.getUserById(supply.getDeliveredBy());
                     supply.setUserDeliveryBy(userDto);
                 } catch (Exception e) {
+                    String messageError = String.format("Error consultando el usuario %d : %s", supply.getDeliveredBy(),
+                            e.getMessage());
+                    SCMTracing.sendError(messageError);
+                    log.error(messageError);
                     supply.setUserDeliveryBy(null);
                 }
 
@@ -857,7 +916,9 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findById(providerId);
         } catch (Exception e) {
-            log.error("No se podido consultar el proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando el proveedor %d : %s", providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return providerDto;
@@ -877,10 +938,16 @@ public class ProviderBusiness {
             profileDto = providerClient.createProfile(providerId, createProviderProfileDto);
 
         } catch (BusinessException e) {
-            log.error("Error creando perfil del proveedor: " + e.getMessage());
+            String messageError = String.format("Error creando el perfil para el proveedor %d: %s", providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error creando perfil del proveedor: " + e.getMessage());
+            String messageError = String.format("Error creando el perfil para el proveedor %d: %s", providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear el perfil del proveedor");
         }
 
@@ -896,10 +963,16 @@ public class ProviderBusiness {
             profilesDto = providerClient.getProfilesByProvider(providerId);
 
         } catch (BusinessException e) {
-            log.error("Error consultando perfiles del proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando los perfiles para el proveedor %d: %s", providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error consultando perfiles del proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando los perfiles para el proveedor %d: %s", providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar los perfiles del proveedor");
         }
 
@@ -920,10 +993,16 @@ public class ProviderBusiness {
             profileDto = providerClient.updateProfile(providerId, profileId, createProviderProfileDto);
 
         } catch (BusinessException e) {
-            log.error("Error editando perfil del proveedor: " + e.getMessage());
+            String messageError = String.format("Error editando el perfil %d para el proveedor %d: %s", profileId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error editando perfil del proveedor: " + e.getMessage());
+            String messageError = String.format("Error editando el perfil %d para el proveedor %d: %s", profileId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido editar el perfil del proveedor");
         }
 
@@ -937,10 +1016,16 @@ public class ProviderBusiness {
             providerClient.deleteProfile(providerId, profileId);
 
         } catch (BusinessException e) {
-            log.error("Error eliminando perfil del proveedor: " + e.getMessage());
+            String messageError = String.format("Error eliminando el perfil %d para el proveedor %d: %s", profileId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error eliminando perfil del proveedor: " + e.getMessage());
+            String messageError = String.format("Error eliminando el perfil %d para el proveedor %d: %s", profileId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido eliminar el perfil del proveedor");
         }
     }
@@ -964,10 +1049,16 @@ public class ProviderBusiness {
             typeSupplyDto = providerClient.createTypeSupplies(providerId, create);
 
         } catch (BusinessException e) {
-            log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
+            String messageError = String.format("Error creando el tipo de insumos para el proveedor %d: %s", providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error creando tipo de insumo para el proveedor: " + e.getMessage());
+            String messageError = String.format("Error creando el tipo de insumos para el proveedor %d: %s", providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear el tipo de insumo para el proveedor");
         }
 
@@ -979,14 +1070,18 @@ public class ProviderBusiness {
         List<MicroserviceTypeSupplyDto> typesSuppliesDto;
 
         try {
-
             typesSuppliesDto = providerClient.getTypesSuppliesByProvider(providerId);
-
         } catch (BusinessException e) {
-            log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando los tipos de insumos para el proveedor %d: %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error consultando tipos de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando los tipos de insumos para el proveedor %d: %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar los tipos de insumo del proveedor");
         }
 
@@ -1012,10 +1107,16 @@ public class ProviderBusiness {
             typeSupplyDto = providerClient.updateTypeSupplies(providerId, typeSupplyId, data);
 
         } catch (BusinessException e) {
-            log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
+            String messageError = String.format("Error editando el tipo de insumo %d para el proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error editando tipo de insumo para el proveedor: " + e.getMessage());
+            String messageError = String.format("Error editando el tipo de insumo %d para el proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido editar el tipo de insumo para el proveedor");
         }
 
@@ -1023,30 +1124,34 @@ public class ProviderBusiness {
     }
 
     public void deleteTypeSupply(Long providerId, Long typeSupplyId) throws BusinessException {
-
         try {
-
             providerClient.deleteTypeSupply(providerId, typeSupplyId);
-
         } catch (BusinessException e) {
-            log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error eliminando el tipo de insumo %d para el proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error eliminando tipo de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error eliminando el tipo de insumo %d para el proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido eliminar el tipo de insumo del proveedor");
         }
     }
 
     public MicroserviceProviderDto getProviderByUserAdministrator(Long userCode) {
-
         MicroserviceProviderDto providerDto = null;
-
         try {
             providerDto = providerClient.findProviderByAdministrator(userCode);
         } catch (Exception e) {
-            log.error("No se ha podido consultar el proveedor: " + e.getMessage());
+            String message = String.format(
+                    "No se ha podido consultar el proveedor a partir de usuario (administrador) %d: %s", userCode,
+                    e.getMessage());
+            SCMTracing.sendError(message);
+            log.error(message);
         }
-
         return providerDto;
     }
 
@@ -1057,7 +1162,11 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findByUserCode(userCode);
         } catch (Exception e) {
-            log.error("No se ha podido consultar el proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error consultando el proveedor a partir del usuario (technical) %d : %s", userCode,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return providerDto;
@@ -1092,161 +1201,14 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido verificar si el usuario es un director(proveedor): " + e.getMessage());
+            String messageError = String.format(
+                    "Error verificando si el usuario %d es un director (proveedor de insumos) : %s", userCode,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return isDirector;
-    }
-
-    public boolean userProviderIsDelegate(Long userCode) {
-
-        boolean isDelegate = false;
-
-        try {
-
-            List<MicroserviceProviderRoleDto> providerRoles = providerClient.findRolesByUser(userCode);
-
-            MicroserviceProviderRoleDto roleDirector = providerRoles.stream()
-                    .filter(roleDto -> roleDto.getId().equals(RoleBusiness.SUB_ROLE_DELEGATE_PROVIDER)).findAny()
-                    .orElse(null);
-
-            if (roleDirector != null) {
-                isDelegate = true;
-            }
-
-        } catch (Exception e) {
-            log.error("No se ha podido verificar si el usuario es un delegado(proveedor): " + e.getMessage());
-        }
-
-        return isDelegate;
-    }
-
-    public CustomSupplyRequestedDto getSupplyRequestedById(Long supplyRequestedId) {
-        CustomSupplyRequestedDto supplyRequestedDto = null;
-        try {
-            MicroserviceSupplyRequestedDto response = providerClient.getSupplyRequested(supplyRequestedId);
-            supplyRequestedDto = new CustomSupplyRequestedDto(response);
-        } catch (Exception e) {
-            log.error("No se ha podido consultar el insumo solicitado: " + e.getMessage());
-        }
-        return supplyRequestedDto;
-    }
-
-    public MicroserviceSupplyRevisionDto createSupplyRevision(Long supplyRequestedId, String database, String hostname,
-            String username, String password, String port, String schema, Long startBy) {
-
-        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
-
-        try {
-
-            MicroserviceCreateSupplyRevisionDto createRevisionDto = new MicroserviceCreateSupplyRevisionDto();
-            createRevisionDto.setDatabase(database);
-            createRevisionDto.setHostname(hostname);
-            createRevisionDto.setPassword(password);
-            createRevisionDto.setPort(port);
-            createRevisionDto.setSchema(schema);
-            createRevisionDto.setStartBy(startBy);
-            createRevisionDto.setUsername(username);
-
-            supplyRevisionDto = providerClient.createSupplyRevision(supplyRequestedId, createRevisionDto);
-
-        } catch (Exception e) {
-            log.error("No se ha podido crear la revisión: " + e.getMessage());
-        }
-
-        return supplyRevisionDto;
-    }
-
-    public CustomRequestDto updateStateToSupplyRequested(Long requestId, Long supplyRequestedId, Long stateId) {
-
-        CustomRequestDto requestDto = null;
-
-        try {
-
-            MicroserviceUpdateSupplyRequestedDto updateSupply = new MicroserviceUpdateSupplyRequestedDto();
-            updateSupply.setSupplyRequestedStateId(stateId);
-
-            MicroserviceRequestDto response = providerClient.updateSupplyRequested(requestId, supplyRequestedId,
-                    updateSupply);
-
-            requestDto = new CustomRequestDto(response);
-        } catch (Exception e) {
-            log.error("No se ha podido actualizar el estado del insumo solicitado: " + e.getMessage());
-        }
-
-        return requestDto;
-    }
-
-    public CustomRequestDto updateSupplyRequested(Long requestId, Long supplyRequestedId,
-            MicroserviceUpdateSupplyRequestedDto updateSupplyData) {
-
-        CustomRequestDto requestDto = null;
-
-        try {
-            MicroserviceRequestDto response = providerClient.updateSupplyRequested(requestId, supplyRequestedId,
-                    updateSupplyData);
-            requestDto = new CustomRequestDto(response);
-        } catch (Exception e) {
-            log.error("No se ha podido actualizar el insumo solicitado: " + e.getMessage());
-        }
-
-        return requestDto;
-    }
-
-    public MicroserviceSupplyRevisionDto getSupplyRevisionFromSupplyRequested(Long supplyRequestedId) {
-
-        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
-
-        try {
-
-            supplyRevisionDto = providerClient.getSupplyRevisionFromSupplyRequested(supplyRequestedId);
-
-        } catch (Exception e) {
-            log.error("No se ha podido consultar la revisión del insumo solicitado: " + e.getMessage());
-        }
-
-        return supplyRevisionDto;
-    }
-
-    public void deleteSupplyRevision(Long supplyRequestedId, Long supplyRevisionId) {
-
-        try {
-
-            providerClient.deleteSupplyRevision(supplyRequestedId, supplyRevisionId);
-
-        } catch (Exception e) {
-            log.error("No se ha podido eliminar la revisión del insumo solicitado: " + e.getMessage());
-        }
-    }
-
-    public CustomRequestDto getRequestById(Long requestId) {
-
-        CustomRequestDto requestDto = null;
-
-        try {
-            MicroserviceRequestDto response = providerClient.findRequestById(requestId);
-            requestDto = new CustomRequestDto(response);
-        } catch (Exception e) {
-            log.error("Error consultando solicitud por id: " + e.getMessage());
-        }
-
-        return requestDto;
-    }
-
-    public MicroserviceSupplyRevisionDto updateSupplyRevision(Long supplyRequestedId, Long supplyRevisionId,
-            MicroserviceUpdateSupplyRevisionDto updateData) {
-
-        MicroserviceSupplyRevisionDto supplyRevisionDto = null;
-
-        try {
-
-            supplyRevisionDto = providerClient.updateSupplyRevision(supplyRequestedId, supplyRevisionId, updateData);
-
-        } catch (Exception e) {
-            log.error("No se ha podido actualizar la revisión: " + e.getMessage());
-        }
-
-        return supplyRevisionDto;
     }
 
     public CustomPetitionDto createPetition(Long providerId, Long managerId, String description)
@@ -1259,7 +1221,10 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findById(providerId);
         } catch (Exception e) {
-            log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+            String messageError = String.format("Error consultando el proveedor %d para crear la petición : %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
         if (providerDto == null) {
             throw new BusinessException("El proveedor de insumo no existe.");
@@ -1277,14 +1242,17 @@ public class ProviderBusiness {
             petitionDto = addAdditionalDataToPetition(petitionDto);
 
         } catch (Exception e) {
-            log.error("Error creando petición: " + e.getMessage());
+            String messageError = String.format("Error creando la petición para el proveedor %d : %s", providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear la petición.");
         }
 
         return petitionDto;
     }
 
-    public List<CustomPetitionDto> getPetitionsForManager(Long providerId, Long managerId) throws BusinessException {
+    public List<CustomPetitionDto> getPetitionsFromManager(Long providerId, Long managerId) throws BusinessException {
 
         List<CustomPetitionDto> listPetitionsDto;
         List<MicroservicePetitionDto> response;
@@ -1293,12 +1261,14 @@ public class ProviderBusiness {
             response = providerClient.getPetitionsByManager(managerId);
         } else {
 
-            // validate provider
             MicroserviceProviderDto providerDto = null;
             try {
                 providerDto = providerClient.findById(providerId);
             } catch (Exception e) {
-                log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+                String messageError = String.format("Error consultando el proveedor %d : %s", providerId,
+                        e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
             if (providerDto == null) {
                 throw new BusinessException("El proveedor de insumo no existe.");
@@ -1316,7 +1286,10 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error obteniendo las peticiones para el gestor: " + e.getMessage());
+            String messageError = String.format("Error obteniendo las peticiones del gestor %d : %s", managerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar las peticiones del gestor.");
         }
 
@@ -1332,7 +1305,9 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findById(providerId);
         } catch (Exception e) {
-            log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+            String messageError = String.format("Error consultando el proveedor %d : %s", providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
         if (providerDto == null) {
             throw new BusinessException("El proveedor de insumo no existe.");
@@ -1350,7 +1325,10 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error obteniendo las peticiones pendientes para el proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando las peticiones pendientes del proveedor %d : %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
         }
 
@@ -1366,7 +1344,9 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findById(providerId);
         } catch (Exception e) {
-            log.error("Error verificando proveedor para crear petición: " + e.getMessage());
+            String messageError = String.format("Error consultando el proveedor %d : %s", providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
         if (providerDto == null) {
             throw new BusinessException("El proveedor de insumo no existe.");
@@ -1385,7 +1365,10 @@ public class ProviderBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error obteniendo las peticiones cerradas para el proveedor: " + e.getMessage());
+            String messageError = String.format("Error consultando las peticiones cerradas del proveedor %d : %s",
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar las peticiones del proveedor.");
         }
 
@@ -1402,7 +1385,9 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findById(providerId);
         } catch (Exception e) {
-            log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
+            String messageError = String.format("Error consultando el proveedor %d : %s", providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
         if (providerDto == null) {
             throw new BusinessException("El proveedor de insumo no existe.");
@@ -1420,10 +1405,16 @@ public class ProviderBusiness {
             petitionDto = addAdditionalDataToPetition(petitionDto);
 
         } catch (BusinessException e) {
-            log.error("Error aceptando la petición: " + e.getMessage());
+            String messageError = String.format("Error rechazando la petición %d por el proveedor %d : %s", petitionId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error aceptando la petición: " + e.getMessage());
+            String messageError = String.format("Error aceptando la petición %d por el proveedor %d : %s", petitionId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido aceptar la petición.");
         }
 
@@ -1440,7 +1431,9 @@ public class ProviderBusiness {
         try {
             providerDto = providerClient.findById(providerId);
         } catch (Exception e) {
-            log.error("Error verificando proveedor para actualizar petición: " + e.getMessage());
+            String messageError = String.format("Error consultando el proveedor %d : %s", providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
         if (providerDto == null) {
             throw new BusinessException("El proveedor de insumo no existe.");
@@ -1458,10 +1451,16 @@ public class ProviderBusiness {
             petitionDto = addAdditionalDataToPetition(petitionDto);
 
         } catch (BusinessException e) {
-            log.error("Error rechazando la petición: " + e.getMessage());
+            String messageError = String.format("Error rechazando la petición %d por el proveedor %d : %s", petitionId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error rechazando la petición: " + e.getMessage());
+            String messageError = String.format("Error rechazando la petición %d por el proveedor %d : %s", petitionId,
+                    providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido rechazar la petición.");
         }
 
@@ -1477,7 +1476,10 @@ public class ProviderBusiness {
 
         } catch (Exception e) {
             petitionDto.setManager(null);
-            log.error("Error agregando información adicional a una petición: " + e.getMessage());
+            String messageError = String.format("Error agregando información del gestor %d a la petición %d : %s",
+                    petitionDto.getManagerCode(), petitionDto.getId(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return petitionDto;
@@ -1498,7 +1500,11 @@ public class ProviderBusiness {
 
         } catch (Exception e) {
             belongToProvider = false;
-            log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error verificando si el tipo de insumo %d pertenece al proveedor %d: %s", typeSupplyId, providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
         if (!belongToProvider) {
             throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
@@ -1509,10 +1515,16 @@ public class ProviderBusiness {
             typeSupplyDto = providerClient.enableTypeSupply(typeSupplyId);
 
         } catch (BusinessException e) {
-            log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error activando el tipo de insumo %d del proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error activando tipo de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error activando el tipo de insumo %d del proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido activar el tipo de insumo.");
         }
 
@@ -1534,7 +1546,11 @@ public class ProviderBusiness {
 
         } catch (Exception e) {
             belongToProvider = false;
-            log.error("Error verificando si el tipo de insumo pertenece al proveedor: " + e.getMessage());
+            String messageError = String.format(
+                    "Error verificando si el tipo de insumo %d pertenece al proveedor %d: %s", typeSupplyId, providerId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
         if (!belongToProvider) {
             throw new BusinessException("El tipo de insumo no pertenece al proveedor.");
@@ -1545,10 +1561,16 @@ public class ProviderBusiness {
             typeSupplyDto = providerClient.disableTypeSupply(typeSupplyId);
 
         } catch (BusinessException e) {
-            log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error desactivando el tipo de insumo %d del proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error desactivando tipo de insumo del proveedor: " + e.getMessage());
+            String messageError = String.format("Error desactivando el tipo de insumo %d del proveedor %d: %s",
+                    typeSupplyId, providerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido desactivar el tipo de insumo.");
         }
 
