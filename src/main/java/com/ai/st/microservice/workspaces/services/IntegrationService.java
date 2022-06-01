@@ -28,7 +28,7 @@ public class IntegrationService implements IIntegrationService {
 
     @Override
     public IntegrationEntity getIntegrationByWorkspaceAndState(WorkspaceEntity workspace,
-                                                               IntegrationStateEntity state) {
+            IntegrationStateEntity state) {
         return integrationRepository.findByWorkspaceAndState(workspace, state);
     }
 
@@ -55,8 +55,9 @@ public class IntegrationService implements IIntegrationService {
 
     @Override
     public IntegrationEntity getIntegrationByCadastreAndSnrAndState(Long cadastreId, Long snrId,
-                                                                    IntegrationStateEntity state, Long managerCode) {
-        return integrationRepository.findBySupplyCadastreIdAndSupplySnrIdAndStateAndManagerCode(cadastreId, snrId, state, managerCode);
+            IntegrationStateEntity state, Long managerCode) {
+        return integrationRepository.findBySupplyCadastreIdAndSupplySnrIdAndStateAndManagerCode(cadastreId, snrId,
+                state, managerCode);
     }
 
     @Override

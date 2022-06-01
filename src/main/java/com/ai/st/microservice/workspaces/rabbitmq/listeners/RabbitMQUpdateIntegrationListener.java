@@ -17,6 +17,7 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
 import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -38,9 +39,10 @@ public class RabbitMQUpdateIntegrationListener {
     private final IIntegrationStateService integrationStateService;
     private final AdministrationBusiness administrationBusiness;
 
-    public RabbitMQUpdateIntegrationListener(IntegrationBusiness integrationBusiness, NotificationBusiness notificationBusiness,
-                                             ManagerMicroserviceBusiness managerBusiness, IIntegrationService integrationService,
-                                             IIntegrationStateService integrationStateService, AdministrationBusiness administrationBusiness) {
+    public RabbitMQUpdateIntegrationListener(IntegrationBusiness integrationBusiness,
+            NotificationBusiness notificationBusiness, ManagerMicroserviceBusiness managerBusiness,
+            IIntegrationService integrationService, IIntegrationStateService integrationStateService,
+            AdministrationBusiness administrationBusiness) {
         this.integrationBusiness = integrationBusiness;
         this.notificationBusiness = notificationBusiness;
         this.managerBusiness = managerBusiness;
@@ -64,7 +66,7 @@ public class RabbitMQUpdateIntegrationListener {
                 log.info("Integration automatic finished successful");
             } else {
                 stateId = IntegrationStateBusiness.STATE_ERROR_INTEGRATION_AUTOMATIC;
-                log.info("Integration automatic finished with errors");
+                log.warn("Integration automatic finished with errors");
             }
 
             // send notification
@@ -78,7 +80,8 @@ public class RabbitMQUpdateIntegrationListener {
                 WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
                 MunicipalityEntity municipalityEntity = workspaceEntity.getMunicipality();
 
-                List<MicroserviceManagerUserDto> directors = managerBusiness.getUserByManager(integrationEntity.getManagerCode(),
+                List<MicroserviceManagerUserDto> directors = managerBusiness.getUsersByManager(
+                        integrationEntity.getManagerCode(),
                         new ArrayList<>(Collections.singletonList(RoleBusiness.SUB_ROLE_DIRECTOR_MANAGER)));
 
                 for (MicroserviceManagerUserDto directorDto : directors) {
@@ -93,8 +96,11 @@ public class RabbitMQUpdateIntegrationListener {
                 }
 
             } catch (Exception e) {
-                log.error("Error enviando notificación informando estado de la integración automática: "
-                        + e.getMessage());
+                String messageError = String.format(
+                        "Error enviando notificación informando el estado de la integración automática %d : %s",
+                        integrationStats.getIntegrationId(), e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
             String logErrors = null;
@@ -106,11 +112,14 @@ public class RabbitMQUpdateIntegrationListener {
                 logErrors = errors.toString();
             }
 
-            integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, logErrors, null, null,
-                    "SISTEMA");
+            integrationBusiness.updateStateToIntegration(integrationStats.getIntegrationId(), stateId, logErrors, null,
+                    null, "SISTEMA");
 
         } catch (Exception e) {
-            log.error("Error RabbitMQUpdateIntegrationListener@updateIntegration#Business ---> " + e.getMessage());
+            String messageError = String.format("Error procesando el resultado de la integración automática %d : %s",
+                    integrationStats.getIntegrationId(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
     }

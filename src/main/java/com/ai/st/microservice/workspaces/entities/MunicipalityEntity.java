@@ -14,55 +14,55 @@ import javax.persistence.Table;
 @Table(name = "municipalities", schema = "workspaces")
 public class MunicipalityEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-	@Column(name = "name", nullable = false)
-	private String name;
+    @Column(name = "name", nullable = false)
+    private String name;
 
-	@Column(name = "code", nullable = false)
-	private String code;
+    @Column(name = "code", nullable = false)
+    private String code;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "department_id", referencedColumnName = "id", nullable = false)
-	private DepartmentEntity department;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", referencedColumnName = "id", nullable = false)
+    private DepartmentEntity department;
 
-	public MunicipalityEntity() {
+    public MunicipalityEntity() {
 
-	}
+    }
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String getCode() {
-		return code;
-	}
+    public String getCode() {
+        return code;
+    }
 
-	public void setCode(String code) {
-		this.code = code;
-	}
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-	public DepartmentEntity getDepartment() {
-		return department;
-	}
+    public DepartmentEntity getDepartment() {
+        return department;
+    }
 
-	public void setDepartment(DepartmentEntity department) {
-		this.department = department;
-	}
+    public void setDepartment(DepartmentEntity department) {
+        this.department = department;
+    }
 
 }

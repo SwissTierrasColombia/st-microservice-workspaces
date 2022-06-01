@@ -4,6 +4,7 @@ import com.ai.st.microservice.common.clients.IliFeignClient;
 import com.ai.st.microservice.common.dto.ili.*;
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,7 @@ public class IliBusiness {
     }
 
     public void startExport(String hostname, String database, String password, String port, String schema,
-                            String username, Long integrationId, Boolean withStats, String modelVersion, String namespace)
+            String username, Long integrationId, Boolean withStats, String modelVersion, String namespace)
             throws BusinessException {
 
         try {
@@ -56,13 +57,16 @@ public class IliBusiness {
             iliClient.startExport(exportDto);
 
         } catch (Exception e) {
+            String messageError = String.format("Error empezando la exportación a un archivo XTF : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la generación del insumo");
         }
 
     }
 
     public void startIntegration(String pathFileCadastre, String pathFileRegistration, String hostname, String database,
-                                 String password, String port, String schema, String username, Long integrationId, String versionModel)
+            String password, String port, String schema, String username, Long integrationId, String versionModel)
             throws BusinessException {
 
         try {
@@ -82,14 +86,17 @@ public class IliBusiness {
             iliClient.startIntegrationCadastreRegistration(integrationDto);
 
         } catch (Exception e) {
+            String messageError = String.format("Error empezando la integración : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la integración.");
         }
 
     }
 
-    public void startValidation(Long requestId, String observations, String pathFile,
-                                Long supplyRequestedId, Long userCode, String modelVersion, Boolean skipGeometryValidation,
-                                Boolean skipErrors) throws BusinessException {
+    public void startValidation(Long requestId, String observations, String pathFile, Long supplyRequestedId,
+            Long userCode, String modelVersion, Boolean skipGeometryValidation, Boolean skipErrors)
+            throws BusinessException {
 
         try {
 
@@ -109,101 +116,10 @@ public class IliBusiness {
             iliClient.startValidation(ilivalidatorDto);
 
         } catch (Exception e) {
+            String messageError = String.format("Error empezando la validación de archivo XTF : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la validación.");
-        }
-
-    }
-
-    public void startImport(String pathFile, String hostname, String database, String password, String port,
-                            String schema, String username, String reference, String versionModel, Long conceptId)
-            throws BusinessException {
-
-        try {
-            MicroserviceIli2pgImportReferenceDto importDto = new MicroserviceIli2pgImportReferenceDto();
-
-            importDto.setPathXTF(pathFile);
-            importDto.setDatabaseHost(hostname);
-            importDto.setDatabaseName(database);
-            importDto.setDatabasePassword(password);
-            importDto.setDatabasePort(port);
-            importDto.setDatabaseSchema(schema);
-            importDto.setDatabaseUsername(username);
-            importDto.setReference(reference);
-            importDto.setVersionModel(versionModel);
-            importDto.setConceptId(conceptId);
-
-            iliClient.startImport(importDto);
-
-        } catch (Exception e) {
-            throw new BusinessException("No se ha podido iniciar la importación.");
-        }
-
-    }
-
-    public MicroserviceQueryResultRegistralRevisionDto getResultQueryRegistralRevision(String host, String database,
-                                                                                       String password, String port, String schema, String username, String versionModel, int page, int limit) {
-
-        MicroserviceQueryResultRegistralRevisionDto resultDto = null;
-
-        try {
-            resultDto = iliClient.getRecordsFromQueryRegistralRevision(host, database, schema, port, username, password,
-                    versionModel, IliBusiness.ILI_CONCEPT_INTEGRATION, page, limit);
-        } catch (Exception e) {
-            log.error("No se ha podido realizar la consulta: " + e.getMessage());
-        }
-
-        return resultDto;
-    }
-
-    public void updateRecordFromRevision(String host, String database, String password, String port, String schema,
-                                         String username, String versionModel, Long boundarySpaceId, Long entityId, String namespace,
-                                         String urlFile) {
-
-        try {
-
-            MicroserviceExecuteQueryUpdateToRevisionDto data = new MicroserviceExecuteQueryUpdateToRevisionDto();
-            data.setBoundarySpaceId(boundarySpaceId);
-            data.setConceptId(IliBusiness.ILI_CONCEPT_INTEGRATION);
-            data.setDatabaseHost(host);
-            data.setDatabaseName(database);
-            data.setDatabasePassword(password);
-            data.setDatabasePort(port);
-            data.setDatabaseSchema(schema);
-            data.setDatabaseUsername(username);
-            data.setEntityId(entityId);
-            data.setNamespace(namespace);
-            data.setUrlFile(urlFile);
-            data.setVersionModel(versionModel);
-
-            iliClient.updateRecordFromRevision(data);
-        } catch (Exception e) {
-            log.error("No se ha podido realizar la actualización del registro: " + e.getMessage());
-        }
-    }
-
-    public void startExportReference(String pathFile, String hostname, String database, String password, String port,
-                                     String schema, String username, String reference, String versionModel, Long conceptId)
-            throws BusinessException {
-
-        try {
-            MicroserviceIli2pgExportReferenceDto exportDto = new MicroserviceIli2pgExportReferenceDto();
-
-            exportDto.setPathFileXTF(pathFile);
-            exportDto.setDatabaseHost(hostname);
-            exportDto.setDatabaseName(database);
-            exportDto.setDatabasePassword(password);
-            exportDto.setDatabasePort(port);
-            exportDto.setDatabaseSchema(schema);
-            exportDto.setDatabaseUsername(username);
-            exportDto.setReference(reference);
-            exportDto.setVersionModel(versionModel);
-            exportDto.setConceptId(conceptId);
-
-            iliClient.startExportReference(exportDto);
-
-        } catch (Exception e) {
-            log.error("No se ha podido iniciar la exportación de la base de datos: " + e.getMessage());
-            throw new BusinessException("No se ha podido iniciar la exportación.");
         }
 
     }

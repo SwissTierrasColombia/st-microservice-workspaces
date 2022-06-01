@@ -26,7 +26,6 @@ public class CustomSupplyDeliveryDto extends MicroserviceSupplyDeliveryDto {
         this.setDownloadReportUrl(response.getDownloadReportUrl());
     }
 
-
     public CustomSupplyDto getSupply() {
         return supply;
     }

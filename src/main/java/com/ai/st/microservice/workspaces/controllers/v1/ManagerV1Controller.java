@@ -11,6 +11,8 @@ import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.OperatorMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.dto.operators.CustomDeliveryDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,7 +25,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Managers ", tags = {"Managers"})
+@Api(value = "Managers ", tags = { "Managers" })
 @RestController
 @RequestMapping("api/workspaces/v1/managers")
 public class ManagerV1Controller {
@@ -34,8 +36,8 @@ public class ManagerV1Controller {
     private final OperatorMicroserviceBusiness operatorBusiness;
     private final AdministrationBusiness administrationBusiness;
 
-    public ManagerV1Controller(ManagerMicroserviceBusiness managerBusiness, OperatorMicroserviceBusiness operatorBusiness,
-                               AdministrationBusiness administrationBusiness) {
+    public ManagerV1Controller(ManagerMicroserviceBusiness managerBusiness,
+            OperatorMicroserviceBusiness operatorBusiness, AdministrationBusiness administrationBusiness) {
         this.managerBusiness = managerBusiness;
         this.operatorBusiness = operatorBusiness;
         this.administrationBusiness = administrationBusiness;
@@ -45,7 +47,7 @@ public class ManagerV1Controller {
     @ApiOperation(value = "Get deliveries by manager")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries by manager", response = CustomDeliveryDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getDeliveriesByManager(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -54,13 +56,17 @@ public class ManagerV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getDeliveriesForManagerFromOperator");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -69,22 +75,27 @@ public class ManagerV1Controller {
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para consultar entregas.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = operatorBusiness.getDeliveriesByManager(managerDto.getId());
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error ManagerV1Controller@getDeliveriesByManager#Microservice ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error ManagerV1Controller@getDeliveriesByManager#Business ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error ManagerV1Controller@getDeliveriesByManager#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -94,23 +105,27 @@ public class ManagerV1Controller {
     @ApiOperation(value = "Get delivery by id")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get deliveries by manager", response = CustomDeliveryDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
-    public ResponseEntity<?> getDeliveriesById(@RequestHeader("authorization") String headerAuthorization,
-                                               @PathVariable Long deliveryId) {
+    public ResponseEntity<?> getDeliveryById(@RequestHeader("authorization") String headerAuthorization,
+            @PathVariable Long deliveryId) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getDeliveryByIdForManagerFromOperator");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -119,22 +134,27 @@ public class ManagerV1Controller {
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para consultar entregas.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = operatorBusiness.getDeliveryIdAndManager(deliveryId, managerDto.getId());
             httpStatus = HttpStatus.OK;
 
         } catch (DisconnectedMicroserviceException e) {
-            log.error("Error ManagerV1Controller@getDeliveriesById#Microservice ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            log.error("Error ManagerV1Controller@getDeliveryById#Microservice ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
-            log.error("Error ManagerV1Controller@getDeliveriesById#Business ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            log.error("Error ManagerV1Controller@getDeliveryById#Business ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error ManagerV1Controller@getDeliveriesById#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            log.error("Error ManagerV1Controller@getDeliveryById#General ---> " + e.getMessage());
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -144,7 +164,7 @@ public class ManagerV1Controller {
     @ApiOperation(value = "Get operators by manager session")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Operators got", response = MicroserviceOperatorDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getOperatorsByManager(@RequestHeader("authorization") String headerAuthorization) {
 
@@ -153,17 +173,23 @@ public class ManagerV1Controller {
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getOperatorsByManager");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = managerBusiness.getOperatorsByManager(managerDto.getId());
             httpStatus = HttpStatus.OK;
@@ -171,7 +197,8 @@ public class ManagerV1Controller {
         } catch (Exception e) {
             log.error("Error ManagerV1Controller@getOperatorsByManager#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

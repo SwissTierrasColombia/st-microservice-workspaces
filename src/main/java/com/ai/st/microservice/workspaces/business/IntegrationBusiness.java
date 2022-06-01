@@ -26,14 +26,22 @@ import com.ai.st.microservice.workspaces.services.IIntegrationStatService;
 import com.ai.st.microservice.workspaces.services.IIntegrationStateService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
 public class IntegrationBusiness {
+
+    @Value("${integrations.database.username}")
+    private String databaseUsername;
+
+    @Value("${integrations.database.password}")
+    private String databasePassword;
 
     private final SupplyFeignClient supplyClient;
     private final ProviderFeignClient providerClient;
@@ -49,11 +57,12 @@ public class IntegrationBusiness {
 
     private final Logger log = LoggerFactory.getLogger(IntegrationBusiness.class);
 
-    public IntegrationBusiness(SupplyFeignClient supplyClient, ProviderFeignClient providerClient, GeovisorFeignClient geovisorClient,
-                               IIntegrationService integrationService, IIntegrationStatService integrationStatService,
-                               IIntegrationStateService integrationStateService, IWorkspaceService workspaceService,
-                               SupplyBusiness supplyBusiness, MunicipalityBusiness municipalityBusiness,
-                               DatabaseIntegrationBusiness databaseBusiness, CrytpoBusiness cryptoBusiness) {
+    public IntegrationBusiness(SupplyFeignClient supplyClient, ProviderFeignClient providerClient,
+            GeovisorFeignClient geovisorClient, IIntegrationService integrationService,
+            IIntegrationStatService integrationStatService, IIntegrationStateService integrationStateService,
+            IWorkspaceService workspaceService, SupplyBusiness supplyBusiness,
+            MunicipalityBusiness municipalityBusiness, DatabaseIntegrationBusiness databaseBusiness,
+            CrytpoBusiness cryptoBusiness) {
         this.supplyClient = supplyClient;
         this.providerClient = providerClient;
         this.geovisorClient = geovisorClient;
@@ -68,9 +77,9 @@ public class IntegrationBusiness {
     }
 
     public IntegrationDto createIntegration(String hostname, String port, String database, String schema,
-                                            String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
-                                            WorkspaceEntity workspaceEntity, IntegrationStateEntity stateEntity, Long userCode, Long managerCode,
-                                            String user) {
+            String username, String password, Long supplyCadastreId, Long supplySnrId, Long supplyAntId,
+            WorkspaceEntity workspaceEntity, IntegrationStateEntity stateEntity, Long userCode, Long managerCode,
+            String user) {
 
         IntegrationEntity integrationEntity = new IntegrationEntity();
         integrationEntity.setDatabase(database);
@@ -103,7 +112,7 @@ public class IntegrationBusiness {
     }
 
     public IntegrationDto updateCredentialsIntegration(Long integrationId, String hostname, String port,
-                                                       String database, String schema, String username, String password) throws BusinessException {
+            String database, String schema, String username, String password) throws BusinessException {
 
         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
         if (integrationEntity == null) {
@@ -124,7 +133,7 @@ public class IntegrationBusiness {
     }
 
     public IntegrationDto addStatToIntegration(Long integrationId, Long countSnr, Long countCadastre, Long countAnt,
-                                               Long countMatch, Double percentage) throws BusinessException {
+            Long countMatch, Double percentage) throws BusinessException {
 
         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
         if (integrationEntity == null) {
@@ -144,8 +153,8 @@ public class IntegrationBusiness {
         return this.transformEntityToDto(integrationEntity);
     }
 
-    public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId, String errors, Long userCode, Long managerCode,
-                                                   String user) throws BusinessException {
+    public IntegrationDto updateStateToIntegration(Long integrationId, Long stateId, String errors, Long userCode,
+            Long managerCode, String user) throws BusinessException {
 
         IntegrationEntity integrationEntity = integrationService.getIntegrationById(integrationId);
         if (integrationEntity == null) {
@@ -200,8 +209,8 @@ public class IntegrationBusiness {
             }
         }
 
-        List<IntegrationEntity> listIntegrationsEntity =
-                integrationService.getIntegrationByWorkspace(workspaceEntity, managerCode);
+        List<IntegrationEntity> listIntegrationsEntity = integrationService.getIntegrationByWorkspace(workspaceEntity,
+                managerCode);
 
         for (IntegrationEntity integrationEntity : listIntegrationsEntity) {
             listIntegrationsDto.add(this.transformEntityToDto(integrationEntity));
@@ -211,10 +220,12 @@ public class IntegrationBusiness {
 
             try {
 
-                MicroserviceSupplyDto responseCadastre = supplyClient.findSupplyById(integrationDto.getSupplyCadastreId());
+                MicroserviceSupplyDto responseCadastre = supplyClient
+                        .findSupplyById(integrationDto.getSupplyCadastreId());
                 CustomSupplyDto supplyCadastreDto = new CustomSupplyDto(responseCadastre);
 
-                supplyCadastreDto.setTypeSupply(providerClient.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode()));
+                supplyCadastreDto
+                        .setTypeSupply(providerClient.findTypeSuppleById(supplyCadastreDto.getTypeSupplyCode()));
                 integrationDto.setSupplyCadastre(supplyCadastreDto);
 
                 MicroserviceSupplyDto responseSnr = supplyClient.findSupplyById(integrationDto.getSupplySnrId());
@@ -223,8 +234,11 @@ public class IntegrationBusiness {
                 supplySnrDto.setTypeSupply(providerClient.findTypeSuppleById(supplySnrDto.getTypeSupplyCode()));
                 integrationDto.setSupplySnr(supplySnrDto);
 
-            } catch (Exception ignored) {
-
+            } catch (Exception e) {
+                String messageError = String.format("Error consultando los insumos de la integración %d : %s",
+                        integrationDto.getId(), e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
         }
@@ -242,6 +256,10 @@ public class IntegrationBusiness {
         try {
             integrationService.deleteIntegration(integrationId);
         } catch (Exception e) {
+            String messageError = String.format("Error eliminando la integración %d : %s", integrationId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido eliminar la integración.");
         }
 
@@ -303,13 +321,17 @@ public class IntegrationBusiness {
         }
 
         try {
-            MunicipalityDto municipalityDto = municipalityBusiness
-                    .getMunicipalityByCode(integrationEntity.getWorkspace().getMunicipality().getCode());
+            String municipalityCode = integrationEntity.getWorkspace().getMunicipality().getCode();
+            MunicipalityDto municipalityDto = municipalityBusiness.getMunicipalityByCode(municipalityCode);
             if (municipalityDto != null) {
                 integrationDto.setMunicipalityDto(municipalityDto);
             }
         } catch (Exception e) {
-            log.error("Error consultando municipio: " + e.getMessage());
+            String messageError = String.format("Error consultando el municipio %s para la integración %d: %s",
+                    integrationEntity.getWorkspace().getMunicipality().getCode(), integrationDto.getId(),
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return integrationDto;
@@ -332,15 +354,17 @@ public class IntegrationBusiness {
 
             try {
 
-                CustomSupplyDto supplyCadastreDto = supplyBusiness
-                        .getSupplyById(integrationDto.getSupplyCadastreId());
-                integrationDto.setSupplyCadastre(supplyCadastreDto);
+                CustomSupplyDto supplyCadastralDto = supplyBusiness.getSupplyById(integrationDto.getSupplyCadastreId());
+                integrationDto.setSupplyCadastre(supplyCadastralDto);
 
                 CustomSupplyDto supplySnrDto = supplyBusiness.getSupplyById(integrationDto.getSupplySnrId());
                 integrationDto.setSupplySnr(supplySnrDto);
 
             } catch (Exception e) {
-                log.error("Error consultando insumo: " + e.getMessage());
+                String messageError = String.format("Error consultando los insumos %d (cadastral) %d (registral) : %s",
+                        integrationDto.getSupplyCadastreId(), integrationDto.getSupplySnrId(), e.getMessage());
+                SCMTracing.sendError(messageError);
+                log.error(messageError);
             }
 
         }
@@ -375,11 +399,10 @@ public class IntegrationBusiness {
                     "No se puede configurar el geovisor porque la integración esta en un estado inválido.");
         }
 
-        WorkspaceManagerEntity workspaceManagerEntity =
-                integrationEntity.getWorkspace().getManagers().stream().filter(m -> m.getManagerCode().equals(managerId)).findAny().orElse(null);
-        if (workspaceManagerEntity == null) {
-            throw new BusinessException("La integración no pertenece al gestor");
-        }
+        integrationEntity.getWorkspace().getManagers().stream().filter(m -> m.getManagerCode().equals(managerId))
+                .findAny().orElseThrow(() -> new BusinessException("La integración no pertenece al gestor"));
+
+        String municipalityCode = integrationEntity.getWorkspace().getMunicipality().getCode();
 
         try {
 
@@ -387,31 +410,57 @@ public class IntegrationBusiness {
             String port = cryptoBusiness.decrypt(integrationEntity.getPort());
             String database = cryptoBusiness.decrypt(integrationEntity.getDatabase());
             String schema = cryptoBusiness.decrypt(integrationEntity.getSchema());
-            String username = cryptoBusiness.decrypt(integrationEntity.getUsername());
-            String password = cryptoBusiness.decrypt(integrationEntity.getPassword());
-            String nameView = "integration_cat_reg";
 
-            databaseBusiness.createViewIntegration(host, port, database, schema, nameView);
+            String perimeterView = "perimetros";
+            String sideWalkView = "veredas";
+            String buildingView = "construcciones";
+            String buildingUnitsView = "unidades_construcciones";
+            String squareView = "manzanas";
+            String parcelsIntegratedView = "predios_integrados";
+
+            databaseBusiness.createPerimeterView(host, port, database, schema, perimeterView);
+            databaseBusiness.createSidewalkView(host, port, database, schema, sideWalkView);
+            databaseBusiness.createBuildingView(host, port, database, schema, buildingView);
+            databaseBusiness.createBuildingUnitsView(host, port, database, schema, buildingUnitsView);
+            databaseBusiness.createSquareView(host, port, database, schema, squareView);
+            databaseBusiness.createParcelIntegratedView(host, port, database, schema, parcelsIntegratedView);
 
             MicroserviceSetupMapDto data = new MicroserviceSetupMapDto();
-            data.setName_conn(nameView);
+            data.setName_conn(String.format("connection_%s_%d", municipalityCode, integrationId));
+            data.setStore(String.format("store_%s_%d", municipalityCode, integrationId));
+            data.setWorkspace(String.format("workspace_%s_%d", municipalityCode, integrationId));
             data.setDbname(database);
             data.setHost(host);
-            data.setPassword(password);
-            data.setPort(Integer.parseInt(port));
+            data.setPassword(databasePassword);
+            data.setPort(port);
             data.setSchema(schema);
-            data.setUser(username);
-            data.setLayers(new ArrayList<>(Collections.singletonList(nameView)));
+            data.setUser(databaseUsername);
+            List<MicroserviceSetupMapDto.Layer> layers = new ArrayList<>();
+            layers.add(new MicroserviceSetupMapDto.Layer(perimeterView, "perimetro_urbano", "Perímetros"));
+            layers.add(new MicroserviceSetupMapDto.Layer(sideWalkView, "vereda", "Veredas"));
+            layers.add(new MicroserviceSetupMapDto.Layer(buildingView, "construccion_Insumo", "Construcción"));
+            layers.add(new MicroserviceSetupMapDto.Layer(squareView, "manzana", "Manzanas"));
+            layers.add(new MicroserviceSetupMapDto.Layer(parcelsIntegratedView, "predio", "Predios Integrados"));
+            data.setLayers(layers);
 
             MicroserviceDataMapDto dataResponse = geovisorClient.setupMap(data);
+            String[] split = dataResponse.getSt_geocreatefastcontext().split("#");
 
-            log.info("URL: " + dataResponse.getData());
-
-            String url = dataResponse.getData();
+            String url = String.format("#%s", split[1]);
 
             updateURLMap(integrationEntity.getId(), url);
 
+        } catch (BusinessException e) {
+            String messageError = String.format("Error configurando el mapa (geo-api) de la integración %d : %s",
+                    integrationId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException(e.getMessage());
         } catch (Exception e) {
+            String messageError = String.format("Error configurando el mapa de la integración %d : %s", integrationId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException(
                     "No se ha podido realizar la configuración de la integración para su visualización.");
         }

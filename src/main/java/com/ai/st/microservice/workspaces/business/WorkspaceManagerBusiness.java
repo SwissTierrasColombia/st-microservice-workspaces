@@ -8,6 +8,9 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceManagerService;
 import com.ai.st.microservice.workspaces.services.IWorkspaceService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
@@ -15,19 +18,21 @@ import java.util.Date;
 @Component
 public class WorkspaceManagerBusiness {
 
+    private final Logger log = LoggerFactory.getLogger(WorkspaceManagerBusiness.class);
+
     private final IWorkspaceManagerService workspaceManagerService;
     private final IWorkspaceService workspaceService;
     private final ManagerMicroserviceBusiness managerBusiness;
 
-    public WorkspaceManagerBusiness(IWorkspaceManagerService workspaceManagerService, IWorkspaceService workspaceService,
-                                    ManagerMicroserviceBusiness managerBusiness) {
+    public WorkspaceManagerBusiness(IWorkspaceManagerService workspaceManagerService,
+            IWorkspaceService workspaceService, ManagerMicroserviceBusiness managerBusiness) {
         this.workspaceManagerService = workspaceManagerService;
         this.workspaceService = workspaceService;
         this.managerBusiness = managerBusiness;
     }
 
     public WorkspaceManagerDto createWorkspaceManager(Long managerCode, String specificObservations,
-                                                      String generalObservations, Date startDate, String urlSupportFile, Long workspaceId) {
+            String generalObservations, Date startDate, String urlSupportFile, Long workspaceId) {
 
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
 
@@ -76,6 +81,10 @@ public class WorkspaceManagerBusiness {
             MicroserviceManagerDto managerDto = managerBusiness.getManagerById(workspaceManagerEntity.getManagerCode());
             workspaceManagerDto.setManager(managerDto);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el gestor %d : %s",
+                    workspaceManagerEntity.getManagerCode(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             workspaceManagerDto.setManager(null);
         }
 

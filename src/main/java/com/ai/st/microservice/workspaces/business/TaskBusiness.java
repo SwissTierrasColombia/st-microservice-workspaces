@@ -20,6 +20,7 @@ import com.ai.st.microservice.workspaces.entities.IntegrationEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.services.IIntegrationService;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,9 +83,10 @@ public class TaskBusiness {
     private final QualityFeignClient qualityClient;
 
     public TaskBusiness(TaskFeignClient taskClient, UserFeignClient userClient, SupplyFeignClient supplyClient,
-                        ProviderFeignClient providerClient, IliBusiness iliBusiness, CrytpoBusiness cryptoBusiness,
-                        IntegrationBusiness integrationBusiness, DatabaseIntegrationBusiness databaseIntegrationBusiness,
-                        ProviderBusiness providerBusiness, IIntegrationService integrationService, QualityFeignClient qualityClient) {
+            ProviderFeignClient providerClient, IliBusiness iliBusiness, CrytpoBusiness cryptoBusiness,
+            IntegrationBusiness integrationBusiness, DatabaseIntegrationBusiness databaseIntegrationBusiness,
+            ProviderBusiness providerBusiness, IIntegrationService integrationService,
+            QualityFeignClient qualityClient) {
         this.taskClient = taskClient;
         this.userClient = userClient;
         this.supplyClient = supplyClient;
@@ -103,8 +105,8 @@ public class TaskBusiness {
         List<CustomTaskMemberDto> members = new ArrayList<>();
 
         List<? extends MicroserviceTaskMemberDto> response = taskDto.getMembers();
-        List<CustomTaskMemberDto> tasksMembersDto =
-                response.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
+        List<CustomTaskMemberDto> tasksMembersDto = response.stream().map(CustomTaskMemberDto::new)
+                .collect(Collectors.toList());
 
         for (CustomTaskMemberDto member : tasksMembersDto) {
             try {
@@ -141,7 +143,7 @@ public class TaskBusiness {
         return taskDto;
     }
 
-    public List<CustomTaskDto> getPendingTasks(Long userCode) throws BusinessException {
+    public List<CustomTaskDto> getPendingTasksByUser(Long userCode) throws BusinessException {
 
         List<CustomTaskDto> listTasksDto = new ArrayList<>();
 
@@ -152,7 +154,8 @@ public class TaskBusiness {
             taskStates.add(TaskBusiness.TASK_STATE_STARTED);
 
             List<MicroserviceTaskDto> response = taskClient.findByUserAndState(userCode, taskStates);
-            List<CustomTaskDto> listResponseTasks = response.stream().map(CustomTaskDto::new).collect(Collectors.toList());
+            List<CustomTaskDto> listResponseTasks = response.stream().map(CustomTaskDto::new)
+                    .collect(Collectors.toList());
 
             for (CustomTaskDto taskDto : listResponseTasks) {
                 taskDto = this.extendTask(taskDto);
@@ -160,6 +163,10 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
+            String messageError = String.format("Error consultando las tareas pendientes del usuario %d : %s", userCode,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido consultar las tareas pendientes del usuario.");
         }
 
@@ -167,8 +174,8 @@ public class TaskBusiness {
     }
 
     public CustomTaskDto createTask(List<Long> categories, String deadline, String description, String name,
-                                    List<Long> users, List<MicroserviceCreateTaskMetadataDto> metadata,
-                                    List<MicroserviceCreateTaskStepDto> steps) throws BusinessException {
+            List<Long> users, List<MicroserviceCreateTaskMetadataDto> metadata,
+            List<MicroserviceCreateTaskStepDto> steps) throws BusinessException {
 
         CustomTaskDto taskDto;
 
@@ -187,15 +194,17 @@ public class TaskBusiness {
             taskDto = new CustomTaskDto(response);
 
         } catch (Exception e) {
-            log.error("No se ha podido crear la tarea: " + e.getMessage());
+            String messageError = String.format("Error creando tarea : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido crear la tarea.");
         }
 
         return taskDto;
     }
 
-    public CustomTaskDto createTaskForGenerationSupply(List<Long> users, String municipality, String department, Long requestId,
-                                                       Long typeSupplyId, Date dateDeadline, String modelVersion) throws BusinessException {
+    public CustomTaskDto createTaskForGenerationSupply(List<Long> users, String municipality, String department,
+            Long requestId, Long typeSupplyId, Date dateDeadline, String modelVersion) throws BusinessException {
 
         List<Long> taskCategories = new ArrayList<>();
         taskCategories.add(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION);
@@ -240,6 +249,9 @@ public class TaskBusiness {
             MicroserviceTaskDto response = taskClient.findTaskById(taskId);
             taskDto = new CustomTaskDto(response);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha encontrado la tarea.");
         }
 
@@ -250,8 +262,8 @@ public class TaskBusiness {
 
         // verify if the user is assigned the task
         List<? extends MicroserviceTaskMemberDto> responseMembers = taskDto.getMembers();
-        List<CustomTaskMemberDto> membersDto =
-                responseMembers.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
+        List<CustomTaskMemberDto> membersDto = responseMembers.stream().map(CustomTaskMemberDto::new)
+                .collect(Collectors.toList());
 
         CustomTaskMemberDto memberFound = membersDto.stream()
                 .filter(memberDto -> memberDto.getMemberCode().equals(userId)).findAny().orElse(null);
@@ -263,15 +275,17 @@ public class TaskBusiness {
         // remove others members
         try {
             List<? extends MicroserviceTaskMemberDto> responseMembersDto = taskDto.getMembers();
-            List<CustomTaskMemberDto> membersListDto =
-                    responseMembersDto.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
+            List<CustomTaskMemberDto> membersListDto = responseMembersDto.stream().map(CustomTaskMemberDto::new)
+                    .collect(Collectors.toList());
             for (CustomTaskMemberDto memberDto : membersListDto) {
                 if (!memberDto.getMemberCode().equals(userId)) {
                     taskClient.removeMemberFromTask(taskId, memberDto.getMemberCode());
                 }
             }
         } catch (Exception e) {
-            log.error("No se ha podido desasignar los usuarios de la tarea: " + e.getMessage());
+            String messageError = String.format("Error quitando usuarios de la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
@@ -279,7 +293,9 @@ public class TaskBusiness {
             taskDto = new CustomTaskDto(response);
             taskDto = this.extendTask(taskDto);
         } catch (Exception e) {
-            log.error("No se ha podido iniciar la tarea: " + e.getMessage());
+            String messageError = String.format("Error iniciando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido iniciar la tarea.");
         }
 
@@ -294,6 +310,9 @@ public class TaskBusiness {
             MicroserviceTaskDto response = taskClient.findTaskById(taskId);
             taskDto = new CustomTaskDto(response);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha encontrado la tarea.");
         }
 
@@ -304,8 +323,8 @@ public class TaskBusiness {
 
         // verify if the user is assigned the task
         List<? extends MicroserviceTaskMemberDto> responseMembers = taskDto.getMembers();
-        List<CustomTaskMemberDto> membersDto =
-                responseMembers.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
+        List<CustomTaskMemberDto> membersDto = responseMembers.stream().map(CustomTaskMemberDto::new)
+                .collect(Collectors.toList());
 
         CustomTaskMemberDto memberFound = membersDto.stream()
                 .filter(memberDto -> memberDto.getMemberCode().equals(userDto.getId())).findAny().orElse(null);
@@ -350,7 +369,8 @@ public class TaskBusiness {
                             WorkspaceEntity workspaceEntity = integrationEntity.getWorkspace();
 
                             // supply cadastre
-                            MicroserviceSupplyDto response = supplyClient.findSupplyById(integrationEntity.getSupplyCadastreId());
+                            MicroserviceSupplyDto response = supplyClient
+                                    .findSupplyById(integrationEntity.getSupplyCadastreId());
                             CustomSupplyDto supplyCadastreDto = new CustomSupplyDto(response);
 
                             String urlBase = "/" + workspaceEntity.getMunicipality().getCode().replace(" ", "_")
@@ -370,11 +390,15 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
+            String messageError = String.format(
+                    "Error generando el producto a partir de la finalización de la tarea de integración %d: %s", taskId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
-                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
+                categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
                 .findAny().orElse(null);
 
         // task for generation of supplies
@@ -402,14 +426,15 @@ public class TaskBusiness {
 
                         CustomRequestDto requestDto = new CustomRequestDto(response);
 
-                        List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto.getSuppliesRequested();
-                        List<CustomSupplyRequestedDto> suppliesRequestDto =
-                                suppliesResponse.stream().map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
+                        List<? extends MicroserviceSupplyRequestedDto> suppliesResponse = requestDto
+                                .getSuppliesRequested();
+                        List<CustomSupplyRequestedDto> suppliesRequestDto = suppliesResponse.stream()
+                                .map(CustomSupplyRequestedDto::new).collect(Collectors.toList());
 
                         CustomSupplyRequestedDto supplyRequestedDto = suppliesRequestDto.stream()
                                 .filter(sR -> sR.getTypeSupply().getId().equals(typeSupplyId)).findAny().orElse(null);
 
-                        if (supplyRequestedDto instanceof CustomSupplyRequestedDto) {
+                        if (supplyRequestedDto != null) {
 
                             Long supplyStateId = supplyRequestedDto.getState().getId();
                             if (supplyStateId.equals(ProviderBusiness.SUPPLY_REQUESTED_STATE_VALIDATING)) {
@@ -432,8 +457,8 @@ public class TaskBusiness {
             }
         }
 
-        MicroserviceTaskCategoryDto categoryXTFQuality = taskDto.getCategories().stream().filter(
-                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_XTF_QUALITY_PROCESS))
+        MicroserviceTaskCategoryDto categoryXTFQuality = taskDto.getCategories().stream()
+                .filter(categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_XTF_QUALITY_PROCESS))
                 .findAny().orElse(null);
 
         if (categoryXTFQuality != null) {
@@ -442,23 +467,27 @@ public class TaskBusiness {
                     .filter(meta -> meta.getKey().equalsIgnoreCase("attachment")).findAny().orElse(null);
             if (metadataRequest != null) {
 
-                BusinessException error = new BusinessException("Ha ocurrido un error finalizando la tarea del proceso de calidad");
+                BusinessException error = new BusinessException(
+                        "Ha ocurrido un error finalizando la tarea del proceso de calidad");
 
-                MicroserviceTaskMetadataPropertyDto propertyDeliveryId = metadataRequest.getProperties()
-                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryId")).findAny().orElseThrow(() -> error);
-                MicroserviceTaskMetadataPropertyDto propertyDeliveryProductId = metadataRequest.getProperties()
-                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryProductId")).findAny().orElseThrow(() -> error);
-                MicroserviceTaskMetadataPropertyDto propertyAttachmentId = metadataRequest.getProperties()
-                        .stream().filter(p -> p.getKey().equalsIgnoreCase("attachmentId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryId = metadataRequest.getProperties().stream()
+                        .filter(p -> p.getKey().equalsIgnoreCase("deliveryId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryProductId = metadataRequest.getProperties().stream()
+                        .filter(p -> p.getKey().equalsIgnoreCase("deliveryProductId")).findAny()
+                        .orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyAttachmentId = metadataRequest.getProperties().stream()
+                        .filter(p -> p.getKey().equalsIgnoreCase("attachmentId")).findAny().orElseThrow(() -> error);
 
                 Long deliveryId = Long.parseLong(propertyDeliveryId.getValue());
                 Long productId = Long.parseLong(propertyDeliveryProductId.getValue());
                 Long attachmentId = Long.parseLong(propertyAttachmentId.getValue());
 
-                MicroserviceXTFAttachmentDto attachmentDto = qualityClient.findAttachmentById(deliveryId, productId, attachmentId);
+                MicroserviceXTFAttachmentDto attachmentDto = qualityClient.findAttachmentById(deliveryId, productId,
+                        attachmentId);
 
                 if (!attachmentDto.getData().isHasReportRevision()) {
-                    throw new BusinessException("No se puede finalizar la tarea porque no se ha cargado el reporte de revisión al archivo XTF");
+                    throw new BusinessException(
+                            "No se puede finalizar la tarea porque no se ha cargado el reporte de revisión al archivo XTF");
                 }
 
                 qualityClient.udpdateXTFStatusToQualityProcessFinished(deliveryId, productId, attachmentId);
@@ -471,15 +500,16 @@ public class TaskBusiness {
             taskDto = new CustomTaskDto(response);
             taskDto = this.extendTask(taskDto);
         } catch (Exception e) {
-            log.error("No se ha podido finalizar la tarea: " + e.getMessage());
+            String messageError = String.format("Error finalizando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido finalizar la tarea.");
         }
 
         return taskDto;
     }
 
-    public CustomTaskDto cancelTask(Long taskId, String reason, MicroserviceUserDto userDto)
-            throws BusinessException {
+    public CustomTaskDto cancelTask(Long taskId, String reason, MicroserviceUserDto userDto) throws BusinessException {
 
         CustomTaskDto taskDto;
 
@@ -487,6 +517,9 @@ public class TaskBusiness {
             MicroserviceTaskDto response = taskClient.findTaskById(taskId);
             taskDto = new CustomTaskDto(response);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha encontrado la tarea.");
         }
 
@@ -498,8 +531,8 @@ public class TaskBusiness {
         // verify if the user is assigned the task
 
         List<? extends MicroserviceTaskMemberDto> responseMembers = taskDto.getMembers();
-        List<CustomTaskMemberDto> membersDto =
-                responseMembers.stream().map(CustomTaskMemberDto::new).collect(Collectors.toList());
+        List<CustomTaskMemberDto> membersDto = responseMembers.stream().map(CustomTaskMemberDto::new)
+                .collect(Collectors.toList());
 
         CustomTaskMemberDto memberFound = membersDto.stream()
                 .filter(memberDto -> memberDto.getMemberCode().equals(userDto.getId())).findAny().orElse(null);
@@ -536,7 +569,11 @@ public class TaskBusiness {
                                         cryptoBusiness.decrypt(integrationEntity.getDatabase()),
                                         cryptoBusiness.decrypt(integrationEntity.getUsername()));
                             } catch (Exception e) {
-                                log.error("No se ha podido borrar la base de datos: " + e.getMessage());
+                                String messageError = String.format(
+                                        "Error eliminando la base de datos a partir de la cancelación de la tarea  %d: %s",
+                                        taskId, e.getMessage());
+                                SCMTracing.sendError(messageError);
+                                log.error(messageError);
                             }
 
                             String randomDatabaseName = RandomStringUtils.random(8, true, false).toLowerCase();
@@ -548,8 +585,11 @@ public class TaskBusiness {
                                 databaseIntegrationBusiness.createDatabase(randomDatabaseName, randomUsername,
                                         randomPassword);
                             } catch (Exception e) {
-                                log.error("No se ha podido crear la base de datos para la integración: "
-                                        + e.getMessage());
+                                String messageError = String.format(
+                                        "Error creando la base de datos a partir de la cancelación de la tarea  %d: %s",
+                                        taskId, e.getMessage());
+                                SCMTracing.sendError(messageError);
+                                log.error(messageError);
                             }
 
                             integrationBusiness.updateCredentialsIntegration(integrationId,
@@ -562,7 +602,8 @@ public class TaskBusiness {
                             try {
 
                                 // file cadastre
-                                MicroserviceSupplyDto responseCadastre = supplyClient.findSupplyById(integrationEntity.getSupplyCadastreId());
+                                MicroserviceSupplyDto responseCadastre = supplyClient
+                                        .findSupplyById(integrationEntity.getSupplyCadastreId());
                                 CustomSupplyDto supplyCadastreDto = new CustomSupplyDto(responseCadastre);
 
                                 MicroserviceSupplyAttachmentDto attachmentCadastre = supplyCadastreDto.getAttachments()
@@ -572,7 +613,8 @@ public class TaskBusiness {
                                         .findAny().orElse(null);
 
                                 // file register
-                                MicroserviceSupplyDto responseSnr = supplyClient.findSupplyById(integrationEntity.getSupplySnrId());
+                                MicroserviceSupplyDto responseSnr = supplyClient
+                                        .findSupplyById(integrationEntity.getSupplySnrId());
                                 CustomSupplyDto supplyRegisteredDto = new CustomSupplyDto(responseSnr);
                                 MicroserviceSupplyAttachmentDto attachmentRegister = supplyRegisteredDto
                                         .getAttachments().stream()
@@ -588,7 +630,11 @@ public class TaskBusiness {
                                         integrationId, supplyCadastreDto.getModelVersion());
 
                             } catch (Exception e) {
-                                log.error("No se ha podido iniciar la integración: " + e.getMessage());
+                                String messageError = String.format(
+                                        "Error iniciando la integración a partir de la cancelación de la tarea  %d: %s",
+                                        taskId, e.getMessage());
+                                SCMTracing.sendError(messageError);
+                                log.error(messageError);
                             }
 
                             // modify integration state to finish assisted
@@ -603,11 +649,14 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido empezar a generar el producto: " + e.getMessage());
+            String messageError = String.format(
+                    "Error al momento de cancelar una tarea correspondiente a una integración : %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         MicroserviceTaskCategoryDto categoryGenerationFound = taskDto.getCategories().stream().filter(
-                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
+                categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION))
                 .findAny().orElse(null);
 
         // task for generation of supplies
@@ -670,11 +719,13 @@ public class TaskBusiness {
             }
 
         } catch (Exception e) {
-            log.error("No se ha podido re-asignar la tarea: " + e.getMessage());
+            String messageError = String.format("Error re-asignando la tarea %d : %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
-        MicroserviceTaskCategoryDto categoryXTFQuality = taskDto.getCategories().stream().filter(
-                        categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_XTF_QUALITY_PROCESS))
+        MicroserviceTaskCategoryDto categoryXTFQuality = taskDto.getCategories().stream()
+                .filter(categoryDto -> categoryDto.getId().equals(TaskBusiness.TASK_CATEGORY_XTF_QUALITY_PROCESS))
                 .findAny().orElse(null);
 
         if (categoryXTFQuality != null) {
@@ -683,14 +734,16 @@ public class TaskBusiness {
                     .filter(meta -> meta.getKey().equalsIgnoreCase("attachment")).findAny().orElse(null);
             if (metadataRequest != null) {
 
-                BusinessException error = new BusinessException("Ha ocurrido un error cancelando la tarea del proceso de calidad");
+                BusinessException error = new BusinessException(
+                        "Ha ocurrido un error cancelando la tarea del proceso de calidad");
 
-                MicroserviceTaskMetadataPropertyDto propertyDeliveryId = metadataRequest.getProperties()
-                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryId")).findAny().orElseThrow(() -> error);
-                MicroserviceTaskMetadataPropertyDto propertyDeliveryProductId = metadataRequest.getProperties()
-                        .stream().filter(p -> p.getKey().equalsIgnoreCase("deliveryProductId")).findAny().orElseThrow(() -> error);
-                MicroserviceTaskMetadataPropertyDto propertyAttachmentId = metadataRequest.getProperties()
-                        .stream().filter(p -> p.getKey().equalsIgnoreCase("attachmentId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryId = metadataRequest.getProperties().stream()
+                        .filter(p -> p.getKey().equalsIgnoreCase("deliveryId")).findAny().orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyDeliveryProductId = metadataRequest.getProperties().stream()
+                        .filter(p -> p.getKey().equalsIgnoreCase("deliveryProductId")).findAny()
+                        .orElseThrow(() -> error);
+                MicroserviceTaskMetadataPropertyDto propertyAttachmentId = metadataRequest.getProperties().stream()
+                        .filter(p -> p.getKey().equalsIgnoreCase("attachmentId")).findAny().orElseThrow(() -> error);
 
                 Long deliveryId = Long.parseLong(propertyDeliveryId.getValue());
                 Long productId = Long.parseLong(propertyDeliveryProductId.getValue());
@@ -710,6 +763,9 @@ public class TaskBusiness {
 
             taskDto = this.extendTask(taskDto);
         } catch (Exception e) {
+            String messageError = String.format("Error cancelando la tarea %d : %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido cancelar la tarea.");
         }
 

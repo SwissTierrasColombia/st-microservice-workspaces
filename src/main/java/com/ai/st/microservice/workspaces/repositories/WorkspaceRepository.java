@@ -17,15 +17,9 @@ public interface WorkspaceRepository extends CrudRepository<WorkspaceEntity, Lon
 
     WorkspaceEntity findByIsActiveAndMunicipality(Boolean isActive, MunicipalityEntity municipality);
 
-    @Query(nativeQuery = true, value = "select \n" +
-            "w.*\n" +
-            "from \n" +
-            "workspaces.workspaces w ,\n" +
-            "workspaces.workspace_managers wm\n" +
-            "where\n" +
-            "w.is_active = true\n" +
-            "and wm.workspace_id  = w.id \n" +
-            "and wm.manager_code = :managerCode")
+    @Query(nativeQuery = true, value = "select \n" + "w.*\n" + "from \n" + "workspaces.workspaces w ,\n"
+            + "workspaces.workspace_managers wm\n" + "where\n" + "w.is_active = true\n"
+            + "and wm.workspace_id  = w.id \n" + "and wm.manager_code = :managerCode")
     List<WorkspaceEntity> findByManagerCode(@Param("managerCode") Long departmentId);
 
     @Query(nativeQuery = true, value = "select\n" + "	w.*\n" + "from\n" + "	workspaces.workspaces w,\n"

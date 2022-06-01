@@ -8,21 +8,25 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value = "UpdatePetitionDto")
 public class UpdatePetitionDto implements Serializable {
 
-	private static final long serialVersionUID = -5543133839868782615L;
+    private static final long serialVersionUID = -5543133839868782615L;
 
-	@ApiModelProperty(required = true, notes = "Justification")
-	private String justification;
+    @ApiModelProperty(required = true, notes = "Justification")
+    private String justification;
 
-	public UpdatePetitionDto() {
+    public UpdatePetitionDto() {
 
-	}
+    }
 
-	public String getJustification() {
-		return justification;
-	}
+    public String getJustification() {
+        return justification;
+    }
 
-	public void setJustification(String justification) {
-		this.justification = justification;
-	}
+    public void setJustification(String justification) {
+        this.justification = justification;
+    }
 
+    @Override
+    public String toString() {
+        return "UpdatePetitionDto{" + "justification='" + justification + '\'' + '}';
+    }
 }

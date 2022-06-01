@@ -9,7 +9,8 @@ import com.ai.st.microservice.common.exceptions.*;
 import com.ai.st.microservice.workspaces.dto.*;
 import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.WorkspaceBusiness;
-
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -37,7 +38,7 @@ import java.util.List;
 
 import javax.servlet.ServletContext;
 
-@Api(value = "Manage Workspaces", tags = {"Workspaces"})
+@Api(value = "Manage Workspaces", tags = { "Workspaces" })
 @RestController
 @RequestMapping("api/workspaces/v2/workspaces")
 public class WorkspaceV2Controller {
@@ -50,7 +51,7 @@ public class WorkspaceV2Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceV2Controller(WorkspaceBusiness workspaceBusiness, ManagerMicroserviceBusiness managerBusiness,
-                                 ServletContext servletContext, AdministrationBusiness administrationBusiness) {
+            ServletContext servletContext, AdministrationBusiness administrationBusiness) {
         this.workspaceBusiness = workspaceBusiness;
         this.managerBusiness = managerBusiness;
         this.servletContext = servletContext;
@@ -61,7 +62,7 @@ public class WorkspaceV2Controller {
     @ApiOperation(value = "Get municipalities where manager does not belong in")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Municipalities validated", response = ValidationMunicipalitiesDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> validateMunicipalitiesBeforeAssigned(
             @RequestParam(name = "municipalities") List<Long> municipalities) {
@@ -71,17 +72,23 @@ public class WorkspaceV2Controller {
 
         try {
 
+            SCMTracing.setTransactionName("validateMunicipalitiesBeforeAssigned");
+
             responseDto = workspaceBusiness.validateMunicipalitiesToAssign(municipalities);
             httpStatus = HttpStatus.OK;
 
         } catch (BusinessException e) {
-            log.error("Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#Business ---> " + e.getMessage());
+            log.error(
+                    "Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#General ---> " + e.getMessage());
+            log.error(
+                    "Error WorkspaceV2Controller@validateMunicipalitiesBeforeAssigned#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -89,11 +96,10 @@ public class WorkspaceV2Controller {
 
     @PostMapping(value = "/assign-manager", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Assign manager")
-    @ApiResponses(value = {@ApiResponse(code = 201, message = "Manager assigned", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Manager assigned", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> assignManager(@ModelAttribute AssignManagerDto assignManagerDto) {
-
         HttpStatus httpStatus;
         Object responseDto;
 
@@ -160,11 +166,11 @@ public class WorkspaceV2Controller {
 
     @GetMapping(value = "{workspaceId}/download-support-manager/{managerCode}")
     @ApiOperation(value = "Download file")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> downloadSupportManager(@PathVariable Long workspaceId, @PathVariable Long managerCode,
-                                                    @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         MediaType mediaType;
         File file;
@@ -229,8 +235,8 @@ public class WorkspaceV2Controller {
 
     @PutMapping(value = "/{workspaceId}/managers/{managerCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update manager from workspace")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Manager updated", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Manager updated", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> updateManagerFromWorkspace(
             @RequestBody UpdateManagerFromWorkspaceDto requestUpdateWorkspace, @PathVariable Long workspaceId,
@@ -284,8 +290,8 @@ public class WorkspaceV2Controller {
 
     @PutMapping(value = "/{workspaceId}/operators/{operatorCode}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Update operator from workspace")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "Operator updated", response = WorkspaceDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Operator updated", response = WorkspaceDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<Object> updateOperatorFromWorkspace(
             @ModelAttribute UpdateOperatorFromWorkspaceDto updateOperatorWorkspace, @PathVariable Long workspaceId,
@@ -361,8 +367,9 @@ public class WorkspaceV2Controller {
                 }
             }
 
-            responseDto = workspaceBusiness.updateOperatorFromWorkspace(workspaceId, managerDto.getId(), operatorCode, startDate, endDate,
-                    observations, parcelsNumber, workArea, updateOperatorWorkspace.getSupportFile());
+            responseDto = workspaceBusiness.updateOperatorFromWorkspace(workspaceId, managerDto.getId(), operatorCode,
+                    startDate, endDate, observations, parcelsNumber, workArea,
+                    updateOperatorWorkspace.getSupportFile());
             httpStatus = HttpStatus.OK;
 
         } catch (InputValidationException e) {
@@ -384,11 +391,11 @@ public class WorkspaceV2Controller {
 
     @GetMapping(value = "{workspaceId}/download-support-operator/{operatorCode}")
     @ApiOperation(value = "Download file")
-    @ApiResponses(value = {@ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "File downloaded", response = BasicResponseDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> downloadSupportOperator(@PathVariable Long workspaceId, @PathVariable Long operatorCode,
-                                                     @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         MediaType mediaType;
         File file;

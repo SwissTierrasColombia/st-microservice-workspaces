@@ -22,6 +22,7 @@ import com.ai.st.microservice.workspaces.dto.operators.CustomSupplyDeliveryDto;
 import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 import com.ai.st.microservice.workspaces.entities.WorkspaceOperatorEntity;
 import com.ai.st.microservice.workspaces.services.IWorkspaceOperatorService;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 
 import org.slf4j.Logger;
@@ -49,10 +50,10 @@ public class WorkspaceOperatorBusiness {
     private final AdministrationBusiness administrationBusiness;
 
     public WorkspaceOperatorBusiness(IWorkspaceOperatorService operatorService, IWorkspaceService workspaceService,
-                                     IWorkspaceOperatorService workspaceOperatorService, OperatorMicroserviceBusiness operatorBusiness,
-                                     ReportBusiness reportBusiness, MunicipalityBusiness municipalityBusiness,
-                                     ManagerMicroserviceBusiness managerBusiness, SupplyBusiness supplyBusiness,
-                                     AdministrationBusiness administrationBusiness) {
+            IWorkspaceOperatorService workspaceOperatorService, OperatorMicroserviceBusiness operatorBusiness,
+            ReportBusiness reportBusiness, MunicipalityBusiness municipalityBusiness,
+            ManagerMicroserviceBusiness managerBusiness, SupplyBusiness supplyBusiness,
+            AdministrationBusiness administrationBusiness) {
         this.operatorService = operatorService;
         this.workspaceService = workspaceService;
         this.workspaceOperatorService = workspaceOperatorService;
@@ -73,8 +74,8 @@ public class WorkspaceOperatorBusiness {
             for (CustomDeliveryDto delivery : deliveries) {
 
                 List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = delivery.getSupplies();
-                List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                        suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+                List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream()
+                        .map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
 
                 CustomSupplyDeliveryDto supplyDto = suppliesDeliveryDto.stream()
                         .filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
@@ -86,21 +87,23 @@ public class WorkspaceOperatorBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error consultando la entrega por insumo: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega a partir del insumo %d : %s", supplyCode,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido obtener la entrega correspondiente al insumo.");
         }
 
         return null;
     }
 
-    public CustomDeliveryDto registerDownloadSupply(CustomDeliveryDto deliveryDto, Long supplyCode,
-                                                    Long userCode) {
+    public CustomDeliveryDto registerDownloadSupply(CustomDeliveryDto deliveryDto, Long supplyCode, Long userCode) {
 
         try {
 
             List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-            List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                    suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+            List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream()
+                    .map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
 
             CustomSupplyDeliveryDto supplyDto = suppliesDeliveryDto.stream()
                     .filter(s -> s.getSupplyCode().equals(supplyCode)).findAny().orElse(null);
@@ -111,7 +114,10 @@ public class WorkspaceOperatorBusiness {
             }
 
         } catch (Exception e) {
-            log.error("Error consultando la entrega por insumo: " + e.getMessage());
+            String messageError = String.format("Error actualizando la entrega %d y el insumo %d : %s",
+                    deliveryDto.getId(), supplyCode, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         return deliveryDto;
@@ -124,7 +130,10 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (deliveryDto == null) {
@@ -138,6 +147,10 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.disableDelivery(deliveryId);
         } catch (Exception e) {
+            String messageError = String.format("Error desactivando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido desactivar la entrega.");
         }
 
@@ -153,13 +166,18 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
             operatorDto = operatorBusiness.getOperatorById(operatorId);
         } catch (Exception e) {
-            log.error("Error consultando operador por id: " + e.getMessage());
+            String messageError = String.format("Error consultando el operador %d : %s", operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (operatorDto == null) {
@@ -179,8 +197,8 @@ public class WorkspaceOperatorBusiness {
         }
 
         List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         CustomSupplyDeliveryDto supplyDeliveryDto = suppliesDeliveryDto.stream()
                 .filter(s -> s.getSupplyCode().equals(supplyId)).findAny().orElse(null);
@@ -252,7 +270,8 @@ public class WorkspaceOperatorBusiness {
         }
 
         supplies.add(new MicroserviceDownloadedSupplyDto(supplyName,
-                DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName.toUpperCase()));
+                DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy,
+                providerName.toUpperCase()));
 
         MicroserviceReportInformationDto report = reportBusiness.generateReportDownloadSupply(namespace, dateCreation,
                 dateDelivery, deliveryId.toString(), departmentName, managerName, municipalityCode, municipalityName,
@@ -272,13 +291,18 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del operador %d: %s", deliveryId,
+                    operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         try {
             operatorDto = operatorBusiness.getOperatorById(operatorId);
         } catch (Exception e) {
-            log.error("Error consultando operador por id: " + e.getMessage());
+            String messageError = String.format("Error consultando el operador %d : %s", operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (deliveryDto == null) {
@@ -294,8 +318,8 @@ public class WorkspaceOperatorBusiness {
         }
 
         List<? extends MicroserviceSupplyDeliveryDto> suppliesResponse = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveryDto =
-                suppliesResponse.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveryDto = suppliesResponse.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveryDto) {
             if (!supplyDeliveryDto.getDownloaded()) {
@@ -334,8 +358,8 @@ public class WorkspaceOperatorBusiness {
         List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
 
         List<? extends MicroserviceSupplyDeliveryDto> response = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto =
-                response.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto = response.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
@@ -371,7 +395,8 @@ public class WorkspaceOperatorBusiness {
             }
 
             supplies.add(new MicroserviceDownloadedSupplyDto(supplyName,
-                    DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy, providerName.toUpperCase()));
+                    DateTool.formatDate(supplyDeliveryDto.getDownloadedAt(), format), downloadedBy,
+                    providerName.toUpperCase()));
         }
 
         MicroserviceReportInformationDto report = reportBusiness.generateReportDownloadSupply(namespace, dateCreation,
@@ -392,23 +417,28 @@ public class WorkspaceOperatorBusiness {
         try {
             deliveryDto = operatorBusiness.getDeliveryId(deliveryId);
         } catch (Exception e) {
-            log.error("Error consultando entrega por id: " + e.getMessage());
+            String messageError = String.format("Error consultando la entrega %d del gestor %d : %s", deliveryId,
+                    managerId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (deliveryDto == null) {
             throw new BusinessException("No se ha encontrado la entrega.");
         }
 
+        Long operatorId = deliveryDto.getOperator().getId();
         try {
-            operatorDto = operatorBusiness.getOperatorById(deliveryDto.getOperator().getId());
+            operatorDto = operatorBusiness.getOperatorById(operatorId);
         } catch (Exception e) {
-            log.error("Error consultando operador por id: " + e.getMessage());
+            String messageError = String.format("Error consultando el operator %d : %s", operatorId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
 
         if (operatorDto == null) {
             throw new BusinessException("No se ha encontrado el operador.");
         }
-
 
         if (!deliveryDto.getManagerCode().equals(managerId)) {
             throw new BusinessException("La entrega no pertenece al gestor.");
@@ -440,8 +470,8 @@ public class WorkspaceOperatorBusiness {
         List<MicroserviceDownloadedSupplyDto> supplies = new ArrayList<>();
 
         List<? extends MicroserviceSupplyDeliveryDto> response = deliveryDto.getSupplies();
-        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto =
-                response.stream().map(CustomSupplyDeliveryDto::new).collect(Collectors.toList());
+        List<CustomSupplyDeliveryDto> suppliesDeliveriesDto = response.stream().map(CustomSupplyDeliveryDto::new)
+                .collect(Collectors.toList());
 
         for (CustomSupplyDeliveryDto supplyDeliveryDto : suppliesDeliveriesDto) {
             String supplyName = "";
@@ -484,8 +514,9 @@ public class WorkspaceOperatorBusiness {
         operatorService.deleteWorkspaceOperatorById(workspaceOperatorId);
     }
 
-    public WorkspaceOperatorDto createOperator(Date startDate, Date endDate, Long numberParcelsExpected, Double workArea, String observations,
-                                               String supportFileURL, Long workspaceId, Long operatorCode, Long managerCode) {
+    public WorkspaceOperatorDto createOperator(Date startDate, Date endDate, Long numberParcelsExpected,
+            Double workArea, String observations, String supportFileURL, Long workspaceId, Long operatorCode,
+            Long managerCode) {
 
         WorkspaceEntity workspaceEntity = workspaceService.getWorkspaceById(workspaceId);
 
@@ -509,7 +540,7 @@ public class WorkspaceOperatorBusiness {
     }
 
     public WorkspaceOperatorDto updateWorkspaceOperator(Long workspaceManagerId, Date startDate, Date endDate,
-                                                        String observations, Long parcelsExpected, Double workArea, String supportFile) {
+            String observations, Long parcelsExpected, Double workArea, String supportFile) {
 
         WorkspaceOperatorEntity workspaceOperatorEntity = workspaceOperatorService
                 .getWorkspaceOperatorById(workspaceManagerId);
@@ -550,7 +581,8 @@ public class WorkspaceOperatorBusiness {
         municipalityDto.setId(municipalityEntity.getId());
         municipalityDto.setName(municipalityEntity.getName());
         municipalityDto.setCode(municipalityEntity.getCode());
-        municipalityDto.setDepartment(new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
+        municipalityDto.setDepartment(
+                new DepartmentDto(departmentEntity.getId(), departmentEntity.getName(), departmentEntity.getCode()));
         workspaceOperatorDto.setMunicipality(municipalityDto);
 
         try {
@@ -558,6 +590,10 @@ public class WorkspaceOperatorBusiness {
                     .getManagerById(workspaceOperatorEntity.getManagerCode());
             workspaceOperatorDto.setManager(managerDto);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el gestor %d : %s",
+                    workspaceOperatorEntity.getManagerCode(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             workspaceOperatorDto.setManager(null);
         }
 
@@ -566,6 +602,10 @@ public class WorkspaceOperatorBusiness {
                     .getOperatorById(workspaceOperatorEntity.getOperatorCode());
             workspaceOperatorDto.setOperator(operatorDto);
         } catch (Exception e) {
+            String messageError = String.format("Error consultando el operador %d : %s",
+                    workspaceOperatorEntity.getOperatorCode(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             workspaceOperatorDto.setOperator(null);
         }
 

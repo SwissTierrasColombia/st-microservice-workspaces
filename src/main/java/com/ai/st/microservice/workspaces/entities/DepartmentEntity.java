@@ -11,43 +11,43 @@ import javax.persistence.Table;
 @Table(name = "departments", schema = "workspaces")
 public class DepartmentEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	private Long id;
-	
-	@Column(name = "name", nullable = false)
-	private String name;
-	
-	@Column(name = "code", nullable = false)
-	private String code;
-	
-	public DepartmentEntity() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-	}
+    @Column(name = "name", nullable = false)
+    private String name;
 
-	public Long getId() {
-		return id;
-	}
+    @Column(name = "code", nullable = false)
+    private String code;
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public DepartmentEntity() {
 
-	public String getName() {
-		return name;
-	}
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public String getCode() {
-		return code;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setCode(String code) {
-		this.code = code;
-	}
-	
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
 }

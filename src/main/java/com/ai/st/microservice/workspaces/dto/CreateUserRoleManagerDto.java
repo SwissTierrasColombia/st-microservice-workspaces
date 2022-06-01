@@ -10,62 +10,67 @@ import io.swagger.annotations.ApiModelProperty;
 @ApiModel(value = "CreateUserRoleManagerDto", description = "Create User Role Manager Dto")
 public class CreateUserRoleManagerDto implements Serializable {
 
-	private static final long serialVersionUID = 4040750533290642970L;
+    private static final long serialVersionUID = 4040750533290642970L;
 
-	@ApiModelProperty(required = true, notes = "Role ID")
-	private Long roleId;
+    @ApiModelProperty(required = true, notes = "Role ID")
+    private Long roleId;
 
-	@ApiModelProperty(required = true, notes = "Manager ID")
-	private Long managerId;
+    @ApiModelProperty(required = true, notes = "Manager ID")
+    private Long managerId;
 
-	@ApiModelProperty(required = true, notes = "Profiles ID")
-	private List<Long> profiles;
-	
-	private Boolean isManager;
-	private Boolean isDirector;
+    @ApiModelProperty(required = true, notes = "Profiles ID")
+    private List<Long> profiles;
 
-	public CreateUserRoleManagerDto() {
-		this.profiles = new ArrayList<Long>();
-	}
+    private Boolean isManager;
+    private Boolean isDirector;
 
-	public Long getRoleId() {
-		return roleId;
-	}
+    public CreateUserRoleManagerDto() {
+        this.profiles = new ArrayList<Long>();
+    }
 
-	public void setRoleId(Long roleId) {
-		this.roleId = roleId;
-	}
+    public Long getRoleId() {
+        return roleId;
+    }
 
-	public Long getManagerId() {
-		return managerId;
-	}
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
+    }
 
-	public void setManagerId(Long managerId) {
-		this.managerId = managerId;
-	}
+    public Long getManagerId() {
+        return managerId;
+    }
 
-	public List<Long> getProfiles() {
-		return profiles;
-	}
+    public void setManagerId(Long managerId) {
+        this.managerId = managerId;
+    }
 
-	public void setProfiles(List<Long> profiles) {
-		this.profiles = profiles;
-	}
+    public List<Long> getProfiles() {
+        return profiles;
+    }
 
-	public Boolean getIsManager() {
-		return isManager;
-	}
+    public void setProfiles(List<Long> profiles) {
+        this.profiles = profiles;
+    }
 
-	public void setIsManager(Boolean isManager) {
-		this.isManager = isManager;
-	}
+    public Boolean getIsManager() {
+        return isManager;
+    }
 
-	public Boolean getIsDirector() {
-		return isDirector;
-	}
+    public void setIsManager(Boolean isManager) {
+        this.isManager = isManager;
+    }
 
-	public void setIsDirector(Boolean isDirector) {
-		this.isDirector = isDirector;
-	}
+    public Boolean getIsDirector() {
+        return isDirector;
+    }
 
+    public void setIsDirector(Boolean isDirector) {
+        this.isDirector = isDirector;
+    }
+
+    @Override
+    public String toString() {
+        return "CreateUserRoleManagerDto{" + "roleId=" + roleId + ", managerId=" + managerId + ", profiles=" + profiles
+                + ", isManager=" + isManager + ", isDirector=" + isDirector + '}';
+    }
 }

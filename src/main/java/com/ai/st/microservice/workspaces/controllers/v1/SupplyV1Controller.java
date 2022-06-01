@@ -10,6 +10,8 @@ import com.ai.st.microservice.workspaces.business.ManagerMicroserviceBusiness;
 import com.ai.st.microservice.workspaces.business.SupplyBusiness;
 import com.ai.st.microservice.workspaces.dto.supplies.CustomSupplyDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
+import com.ai.st.microservice.workspaces.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -24,7 +26,7 @@ import io.swagger.annotations.ApiResponses;
 
 import java.util.List;
 
-@Api(value = "Manage Supplies", tags = {"Supplies"})
+@Api(value = "Manage Supplies", tags = { "Supplies" })
 @RestController
 @RequestMapping("api/workspaces/v1/supplies")
 public class SupplyV1Controller {
@@ -36,7 +38,7 @@ public class SupplyV1Controller {
     private final AdministrationBusiness administrationBusiness;
 
     public SupplyV1Controller(SupplyBusiness supplyBusiness, ManagerMicroserviceBusiness managerBusiness,
-                              AdministrationBusiness administrationBusiness) {
+            AdministrationBusiness administrationBusiness) {
         this.supplyBusiness = supplyBusiness;
         this.managerBusiness = managerBusiness;
         this.administrationBusiness = administrationBusiness;
@@ -46,40 +48,46 @@ public class SupplyV1Controller {
     @ApiOperation(value = "Get supplies by municipality")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get supplies", response = CustomSupplyDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getSuppliesByMunicipality(@PathVariable Long municipalityId,
-                                                       @RequestParam(name = "extensions", required = false) List<String> extensions,
-                                                       @RequestHeader("authorization") String headerAuthorization,
-                                                       @RequestParam(name = "page", required = false) Integer page,
-                                                       @RequestParam(name = "manager", required = false) Long managerCode,
-                                                       @RequestParam(name = "operator", required = false) Long operatorCode,
-                                                       @RequestParam(name = "active", defaultValue = "true") boolean active,
-                                                       @RequestParam(name = "requests", required = false) List<Long> requests) {
+            @RequestParam(name = "extensions", required = false) List<String> extensions,
+            @RequestHeader("authorization") String headerAuthorization,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "manager", required = false) Long managerCode,
+            @RequestParam(name = "operator", required = false) Long operatorCode,
+            @RequestParam(name = "active", defaultValue = "true") boolean active,
+            @RequestParam(name = "requests", required = false) List<Long> requests) {
 
         HttpStatus httpStatus;
         Object responseDto = null;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("getSuppliesByMunicipality");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
             if (administrationBusiness.isAdministrator(userDtoSession)) {
-
+                SCMTracing.addCustomParameter(TracingKeyword.IS_ADMIN, true);
                 responseDto = supplyBusiness.getSuppliesByMunicipalityAdmin(municipalityId, extensions, page, requests,
                         active, managerCode);
 
             } else if (administrationBusiness.isManager(userDtoSession)) {
-
-                // get manager
+                SCMTracing.addCustomParameter(TracingKeyword.IS_MANAGER, true);
                 MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
                 if (managerDto == null) {
                     throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
                 }
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+                SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
                 responseDto = supplyBusiness.getSuppliesByMunicipalityManager(municipalityId, managerDto.getId(),
                         extensions, page, requests, active, operatorCode);
@@ -90,12 +98,15 @@ public class SupplyV1Controller {
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error SupplyV1Controller@getSuppliesByMunicipality#Microservice ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error SupplyV1Controller@getSuppliesByMunicipality#Business ---> " + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error SupplyV1Controller@getSuppliesByMunicipality#General ---> " + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -103,25 +114,28 @@ public class SupplyV1Controller {
 
     @PutMapping(value = "/{supplyId}/active", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Active supply")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Supply activated", response = CustomSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> activeSupply(@PathVariable Long supplyId,
-                                          @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("activeSupply");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -129,6 +143,8 @@ public class SupplyV1Controller {
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para activar insumos.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = supplyBusiness.changeStateSupply(supplyId, SupplyBusiness.SUPPLY_STATE_ACTIVE,
                     managerDto.getId());
@@ -136,16 +152,19 @@ public class SupplyV1Controller {
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error SupplyV1Controller@activeSupply#Microservice ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 5);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error SupplyV1Controller@activeSupply#Business ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error SupplyV1Controller@activeSupply#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);
@@ -153,25 +172,28 @@ public class SupplyV1Controller {
 
     @PutMapping(value = "/{supplyId}/inactive", produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation(value = "Inactive supply")
-    @ApiResponses(value = {
-            @ApiResponse(code = 200, message = "Supply updated", response = CustomSupplyDto.class),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Supply inactivated", response = CustomSupplyDto.class),
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> inactiveSupply(@PathVariable Long supplyId,
-                                            @RequestHeader("authorization") String headerAuthorization) {
+            @RequestHeader("authorization") String headerAuthorization) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
-            // user session
+            SCMTracing.setTransactionName("inactiveSupply");
+            SCMTracing.addCustomParameter(TracingKeyword.AUTHORIZATION_HEADER, headerAuthorization);
+
             MicroserviceUserDto userDtoSession = administrationBusiness.getUserByToken(headerAuthorization);
             if (userDtoSession == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el usuario");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.USER_ID, userDtoSession.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_EMAIL, userDtoSession.getEmail());
+            SCMTracing.addCustomParameter(TracingKeyword.USER_NAME, userDtoSession.getUsername());
 
-            // get manager
             MicroserviceManagerDto managerDto = managerBusiness.getManagerByUserCode(userDtoSession.getId());
             if (managerDto == null) {
                 throw new DisconnectedMicroserviceException("Ha ocurrido un error consultando el gestor.");
@@ -179,6 +201,8 @@ public class SupplyV1Controller {
             if (!managerBusiness.userManagerIsDirector(userDtoSession.getId())) {
                 throw new InputValidationException("El usuario no tiene permisos para activar insumos.");
             }
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_ID, managerDto.getId());
+            SCMTracing.addCustomParameter(TracingKeyword.MANAGER_NAME, managerDto.getName());
 
             responseDto = supplyBusiness.changeStateSupply(supplyId, SupplyBusiness.SUPPLY_STATE_INACTIVE,
                     managerDto.getId());
@@ -186,16 +210,19 @@ public class SupplyV1Controller {
 
         } catch (DisconnectedMicroserviceException e) {
             log.error("Error SupplyV1Controller@inactiveSupply#Microservice ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 5);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         } catch (BusinessException e) {
             log.error("Error SupplyV1Controller@inactiveSupply#Business ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 4);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
             log.error("Error SupplyV1Controller@inactiveSupply#General ---> " + e.getMessage());
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

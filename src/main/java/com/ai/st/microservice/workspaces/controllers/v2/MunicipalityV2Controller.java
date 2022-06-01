@@ -6,6 +6,7 @@ import com.ai.st.microservice.common.exceptions.*;
 import com.ai.st.microservice.workspaces.business.MunicipalityBusiness;
 import com.ai.st.microservice.workspaces.dto.MunicipalityDto;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Municipalities", tags = {"Municipalities"})
+@Api(value = "Manage Municipalities", tags = { "Municipalities" })
 @RestController
 @RequestMapping("api/workspaces/v2/municipalities")
 public class MunicipalityV2Controller {
@@ -35,27 +36,33 @@ public class MunicipalityV2Controller {
     @ApiOperation(value = "Get municipalities where manager does not belong in")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Get municipalities", response = MunicipalityDto.class, responseContainer = "List"),
-            @ApiResponse(code = 500, message = "Error Server", response = String.class)})
+            @ApiResponse(code = 500, message = "Error Server", response = String.class) })
     @ResponseBody
     public ResponseEntity<?> getMunicipalitiesWhereManagerDoesNotBelongIn(@PathVariable Long managerCode,
-                                                                          @PathVariable Long departmentId) {
+            @PathVariable Long departmentId) {
 
         HttpStatus httpStatus;
         Object responseDto;
 
         try {
 
+            SCMTracing.setTransactionName("getMunicipalitiesWhereManagerDoesNotBelongIn");
+
             responseDto = municipalityBusiness.getMunicipalitiesWhereManagerDoesNotBelong(managerCode, departmentId);
             httpStatus = HttpStatus.OK;
 
         } catch (BusinessException e) {
-            log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#Business ---> " + e.getMessage());
+            log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#Business ---> "
+                    + e.getMessage());
             httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-            responseDto = new BasicResponseDto(e.getMessage(), 2);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         } catch (Exception e) {
-            log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#General ---> " + e.getMessage());
+            log.error("Error MunicipalityV2Controller@getMunicipalitiesWhereManagerDoesntBelongIn#General ---> "
+                    + e.getMessage());
             httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-            responseDto = new BasicResponseDto(e.getMessage(), 3);
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
         }
 
         return new ResponseEntity<>(responseDto, httpStatus);

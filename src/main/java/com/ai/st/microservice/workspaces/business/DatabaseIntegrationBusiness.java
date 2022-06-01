@@ -2,6 +2,7 @@ package com.ai.st.microservice.workspaces.business;
 
 import com.ai.st.microservice.common.exceptions.BusinessException;
 
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +52,9 @@ public class DatabaseIntegrationBusiness {
             this.createExtensionsToDatabase(database);
 
         } catch (Exception e) {
-            log.error("Error creando base de datos: " + e.getMessage());
+            String messageError = String.format("Error creando base de datos %s: %s", database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido generar la base de datos.");
         }
 
@@ -59,7 +62,7 @@ public class DatabaseIntegrationBusiness {
     }
 
     public void protectedDatabase(String host, String port, String database, String schema, String username,
-                                  String password) throws BusinessException {
+            String password) throws BusinessException {
 
         try {
 
@@ -125,7 +128,9 @@ public class DatabaseIntegrationBusiness {
             stmt13.execute();
 
         } catch (Exception e) {
-            log.error("Error protegiendo base de datos: " + e.getMessage());
+            String messageError = String.format("Error protegiendo la base de datos %s: %s", database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido configurar los permisos a la base de datos.");
         }
 
@@ -145,7 +150,10 @@ public class DatabaseIntegrationBusiness {
             stmt2.execute();
 
         } catch (Exception e) {
-            log.error("Error creando extensiones a la base de datos: " + e.getMessage());
+            String messageError = String.format("Error creando las extensiones en la base de datos %s: %s", database,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
         }
     }
 
@@ -173,13 +181,15 @@ public class DatabaseIntegrationBusiness {
             stmt4.execute();
 
         } catch (Exception e) {
-            log.error("Error eliminando base de datos: " + e.getMessage());
+            String messageError = String.format("Error eliminando la base de datos %s: %s", database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido eliminar la base de datos");
         }
 
     }
 
-    public void createViewIntegration(String host, String port, String database, String schema, String nameView)
+    public void createParcelIntegratedView(String host, String port, String database, String schema, String viewName)
             throws BusinessException {
 
         try {
@@ -188,20 +198,196 @@ public class DatabaseIntegrationBusiness {
 
             Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
 
-            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + nameView
-                    + " AS\n"
-                    + "  select id, numero_predial, coalesce(c.tipo_emparejamiento,0) as emparejamiento , geometria  from\n"
-                    + "(select * from\n" + "       (select p.t_id as id, p.numero_predial, t.geometria\n"
-                    + "      from  " + schema + ".gc_prediocatastro as p\n" + "inner join " + schema
-                    + ".gc_terreno as t\n" + "   on t.gc_predio=p.t_id) as a\n" + "  left join\n"
-                    + "  (select l.t_id as id2, i.tipo_emparejamiento\n" + "      from " + schema
-                    + ".ini_predioinsumos as i\n" + "         inner join " + schema + ".gc_prediocatastro as l\n"
-                    + "   on l.t_id=i.gc_predio_catastro) as b\n" + " on a.id=b.id2\n" + ") as c;");
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT pc.t_id AS id,\n" + "    pc.numero_predial,\n" + "        CASE\n"
+                    + "            WHEN pc.nupre IS NULL THEN 'NA'::character varying\n" + "            ELSE pc.nupre\n"
+                    + "        END AS nupre,\n" + "    pc.circulo_registral,\n"
+                    + "    pc.matricula_inmobiliaria_catastro,\n" + "        CASE\n"
+                    + "            WHEN r.valor IS NULL THEN 'NA'::character varying\n" + "            ELSE r.valor\n"
+                    + "        END AS direccion,\n" + "    pc.tipo_predio,\n"
+                    + "    cpt.dispname AS condicion_predio,\n" + "        CASE\n"
+                    + "            WHEN ep.estado_alerta IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE ep.estado_alerta\n" + "        END AS estado_predio,\n" + "    t.geometria,\n"
+                    + "    t.area_terreno_alfanumerica,\n" + "    t.area_terreno_digital,\n" + "        CASE\n"
+                    + "            WHEN ipi.t_id IS NULL THEN false\n" + "            ELSE true\n"
+                    + "        END AS cruzo\n" + "   FROM " + schema + ".gc_prediocatastro pc\n" + "     JOIN " + schema
+                    + ".gc_terreno t ON t.gc_predio = pc.t_id AND t.geometria IS NOT NULL\n" + "     LEFT JOIN "
+                    + schema + ".ini_predioinsumos ipi ON ipi.gc_predio_catastro = pc.t_id\n" + "     LEFT JOIN "
+                    + schema + ".gc_condicionprediotipo cpt ON cpt.t_id = pc.condicion_predio\n" + "     LEFT JOIN "
+                    + schema + ".gc_estadopredio ep ON ep.gc_prediocatastro_estado_predio = pc.t_id\n"
+                    + "     LEFT JOIN LATERAL ( SELECT r_1.t_id,\n" + "            r_1.t_seq,\n"
+                    + "            r_1.valor,\n" + "            r_1.principal,\n"
+                    + "            r_1.geometria_referencia,\n" + "            r_1.gc_prediocatastro_direcciones\n"
+                    + "           FROM " + schema + ".gc_direccion r_1\n"
+                    + "          WHERE pc.t_id = r_1.gc_prediocatastro_direcciones\n" + "         LIMIT 1) r ON true\n"
+                    + "  ORDER BY pc.t_id;");
             stmt1.execute();
 
         } catch (Exception e) {
-            log.error("Error creando vista para el proceso de integración: " + e.getMessage());
-            throw new BusinessException("No se ha podido configurar la integración.");
+            String messageError = String.format(
+                    "Error creando la vista de predios integrados en la base de datos %s: %s", database,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido configurar la vista de predios integrados.");
+        }
+
+    }
+
+    public void createPerimeterView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
+
+        try {
+
+            String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+            Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT\n" + "        CASE\n"
+                    + "            WHEN p.codigo_departamento IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.codigo_departamento\n" + "        END AS codigo_departamento,\n"
+                    + "        CASE\n" + "            WHEN p.codigo_municipio IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.codigo_municipio\n" + "        END AS codigo_municipio,\n" + "        CASE\n"
+                    + "            WHEN p.tipo_avaluo IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.tipo_avaluo\n" + "        END AS tipo_avaluo,\n" + "        CASE\n"
+                    + "            WHEN p.nombre_geografico IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.nombre_geografico\n" + "        END AS nombre_geografico,\n"
+                    + "        CASE\n" + "            WHEN p.codigo_nombre IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE p.codigo_nombre\n" + "        END AS codigo_nombre,\n" + "    p.geometria\n"
+                    + "   FROM " + schema + ".gc_perimetro p\n" + "  WHERE p.geometria IS NOT NULL;");
+            stmt1.execute();
+
+        } catch (Exception e) {
+            String messageError = String.format("Error creando la vista de perímetros en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la vista de perímetros.");
+        }
+
+    }
+
+    public void createSidewalkView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
+
+        try {
+
+            String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+            Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT\n" + "        CASE\n"
+                    + "            WHEN v.codigo IS NULL THEN 'NA'::character varying\n" + "            ELSE v.codigo\n"
+                    + "        END AS codigo,\n" + "        CASE\n"
+                    + "            WHEN v.codigo_anterior IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE v.codigo_anterior\n" + "        END AS codigo_anterior,\n" + "        CASE\n"
+                    + "            WHEN v.nombre IS NULL THEN 'NA'::character varying\n" + "            ELSE v.nombre\n"
+                    + "        END AS nombre,\n" + "        CASE\n"
+                    + "            WHEN v.codigo_sector IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE v.codigo_sector\n" + "        END AS codigo_sector,\n" + "    v.geometria\n"
+                    + "   FROM " + schema + ".gc_vereda v\n" + "  WHERE v.geometria IS NOT NULL;");
+            stmt1.execute();
+
+        } catch (Exception e) {
+            String messageError = String.format("Error creando la vista de veredas en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la vista de veredas.");
+        }
+
+    }
+
+    public void createBuildingView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
+
+        try {
+
+            String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+            Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT c.t_id AS id,\n" + "    c.gc_predio AS id_predio,\n" + "        CASE\n"
+                    + "            WHEN c.etiqueta IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE c.etiqueta\n" + "        END AS etiqueta,\n"
+                    + "    uct.dispname AS tipo_construccion,\n" + "    c.tipo_dominio,\n" + "    c.area_construida,\n"
+                    + "    c.geometria\n" + "   FROM " + schema + ".gc_construccion c\n" + "     LEFT JOIN " + schema
+                    + ".gc_unidadconstrucciontipo uct ON uct.t_id = c.tipo_construccion\n"
+                    + "  WHERE c.geometria IS NOT NULL;");
+            stmt1.execute();
+
+        } catch (Exception e) {
+            String messageError = String.format("Error creando la vista de construcciones en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la vista de construcciones.");
+        }
+
+    }
+
+    public void createBuildingUnitsView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
+
+        try {
+
+            String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+            Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+            PreparedStatement stmt1 = connection.prepareStatement(
+                    "CREATE OR REPLACE VIEW " + schema + "." + viewName + " AS SELECT uc.t_id AS id,\n"
+                            + "        CASE\n" + "            WHEN uc.etiqueta IS NULL THEN 'NA'::character varying\n"
+                            + "            ELSE uc.etiqueta\n" + "        END AS etiqueta,\n" + "        CASE\n"
+                            + "            WHEN uc.tipo_dominio IS NULL THEN 'NA'::character varying\n"
+                            + "            ELSE uc.tipo_dominio\n" + "        END AS tipo_dominio,\n"
+                            + "    uct.dispname AS tipo_construccion,\n" + "    uc.total_habitaciones,\n"
+                            + "    uc.total_banios,\n" + "    uc.total_pisos,\n" + "    uc.geometria\n" + "   FROM "
+                            + schema + ".gc_unidadconstruccion uc\n" + "     LEFT JOIN " + schema
+                            + ".gc_unidadconstrucciontipo uct ON uct.t_id = uc.tipo_construccion\n"
+                            + "  WHERE uc.geometria IS NOT NULL;");
+            stmt1.execute();
+
+        } catch (Exception e) {
+            String messageError = String.format(
+                    "Error creando la vista de unidades de construcción en la base de datos %s: %s", database,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la vista de unidades de construcción.");
+        }
+
+    }
+
+    public void createSquareView(String host, String port, String database, String schema, String viewName)
+            throws BusinessException {
+
+        try {
+
+            String url = "jdbc:postgresql://" + host + ":" + port + "/" + database;
+
+            Connection connection = DriverManager.getConnection(url, databaseUsername, databasePassword);
+
+            PreparedStatement stmt1 = connection.prepareStatement("CREATE OR REPLACE VIEW " + schema + "." + viewName
+                    + " AS SELECT\n" + "        CASE\n"
+                    + "            WHEN m.codigo IS NULL THEN 'NA'::character varying\n" + "            ELSE m.codigo\n"
+                    + "        END AS codigo,\n" + "        CASE\n"
+                    + "            WHEN m.codigo_anterior IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE m.codigo_anterior\n" + "        END AS codigo_anterior,\n" + "        CASE\n"
+                    + "            WHEN m.codigo_barrio IS NULL THEN 'NA'::character varying\n"
+                    + "            ELSE m.codigo_barrio\n" + "        END AS codigo_barrio,\n" + "    m.geometria\n"
+                    + "   FROM " + schema + ".gc_manzana m\n" + "  WHERE m.geometria IS NOT NULL;");
+            stmt1.execute();
+
+        } catch (Exception e) {
+            String messageError = String.format("Error creando la vista de manzanas en la base de datos %s: %s",
+                    database, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la vista de manzanas.");
         }
 
     }

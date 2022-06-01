@@ -14,10 +14,13 @@ import com.ai.st.microservice.workspaces.entities.WorkspaceEntity;
 import com.ai.st.microservice.workspaces.entities.WorkspaceManagerEntity;
 import com.ai.st.microservice.workspaces.services.MunicipalityService;
 import com.ai.st.microservice.workspaces.services.WorkspaceService;
+import com.ai.st.microservice.workspaces.services.tracing.SCMTracing;
 import com.ai.st.microservice.workspaces.utils.DateTool;
 import com.ai.st.microservice.workspaces.utils.FileTool;
 
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +31,8 @@ import java.util.List;
 
 @Component
 public class CadastralAuthorityBusiness {
+
+    private final Logger log = LoggerFactory.getLogger(CadastralAuthorityBusiness.class);
 
     @Value("${st.filesDirectory}")
     private String stFilesDirectory;
@@ -40,9 +45,9 @@ public class CadastralAuthorityBusiness {
     private final ReportBusiness reportBusiness;
     private final ManagerMicroserviceBusiness managerBusiness;
 
-    public CadastralAuthorityBusiness(MunicipalityBusiness municipalityBusiness, WorkspaceService workspaceService, FileBusiness fileBusiness,
-                                      SupplyBusiness supplyBusiness, MunicipalityService municipalityService,
-                                      ReportBusiness reportBusiness, ManagerMicroserviceBusiness managerBusiness) {
+    public CadastralAuthorityBusiness(MunicipalityBusiness municipalityBusiness, WorkspaceService workspaceService,
+            FileBusiness fileBusiness, SupplyBusiness supplyBusiness, MunicipalityService municipalityService,
+            ReportBusiness reportBusiness, ManagerMicroserviceBusiness managerBusiness) {
         this.municipalityBusiness = municipalityBusiness;
         this.workspaceService = workspaceService;
         this.fileBusiness = fileBusiness;
@@ -52,8 +57,8 @@ public class CadastralAuthorityBusiness {
         this.managerBusiness = managerBusiness;
     }
 
-    public CustomSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId, String name,
-                                                          String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
+    public CustomSupplyDto createSupplyCadastralAuthority(Long municipalityId, Long managerCode, Long attachmentTypeId,
+            String name, String observations, String ftp, MultipartFile file, Long userCode) throws BusinessException {
 
         CustomSupplyDto supplyDto;
 
@@ -70,8 +75,8 @@ public class CadastralAuthorityBusiness {
         if (workspaceEntity == null) {
             throw new BusinessException("El municipio no tiene asignado un gestor");
         }
-        WorkspaceManagerEntity workspaceManagerEntity =
-                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("El gestor no pertenece al municipio");
         }
@@ -111,9 +116,12 @@ public class CadastralAuthorityBusiness {
         }
 
         try {
-            supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null, managerCode, attachments, null,
-                    userCode, null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name, null);
+            supplyDto = supplyBusiness.createSupply(municipalityCode, observations, null, managerCode, attachments,
+                    null, userCode, null, null, userCode, null, SupplyBusiness.SUPPLY_STATE_INACTIVE, name, null);
         } catch (Exception e) {
+            String messageError = String.format("Error al intentar crear un insumo: %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
             throw new BusinessException("No se ha podido cargar el insumo.");
         }
 
@@ -134,9 +142,8 @@ public class CadastralAuthorityBusiness {
             throw new BusinessException("El municipio aún no tiene asignado un gestor");
         }
 
-
-        WorkspaceManagerEntity workspaceManagerEntity =
-                workspaceEntity.getManagers().stream().filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
+        WorkspaceManagerEntity workspaceManagerEntity = workspaceEntity.getManagers().stream()
+                .filter(m -> m.getManagerCode().equals(managerCode)).findAny().orElse(null);
         if (workspaceManagerEntity == null) {
             throw new BusinessException("El gestor no pertenece al municipio");
         }
@@ -158,8 +165,8 @@ public class CadastralAuthorityBusiness {
 
         List<MicroserviceSupplyACDto> suppliesReport = new ArrayList<>();
 
-        List<CustomSupplyDto> supplies = (List<CustomSupplyDto>) supplyBusiness
-                .getSuppliesByMunicipalityAdmin(municipalityId, new ArrayList<>(), null, null, false, workspaceManagerEntity.getManagerCode());
+        List<CustomSupplyDto> supplies = (List<CustomSupplyDto>) supplyBusiness.getSuppliesByMunicipalityAdmin(
+                municipalityId, new ArrayList<>(), null, null, false, workspaceManagerEntity.getManagerCode());
 
         for (CustomSupplyDto supply : supplies) {
 
